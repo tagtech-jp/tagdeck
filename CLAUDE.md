@@ -41,6 +41,13 @@ TagTech の第 7 事業として位置付け（既存 6 事業に追加）。担
 - GitHub Actions を使わない運用のため、**ローカル3点（`pnpm exec tsc --noEmit` / `pnpm test` / `pnpm exec next build --webpack`）が唯一の品質ゲート**。このリポジトリは private + Free でブランチ保護を設定できず、CI が赤でもマージできてしまうため、人間の目視が最後の砦になる
 - PR 報告時は3点すべての結果を明示すること。1つでも赤なら報告に「赤」と書き、マージを求めない
 
+## migration の再提示（2026-09-23 の実害から）
+
+- **列を足して SQL を提示し直すときは、`CREATE TABLE IF NOT EXISTS` だけで済ませない。** 既存テーブルには列が追加されないため、社長が実行しても「Success」が返るのに何も起きない
+- 提示し直す SQL には `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` を必ず併記する
+- `_manual` SQL の末尾には、**コメントアウトしない確認 SELECT**（`information_schema.columns` の列一覧）を置き、期待する行数を書き添える
+- 実害: 0016 を 5 列版で適用済みの DB に 8 列版を流して無反応となり、`/items/patterns` が HTTP 500・カテゴリ 0 件になった。原因究明に数往復を要した
+
 ## デザインルール（DESIGN.md）
 
 - UI・Webページを実装・修正するときは、必ず同ディレクトリの `DESIGN.md` を最初に読み、そこで定義されたデザイントークンに従うこと
