@@ -1,0 +1,172 @@
+{
+  "name": "TagDeck - ふわっち daily sync (items + events)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 15 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Cron (JST 0:00 = UTC 15:00)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const { spawn } = require('child_process');\nconst path = require('path');\n\nconst scriptPath = 'D:/tagdeck/scripts/platforms/whowatch/sync_items_and_events.py';\nconst pythonBin = 'pythonw';\n\nconst env = {\n  ...process.env,\n  WHOWATCH_DEVICE_ID: $env.WHOWATCH_DEVICE_ID,\n  SUPABASE_URL: $env.SUPABASE_URL,\n  SUPABASE_SERVICE_ROLE_KEY: $env.SUPABASE_SERVICE_ROLE_KEY,\n  DISCORD_WEBHOOK_TASK: $env.DISCORD_WEBHOOK_TASK,\n  PYTHONIOENCODING: 'utf-8',\n};\n\nawait new Promise((resolve, reject) => {\n  const child = spawn(pythonBin, [scriptPath], {\n    env,\n    detached: true,\n    stdio: ['ignore', 'pipe', 'pipe'],\n  });\n\n  let stdout = '';\n  let stderr = '';\n  child.stdout.on('data', (d) => (stdout += d.toString('utf-8')));\n  child.stderr.on('data', (d) => (stderr += d.toString('utf-8')));\n\n  child.on('close', (code) => {\n    if (code === 0) {\n      resolve({ code, stdout, stderr });\n    } else {\n      reject(new Error(`exit ${code}: ${stderr.trim()}`));\n    }\n  });\n\n  child.on('error', reject);\n});\n\nreturn [{ json: { stdout, stderr, exitCode: 0 } }];"
+      },
+      "id": "run-sync-script",
+      "name": "Run sync_items_and_events.py",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "exit-code-check",
+              "leftValue": "={{ $json.exitCode }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-success",
+      "name": "Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DISCORD_WEBHOOK_TASK }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{ '[TagDeck] ふわっち daily sync 完了 ✅ ' + $json.stdout.trim() }}"
+            }
+          ]
+        },
+        "options": {
+          "headers": {
+            "parameters": [
+              {
+                "name": "User-Agent",
+                "value": "TagTech-Bot/1.0"
+              }
+            ]
+          }
+        }
+      },
+      "id": "discord-success",
+      "name": "Discord 成功通知",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DISCORD_WEBHOOK_TASK }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{ '[TagDeck] ふわっち daily sync FAILED ❌ ' + $json.stderr }}"
+            }
+          ]
+        },
+        "options": {
+          "headers": {
+            "parameters": [
+              {
+                "name": "User-Agent",
+                "value": "TagTech-Bot/1.0"
+              }
+            ]
+          }
+        }
+      },
+      "id": "discord-failure",
+      "name": "Discord 失敗通知",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 420]
+    }
+  ],
+  "connections": {
+    "Cron (JST 0:00 = UTC 15:00)": {
+      "main": [
+        [
+          {
+            "node": "Run sync_items_and_events.py",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run sync_items_and_events.py": {
+      "main": [
+        [
+          {
+            "node": "Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Success?": {
+      "main": [
+        [
+          {
+            "node": "Discord 成功通知",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Discord 失敗通知",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["tagdeck", "whowatch", "sync"],
+  "triggerCount": 0,
+  "updatedAt": "2026-05-09T00:00:00.000Z",
+  "versionId": "1"
+}

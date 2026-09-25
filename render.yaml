@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: tagdeck-whowatch-poller
+    runtime: node
+    rootDir: workers/whowatch-poller
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: WHOWATCH_DEVICE_ID
+        sync: false
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          type: web
+          name: tagdeck-whowatch-poller
+          property: host
+      - key: KEEP_ALIVE_INTERVAL_MS
+        value: "840000"

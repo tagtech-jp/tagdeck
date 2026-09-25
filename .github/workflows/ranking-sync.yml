@@ -1,0 +1,43 @@
+name: Whowatch ranking sync (5min)
+
+# イベント勝率シミュレーター E2: 開催中シミュレーターのランキングを 5 分毎に取得して ranking_snapshots に追記する。
+# 既存の daily-sync.yml と同じく GitHub Actions cron を使う（Cloudflare/Vercel cron は未使用の慣習に合わせる）。
+# 実行本体は tagdeck の Route Handler（POST /api/platforms/whowatch/rankings/sync）。認証は X-Sync-Key（middleware は素通し）。
+# Secrets: RANKING_SYNC_KEY（Cloudflare Workers 側の env RANKING_SYNC_KEY と同じ値）、TAGDECK_BASE_URL（省略時 https://tagdeck.jp）
+# GitHub Actions の cron は数分遅れることがある。
+
+# 【休眠中 2026-09-25〜】GitHub Actions無料枠の都合でCloudflare Workers Cron Triggerへ移設した
+# (src/worker.ts の scheduled ハンドラ、wrangler.jsonc の triggers.crons を参照)。
+# schedule トリガーを外し workflow_dispatch のみ残している(手動実行・動作確認用に保持)。
+# 復帰させる場合: 下のコメントアウトを戻し、Workers側 wrangler.jsonc の triggers.crons を削除して
+# 二重実行(GitHub Actions + Workers Cron の両方が5分毎に同期)にならないようにすること。
+
+on:
+  # schedule:
+  #   - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Call ranking sync endpoint
+        env:
+          RANKING_SYNC_KEY: ${{ secrets.RANKING_SYNC_KEY }}
+          TAGDECK_BASE_URL: ${{ secrets.TAGDECK_BASE_URL }}
+        run: |
+          if [ -z "$RANKING_SYNC_KEY" ]; then echo "RANKING_SYNC_KEY is not set; skipping"; exit 0; fi
+          BASE="${TAGDECK_BASE_URL:-https://tagdeck.jp}"
+          # -L は付けない（リダイレクト＝認証に流された＝失敗として検知する）。HTTP 200 以外は失敗
+          code=$(curl -sS --max-redirs 0 -o /tmp/out.json -w "%{http_code}" -X POST \
+            -H "X-Sync-Key: $RANKING_SYNC_KEY" -H "Content-Length: 0" \
+            "$BASE/api/platforms/whowatch/rankings/sync")
+          echo "HTTP $code"
+          echo "--- response body"
+          cat /tmp/out.json; echo
+          if [ "$code" = "200" ] && command -v jq >/dev/null; then
+            echo "--- summary"
+            jq -r '"targets=\(.targets) ok=\([.results[]|select(.ok)]|length) failed=\([.results[]|select(.ok|not)]|length) snapshots=\([.results[]|select(.snapshotId!=null)]|length)"' /tmp/out.json
+          fi
+          [ "$code" = "200" ]

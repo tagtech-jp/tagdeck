@@ -1,0 +1,43 @@
+name: CI
+
+# PR 向けの型チェック・単体テスト・Next.js ビルド（deploy.yml と同じ手順をデプロイ無しで実行する）。
+# deploy.yml は main への push でしか動かないため、PR 段階で緑を確認する用途。
+# next build を含めるのは、Route ファイルの export 制約（POST 以外の export でビルド失敗）など
+# tsc/vitest では検出できない Next.js 固有の検証を PR 段階で通すため（2026-09-21 の本番ビルド失敗の再発防止）。
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v5
+        with:
+          version: latest
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm exec tsc --noEmit
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Next.js build (route export validation)
+        run: pnpm exec next build --webpack
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}

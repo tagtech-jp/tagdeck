@@ -1,0 +1,22 @@
+{
+  "name": "@tagdeck/whowatch-poller",
+  "version": "0.0.1",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "dev": "ts-node index.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.3",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/ws": "^8.5.14",
+    "dotenv": "^16.4.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+  }
+}

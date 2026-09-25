@@ -1,0 +1,64 @@
+name: Whowatch item patterns sync (manual)
+
+# /playitems（アイテムパターン 4,000 件超・当たり判定に必須）を whowatch_item_patterns に同期する。
+# 2026-09-22: 400 行/チャンクの単一 INSERT が HTTP 502 で失敗したため、200 行/チャンク + cursor 方式に変更。
+# 1 リクエストで最大 5 チャンク（1,000 行）を処理し、next_cursor が空になるまでループする。
+# 日次は daily-sync.yml の末尾ステップで同じループを回す。ここは社長の手動実行（Run workflow）用。
+# Secrets: RANKING_SYNC_KEY、TAGDECK_BASE_URL（省略時 https://tagdeck.jp）
+
+on:
+  workflow_dispatch:
+    inputs:
+      chunk_size:
+        description: "1 INSERT あたりの行数（既定 200）"
+        required: false
+        default: ""
+      limit:
+        description: "1 リクエストで処理するチャンク数（既定 5）"
+        required: false
+        default: ""
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Call item patterns sync endpoint (loop until next_cursor is empty)
+        env:
+          RANKING_SYNC_KEY: ${{ secrets.RANKING_SYNC_KEY }}
+          TAGDECK_BASE_URL: ${{ secrets.TAGDECK_BASE_URL }}
+          CHUNK_SIZE: ${{ github.event.inputs.chunk_size }}
+          LIMIT: ${{ github.event.inputs.limit }}
+        run: |
+          if [ -z "$RANKING_SYNC_KEY" ]; then echo "RANKING_SYNC_KEY is not set"; exit 1; fi
+          BASE="${TAGDECK_BASE_URL:-https://tagdeck.jp}"
+          Q=""
+          [ -n "$CHUNK_SIZE" ] && Q="chunk_size=$CHUNK_SIZE"
+          [ -n "$LIMIT" ] && Q="${Q:+$Q&}limit=$LIMIT"
+          cursor=""; total_inserted=0; total_updated=0; total_failed=0; fail=0
+          # 4,422 パターン ÷ 1,000 行/リクエスト ≒ 5 回。余裕を見て最大 30 回で打ち切る
+          for i in $(seq 1 30); do
+            url="$BASE/api/platforms/whowatch/items/sync"
+            params="$Q"
+            [ -n "$cursor" ] && params="${params:+$params&}cursor=$cursor"
+            [ -n "$params" ] && url="$url?$params"
+            # -L は付けない（リダイレクト＝認証に流された＝失敗として検知する）
+            code=$(curl -sS --max-redirs 0 -o /tmp/out.json -w "%{http_code}" -X POST \
+              -H "X-Sync-Key: $RANKING_SYNC_KEY" -H "Content-Length: 0" "$url")
+            echo "=== batch $i HTTP $code (cursor=${cursor:-none})"
+            if [ "$code" != "200" ]; then
+              echo "--- response body"; head -c 2000 /tmp/out.json; echo
+              fail=1; break
+            fi
+            jq -r '"processed=\(.processed) inserted=\(.inserted) updated=\(.updated) failed=\(.failed) chunks=\(.chunks)/\(.totalChunks) next_cursor=\(.next_cursor // "none")"' /tmp/out.json
+            jq -r '.results[] | "  \(.range)\t\(if .ok then "ok" else "FAILED" end)\trows=\(.rows)\tins=\(.inserted)\tupd=\(.updated)\t\(.error // "")"' /tmp/out.json
+            # カテゴリ同期（初回バッチのみ実行）の結果。成功と「何もしていない」を区別できるようにする
+            jq -r 'if .groups then "groups: \(.groups)" else "groups: (なし)" end' /tmp/out.json
+            total_inserted=$((total_inserted + $(jq -r '.inserted' /tmp/out.json)))
+            total_updated=$((total_updated + $(jq -r '.updated' /tmp/out.json)))
+            total_failed=$((total_failed + $(jq -r '.failed' /tmp/out.json)))
+            cursor=$(jq -r '.next_cursor // empty' /tmp/out.json)
+            [ -z "$cursor" ] && break
+          done
+          echo "=== total inserted=$total_inserted updated=$total_updated failed=$total_failed"
+          [ "$fail" = "0" ] && [ "$total_failed" = "0" ]

@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tagdeck",
+  // OpenNext生成のfetchハンドラをsrc/worker.tsでラップし、scheduledハンドラ(ランキング5分同期)を追加している。
+  // 元は ".open-next/worker.js" 直指定だった(OpenNext Custom Workerパターン)
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-05-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "triggers": {
+    // 旧 .github/workflows/ranking-sync.yml (GitHub Actions cron) から移設。休眠手順は同ファイル参照
+    "crons": ["*/5 * * * *"]
+  },
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

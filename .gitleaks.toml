@@ -1,0 +1,14 @@
+[extend]
+useDefault = true
+
+[allowlist]
+  description = "whowatch public API event_key field name — false positive for generic-api-key (confirmed in TagTech migration phase1 report.md 3.3 and re-verified during phase2 snapshot build 2026-09-23/25). Not credentials: these are docs/test/mock files referencing the whowatch API's `event_key` response field."
+  paths = [
+    '''^docs/architecture/whowatch_api_endpoints_v1\.md$''',
+    '''^docs/live-cockpit/README\.md$''',
+    '''^src/app/api/platforms/whowatch/events/sync/route\.test\.ts$''',
+    '''^scripts/platforms/whowatch/test_sync_items_and_events\.py$''',
+    '''^src/lib/platforms/whowatch/event-list\.test\.ts$''',
+    '''^src/lib/whowatch/event-detail-sync\.test\.ts$''',
+    '''^src/lib/whowatch/events\.test\.ts$''',
+  ]

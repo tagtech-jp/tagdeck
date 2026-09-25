@@ -1,0 +1,163 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* shadcn base-nova preset variants (node_modules/shadcn/dist/tailwind.css).
+   Base UI emits data-orientation="horizontal|vertical"; ui/tabs.tsx and
+   ui/toggle-group.tsx rely on data-horizontal / data-vertical variants that
+   were missing here (tabs rendered as a row: list stretched, panel squeezed). */
+@custom-variant data-horizontal {
+  &:where([data-orientation="horizontal"]) {
+    @slot;
+  }
+}
+
+@custom-variant data-vertical {
+  &:where([data-orientation="vertical"]) {
+    @slot;
+  }
+}
+
+/*
+ * Dark only (light mode retired 2026-09-08). shadcn variable names are kept;
+ * values follow DESIGN.md (Huly) — see docs/design-md-mapping.md.
+ * --primary / --ring = Electric Iris.
+ * --destructive is a project exception (Huly has no error color).
+ */
+:root {
+  color-scheme: dark;
+  --radius: 12px;
+
+  --background: #090a0c;
+  --foreground: #ffffff;
+
+  --card: #111111;
+  --card-foreground: #ffffff;
+
+  --popover: #111111;
+  --popover-foreground: #ffffff;
+
+  --primary: #5683da;
+  /* Void instead of Huly's white: white on iris is 3.71:1 (fails AA at 14px). */
+  --primary-foreground: #090a0c;
+
+  --secondary: #6b6c6d;
+  --secondary-foreground: #ffffff;
+
+  --muted: #303236;
+  --muted-foreground: #a9a9aa;
+
+  --accent: #4a4b50;
+  --accent-foreground: #ffffff;
+
+  --destructive: #f87171;
+  --destructive-foreground: #171717;
+
+  --border: #4a4b50;
+  --input: #4a4b50;
+  --ring: #5683da;
+
+  /* Project exception tokens (not in DESIGN.md).
+     Status colors: Huly has no success/warning/error semantics; the
+     rank-forecast UX needs a 3-level scale (success / warning / destructive). */
+  --status-success: #10b981;
+  --status-warning: #eab308;
+
+  /* Listener tier category colors (Huly Tag/Chip allows custom hex variants:
+     12% background + category-colored text). */
+  --tier-top: #ca8a04;
+  --tier-vip: #9333ea;
+  --tier-regular: #2563eb;
+  --tier-newcomer: #16a34a;
+
+  /* Layout (DESIGN.md) */
+  --page-max-width: 1200px;
+  --section-gap: 96px;
+  --card-padding: 24px;
+  --element-gap: 12px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-status-success: var(--status-success);
+  --color-status-warning: var(--status-warning);
+  --color-tier-top: var(--tier-top);
+  --color-tier-vip: var(--tier-vip);
+  --color-tier-regular: var(--tier-regular);
+  --color-tier-newcomer: var(--tier-newcomer);
+
+  /* Radius by purpose (DESIGN.md): inputs 4px / cards 12px / panels 30px /
+     buttons・tags 9999px. --radius-md stays 8px (menu items, skeleton). */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: var(--radius);
+  --radius-xl: 12px;
+  --radius-3xl: 30px;
+  --radius-full: 9999px;
+}
+
+/* ------------------------------------------------------------------
+ * DESIGN.md (Huly) tokens — see docs/design-md-mapping.md
+ * Plain @theme (not inline) so the CSS variables exist at runtime and
+ * charts can read them via getComputedStyle() (src/lib/css-tokens.ts).
+ * ------------------------------------------------------------------ */
+@theme {
+  /* Colors */
+  --color-obsidian-canvas: #303236;
+  --color-void: #090a0c;
+  --color-charcoal-card: #111111;
+  --color-slate-edge: #4a4b50;
+  --color-iron-veil: #6b6c6d;
+  --color-smoke: #95979e;
+  --color-ash: #a9a9aa;
+  --color-frost: #d1d1d1;
+  --color-linen: #e5e5e7;
+  --color-snow: #ffffff;
+  --color-electric-iris: #5683da;
+  --color-ember-pulse: #ff8964;
+  --color-molasses: #5a250a;
+
+  /* Typography — Scale */
+  --text-caption: 11px;
+  --leading-caption: 1.38;
+  --tracking-caption: -0.1px;
+  --text-body: 14px;
+  --leading-body: 1.5;
+  --tracking-body: -0.14px;
+  --text-body-lg: 16px;
+  --leading-body-lg: 1.5;
+  --tracking-body-lg: -0.16px;
+  --text-subheading: 18px;
+  --leading-subheading: 1.5;
+  --tracking-subheading: -0.36px;
+  --text-heading-sm: 22px;
+  --leading-heading-sm: 1.25;
+  --text-heading: 24px;
+  --leading-heading: 1.25;
+  --tracking-heading: -0.48px;
+  --text-display-sm: 32px;
+  --leading-display-sm: 1;
+  --tracking-display-sm: -1.6px;
+  --text-display: 80px;
+  --leading-display: 0.9;
+  --tracking-display: -4px;
+}

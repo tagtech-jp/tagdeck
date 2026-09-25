@@ -1,0 +1,81 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.local.example
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Cloudflare
+.open-next/
+.wrangler/
+
+# Drizzle
+drizzle/migrations/.snapshot.json
+
+# IDE
+.vscode/
+.idea/
+
+# TagDeck sync logs (暫定運用)
+logs/*
+!logs/.gitkeep
+
+# Runtime artifacts
+dev.log
+__pycache__/
+
+# wrangler tail dev artifacts (CF-2)
+run_tail.ps1
+tail_log.json
+tail_pid.txt
+
+# workers -- build output & local node_modules
+workers/*/node_modules/
+workers/*/dist/
+
+# Build & lint logs (Phase 3a-1b cleanup 2026-05-15)
+_build_*.txt
+_lint_*.txt
+_opennext_*.txt
+
+# Serwist service worker (auto-generated at build time)
+public/sw.js
+
+# DB backups (contain real user data) — never commit
+docs/backup/

@@ -1,0 +1,52 @@
+name: Whowatch event detail sync (manual)
+
+# open/pre の全ふわっちイベントの詳細（名前・区分・ランキング構造・ルール本文・periods）を即時に同期する。
+# Cloudflare Workers のサブリクエスト上限のため 1 リクエスト 3 件ずつ処理し、応答の next_cursor が空になるまでループする。
+# 日次は daily-sync.yml の末尾ステップで同じループを回す。ここは社長の手動実行（Run workflow）用。
+# Secrets: RANKING_SYNC_KEY（Cloudflare Workers の env RANKING_SYNC_KEY と同じ値）、TAGDECK_BASE_URL（省略時 https://tagdeck.jp）
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "DB の鮮度に関係なく取り直す（1 = force）"
+        required: false
+        default: "1"
+      event_key:
+        description: "単体実行する event_key（例 2026_09_autumncollection）。空なら open/pre 全件"
+        required: false
+        default: ""
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Call event detail sync endpoint (loop until next_cursor is empty)
+        env:
+          RANKING_SYNC_KEY: ${{ secrets.RANKING_SYNC_KEY }}
+          TAGDECK_BASE_URL: ${{ secrets.TAGDECK_BASE_URL }}
+          FORCE: ${{ github.event.inputs.force }}
+          EVENT_KEY: ${{ github.event.inputs.event_key }}
+        run: |
+          if [ -z "$RANKING_SYNC_KEY" ]; then echo "RANKING_SYNC_KEY is not set"; exit 1; fi
+          BASE="${TAGDECK_BASE_URL:-https://tagdeck.jp}"
+          Q="limit=3"; [ "$FORCE" = "1" ] && Q="$Q&force=1"
+          [ -n "$EVENT_KEY" ] && Q="$Q&event_key=$EVENT_KEY"
+          cursor=""; total_ok=0; total_failed=0; fail=0
+          for i in $(seq 1 20); do
+            url="$BASE/api/platforms/whowatch/events/sync?$Q"
+            [ -n "$cursor" ] && url="$url&cursor=$cursor"
+            code=$(curl -sS --max-redirs 0 -o /tmp/out.json -w "%{http_code}" -X POST \
+              -H "X-Sync-Key: $RANKING_SYNC_KEY" -H "Content-Length: 0" "$url")
+            echo "=== batch $i HTTP $code (cursor=${cursor:-none})"
+            cat /tmp/out.json; echo
+            if [ "$code" != "200" ]; then fail=1; break; fi
+            jq -r '.results[] | "\(.eventKey)\t\(if .ok then "ok" else "FAILED[" + (.stage // "?") + "]" end)\tname=\(.name // "-")\tprefix=\(.rankingPrefix // "-")\tperiods=\(.periods // 0)\t\(.note // "")\t\(.error // "")"' /tmp/out.json
+            total_ok=$((total_ok + $(jq -r '.succeeded' /tmp/out.json)))
+            total_failed=$((total_failed + $(jq -r '.failed' /tmp/out.json)))
+            cursor=$(jq -r '.next_cursor // empty' /tmp/out.json)
+            [ -z "$cursor" ] && break
+          done
+          echo "=== total succeeded=$total_ok failed=$total_failed"
+          [ "$fail" = "0" ]

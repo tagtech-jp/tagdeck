@@ -1,0 +1,83 @@
+name: Daily whowatch sync
+
+# ふわっちアイテムマスタ（item_point_mapping）+ イベント一覧（whowatch_events）を毎日 JST 0:00 に同期。
+# 既存 scripts/platforms/whowatch/sync_items_and_events.py を実行（標準ライブラリのみ・依存インストール不要）。
+# n8n 廃止後の日次同期基盤。GitHub Actions cron は数分〜十数分の遅延がありうる（0:00〜0:15 頃）。
+
+on:
+  schedule:
+    - cron: "0 15 * * *" # UTC 15:00 = JST 0:00（cron は UTC 指定）
+  workflow_dispatch: {} # 手動実行（テスト用）
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run whowatch item/event daily sync
+        working-directory: scripts/platforms/whowatch
+        run: python sync_items_and_events.py
+        env:
+          WHOWATCH_DEVICE_ID: ${{ secrets.WHOWATCH_DEVICE_ID }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DISCORD_WEBHOOK_TASK: ${{ secrets.DISCORD_WEBHOOK_TASK }}
+
+      # E1b: open/pre の全イベント詳細（名前・区分・ランキング構造・ルール・periods）を同期する。
+      # Python 同期の後に tagdeck の Route Handler を呼ぶ。RANKING_SYNC_KEY 未設定なら skip（失敗にしない）
+      - name: Sync whowatch event details (tagdeck route)
+        if: always()
+        env:
+          RANKING_SYNC_KEY: ${{ secrets.RANKING_SYNC_KEY }}
+          TAGDECK_BASE_URL: ${{ secrets.TAGDECK_BASE_URL }}
+        run: |
+          if [ -z "$RANKING_SYNC_KEY" ]; then echo "RANKING_SYNC_KEY is not set; skipping"; exit 0; fi
+          BASE="${TAGDECK_BASE_URL:-https://tagdeck.jp}"
+          # Workers のサブリクエスト上限のため 3 件ずつ。next_cursor が空になるまでループ（最大 20 回）
+          cursor=""; fail=0
+          for i in $(seq 1 20); do
+            url="$BASE/api/platforms/whowatch/events/sync?force=1&limit=3"
+            [ -n "$cursor" ] && url="$url&cursor=$cursor"
+            code=$(curl -sS --max-redirs 0 -o /tmp/detail.json -w "%{http_code}" -X POST               -H "X-Sync-Key: $RANKING_SYNC_KEY" -H "Content-Length: 0" "$url")
+            echo "=== batch $i HTTP $code"; cat /tmp/detail.json; echo
+            if [ "$code" != "200" ]; then fail=1; break; fi
+            cursor=$(jq -r '.next_cursor // empty' /tmp/detail.json)
+            [ -z "$cursor" ] && break
+          done
+          [ "$fail" = "0" ]
+
+      # S1: /playitems のアイテムパターン（当たり判定用）を同期する
+      - name: Sync whowatch item patterns (tagdeck route)
+        if: always()
+        env:
+          RANKING_SYNC_KEY: ${{ secrets.RANKING_SYNC_KEY }}
+          TAGDECK_BASE_URL: ${{ secrets.TAGDECK_BASE_URL }}
+        run: |
+          if [ -z "$RANKING_SYNC_KEY" ]; then echo "RANKING_SYNC_KEY is not set; skipping"; exit 0; fi
+          BASE="${TAGDECK_BASE_URL:-https://tagdeck.jp}"
+          # 200 行/チャンク・1 リクエスト最大 5 チャンク。next_cursor が空になるまでループ（最大 30 回）
+          cursor=""; total_inserted=0; total_updated=0; total_failed=0; fail=0
+          for i in $(seq 1 30); do
+            url="$BASE/api/platforms/whowatch/items/sync"
+            [ -n "$cursor" ] && url="$url?cursor=$cursor"
+            code=$(curl -sS --max-redirs 0 -o /tmp/items.json -w "%{http_code}" -X POST \
+              -H "X-Sync-Key: $RANKING_SYNC_KEY" -H "Content-Length: 0" "$url")
+            echo "=== batch $i HTTP $code (cursor=${cursor:-none})"
+            if [ "$code" != "200" ]; then head -c 2000 /tmp/items.json; echo; fail=1; break; fi
+            jq -r '"processed=\(.processed) inserted=\(.inserted) updated=\(.updated) failed=\(.failed) next_cursor=\(.next_cursor // "none")"' /tmp/items.json
+            jq -r 'if .groups then "groups: \(.groups)" else "groups: (なし)" end' /tmp/items.json
+            total_inserted=$((total_inserted + $(jq -r '.inserted' /tmp/items.json)))
+            total_updated=$((total_updated + $(jq -r '.updated' /tmp/items.json)))
+            total_failed=$((total_failed + $(jq -r '.failed' /tmp/items.json)))
+            cursor=$(jq -r '.next_cursor // empty' /tmp/items.json)
+            [ -z "$cursor" ] && break
+          done
+          echo "=== total inserted=$total_inserted updated=$total_updated failed=$total_failed"
+          [ "$fail" = "0" ] && [ "$total_failed" = "0" ]

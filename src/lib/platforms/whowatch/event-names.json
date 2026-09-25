@@ -1,0 +1,4 @@
+{
+  "_readme": "event_key(ふわっちイベントキー) → 表示用日本語名のフラットな対応表。resolveEventDisplayName() が事前チェックし、ヒットしなければ整形 event_key にフォールバックする。このキー自体は解決処理で無視される。確実に判明しているキーのみ追記すること（不確実な推測は登録しない）。",
+  "whowatchgrandprix": "WGP"
+}
