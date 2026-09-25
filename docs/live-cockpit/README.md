@@ -326,3 +326,15 @@ $4,400 以上続く巨大な単一 INSERT。認証・ルーティング(PR #25)�
 - WS のメッセージ形式・認証方式は未実測。形式が違っても落ちず、ポーリングで従来どおり鳴る設計
 - 無料アイテムの設定が反映されない原因(a/b)は実データ待ち
 - payments3 のバナー URL フィールド名は未確認
+
+## 2026-09-25 本番稼働状況
+
+- PR #1「feat(live): WebSocket 即時経路・SE タブのバナー付きカテゴリ表示・無料アイテムの既定音」(https://github.com/tagtech-jp/tagdeck/pull/1)は main にマージ済み(マージコミット `b863ae8`、2026-09-25T05:35Z 頃)。CI(`.github/workflows/ci.yml` の check)は head `80e5f5f` で success
+- PR #2「fix(types): res.json() の戻り値に型を付け、CI の Type check を緑にする」(https://github.com/tagtech-jp/tagdeck/pull/2、コミット `26eb394`、15 ファイル・52 箇所)もマージ済み。CI は head `26eb394` で success。PR #1 は PR #2 の内容をマージで取り込んでいた
+- main で CI の Type check が赤だった原因: lockfile の TypeScript 5.9.3 + @types/node 20.19.39 の組み合わせで `Response.json()` の戻り値が `Promise<unknown>` になるため(上記「2026-09-25 S1 拡張」動作確認手順 1 の「既存エラー 52 件」がこれ)。PR #2 で `res.json()` の戻り値に型を付けて解消
+- 未確認(社長作業。本セッションでは確認していない):
+  - Supabase での `drizzle/0017_item_group_banner_manual.sql` の適用
+  - Actions「Whowatch item patterns sync (manual)」の実行(バナー列の充填)
+  - `/live?debug=1` での WS 経路の実測(メッセージ形式・認証方式。TODO.md Q1b)
+  - payments3 のバナー URL の有無(TODO.md Q3)
+  - 無料アイテムの設定反映の原因(TODO.md Q2)
