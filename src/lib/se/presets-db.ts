@@ -3,6 +3,22 @@ import { and, desc, eq, ne, sql } from "drizzle-orm";
 import type { createDbClient } from "@/lib/db/client";
 import { seMappings, sePresets, users } from "@/lib/db/schema";
 import { generateShareCode, toPresetMappings, type PresetApplyMode, type SePresetMapping } from "./presets";
+import { describeDbError } from "@/lib/whowatch/sanitize";
+
+/**
+ * プリセット系ルートの DB 例外を利用者向けの文言にする。
+ * 本番で「保存に失敗しました（HTTP 500）」だけ出て原因が分からなかった（2026-09-26）ため、
+ * テーブル未作成（migration 0018 未適用・42P01）は 503 と具体的な手順で返す。SQL 全文は出さない
+ */
+export function describePresetDbError(err: unknown): { status: number; error: string } {
+  const summary = describeDbError(err);
+  const cause = (err as { cause?: { code?: string } } | null)?.cause;
+  const missingTable = cause?.code === "42P01" || /42P01|does not exist/.test(summary);
+  if (missingTable) {
+    return { status: 503, error: "プリセット用のテーブルがまだ作られていません。Supabase SQL Editor で drizzle/0018_se_presets_manual.sql を実行してください" };
+  }
+  return { status: 500, error: `保存できませんでした（${summary}）` };
+}
 
 type Db = ReturnType<typeof createDbClient>;
 
