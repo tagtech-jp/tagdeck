@@ -77,6 +77,8 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
     setVolume,
     audioReady,
     enableAudio,
+    audioState,
+    audioRecoveredAt,
     pollingInterval,
     lastPolledAt,
     targetId,
@@ -139,6 +141,14 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
         <div className="flex flex-wrap items-center gap-2">
           <span className={`rounded-full px-2 py-1 text-xs font-bold ${badge.className}`}>{badge.label}</span>
           {waiting && !audioReady && <span className="rounded-full bg-status-warning/10 px-2 py-1 text-xs font-bold text-status-warning">音声未許可</span>}
+          {audioState !== "running" && audioState !== "none" && (
+            <span className="rounded-full bg-destructive/10 px-2 py-1 text-xs font-bold text-destructive" title={`AudioContext: ${audioState}`}>
+              音声停止中 — 「音を有効にする」を押してください
+            </span>
+          )}
+          {audioRecoveredAt !== null && Date.now() - audioRecoveredAt < 15_000 && (
+            <span className="rounded-full bg-status-success/10 px-2 py-1 text-xs font-bold text-status-success">音声を再開しました</span>
+          )}
           {viewingOther && <span className="rounded-full bg-status-warning/10 px-2 py-1 text-xs font-bold text-status-warning">{viewingOther}さんを表示のみ・記録しません</span>}
           {selfByTypedId && <span className="rounded-full bg-status-success/10 px-2 py-1 text-xs font-bold text-status-success">自分の配信として記録します</span>}
           {status === "polling" && wsState !== "off" && (

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { getAudioContext, playSeUntilEnd, preloadSe, startKeepAlive, stopKeepAlive, unlockAudio } from "@/lib/se/engine";
+import { ensureAudioRunning, getAudioContext, getAudioState, installAudioAutoResume, playSeUntilEnd, preloadSe, startKeepAlive, stopKeepAlive, unlockAudio, type AudioState } from "@/lib/se/engine";
 import { createSeQueue } from "@/lib/se/queue";
 import { resolveMappingKey, tierForGift, type SeTier } from "@/lib/se/tiers";
 import { nextPollDelay, partitionFreshGifts, pollIntervalFor } from "@/lib/live/polling";
@@ -12,6 +12,7 @@ import { commentsFromFrame, createRefCounter, decodeFrame, heartbeatFrame, joinC
 import { normalizeGift, type NormalizedGift as Gift, type PatternInfo, type PickedGiftComment } from "@/lib/whowatch/gift-normalize";
 import type { ItemKind } from "@/lib/se/item-kind";
 import { BackgroundKeepAlive, detectBgAudioSupport, type BgAudioState, type BgAudioSupport } from "@/lib/se/background-keepalive";
+import { mergeWithDefaults } from "@/lib/se/merge-defaults";
 
 // ライブ接続の状態をアプリ全体で保持する Provider。
 // (dashboard)/layout.tsx に置いてあるため、ページを移動しても接続と SE 再生が続く。
@@ -119,6 +120,10 @@ export interface BgAudioInfo {
   hiddenPollCount: number;
   hiddenPollLastAt: string | null;
 }
+/** ポーリング・待機確認の fetch がぶら下がったままになると inFlight ガードで以後の取得が止まるため、必ず打ち切る */
+const POLL_FETCH_TIMEOUT_MS = 15_000;
+/** 音声コンテキストの監視間隔（無音が続いて suspended / interrupted になっていたら戻す） */
+const AUDIO_WATCHDOG_MS = 5_000;
 
 interface LiveConnectionValue {
   status: Status;
@@ -133,6 +138,10 @@ interface LiveConnectionValue {
   setVolume: (v: number) => void;
   audioReady: boolean;
   enableAudio: () => Promise<void>;
+  /** 音声コンテキストの状態（running 以外は鳴らない。監視が自動で戻せなければ「音を有効にする」を出す） */
+  audioState: AudioState;
+  /** 監視が自動で音声を戻した時刻（表示用） */
+  audioRecoveredAt: number | null;
   pollingInterval: number;
   lastPolledAt: string | null;
   mappings: Mapping[];
@@ -200,6 +209,8 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const [autoPlay, setAutoPlay] = useState(true);
   const [volume, setVolume] = useState(80);
   const [audioReady, setAudioReady] = useState(false);
+  const [audioState, setAudioState] = useState<AudioState>("none");
+  const [audioRecoveredAt, setAudioRecoveredAt] = useState<number | null>(null);
   const [pollingInterval, setPollingInterval] = useState<number>(10_000);
   const [lastPolledAt, setLastPolledAt] = useState<string | null>(null);
   const [mappings, setMappings] = useState<Mapping[]>([]);
@@ -421,10 +432,16 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   }, [autoConnect.phase]);
 
   useEffect(() => {
-    fetch("/api/se/mappings")
-      .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[] }>) : { mappings: [] }))
-      .then((d: { mappings?: Mapping[] }) => setMappings(d.mappings ?? []))
-      .catch(() => undefined);
+    // 公式の既定 SE（同期元＝社長の現在の割り当て。無ければ同梱）と合成してから使う。
+    // 同期元がアップロードし直したものを拾うため、開いている間は 5 分ごとに読み直す
+    const load = () =>
+      fetch("/api/se/mappings")
+        .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[]; defaults?: Mapping[] | null }>) : { mappings: [], defaults: null }))
+        .then((d: { mappings?: Mapping[]; defaults?: Mapping[] | null }) => setMappings(mergeWithDefaults(d.mappings ?? [], d.defaults ?? null)))
+        .catch(() => undefined);
+    void load();
+    const id = setInterval(() => void load(), 5 * 60 * 1000);
+    return () => clearInterval(id);
   }, []);
 
   const applyPatternMaster = useCallback((pd: ItemsPatternsResponse | null): boolean => {
@@ -614,6 +631,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       // 縮退中だけ、まだ聞いていない pattern_id をサーバに照合してもらう（正常時は空＝DBに触らない）
       const needPatterns = masterRef.current.ready ? [] : [...askedPatternsRef.current].slice(0, 50);
       const res = await fetch("/api/platforms/whowatch/live/poll", {
+        signal: AbortSignal.timeout(POLL_FETCH_TIMEOUT_MS),
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ liveId: id, lastUpdatedAt: lastUpdatedRef.current, dryRun: readOnlyRef.current || (dbg && !autoPlayRef.current), debug: dbg, needPatterns }),
@@ -1001,7 +1019,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     }
     void (async () => {
       try {
-        const r = await fetch("/api/platforms/whowatch/live");
+        const r = await fetch("/api/platforms/whowatch/live", { signal: AbortSignal.timeout(POLL_FETCH_TIMEOUT_MS) });
         const d = (await r.json()) as { isLive?: boolean; liveId?: string | null };
         if (r.ok && d.isLive && d.liveId) {
           dispatchAutoConnect({ type: "live_detected" });
@@ -1049,9 +1067,39 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     dispatchAutoConnect(on ? { type: "enable", now: Date.now() } : { type: "disable" });
   }, []);
 
+  // 無音が続いた後に鳴らなくなる問題（2026-09-25）: 画面復帰・ユーザー操作で自動復帰し、接続中・待機中は 5 秒ごとに監視する。
+  // 自動で戻せない（iOS の割り込み後など）ときは audioReady を落として「音を有効にする」ボタンを出し、タップで戻す
+  useEffect(() => {
+    installAudioAutoResume((s) => {
+      setAudioState(s);
+      setAudioRecoveredAt(Date.now());
+      setAudioReady(true);
+    });
+  }, []);
+  const audioWatch = status === "polling" || autoConnect.phase === "waiting";
+  useEffect(() => {
+    if (!audioWatch) return;
+    const id = setInterval(() => {
+      const before = getAudioState();
+      // 未解除（none）のうちはコンテキストを作らない（自動再生制限に触れないため）
+      if (before === "none") return;
+      void ensureAudioRunning().then((ok) => {
+        const after = getAudioState();
+        setAudioState(after);
+        if (!ok) setAudioReady(false);
+        else if (before !== "running") {
+          setAudioRecoveredAt(Date.now());
+          setAudioReady(true);
+        }
+      });
+    }, AUDIO_WATCHDOG_MS);
+    return () => clearInterval(id);
+  }, [audioWatch]);
+
   const enableAudio = useCallback(async () => {
     const ok = await unlockAudio();
     setAudioReady(ok);
+    setAudioState(getAudioState());
     // 待機中なら、音が有効になった時点で keepAlive を鳴らし始める
     if (ok && autoConnectRef.current.phase === "waiting") startKeepAlive();
     kickBgAudio();
@@ -1079,6 +1127,8 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       setVolume,
       audioReady,
       enableAudio,
+      audioState,
+      audioRecoveredAt,
       pollingInterval,
       lastPolledAt,
       mappings,
@@ -1113,7 +1163,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       setDebug,
       debug,
     }),
-    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, pollingInterval, lastPolledAt, mappings, bgEnabled, bgWakeLock, bgState, bgError, bgSupport, hiddenPollCount, hiddenPollLastAt, setBgAudioEnabled, setBgWakeLock, targetId, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsPollGiftsSinceConnect, wsInfo, wsTopic, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
+    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, audioState, audioRecoveredAt, pollingInterval, lastPolledAt, mappings, bgEnabled, bgWakeLock, bgState, bgError, bgSupport, hiddenPollCount, hiddenPollLastAt, setBgAudioEnabled, setBgWakeLock, targetId, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsPollGiftsSinceConnect, wsInfo, wsTopic, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
   );
 
   return <LiveConnectionContext.Provider value={value}>{children}</LiveConnectionContext.Provider>;

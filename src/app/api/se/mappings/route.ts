@@ -9,14 +9,27 @@ import { ensureUserRow } from "@/lib/db/ensure-user";
 // cat:kind = 種類の一括割り当て / cat:group = イベント別（第 2 弾）
 const KEY_RE = /^(pattern:\d{1,10}|item:\d{1,10}|cat:kind:(normal|hit|anim)|cat:group:[A-Za-z0-9_#-]{1,64}|tier:(T0|T1|T2|T3|T4|hit))$/;
 
-/** GET /api/se/mappings → 自分の SE 割り当て一覧（S1） */
+/**
+ * GET /api/se/mappings → 自分の SE 割り当て一覧（S1）+ 公式既定（S4: 同期元ユーザーの現在の割り当て）
+ * defaults: 環境変数 SE_DEFAULT_SOURCE_USER_ID（wrangler.jsonc の vars）で指定したユーザーの se_mappings のうち、
+ *   音源あり・鳴らす ON の行。同期元がアップロードし直せば次の読込から全ユーザーの既定が変わる。
+ *   未設定・0 件なら null（クライアントは同梱スナップショットに落ちる）
+ */
 export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const db = createDbClient();
-  const rows = await db.select().from(seMappings).where(eq(seMappings.userId, user.id));
-  return NextResponse.json({ mappings: rows.map((r) => ({ key: r.key, url: r.url, volume: r.volume, enabled: r.enabled, label: r.label, updatedAt: r.updatedAt.toISOString() })) });
+  const sourceId = (process.env.SE_DEFAULT_SOURCE_USER_ID ?? "").trim();
+  const [rows, sourceRows] = await Promise.all([
+    db.select().from(seMappings).where(eq(seMappings.userId, user.id)),
+    sourceId ? db.select().from(seMappings).where(eq(seMappings.userId, sourceId)) : Promise.resolve([]),
+  ]);
+  const toRow = (r: typeof seMappings.$inferSelect) => ({ key: r.key, url: r.url, volume: r.volume, enabled: r.enabled, label: r.label, updatedAt: r.updatedAt.toISOString() });
+  const defaults = sourceRows.filter((r) => r.enabled && r.url).map(toRow);
+  const res = NextResponse.json({ mappings: rows.map(toRow), defaults: defaults.length > 0 ? defaults : null, defaultsSource: sourceId ? "sync" : "bundled" });
+  res.headers.set("Cache-Control", "private, no-store");
+  return res;
 }
 
 const putSchema = z.object({
