@@ -71,9 +71,12 @@ describe("DEFAULT_SE_MAPPINGS / GENERIC_DEFAULT_SOUND（同梱データ）", () 
       expect(d.volume).toBeLessThanOrEqual(100);
     }
   });
-  it("第三者の著作物と思われる音源は同梱スナップショットに含めない（T2 コイン音・item:13064 牙狼）", () => {
-    expect(DEFAULT_SE_MAPPINGS.find((d) => d.key === "tier:T2")).toBeUndefined();
-    expect(DEFAULT_SE_MAPPINGS.find((d) => d.key === "item:13064")).toBeUndefined();
-    expect(DEFAULT_SE_MAPPINGS.some((d) => /任天堂|ガロ/.test(d.label))).toBe(false);
+  it("同期元（社長のアカウント）と同じ全件を含む（2026-09-26 社長指示: 除外なし。価格帯 T0〜T4 すべてに音源あり）", () => {
+    for (const key of ["tier:T0", "tier:T1", "tier:T2", "tier:T3", "tier:T4", "item:13064", "item:12857", "item:14"]) {
+      expect(DEFAULT_SE_MAPPINGS.find((d) => d.key === key), key).toBeDefined();
+    }
+    // 廃止キー tier:combo は key 書式外なので含めない
+    expect(DEFAULT_SE_MAPPINGS.find((d) => d.key === "tier:combo")).toBeUndefined();
+    expect(DEFAULT_SE_MAPPINGS.length).toBeGreaterThanOrEqual(37);
   });
 });
