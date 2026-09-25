@@ -6,6 +6,7 @@ import { BottomTabBar } from "@/components/nav/BottomTabBar";
 import { PlatformSwitcher } from "@/components/dashboard/PlatformSwitcher";
 import { Providers } from "./providers";
 import { LiveStatusIndicator } from "@/components/live/LiveStatusIndicator";
+import { BuildGuard } from "@/components/layout/BuildGuard";
 
 export default async function DashboardLayout({
   children,
@@ -24,6 +25,7 @@ export default async function DashboardLayout({
   return (
     <Providers>
       <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <BuildGuard />
       <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background px-4 py-3">
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-bold">TagDeck</h1>
