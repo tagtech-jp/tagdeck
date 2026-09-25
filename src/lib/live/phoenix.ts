@@ -103,13 +103,20 @@ export interface JoinCandidate {
 
 /**
  * 参加（phx_join）の候補を「トピック × 参加データ」で並べる。
- * 2026-09-25 実測: live:<id> 等は "unmatched topic"、live:lobby だけ "unauthorized invalid param"
- * （チャンネルはあるが参加データが不正）だった。そこで live:lobby を先頭に、配信 ID と jwt の
- * 渡し方（キー名・数値/文字列）を変えて順に試す。"ok" が返った時点で止める
+ * 2026-09-25 実測（社長がふわっち公式サイトの通信を F12 で確認）:
+ *   ["1","1","room:76347155","phx_join",{"p":"<jwt>"}] → {"status":"ok"}
+ * つまりチャンネルは room:<配信ID>、参加データは {"p": jwt}。これを先頭にし、
+ * 万一に備えて従来の候補（live:lobby の各種、他トピック）を後ろに残す
  */
 export function joinCandidates(liveId: string, jwt: string | null | undefined): JoinCandidate[] {
   const idNum = Number(liveId);
   const id: number | string = Number.isFinite(idNum) ? idNum : liveId;
+  const room: JoinCandidate[] = jwt
+    ? [
+        { topic: `room:${liveId}`, payload: { p: jwt }, label: `room:${liveId}{p}` },
+        { topic: `room:${liveId}`, payload: { p: jwt, live_id: id }, label: `room:${liveId}{p+live_id}` },
+      ]
+    : [{ topic: `room:${liveId}`, payload: {}, label: `room:${liveId}{}` }];
   const lobby: Array<[string, Record<string, unknown>]> = [
     ["jwt", jwt ? { jwt } : {}],
     ["jwt+live_id", jwt ? { jwt, live_id: id } : { live_id: id }],
@@ -120,9 +127,9 @@ export function joinCandidates(liveId: string, jwt: string | null | undefined): 
     ["token+id", jwt ? { token: jwt, id } : { id }],
     ["jwt+live_id+user", jwt ? { jwt, live_id: id, user_id: null } : { live_id: id }],
   ];
-  const out: JoinCandidate[] = lobby.map(([label, payload]) => ({ topic: "live:lobby", payload, label: `live:lobby{${label}}` }));
+  const out: JoinCandidate[] = [...room, ...lobby.map(([label, payload]) => ({ topic: "live:lobby", payload, label: `live:lobby{${label}}` }))];
   for (const topic of topicCandidates(liveId)) {
-    if (topic === "live:lobby") continue;
+    if (topic === "live:lobby" || topic === `room:${liveId}`) continue;
     out.push({ topic, payload: jwt ? { token: jwt } : {}, label: `${topic}{token}` });
   }
   return out;
