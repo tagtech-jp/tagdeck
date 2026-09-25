@@ -842,8 +842,10 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       };
       void loop();
       // WS 経路はポーリングと並行して開く（失敗してもポーリングだけで従来どおり動く）。
-      // 決裁の範囲は「本人の配信」なので、他人の配信を表示しているときはポーリングだけにする
-      if (!readOnlyRef.current) void connectWs(d.liveId);
+      // 決裁(2026-09-25 更新): 本人の配信に加え、閲覧中の他人の配信も即時経路を開く。
+      // 受信のみ（phx_join / heartbeat だけ送信）で、他人の配信は元々 DB へ保存しない（readOnly）ため記録は増えない。
+      // WS 経由のギフトは画面表示と SE のみに使い、保存はポーリング側（readOnly なら dryRun）に一任する
+      void connectWs(d.liveId);
     } catch (e) {
       setStatus("error");
       setMessage(String(e));
