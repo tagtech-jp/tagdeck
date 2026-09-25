@@ -314,7 +314,7 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 ### 既定の優先順(上が優先)
 
 1. **同期元ユーザーの現在の割り当て**: `wrangler.jsonc` の `vars.SE_DEFAULT_SOURCE_USER_ID`(運営アカウントの users.id)の se_mappings のうち、音源あり・鳴らす ON の行。`GET /api/se/mappings` が `defaults` として返し、クライアントが合成する。**運営が SE タブでアップロードし直せば、次の読込(ライブ画面は 5 分ごと・SE タブは開いたとき)から全ユーザーの既定が変わる**。デプロイ不要
-2. **同梱スナップショット**(`src/lib/se/default-mappings.ts` 27 件 + `public/se/defaults/*.mp3` 16 ファイル・2026-09-26 に同期元の 30 件へ追従: メガホン 8 種=ドラムロール、金のネズミ=ネズミの鳴き声1回): 同期元が未設定・0 件のとき(ローカル開発など)。第三者の著作物と思われる音源(任天堂コイン音・牙狼保留音)と廃止キー tier:combo は含めていない
+2. **同梱スナップショット**(`src/lib/se/default-mappings.ts` 37 件 + `public/se/defaults/*.mp3|wav` 21 ファイル・2026-09-26 に同期元の全件へ追従。廃止キー tier:combo のみ除く): 同期元が未設定・0 件のとき(ローカル開発など)。生成は scratchpad の build_defaults_full.py 相当(同期元の `/api/se/mappings` から key/ファイル/音量/ラベルを写す)
 3. **汎用既定「きらきら輝く1」**(`public/se/defaults/kirakira.mp3`・効果音ラボ): 価格帯 tier:T0〜T4・hit のうち 1・2 に無いもの。Web Audio 合成音は音源が取れなかった時だけの保険になった
 
 ユーザー側の規則: 自分の行がある key は自分の行。ただし url が null(音量・鳴らすだけ変えた)なら音源は既定のまま。「既定に戻す」= 自分の行を消して公式音源へ。SE タブは「既定 ♪ ラベル」と表示し、自分の行がある key だけ「上書き中」「既定に戻す」を出す。
@@ -329,9 +329,9 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 | lib | `src/lib/se/default-mappings.ts` | 同梱スナップショット 18 件 + `GENERIC_DEFAULT_SOUND`(きらきら輝く1) |
 | provider/UI | `LiveConnectionProvider`・`SeMappingTab` | 合成後の mappings を使う。ライブ画面は 5 分ごとに再読込。SE タブの説明に「運営の現在の設定に同期 / 同梱」を表示 |
 
-### 権利について(社長判断)
+### 権利について(社長判断・2026-09-26 確定)
 
-同期方式では、運営アカウントにアップロードした音源が**そのまま全ユーザーに配られる**。第三者の著作物(現在の設定では tier:T2「【任天堂】コインの音【スーパーマリオ】.wav」、item:13064「ガロ保留音(赤).mp3」)も同期される点に注意。既定から外したい音源は運営アカウントの SE タブで「既定に戻す」(同期元の行が消えると、その key は同梱または汎用既定になる)。
+同期方式では、運営アカウントにアップロードした音源が**そのまま全ユーザーに配られる**。当初は第三者の著作物と思われる音源(任天堂コイン音・牙狼保留音)を同梱スナップショットから除外していたが、2026-09-26 の社長指示「すべて社長のアカウントと同じように既定の SE に同期」により**除外をやめ、同期元の全件を同梱**した(現在の T2「【任天堂】コインの音」、item:13064「super-mario-bros … star-theme」を含む)。権利上の判断は社長が負う。外す場合は運営アカウントの SE タブで「既定に戻す」し、同梱スナップショットを作り直す。
 
 ### 動作確認手順
 
