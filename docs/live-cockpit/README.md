@@ -332,9 +332,25 @@ $4,400 以上続く巨大な単一 INSERT。認証・ルーティング(PR #25)�
 - PR #1「feat(live): WebSocket 即時経路・SE タブのバナー付きカテゴリ表示・無料アイテムの既定音」(https://github.com/tagtech-jp/tagdeck/pull/1)は main にマージ済み(マージコミット `b863ae8`、2026-09-25T05:35Z 頃)。CI(`.github/workflows/ci.yml` の check)は head `80e5f5f` で success
 - PR #2「fix(types): res.json() の戻り値に型を付け、CI の Type check を緑にする」(https://github.com/tagtech-jp/tagdeck/pull/2、コミット `26eb394`、15 ファイル・52 箇所)もマージ済み。CI は head `26eb394` で success。PR #1 は PR #2 の内容をマージで取り込んでいた
 - main で CI の Type check が赤だった原因: lockfile の TypeScript 5.9.3 + @types/node 20.19.39 の組み合わせで `Response.json()` の戻り値が `Promise<unknown>` になるため(上記「2026-09-25 S1 拡張」動作確認手順 1 の「既存エラー 52 件」がこれ)。PR #2 で `res.json()` の戻り値に型を付けて解消
-- 未確認(社長作業。本セッションでは確認していない):
-  - Supabase での `drizzle/0017_item_group_banner_manual.sql` の適用
-  - Actions「Whowatch item patterns sync (manual)」の実行(バナー列の充填)
+- リポジトリ移行: `nikkun22/tagdeck` → `tagtech-jp/tagdeck`(初回コミット `a5e1508`「Initial public release」)。移行直後は GitHub Actions の Secrets が未投入で、`deploy.yml` が 3 回連続で失敗(run #1 は型エラー、#2/#3 は `CLOUDFLARE_API_TOKEN` 未設定)。その間、本番は旧ビルド `9d95f0b` のままだった
+- Secrets 投入(社長作業・2026-09-25): `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` / `DISCORD_WEBHOOK_TASK` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `NEXT_PUBLIC_SUPABASE_URL` / `RANKING_SYNC_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_URL` / `WHOWATCH_DEVICE_ID` の 9 個と `TAGDECK_BASE_URL` を新リポジトリに登録。以後 Deploy は成功(run #4〜#8)
+- 追加マージ(いずれも CI 緑。社長の許可「マージも自動化を許可する」(2026-09-25)に基づき Claude がマージ):
+  - PR #4: `deploy.yml` に `workflow_dispatch` を追加(手動再デプロイ用)
+  - PR #5: アイテムごとの代表画像 `imageUrl` を `GET /api/platforms/whowatch/items/patterns` の応答と SE タブに追加(`src/lib/se/item-image.ts` の `pickItemImage()`)
+  - PR #6: SE タブのアイテム欄を「バナー見出し → 3 列グリッド(画像・名前・価格)」に変更
+- migration 0017(`whowatch_item_groups.banner_url` / `description`)は社長が Supabase SQL Editor で適用済み(「Success. No rows returned」を確認)
+- Actions「Whowatch item patterns sync (manual)」を 06:02Z に実行し成功: パターン 4,428 件(inserted 8 / updated 4,420 / failed 0)、カテゴリ 22 件・137 行を新規登録(inserted 137 / updated 0 → 移行後は未同期だった)。`banner_url` が埋まったかは未確認(TODO.md Q3 のまま)
+- ログイン障害と対処: 再デプロイ後にログインすると Supabase の 404 ページに飛んだ。原因は GitHub Secrets の `NEXT_PUBLIC_SUPABASE_URL` に管理画面の URL(`https://supabase.com/dashboard/project/<ref>/...`)が入っていたこと。正しくは `https://<ref>.supabase.co`。修正後に Deploy を再実行(run #9)。**run #9 の結果と修正後のログイン成否は本セッション時点で未確認**
+- Service Worker の注意: serwist(`skipWaiting` / `clientsClaim`)がデプロイ後も古い JS を配るため、本番の動作確認は Ctrl+Shift+R(キャッシュ無視の再読み込み)で行う
+- Supabase の課金警告: ダッシュボード上部に「Grace period is over … projects will not be able to serve requests when you use up your quota」が表示されていた(無料枠の猶予期間終了)。Billing の確認が必要(TODO.md Q5)
+- 未確認(本セッションでは確認していない):
   - `/live?debug=1` での WS 経路の実測(メッセージ形式・認証方式。TODO.md Q1b)
-  - payments3 のバナー URL の有無(TODO.md Q3)
+  - payments3 のバナー URL の有無(`SELECT group_key, banner_url FROM whowatch_item_groups`。TODO.md Q3)
   - 無料アイテムの設定反映の原因(TODO.md Q2)
+
+### 運用メモ(リポジトリ移行・デプロイ)
+
+- リポジトリを移行(transfer / 再作成)したら GitHub Secrets は引き継がれない。上記 9 個 + `TAGDECK_BASE_URL` を新リポジトリに登録し直すまで Deploy と cron は失敗する
+- `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_URL` は `https://<ref>.supabase.co` 形式(API の URL)。ダッシュボードの URL(`https://supabase.com/dashboard/...`)を入れるとログインが Supabase の 404 に飛ぶ
+- Deploy は Actions →「Deploy」→ Run workflow で手動再実行できる(PR #4 で `workflow_dispatch` を追加)。Secrets を直した後はコードを変えずにこれで再デプロイする
+- デプロイ後の確認は Ctrl+Shift+R で行う(Service Worker が古い JS を配るため)
