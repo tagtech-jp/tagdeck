@@ -28,7 +28,7 @@ export const DEFAULT_SE_MAPPINGS: readonly DefaultSeMapping[] = [
   { key: "item:13061", url: "/se/defaults/ziyagura_gako.mp3", volume: 80, label: "ziyagura-gako.mp3" },
   { key: "item:12132", url: "/se/defaults/shakin.mp3", volume: 100, label: "シャキーン2.mp3" },
   { key: "item:11146", url: "/se/defaults/dog_bark.mp3", volume: 100, label: "狂犬が連続で吠える.mp3" },
-  { key: "item:13065", url: "/se/defaults/harakiridrive.mp3", volume: 9, label: "harakiridrive.mp3" },
+  { key: "item:13065", url: "/se/defaults/harakiridrive.mp3", volume: 25, label: "harakiridrive.mp3" },
   { key: "item:1", url: "/se/defaults/air_horn.mp3", volume: 80, label: "エアーホーン.mp3" },
   { key: "item:10842", url: "/se/defaults/buta.mp3", volume: 100, label: "buta.mp3" },
   { key: "item:12131", url: "/se/defaults/sea_lion.mp3", volume: 80, label: "カリフォルニアアシカ1.mp3" },
