@@ -371,6 +371,14 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - 対応 2: 検索欄は「価格ありのみ」とカテゴリを無視して全アイテムから探し、検索結果を 1 つの一覧で出す
 - 追加候補があれば `WEB_BONUS_RE` に名前を足す(テスト `web-bonus.test.ts`)
 
+## S8: SE 音源アップロードの上限 20MB・m4a/aac 対応・行ごとのエラー表示(実装済み・2026-09-26)
+
+社長報告「音源がアップロードできなくなった」への対応。社長アカウントで本番の API と画面操作を再現したところ PC では成功したため、原因は「5MB 超のファイル(WAV は 30 秒で超える)」「m4a/aac」「エラーが一覧の上にしか出ず気付けない」のいずれかと判断し、3 つとも直した。
+
+- 上限 5MB → 20MB、拡張子に m4a / aac を追加(`/api/se/upload`・`SeMappingTab`)。Content-Type はブラウザ申告を使わず拡張子から正規の値にする(audio/x-wav・空文字・video/mp4 の揺れ対策)
+- **バケット側の上限は SQL で合わせる必要がある**: `drizzle/0019_se_bucket_limits_manual.sql`(5MB → 20MB、MIME 9 種)。未適用のまま 5MB 超や m4a を上げると Supabase が拒否し、画面に「0019 を適用してください」と出る
+- エラー・完了メッセージは操作した行の直下にも出す(ファイル名・サイズ・種類を含める)
+
 ## S1: SE タブ・ふわっちギフト取得(実装済み・2026-09-21)
 
 決裁どおり公開 API のポーリングのみ(WebSocket 不使用)。

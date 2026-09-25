@@ -75,8 +75,11 @@ interface Mapping {
   label: string | null;
 }
 
-const MAX_BYTES = 5 * 1024 * 1024;
-const ACCEPT = "audio/mpeg,audio/mp3,audio/ogg,audio/wav,audio/x-wav,.mp3,.ogg,.wav";
+/** 2026-09-26: 5MB → 20MB、m4a / aac 追加（サーバ /api/se/upload と drizzle/0019 に合わせる） */
+const MAX_BYTES = 20 * 1024 * 1024;
+const ACCEPT = "audio/mpeg,audio/mp3,audio/ogg,audio/wav,audio/x-wav,audio/mp4,audio/aac,audio/x-m4a,.mp3,.ogg,.wav,.m4a,.aac";
+const EXT_RE = /\.(mp3|ogg|wav|m4a|aac)$/i;
+const describeFile = (f: File) => `${f.name}（${(f.size / 1024 / 1024).toFixed(1)}MB${f.type ? ` · ${f.type}` : ""}）`;
 const TIERS: SeTier[] = ["T0", "T1", "T2", "T3", "T4", "hit"];
 const KINDS: ItemKind[] = ["normal", "hit", "anim"];
 /** 種類ごとの一括割り当てを試聴するときの既定ティア */
@@ -100,6 +103,12 @@ export function SeMappingTab() {
   const [groupFilter, setGroupFilter] = useState<string>("all");
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  // 2026-09-26: メッセージは一覧の上にしか出ておらず、価格帯・種類の行でアップロードに失敗しても気付けなかった。操作した行の直下にも出す
+  const [msgKey, setMsgKey] = useState<string | null>(null);
+  const say = (key: string | null, text: string | null) => {
+    setMsg(text);
+    setMsgKey(text ? key : null);
+  };
 
   useEffect(() => {
     fetch("/api/platforms/whowatch/items/patterns")
@@ -214,7 +223,7 @@ export function SeMappingTab() {
    */
   const upsert = async (keys: string[], patch: Partial<Mapping>) => {
     setBusyKey(keys[0]);
-    setMsg(null);
+    say(keys[0], null);
     try {
       const saved: Mapping[] = [];
       for (const key of keys) {
@@ -229,7 +238,7 @@ export function SeMappingTab() {
       setUserRows((prev) => [...prev.filter((m) => !keys.includes(m.key)), ...saved]);
     } catch (e) {
       const message = e instanceof Error ? e.message : "通信エラー";
-      setMsg(message);
+      say(keys[0], message);
       throw e instanceof Error ? e : new Error(message);
     } finally {
       setBusyKey(null);
@@ -249,15 +258,15 @@ export function SeMappingTab() {
   const upload = async (keys: string[], file: File) => {
     const key = keys[0];
     if (file.size > MAX_BYTES) {
-      setMsg("5MB 以下のファイルにしてください");
+      say(key, `20MB 以下のファイルにしてください: ${describeFile(file)}`);
       return;
     }
-    if (!/\.(mp3|ogg|wav)$/i.test(file.name)) {
-      setMsg("mp3 / ogg / wav のみ対応です");
+    if (!EXT_RE.test(file.name)) {
+      say(key, `mp3 / ogg / wav / m4a / aac のみ対応です: ${describeFile(file)}`);
       return;
     }
     setBusyKey(key);
-    setMsg(null);
+    say(key, null);
     try {
       // アップロードはサーバ経由（/api/se/upload）。ブラウザ側の Supabase クライアントに頼ると、
       // Service Worker が古い JS を配っている間だけ認証が取れず「ログインが必要です」になる（2026-09-25）
@@ -267,13 +276,13 @@ export function SeMappingTab() {
       const res = await fetch("/api/se/upload", { method: "POST", body: form });
       const d = (await res.json().catch(() => null)) as { url?: string; label?: string; error?: string } | null;
       if (!res.ok || !d?.url) {
-        setMsg(res.status === 401 ? "セッションが切れています。ページを更新してログインし直してください" : (d?.error ?? `アップロード失敗（HTTP ${res.status}）`));
+        say(key, res.status === 401 ? "セッションが切れています。ページを更新してログインし直してください" : `${d?.error ?? `アップロード失敗（HTTP ${res.status}）`} — ${describeFile(file)}`);
         return;
       }
       await upsert(keys, { url: d.url, label: d.label ?? file.name });
-      setMsg(`${file.name} を割り当てました`);
+      say(key, `${file.name} を割り当てました`);
     } catch (e) {
-      setMsg(`アップロード失敗: ${e instanceof Error ? e.message : String(e)}`);
+      say(key, `アップロード失敗: ${e instanceof Error ? e.message : String(e)} — ${describeFile(file)}`);
     } finally {
       setBusyKey(null);
     }
@@ -308,6 +317,7 @@ export function SeMappingTab() {
         <span className="truncate text-xs text-muted-foreground">
           {m?.usesDefaultSound ? `既定 ♪ ${m.label ?? "公式音源"}` : m?.url ? `♪ ${m.label ?? "カスタム音源"}` : "既定（合成音）"}
         </span>
+        {msg && msgKey === mkey && <p className="w-full text-xs text-status-warning">{msg}</p>}
       </div>
     );
   };
