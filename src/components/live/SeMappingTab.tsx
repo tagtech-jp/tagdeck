@@ -6,6 +6,7 @@ import { playSe, unlockAudio } from "@/lib/se/engine";
 import { itemKind, ITEM_KIND_LABELS, patternKind, type ItemKind } from "@/lib/se/item-kind";
 import { tierForGift, TIER_LABELS, type SeTier } from "@/lib/se/tiers";
 import { expandablePatternRows } from "@/lib/se/pattern-rows";
+import { WEB_BONUS_GROUP, WEB_BONUS_LABEL, isWebBonusItem } from "@/lib/se/web-bonus";
 import { VolumeSlider } from "./VolumeSlider";
 import { SePresetPanel } from "./SePresetPanel";
 import { useLiveConnection } from "./LiveConnectionProvider";
@@ -53,6 +54,10 @@ interface GroupRow {
 }
 /** プルダウンの「分類なし」を表す擬似カテゴリのキー */
 const NONE_GROUP = "none";
+/** 検索中に全アイテムをまとめて出す擬似カテゴリのキー */
+const SEARCH_GROUP = "search";
+/** 擬似カテゴリ（ふわっちのアイテムページの見出しではない）: カテゴリ一括の cat:group: は使えない */
+const PSEUDO_GROUPS = new Set<string>([NONE_GROUP, SEARCH_GROUP, WEB_BONUS_GROUP]);
 /** 仮想リストの 1 行: カテゴリ見出し か アイテムの段（最大 GRID_COLUMNS 件をグリッドで並べる） */
 type ListRow = { kind: "header"; group: GroupRow; count: number } | { kind: "items"; items: ItemRow[]; groupKey: string };
 /** アイテムページと同じ 3 列（画面幅が狭ければ CSS 側で 2 列・1 列に落ちる） */
@@ -136,16 +141,27 @@ export function SeMappingTab() {
     await reloadMappings();
   };
 
-  /** 検索・価格・種類で絞ったアイテム（カテゴリはまだ見ていない） */
+  const query = filter.trim();
+  /** 検索・価格・種類で絞ったアイテム（カテゴリはまだ見ていない）。検索中は「価格ありのみ」を無視して全アイテムから探す（2026-09-26: WEBおまけ等が見つからなかった対策） */
   const filtered = useMemo(() => {
-    const q = filter.trim();
+    const q = query;
     return (items ?? [])
-      .filter((i) => (!onlyOnSale || i.priceJpy !== null) && (!q || i.itemName.includes(q) || i.patterns.some((p) => p.patternName.includes(q))))
+      .filter((i) => (!onlyOnSale || q !== "" || i.priceJpy !== null) && (!q || i.itemName.includes(q) || i.patterns.some((p) => p.patternName.includes(q))))
       .filter((i) => kindFilter === "all" || itemKind(i.patterns) === kindFilter);
-  }, [items, filter, onlyOnSale, kindFilter]);
+  }, [items, query, onlyOnSale, kindFilter]);
 
   /** 分類なし（どのカテゴリにも属さない）のアイテム。プルダウンで選んだときだけ表示する */
   const unclassified = useMemo(() => filtered.filter((i) => (i.groups?.length ?? 0) === 0), [filtered]);
+  /** WEBおまけ・無料アイテム（ネズミ・メガホン・ハートなど）。価格の有無の絞り込みは無視して名前で束ねる */
+  const webBonus = useMemo(
+    () =>
+      (items ?? [])
+        .filter((i) => isWebBonusItem(i) && (!query || i.itemName.includes(query) || i.patterns.some((p) => p.patternName.includes(query))))
+        .filter((i) => kindFilter === "all" || itemKind(i.patterns) === kindFilter)
+        .sort((a, b) => a.itemName.localeCompare(b.itemName, "ja")),
+    [items, query, kindFilter],
+  );
+  const webBonusKeys = useMemo(() => webBonus.map((i) => `item:${i.itemId}`), [webBonus]);
 
   /**
    * 表示する行。カテゴリごとに「見出し → そのカテゴリのアイテム」を並べる（ふわっちのアイテムページと同じ順）。
@@ -153,6 +169,17 @@ export function SeMappingTab() {
    */
   const rows = useMemo<ListRow[]>(() => {
     const out: ListRow[] = [];
+    if (query !== "") {
+      // 検索中はカテゴリ・価格の有無を問わず全アイテムから 1 つの一覧にする
+      out.push({ kind: "header", group: { groupKey: SEARCH_GROUP, groupTitle: `検索結果「${query}」`, subGroupTitle: null, badgeText: null, displayOrder: null, description: "全アイテムから名前で検索しています（価格の有無・カテゴリを問いません）", itemCount: filtered.length }, count: filtered.length });
+      out.push(...chunkItems(filtered, SEARCH_GROUP));
+      return out;
+    }
+    if (groupFilter === WEB_BONUS_GROUP) {
+      out.push({ kind: "header", group: { groupKey: WEB_BONUS_GROUP, groupTitle: WEB_BONUS_LABEL, subGroupTitle: null, badgeText: "無料", displayOrder: null, description: "ふわっちの WEB おまけ・無料配布アイテムを名前で束ねています（ネズミ・メガホン・ハート・拍手・(Web)）。価格ありの同名アイテムはアイテムページのカテゴリ側に出ます。見つからない場合は上の検索欄に名前を入れてください", itemCount: webBonus.length }, count: webBonus.length });
+      out.push(...chunkItems(webBonus, WEB_BONUS_GROUP));
+      return out;
+    }
     if (groupFilter === NONE_GROUP) {
       out.push({ kind: "header", group: { groupKey: NONE_GROUP, groupTitle: "分類なし", subGroupTitle: null, badgeText: null, displayOrder: null, description: "無料アイテム・販売終了・イベント限定など、ふわっちのアイテムページの見出しに無いアイテム。無料アイテムの既定 SE は上の「価格帯ごとの既定 SE」で変えられます", itemCount: unclassified.length }, count: unclassified.length });
       out.push(...chunkItems(unclassified, NONE_GROUP));
@@ -167,7 +194,7 @@ export function SeMappingTab() {
       out.push(...chunkItems(sectionItems, group.groupKey));
     }
     return out;
-  }, [filtered, groups, groupFilter, unclassified]);
+  }, [filtered, groups, groupFilter, unclassified, webBonus, query]);
   const visibleItemCount = useMemo(() => rows.reduce((n, r) => n + (r.kind === "items" ? r.items.length : 0), 0), [rows]);
 
   /** カテゴリの表示名。ふわっちAPIの title + badge_text（アイテムページの見出しとは異なる場合がある） */
@@ -335,7 +362,7 @@ export function SeMappingTab() {
             {items ? `${items.length} アイテム` : ""}
             {syncedAt ? ` · マスタ同期 ${new Date(syncedAt).toLocaleString("ja-JP")}` : ""}
           </span>
-          <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="名前で絞り込み" className="ml-auto min-h-9 w-40 rounded-sm bg-muted px-3 text-xs text-foreground" />
+          <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="名前で検索（全アイテム）" className="ml-auto min-h-9 w-44 rounded-sm bg-muted px-3 text-xs text-foreground" />
           <label className="flex items-center gap-1 text-xs text-muted-foreground" title="OFF にすると無料・価格なしのアイテムも出ます">
             <input type="checkbox" checked={onlyOnSale} onChange={(e) => setOnlyOnSale(e.target.checked)} className="size-4" />
             価格ありのみ
@@ -367,6 +394,7 @@ export function SeMappingTab() {
             className="min-h-9 max-w-full rounded-sm border border-border bg-muted px-2 text-xs text-foreground"
           >
             <option value="all">すべてのカテゴリ（アイテムページ順）</option>
+            <option value={WEB_BONUS_GROUP}>{WEB_BONUS_LABEL}{items ? `（${(items ?? []).filter(isWebBonusItem).length}）` : ""}</option>
             {groups.map((g) => (
               <option key={g.groupKey} value={g.groupKey}>
                 {groupLabel(g)}（{g.itemCount}）
@@ -397,7 +425,7 @@ export function SeMappingTab() {
                 const r = rows[row.index];
                 if (r.kind === "header") {
                   const g = r.group;
-                  const isPseudo = g.groupKey === NONE_GROUP;
+                  const isPseudo = PSEUDO_GROUPS.has(g.groupKey);
                   const catKey = `cat:group:${g.groupKey}`;
                   // バナー画像が無いカテゴリは、所属アイテムの画像を並べて見出しにする（アイテムページの雰囲気に寄せる）
                   const thumbs = g.bannerUrl
@@ -442,6 +470,12 @@ export function SeMappingTab() {
                             <div>
                               <p className="mb-1 text-xs text-muted-foreground">このカテゴリ全部にまとめて割り当て（アイテム個別・パターン個別が優先。種類ごと・価格帯の既定より優先）</p>
                               <MappingControls mkeys={[catKey]} tier="T2" />
+                            </div>
+                          )}
+                          {g.groupKey === WEB_BONUS_GROUP && webBonusKeys.length > 0 && (
+                            <div>
+                              <p className="mb-1 text-xs text-muted-foreground">ここに出ている {webBonusKeys.length} アイテム全部にまとめて割り当て（アイテムごとの設定として保存されるので、あとで個別に変えられます）</p>
+                              <MappingControls mkeys={webBonusKeys} tier="T0" />
                             </div>
                           )}
                           {r.count === 0 && <p className="text-xs text-muted-foreground">条件に合うアイテムがありません（「価格ありのみ」や種類の絞り込みを見直してください）</p>}
