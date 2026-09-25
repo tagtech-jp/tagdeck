@@ -104,6 +104,8 @@ export type Status = "idle" | "checking" | "offline" | "notfound" | "polling" | 
 /** このバンドルのビルド識別子。Worker の値と食い違えば古い JS で動いている（Service Worker 対策） */
 export const CLIENT_BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "unknown";
 const AUTO_CONNECT_STORAGE_KEY = "tagdeck.live.autoConnect";
+/** 配信者ID欄の固定（2026-09-26）: 値があれば「固定中」。次に開いたときも同じ ID で始める */
+const TARGET_ID_STORAGE_KEY = "tagdeck.live.targetId";
 // 実験（2026-09-25）: スマホ用バックグラウンド再生（音楽プレイヤー扱い）と画面ロック防止のスイッチ
 const BG_AUDIO_STORAGE_KEY = "tagdeck.live.bgAudio";
 const BG_WAKELOCK_STORAGE_KEY = "tagdeck.live.bgWakeLock";
@@ -153,6 +155,9 @@ interface LiveConnectionValue {
   setBgWakeLock: (v: boolean) => void;
   targetId: string;
   setTargetId: (v: string) => void;
+  /** 配信者ID欄を固定して次回も引き継ぐ */
+  targetIdPinned: boolean;
+  setTargetIdPinned: (v: boolean) => void;
   viewingOther: string | null;
   /** 配信者ID欄に入力したが自分の配信だった（＝通常どおり記録される） */
   selfByTypedId: boolean;
@@ -217,6 +222,38 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const [lastPolledAt, setLastPolledAt] = useState<string | null>(null);
   const [mappings, setMappings] = useState<Mapping[]>([]);
   const [targetId, setTargetId] = useState("");
+  const [targetIdPinned, setTargetIdPinnedState] = useState(false);
+  // 固定中の ID は保存し、次に開いたときに入力欄へ戻す（effect 内の同期 setState を避けるため microtask）
+  useEffect(() => {
+    queueMicrotask(() => {
+      try {
+        const saved = localStorage.getItem(TARGET_ID_STORAGE_KEY);
+        if (saved) {
+          setTargetId(saved);
+          setTargetIdPinnedState(true);
+        }
+      } catch {
+        // localStorage が使えなければ固定なし
+      }
+    });
+  }, []);
+  useEffect(() => {
+    if (!targetIdPinned) return;
+    try {
+      localStorage.setItem(TARGET_ID_STORAGE_KEY, targetId);
+    } catch {
+      // 保存できなくても動作には影響しない
+    }
+  }, [targetId, targetIdPinned]);
+  const setTargetIdPinned = useCallback((v: boolean) => {
+    setTargetIdPinnedState(v);
+    try {
+      if (v) localStorage.setItem(TARGET_ID_STORAGE_KEY, targetId);
+      else localStorage.removeItem(TARGET_ID_STORAGE_KEY);
+    } catch {
+      // 無視
+    }
+  }, [targetId]);
   const [viewingOther, setViewingOther] = useState<string | null>(null);
   // 配信者ID欄に入力したうえで自分の配信と判定された状態。空欄のときと区別できないと
   // 「他人扱いになって記録されていないのでは」という誤解を生む
@@ -1144,6 +1181,8 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       setBgWakeLock,
       targetId,
       setTargetId,
+      targetIdPinned,
+      setTargetIdPinned,
       viewingOther,
       selfByTypedId,
       masterWarning,
@@ -1170,7 +1209,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       setDebug,
       debug,
     }),
-    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, audioState, audioRecoveredAt, pollingInterval, lastPolledAt, mappings, bgEnabled, bgWakeLock, bgState, bgError, bgSupport, hiddenPollCount, hiddenPollLastAt, setBgAudioEnabled, setBgWakeLock, reloadMappings, targetId, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsPollGiftsSinceConnect, wsInfo, wsTopic, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
+    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, audioState, audioRecoveredAt, pollingInterval, lastPolledAt, mappings, bgEnabled, bgWakeLock, bgState, bgError, bgSupport, hiddenPollCount, hiddenPollLastAt, setBgAudioEnabled, setBgWakeLock, reloadMappings, targetId, targetIdPinned, setTargetIdPinned, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsPollGiftsSinceConnect, wsInfo, wsTopic, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
   );
 
   return <LiveConnectionContext.Provider value={value}>{children}</LiveConnectionContext.Provider>;
