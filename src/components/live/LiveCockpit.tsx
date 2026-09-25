@@ -311,7 +311,7 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
                     <th className="py-1 pr-2 font-medium">投稿→SE(補正)</th>
                     <th className="py-1 pr-2 font-medium">投稿→SE(生)</th>
                     <th className="py-1 pr-2 font-medium">ズレ</th>
-                    <th className="py-1 font-medium">SE処理</th>
+                    <th className="py-1 font-medium">SE再生(鳴り終わりまで)</th>
                   </tr>
                 </thead>
                 <tbody className="text-foreground">

@@ -1,14 +1,14 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { getAudioContext, playSe, startKeepAlive, stopKeepAlive, unlockAudio } from "@/lib/se/engine";
+import { getAudioContext, playSeUntilEnd, startKeepAlive, stopKeepAlive, unlockAudio } from "@/lib/se/engine";
 import { createSeQueue } from "@/lib/se/queue";
 import { resolveMappingKey, tierForGift, type SeTier } from "@/lib/se/tiers";
 import { nextPollDelay, partitionFreshGifts, pollIntervalFor } from "@/lib/live/polling";
 import { idlePollInterval, INITIAL_AUTO_CONNECT_STATE, reduceAutoConnect, type AutoConnectPhase } from "@/lib/live/auto-connect";
 import { INITIAL_MASTER_STATE, masterFailed, masterSucceeded, retryCountdownSec, type MasterState } from "@/lib/live/master-retry";
 import { extractComments, isBacklogComment, parseWsMessage, WS_MAX_FAILURES_BEFORE_GIVE_UP, wsReconnectDelay, type WsState } from "@/lib/live/ws-feed";
-import { commentsFromFrame, createRefCounter, decodeFrame, heartbeatFrame, joinFrame, PHOENIX_HEARTBEAT_MS, phoenixSocketUrl, replyStatus, topicCandidates, type PhoenixFrame } from "@/lib/live/phoenix";
+import { commentsFromFrame, createRefCounter, decodeFrame, heartbeatFrame, joinCandidates, joinFrame, PHOENIX_HEARTBEAT_MS, phoenixSocketUrl, replyStatus, type JoinCandidate, type PhoenixFrame } from "@/lib/live/phoenix";
 import { normalizeGift, type NormalizedGift as Gift, type PatternInfo, type PickedGiftComment } from "@/lib/whowatch/gift-normalize";
 import type { ItemKind } from "@/lib/se/item-kind";
 
@@ -150,7 +150,7 @@ interface LiveConnectionValue {
   setAutoConnect: (on: boolean) => void;
   start: () => Promise<void>;
   stop: () => void;
-  playGift: (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[] }, forceTier?: SeTier) => Promise<void>;
+  playGift: (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[] }, forceTier?: SeTier, waitForEnd?: boolean) => Promise<void>;
   pushTestGift: (g: Gift) => void;
   /** ?debug=1 のときだけ生コメントと計測ログを集める */
   setDebug: (v: boolean) => void;
@@ -248,8 +248,8 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   // ── Phoenix Channels（決裁 2026-09-25「送信も可」: 送るのは phx_join と heartbeat だけ） ──
   const wsJwtRef = useRef<string | null>(null);
   const wsLiveIdRef = useRef<string | null>(null);
-  /** 参加候補のトピック名（順に試す） */
-  const wsTopicsRef = useRef<string[]>([]);
+  /** 参加候補（トピック × 参加データ。順に試す） */
+  const wsJoinsRef = useRef<JoinCandidate[]>([]);
   /** 参加が通ったトピック */
   const wsTopicRef = useRef<string | null>(null);
   /** 返事待ちの phx_join（ref が一致する phx_reply を待つ。5 秒で次の候補へ） */
@@ -360,7 +360,11 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     [fetchMaster],
   );
 
-  const playGift = useCallback(async (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[] }, forceTier?: SeTier) => {
+  /**
+   * ギフト 1 件の SE を鳴らす。waitForEnd=true（キューからの呼び出し）なら鳴り終わるまで待つ。
+   * 連続ギフトは前の音が終わってから次を鳴らす（重ねると長い音源で 2 発目以降が埋もれる）
+   */
+  const playGift = useCallback(async (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[] }, forceTier?: SeTier, waitForEnd = false) => {
     const tier = forceTier ?? tierForGift({ priceYen: g.price_yen, count: g.count, isHit: g.is_hit });
     const target = { patternId: g.pattern_id, itemId: g.item_id, tier, kind: g.kind, groups: g.groups };
     const enabledKeys = new Set(mappingsRef.current.filter((m) => m.enabled).map((m) => m.key));
@@ -369,7 +373,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     if (!key && resolveMappingKey(disabledKeys, target)) return; // 明示的に無効化
     const m = key ? mappingsRef.current.find((x) => x.key === key) : undefined;
     const vol = (volumeRef.current / 100) * ((m?.volume ?? 80) / 100);
-    await playSe(tier, { url: m?.url ?? null, volume: vol });
+    await playSeUntilEnd(tier, { url: m?.url ?? null, volume: vol }, waitForEnd);
   }, []);
 
   const playQueued = useCallback(
@@ -377,7 +381,8 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       const playedAt = Date.now();
       // 当たり判定はパターン名からの推定。実ログで精度を確かめられるよう残す
       if (q.gift.is_hit) console.info("[tagdeck] 当たり検知", { pattern_id: q.gift.pattern_id, pattern_name: q.gift.pattern_name, item_name: q.gift.item_name, hit_grade: q.gift.hit_grade, posted_at: q.gift.posted_at });
-      await playGift(q.gift);
+      // 計測用の seMs は「鳴り始めまで」を測りたいので、鳴り始めた時刻を先に確定させてから終わりを待つ
+      await playGift(q.gift, undefined, true);
       if (!debugRef.current) return;
       const postedAt = q.gift.posted_at ? Date.parse(q.gift.posted_at) : null;
       setGiftLog((prev) =>
@@ -534,11 +539,11 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const tryJoin = useCallback((idx: number) => {
     const ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
-    const topics = wsTopicsRef.current;
-    if (idx >= topics.length) {
+    const joins = wsJoinsRef.current;
+    if (idx >= joins.length) {
       wsGiveUpRef.current = true;
       setWsState("failed");
-      setWsInfo(`購読できるチャンネルが見つかりません（試した: ${topics.join(", ")} / 理由: ${wsJoinErrorsRef.current.join("; ") || "—"}）。ポーリングで続行`);
+      setWsInfo(`購読できる組み合わせが見つかりません（試した ${joins.length} 通り / 理由: ${wsJoinErrorsRef.current.join("; ") || "—"}）。ポーリングで続行`);
       try {
         ws.close(1000, "no topic");
       } catch {
@@ -546,24 +551,23 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       }
       return;
     }
-    const topic = topics[idx];
+    const cand = joins[idx];
     const ref = wsNextRefRef.current();
-    const jwt = wsJwtRef.current;
-    ws.send(joinFrame(topic, ref, jwt ? { token: jwt } : {}));
+    ws.send(joinFrame(cand.topic, ref, cand.payload));
     if (wsPendingJoinRef.current) clearTimeout(wsPendingJoinRef.current.timer);
     wsPendingJoinRef.current = {
       ref,
-      topic,
+      topic: cand.topic,
       idx,
       timer: setTimeout(() => {
-        // 返事が来ない＝そのトピックは無視されている。次へ
+        // 返事が来ない＝その組み合わせは無視されている。次へ
         if (wsPendingJoinRef.current?.ref !== ref) return;
-        wsJoinErrorsRef.current.push(`${topic}: 返事なし`);
+        wsJoinErrorsRef.current.push(`${cand.label}: 返事なし`);
         wsPendingJoinRef.current = null;
         tryJoinRef.current(idx + 1);
       }, 5_000),
     };
-    setWsInfo(`購読を試行中: ${topic}`);
+    setWsInfo(`購読を試行中: ${cand.label}`);
   }, []);
   useEffect(() => {
     tryJoinRef.current = tryJoin;
@@ -584,16 +588,21 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
         if (st === "ok") {
           clearTimeout(pending.timer);
           wsPendingJoinRef.current = null;
+          const label = wsJoinsRef.current[pending.idx]?.label ?? pending.topic;
           wsTopicRef.current = pending.topic;
-          setWsTopic(pending.topic);
-          setWsInfo(`購読中: ${pending.topic}`);
+          setWsTopic(label);
+          setWsInfo(`購読中: ${label}`);
+          console.info("[tagdeck] WS 購読成功", { label, topic: pending.topic, keys: Object.keys(wsJoinsRef.current[pending.idx]?.payload ?? {}) });
           return;
         }
         if (st === "error") {
           clearTimeout(pending.timer);
           wsPendingJoinRef.current = null;
-          const reason = (frame.payload as { response?: { reason?: unknown } } | null)?.response?.reason;
-          wsJoinErrorsRef.current.push(`${pending.topic}: ${typeof reason === "string" ? reason : "error"}`);
+          const resp = (frame.payload as { response?: unknown } | null)?.response;
+          const reason = (resp as { reason?: unknown } | null)?.reason;
+          const label = wsJoinsRef.current[pending.idx]?.label ?? pending.topic;
+          // reason が無い形式もあるので、返事の中身（先頭 120 文字）を残す
+          wsJoinErrorsRef.current.push(`${label}: ${typeof reason === "string" ? reason : JSON.stringify(resp ?? frame.payload).slice(0, 120)}`);
           tryJoinRef.current(pending.idx + 1);
           return;
         }
@@ -733,15 +742,22 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
         }
         wsJwtRef.current = d.jwt;
         wsCandidatesRef.current = [url];
-        // トピック名は実機で確定させる。確定したら localStorage の tagdeck.live.wsTopic（{id} は live_id に置換）で先頭に差し込める
-        let topics = topicCandidates(id);
+        // 参加の組み合わせは実機で確定させる。確定したら localStorage の tagdeck.live.wsJoin
+        // （JSON: {"topic":"live:lobby","payload":{...}}。値の "{id}" は live_id、"{jwt}" は jwt に置換）で先頭に差し込める
+        let joins = joinCandidates(id, d.jwt);
         try {
-          const override = localStorage.getItem("tagdeck.live.wsTopic");
-          if (override) topics = [override.replace("{id}", id), ...topics.filter((t) => t !== override.replace("{id}", id))];
+          const override = localStorage.getItem("tagdeck.live.wsJoin");
+          if (override) {
+            const o = JSON.parse(override) as { topic?: string; payload?: Record<string, unknown> };
+            if (o.topic) {
+              const payload = Object.fromEntries(Object.entries(o.payload ?? {}).map(([k, v]) => [k, v === "{id}" ? id : v === "{jwt}" ? d.jwt : v]));
+              joins = [{ topic: o.topic.replace("{id}", id), payload, label: `${o.topic.replace("{id}", id)}{手動}` }, ...joins];
+            }
+          }
         } catch {
-          // localStorage が使えない環境では候補のまま
+          // localStorage が使えない・JSON が壊れている場合は候補のまま
         }
-        wsTopicsRef.current = topics;
+        wsJoinsRef.current = joins;
         if (!runningRef.current) return; // 取得中に停止された
         openWs();
       } catch (e) {

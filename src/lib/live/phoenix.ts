@@ -87,10 +87,45 @@ export function commentsFromFrame(f: PhoenixFrame): Array<GiftCommentInput & { c
 
 /**
  * 購読するトピック名の候補。正解は個人ツール（whowatch-feed）のログで確定させる想定だが、
- * 無い場合は診断 v3 でこの順に phx_join を試し、"ok" が返ったものを採用する
+ * 無い場合は順に phx_join を試し、"ok" が返ったものを採用する
  */
 export function topicCandidates(liveId: string): string[] {
   return [`live:${liveId}`, `lives:${liveId}`, `live_comments:${liveId}`, `comments:${liveId}`, `room:${liveId}`, `live:lobby`];
+}
+
+/** 参加の試行 1 件（トピック × 参加時のデータ） */
+export interface JoinCandidate {
+  topic: string;
+  payload: Record<string, unknown>;
+  /** 表示用の短い名前（jwt の値は含めない） */
+  label: string;
+}
+
+/**
+ * 参加（phx_join）の候補を「トピック × 参加データ」で並べる。
+ * 2026-09-25 実測: live:<id> 等は "unmatched topic"、live:lobby だけ "unauthorized invalid param"
+ * （チャンネルはあるが参加データが不正）だった。そこで live:lobby を先頭に、配信 ID と jwt の
+ * 渡し方（キー名・数値/文字列）を変えて順に試す。"ok" が返った時点で止める
+ */
+export function joinCandidates(liveId: string, jwt: string | null | undefined): JoinCandidate[] {
+  const idNum = Number(liveId);
+  const id: number | string = Number.isFinite(idNum) ? idNum : liveId;
+  const lobby: Array<[string, Record<string, unknown>]> = [
+    ["jwt", jwt ? { jwt } : {}],
+    ["jwt+live_id", jwt ? { jwt, live_id: id } : { live_id: id }],
+    ["token+live_id", jwt ? { token: jwt, live_id: id } : { live_id: id }],
+    ["live_id", { live_id: id }],
+    ["jwt+live_id(文字列)", jwt ? { jwt, live_id: String(liveId) } : { live_id: String(liveId) }],
+    ["jwt+id", jwt ? { jwt, id } : { id }],
+    ["token+id", jwt ? { token: jwt, id } : { id }],
+    ["jwt+live_id+user", jwt ? { jwt, live_id: id, user_id: null } : { live_id: id }],
+  ];
+  const out: JoinCandidate[] = lobby.map(([label, payload]) => ({ topic: "live:lobby", payload, label: `live:lobby{${label}}` }));
+  for (const topic of topicCandidates(liveId)) {
+    if (topic === "live:lobby") continue;
+    out.push({ topic, payload: jwt ? { token: jwt } : {}, label: `${topic}{token}` });
+  }
+  return out;
 }
 
 /** ref を単調増加で払い出す（同じ接続内で一意なら十分） */

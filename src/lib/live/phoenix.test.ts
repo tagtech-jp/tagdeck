@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { commentsFromFrame, createRefCounter, decodeFrame, heartbeatFrame, joinFrame, leaveFrame, phoenixSocketUrl, replyStatus, topicCandidates } from "./phoenix";
+import { commentsFromFrame, createRefCounter, decodeFrame, heartbeatFrame, joinCandidates, joinFrame, leaveFrame, phoenixSocketUrl, replyStatus, topicCandidates } from "./phoenix";
 
 const GIFT = { id: 123, comment_type: "BY_PLAYITEM", play_item_pattern_id: 10365, item_count: 1 };
 
@@ -48,5 +48,22 @@ describe("topicCandidates / createRefCounter", () => {
     expect(topicCandidates("76347155")[0]).toBe("live:76347155");
     const next = createRefCounter();
     expect([next(), next(), next()]).toEqual(["1", "2", "3"]);
+  });
+});
+
+describe("joinCandidates（実測: live:lobby だけ「unauthorized invalid param」だったので先頭に）", () => {
+  it("live:lobby の参加データを jwt / live_id の組み合わせで並べ、その後に他トピック", () => {
+    const c = joinCandidates("76347155", "SECRETJWT");
+    expect(c[0]).toEqual({ topic: "live:lobby", payload: { jwt: "SECRETJWT" }, label: "live:lobby{jwt}" });
+    expect(c[1].payload).toEqual({ jwt: "SECRETJWT", live_id: 76347155 });
+    expect(c.filter((x) => x.topic === "live:lobby").length).toBe(8);
+    expect(c.find((x) => x.topic === "live:76347155")?.payload).toEqual({ token: "SECRETJWT" });
+    // 表示用ラベルに jwt の値が混ざらない
+    expect(c.every((x) => !x.label.includes("SECRETJWT"))).toBe(true);
+  });
+  it("jwt が無ければ jwt 系のキーを入れない", () => {
+    const c = joinCandidates("1", null);
+    expect(c[0].payload).toEqual({});
+    expect(c[1].payload).toEqual({ live_id: 1 });
   });
 });
