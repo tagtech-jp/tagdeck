@@ -5,6 +5,7 @@
 
 決裁(2026-09-20): ふわっちデータ取得は公開 API のポーリングのみ。WebSocket は実装しない。
 決裁(2026-09-25): 上記を変更。SE のラグ解消のため、`/lives/{id}` の `comment_server_url` / `jwt` によるコメントサーバ(WebSocket)への **受信のみ** の接続を例外として許可(AGENTS.md 参照)。ポーリングは保存と予備経路として継続。
+決裁(2026-09-25・同日追記): 上記「受信のみ」を「送信も可」に変更。送るのは Phoenix の `phx_join`(購読)と `heartbeat` のみ(AGENTS.md / CODEX_CLAUDE.md は PR #11 で更新済み)。詳細は「即時経路(WebSocket)の到達点」。
 
 ## E1: イベント取得(実装済み・2026-09-21)
 
@@ -323,7 +324,7 @@ $4,400 以上続く巨大な単一 INSERT。認証・ルーティング(PR #25)�
 
 ### 未確定(TODO.md Q1b / Q2 / Q3)
 
-- WS のメッセージ形式・認証方式は未実測。形式が違っても落ちず、ポーリングで従来どおり鳴る設計
+- WS のメッセージ形式・認証方式は未実測。形式が違っても落ちず、ポーリングで従来どおり鳴る設計 → 確定(同日)。詳細は「2026-09-25 本番稼働状況」内の「即時経路(WebSocket)の到達点」
 - 無料アイテムの設定が反映されない原因(a/b)は実データ待ち
 - payments3 のバナー URL フィールド名は未確認
 
@@ -344,7 +345,7 @@ $4,400 以上続く巨大な単一 INSERT。認証・ルーティング(PR #25)�
 - Service Worker の注意: serwist(`skipWaiting` / `clientsClaim`)がデプロイ後も古い JS を配るため、本番の動作確認は Ctrl+Shift+R(キャッシュ無視の再読み込み)で行う
 - Supabase の課金警告: ダッシュボード上部に「Grace period is over … projects will not be able to serve requests when you use up your quota」が表示されていた(無料枠の猶予期間終了)。Billing の確認が必要(TODO.md Q5)
 - 未確認(本セッションでは確認していない):
-  - `/live?debug=1` での WS 経路の実測(メッセージ形式・認証方式。TODO.md Q1b)
+  - `/live?debug=1` での WS 経路の実測(メッセージ形式・認証方式。TODO.md Q1b)→ 同日中に確定。下記「即時経路(WebSocket)の到達点」
   - payments3 のバナー URL の有無(`SELECT group_key, banner_url FROM whowatch_item_groups`。TODO.md Q3)
   - 無料アイテムの設定反映の原因(TODO.md Q2)
 
@@ -354,3 +355,38 @@ $4,400 以上続く巨大な単一 INSERT。認証・ルーティング(PR #25)�
 - `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_URL` は `https://<ref>.supabase.co` 形式(API の URL)。ダッシュボードの URL(`https://supabase.com/dashboard/...`)を入れるとログインが Supabase の 404 に飛ぶ
 - Deploy は Actions →「Deploy」→ Run workflow で手動再実行できる(PR #4 で `workflow_dispatch` を追加)。Secrets を直した後はコードを変えずにこれで再デプロイする
 - デプロイ後の確認は Ctrl+Shift+R で行う(Service Worker が古い JS を配るため)
+
+### 即時経路(WebSocket)の到達点(2026-09-25・UTC)
+
+上記「未確認」のうち Q1b(WS のメッセージ形式・認証方式)は同日中に確定し、本番で即時経路が動いた。
+
+#### 計測(社長の実機計測・ビルド `0557519`)
+
+- 即時経路バッジ「接続済み / 購読 room:76348066{p}」。WS 経由のギフト 4 件
+- 投げられた→SE(時計ズレ補正済み): 平均 957ms / 最大 2202ms(4 件)。生の値は平均 -439ms(`posted_at` が秒単位のため負になる)。時計ズレ補正 1411ms
+- ポーリングは「WS がギフトを届けているので保存用の通常間隔(10 秒)」に自動で戻った(`pollIntervalFor()` の `wsDelivering` が期待どおり動作)
+- 出発点(同日朝のポーリングのみの計測): 平均 3862ms / 最大 10629ms
+
+#### 確定した接続仕様(社長が whowatch.tv の自分の配信ページで F12 → Network → WS を確認)
+
+- 入口: `wss://ws.whowatch.tv/socket/websocket?vsn=2.0.0`(Phoenix Channels v2)。Origin 制限なし(診断 v2 で 101)
+- 購読: `["1","1","room:<配信ID>","phx_join",{"p":"<jwt>"}]` → `{"status":"ok"}`。jwt は `/lives/{id}` の `jwt`
+- heartbeat: `[null,"2","phoenix","heartbeat",{}]`(30 秒)
+- ギフト: event `"shout"` の `payload.comment` にコメント本体(`comment_type` `"BY_PLAYITEM"` 等。`/lives/{id}` の `comments[]` と同じフィールド)
+
+#### 経緯(PR 番号。いずれも CI 緑・社長の自動マージ許可に基づき Claude がマージ)
+
+- PR #9 診断 v1: `comment_server_url` の `/socket` にそのまま接続 → 全候補 404
+- PR #10 診断 v2: `/socket/websocket?vsn=2.0.0` で 101 を確認
+- PR #11 Phoenix 購読(phx_join / heartbeat の送信)。決裁の変更: 2026-09-25「送信も可」。送るのは phx_join / heartbeat のみ(AGENTS.md / CODEX_CLAUDE.md をこの PR で更新済み)
+- PR #12 連続ギフトの SE 修正 + 参加データ総当たり。購読候補 `live:<id>` 等は `unmatched topic`、`room:<id>` に `token` キーでは `unauthorized invalid param`
+- PR #13 `room:<id>` + `{"p": jwt}` で確定(公式サイトの通信で確認)
+
+#### 連続ギフトの SE(PR #12)
+
+200ms ずらしで重ねる方式は長い音源で 2 発目以降が埋もれたため、前の音が鳴り終わってから次を鳴らす方式に変更(待ち上限 4 秒)。
+
+#### 残課題
+
+- 残り約 1 秒の内訳は「`posted_at` が秒単位の誤差」「時計ズレ補正の精度」「連投時の SE キュー待ち」に分かれる。キュー待ちの計測列を `?debug=1` に追加中(ブランチ `claude/ws-metrics`。実測は未取得)。ふわっち内部の遅れは手が出せない(TODO.md Q6)
+- 未確認のまま: payments3 のバナー URL の有無(Q3)、無料アイテムの設定反映(Q2)、Supabase 課金警告(Q5)

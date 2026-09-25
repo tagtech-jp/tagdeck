@@ -91,6 +91,8 @@ export interface GiftSample {
   arrivalMs: number | null;
   totalMs: number | null;
   rawTotalMs: number | null;
+  /** 受信→鳴り始めまでの待ち（SE キューで前の音を待った時間）。ネットワークとは無関係な分 */
+  queueMs: number;
   seMs: number;
   skewMs: number | null;
 }
@@ -397,6 +399,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
             arrivalMs: postedAt !== null && q.skewMs !== null ? q.receivedAt + q.skewMs - postedAt : null,
             totalMs: postedAt !== null && q.skewMs !== null ? playedAt + q.skewMs - postedAt : null,
             rawTotalMs: postedAt !== null ? playedAt - postedAt : null,
+            queueMs: playedAt - q.receivedAt,
             seMs: Date.now() - playedAt,
             skewMs: q.skewMs,
           },
