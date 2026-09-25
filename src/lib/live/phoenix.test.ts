@@ -68,3 +68,31 @@ describe("joinCandidates（実測: 公式サイトは room:<配信ID> に {\"p\"
     expect(c[1].payload).toEqual({});
   });
 });
+
+describe("実キャプチャの WS フレーム（2026-09-25 room:76348066）", () => {
+  // shout イベントの payload.comment にコメント本体（comment_type / id / play_item_pattern_id を持つ）
+  const giftFrame = (patternId: number, count: number) =>
+    JSON.stringify(["2", null, "room:76348066", "shout", {
+      topic: "room:76348066", event: "shout",
+      comment: {
+        user: { user_path: "w:匿名盛り上げ係長", name: "匿名盛り上げ係長", id: 1523 },
+        posted_at: 1790323435000, play_item_pattern_id: patternId, item_count: count,
+        message: "どんぐり帽子をプレゼントしました", live_id: 76348066,
+        id: 6432702623, comment_type: "BY_PLAYITEM", anonymized: true,
+      },
+    }]);
+  const battleFrame = JSON.stringify(["2", null, "room:76348066", "battle", { topic: "room:76348066", event: "battle", collaboration_battle_point: { owner_point: 146, live_id: 76348066 } }]);
+  const systemFrame = JSON.stringify(["2", null, "room:76348066", "shout", { topic: "room:76348066", event: "shout", comment: { user: { id: 1004 }, message: "コラボバトル終了", id: 6432703924, comment_type: "BY_SYSTEM" } }]);
+
+  it("shout のギフト（BY_PLAYITEM）を payload.comment から抽出する", () => {
+    const gifts = commentsFromFrame(decodeFrame(giftFrame(10587, 1))!).filter((c) => c.comment_type === "BY_PLAYITEM");
+    expect(gifts).toHaveLength(1);
+    expect(gifts[0].play_item_pattern_id).toBe(10587);
+    expect(gifts[0].item_count).toBe(1);
+    expect(gifts[0].id).toBe(6432702623);
+  });
+  it("battle イベントとシステムコメント（BY_SYSTEM）はギフトとして拾わない", () => {
+    expect(commentsFromFrame(decodeFrame(battleFrame)!).filter((c) => c.comment_type === "BY_PLAYITEM")).toHaveLength(0);
+    expect(commentsFromFrame(decodeFrame(systemFrame)!).filter((c) => c.comment_type === "BY_PLAYITEM")).toHaveLength(0);
+  });
+});

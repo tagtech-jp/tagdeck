@@ -82,6 +82,7 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
     giftLog,
     wsState,
     wsGiftCount,
+    wsPollGiftsSinceConnect,
     wsInfo,
     wsTopic,
     wsLog,
@@ -266,7 +267,7 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
             <div className={wsState === "open" ? "font-bold text-status-success" : wsState === "failed" ? "font-bold text-status-warning" : ""}>
               即時経路（WebSocket）: {WS_BADGE[wsState].label || "未使用"} / 購読 {wsTopic ?? "—"} / WS 経由のギフト {wsGiftCount} 件
               {wsInfo ? ` / ${wsInfo}` : ""}
-              {wsState === "open" && wsGiftCount === 0 && lastGiftAt !== null && " ← 接続はできているが WS からギフトを解釈できていない（ポーリングでは届いている）。下の WS 生ログを確認"}
+              {wsState === "open" && wsGiftCount === 0 && wsPollGiftsSinceConnect > 0 && ` ← 接続はできているが WS からギフトを解釈できていない（この接続でポーリングは ${wsPollGiftsSinceConnect} 件届いている）。下の WS 生ログを確認`}
             </div>
             <div>
               投げられた→SE（経路別）: WS {fmt(stats(giftLog.filter((g) => g.source === "ws").map((g) => g.totalMs).filter((v): v is number => v !== null)))} / ポーリング {fmt(stats(giftLog.filter((g) => g.source === "poll").map((g) => g.totalMs).filter((v): v is number => v !== null)))}
