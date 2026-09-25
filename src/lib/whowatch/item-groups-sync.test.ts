@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { notInArray, sql } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { whowatchItemGroups } from "@/lib/db/schema";
-import { flattenGroups, type RawCategory } from "./item-groups-sync";
+import { flattenGroups, pickBannerUrl, pickDescription, type RawCategory } from "./item-groups-sync";
 
 const NOW = new Date("2026-09-22T10:00:00.000Z");
 
@@ -56,6 +56,18 @@ describe("flattenGroups", () => {
     expect(rows[1].eventKey).toBeNull();
   });
 
+  it("バナー URL と説明文を拾う（フィールド名は未確認なので候補を総当たり）", () => {
+    const [row] = flattenGroups([{ group: "g", title: "t", banner: "https://img.example/b.png", description: "説明", play_item: [{ id: 1 }] }], NOW);
+    expect(row.bannerUrl).toBe("https://img.example/b.png");
+    expect(row.description).toBe("説明");
+  });
+
+  it("バナー・説明が無ければ null（文字の見出しで表示する）", () => {
+    const [row] = flattenGroups([{ group: "g", title: "t", play_item: [{ id: 1 }] }], NOW);
+    expect(row.bannerUrl).toBeNull();
+    expect(row.description).toBeNull();
+  });
+
   it("title が無ければ group_key をそのまま見出しに使う", () => {
     const [row] = flattenGroups([{ group: "unknown_group", play_item: [{ id: 5 }] }], NOW);
     expect(row.groupTitle).toBe("unknown_group");
@@ -84,5 +96,23 @@ describe("応答から消えたカテゴリの削除条件", () => {
     const { sql: text } = dialect.sqlToQuery(notInArray(whowatchItemGroups.groupKey, []).getSQL());
     // Drizzle は空配列を恒偽の条件に落とす（誤って全行消さない）
     expect(text.length).toBeGreaterThan(0);
+  });
+});
+
+describe("pickBannerUrl / pickDescription", () => {
+  it("候補キーの順に見て最初の http(s) URL を採用する", () => {
+    expect(pickBannerUrl({ image_url: "https://a/1.png", banner_url: "https://a/2.png" })).toBe("https://a/2.png");
+    expect(pickBannerUrl({ banner: { pc: "https://a/pc.png", sp: "https://a/sp.png" } })).toBe("https://a/pc.png");
+  });
+  it("URL でない文字列・相対パス・data URL は採用しない", () => {
+    expect(pickBannerUrl({ banner: "/static/b.png" })).toBeNull();
+    expect(pickBannerUrl({ banner: "data:image/png;base64,AAAA" })).toBeNull();
+    expect(pickBannerUrl({ banner: 123 })).toBeNull();
+    expect(pickBannerUrl({})).toBeNull();
+  });
+  it("説明文は空・URL を除き 500 文字で切る", () => {
+    expect(pickDescription({ description: "  " })).toBeNull();
+    expect(pickDescription({ description: "https://x" })).toBeNull();
+    expect(pickDescription({ sub_title: "a".repeat(600) })?.length).toBe(500);
   });
 });

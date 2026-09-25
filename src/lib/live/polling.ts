@@ -25,19 +25,28 @@ export interface PollIntervalInput {
   /** 最後にギフトを検知した時刻。まだ無ければ null */
   lastGiftAt: number | null;
   now: number;
+  /**
+   * WebSocket 経路がギフトを実際に届けているか（決裁 2026-09-25）。「開いている」だけでは足りない:
+   * メッセージ形式が未確定で解析できない場合に短縮を止めると今より遅くなるため、
+   * WS 経由でギフトを 1 件以上受け取れた実績がある間だけ true にする。
+   * true の間、ポーリングは保存と予備経路のためだけに idle 間隔で続ける
+   */
+  wsDelivering?: boolean;
 }
 
 /**
  * 次のポーリング間隔を決める。
  * - 他人の配信: 常に idle（10 秒）
+ * - WebSocket がギフトを届けている: 常に idle（ポーリングは保存と予備）
  * - 直近 ACTIVE_WINDOW_MS 以内にギフトがあった: active（3 秒）
  * - それ以外: idle（10 秒）
  * - ふわっちが idle より長い間隔を指示してきた場合は、負荷対策の指示としてそちらに従う（既存の挙動）
  */
 export function pollIntervalFor(input: PollIntervalInput): number {
-  const { isOther, serverIntervalMs, lastGiftAt, now } = input;
+  const { isOther, serverIntervalMs, lastGiftAt, now, wsDelivering = false } = input;
   if (serverIntervalMs > POLL_INTERVAL_MS.idle) return serverIntervalMs;
   if (isOther) return POLL_INTERVAL_MS.other;
+  if (wsDelivering) return POLL_INTERVAL_MS.idle;
   const isActive = lastGiftAt !== null && now - lastGiftAt <= ACTIVE_WINDOW_MS;
   return isActive ? POLL_INTERVAL_MS.active : POLL_INTERVAL_MS.idle;
 }

@@ -16,7 +16,11 @@ type Db = ReturnType<typeof createDbClient>;
 const BASE_URL = "https://api.whowatch.tv";
 const USER_AGENT = "TagDeck/0.1 (+https://tagdeck.jp)";
 
-/** payments3 のカテゴリ（必要なフィールドのみ） */
+/**
+ * payments3 のカテゴリ（必要なフィールドのみ）。
+ * バナー画像・説明文のフィールド名は未確認（2026-09-25 時点。この環境から実応答を取れなかった）ため、
+ * 候補キーを pickBannerUrl / pickDescription で総当たりし、無ければ null にする
+ */
 export interface RawCategory {
   group?: string;
   title?: string;
@@ -24,6 +28,42 @@ export interface RawCategory {
   badge_text?: string;
   display_order?: number;
   play_item?: Array<{ id?: number }>;
+  [k: string]: unknown;
+}
+
+/** バナー画像 URL の候補キー（順に見て最初の http(s) URL を採用） */
+const BANNER_KEYS = ["banner", "banner_url", "banner_image_url", "image_url", "image", "header_image_url", "thumbnail_url", "pc_banner_url", "sp_banner_url"] as const;
+/** 説明文の候補キー */
+const DESCRIPTION_KEYS = ["description", "sub_title", "subtitle", "lead", "note", "text"] as const;
+
+/** http(s) の URL 文字列ならトリムして返す。それ以外は null */
+function asHttpUrl(v: unknown): string | null {
+  return typeof v === "string" && /^https?:\/\//i.test(v.trim()) ? v.trim() : null;
+}
+
+/** カテゴリからバナー画像 URL を拾う（純関数）。フィールド名が未確認なので候補を総当たり。無ければ null */
+export function pickBannerUrl(c: RawCategory): string | null {
+  for (const k of BANNER_KEYS) {
+    const v: unknown = c[k];
+    const direct = asHttpUrl(v);
+    if (direct) return direct;
+    // { url: "..." } / { pc: "...", sp: "..." } のような入れ子にも対応
+    const nested: unknown[] = v && typeof v === "object" && !Array.isArray(v) ? Object.values(v as Record<string, unknown>) : [];
+    for (const inner of nested) {
+      const u = asHttpUrl(inner);
+      if (u) return u;
+    }
+  }
+  return null;
+}
+
+/** カテゴリの説明文を拾う（純関数）。空文字・URL は説明文とみなさない。長すぎる場合は 500 文字で切る */
+export function pickDescription(c: RawCategory): string | null {
+  for (const k of DESCRIPTION_KEYS) {
+    const v = c[k];
+    if (typeof v === "string" && v.trim() && !asHttpUrl(v)) return v.trim().slice(0, 500);
+  }
+  return null;
 }
 
 export type ItemGroupRow = typeof whowatchItemGroups.$inferInsert;
@@ -56,6 +96,8 @@ export function flattenGroups(categories: RawCategory[], now: Date, knownEventKe
         // group_key は event_lists の ITEM タブ detail と一致する（4/4 確認済み）。
         // ただし恒常カテゴリ（通常アイテム・ひとことアイテム等）はイベントではないので null のままにする
         eventKey: knownEventKeys.has(groupKey) ? groupKey : null,
+        bannerUrl: pickBannerUrl(c),
+        description: pickDescription(c),
         syncedAt: now,
       });
     }
@@ -108,6 +150,8 @@ export async function syncItemGroups(db: Db): Promise<SyncItemGroupsResult> {
         badgeText: sql`excluded.badge_text`,
         displayOrder: sql`excluded.display_order`,
         eventKey: sql`excluded.event_key`,
+        bannerUrl: sql`excluded.banner_url`,
+        description: sql`excluded.description`,
         syncedAt: sql`excluded.synced_at`,
       },
     })

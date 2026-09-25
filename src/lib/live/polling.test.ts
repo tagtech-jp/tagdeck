@@ -25,6 +25,12 @@ describe("pollIntervalFor（対策F: 盛り上がっている時だけ短くす�
     expect(pollIntervalFor({ isOther: false, serverIntervalMs: 10_000, lastGiftAt: NOW - ACTIVE_WINDOW_MS, now: NOW })).toBe(POLL_INTERVAL_MS.active);
   });
 
+  it("WebSocket がギフトを届けている間は盛り上がっていても idle（ポーリングは保存と予備）", () => {
+    expect(pollIntervalFor({ isOther: false, serverIntervalMs: 10_000, lastGiftAt: NOW - 1_000, now: NOW, wsDelivering: true })).toBe(POLL_INTERVAL_MS.idle);
+    // WS が閉じた瞬間から従来どおり短縮に戻る
+    expect(pollIntervalFor({ isOther: false, serverIntervalMs: 10_000, lastGiftAt: NOW - 1_000, now: NOW, wsDelivering: false })).toBe(POLL_INTERVAL_MS.active);
+  });
+
   it("最後のギフトから 60 秒を過ぎたら 10 秒に戻る", () => {
     expect(pollIntervalFor({ isOther: false, serverIntervalMs: 10_000, lastGiftAt: NOW - ACTIVE_WINDOW_MS - 1, now: NOW })).toBe(POLL_INTERVAL_MS.idle);
   });

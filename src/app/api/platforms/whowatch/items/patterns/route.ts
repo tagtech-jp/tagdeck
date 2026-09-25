@@ -46,7 +46,7 @@ export async function GET() {
     const priceById = new Map(prices.map((p) => [p.itemId, p]));
 
     // カテゴリは付加情報。ここで落ちてもアイテム一覧は返す（/live の SE 判定を道連れにしない）
-    let groupRows: Array<{ itemId: number; groupKey: string; groupTitle: string; subGroupTitle: string | null; badgeText: string | null; displayOrder: number | null }> = [];
+    let groupRows: Array<{ itemId: number; groupKey: string; groupTitle: string; subGroupTitle: string | null; badgeText: string | null; displayOrder: number | null; bannerUrl: string | null; description: string | null }> = [];
     try {
       groupRows = await db
         .select({
@@ -56,6 +56,9 @@ export async function GET() {
           subGroupTitle: whowatchItemGroups.subGroupTitle,
           badgeText: whowatchItemGroups.badgeText,
           displayOrder: whowatchItemGroups.displayOrder,
+          // 0017: バナー画像と説明文（SE タブのセクション見出し用。無ければ null）
+          bannerUrl: whowatchItemGroups.bannerUrl,
+          description: whowatchItemGroups.description,
         })
         .from(whowatchItemGroups);
     } catch (e) {
@@ -70,11 +73,11 @@ export async function GET() {
       else groupsByItem.set(g.itemId, [g.groupKey]);
     }
     // プルダウン用の一覧
-    const groupMap = new Map<string, { groupKey: string; groupTitle: string; subGroupTitle: string | null; badgeText: string | null; displayOrder: number | null; itemCount: number }>();
+    const groupMap = new Map<string, { groupKey: string; groupTitle: string; subGroupTitle: string | null; badgeText: string | null; displayOrder: number | null; bannerUrl: string | null; description: string | null; itemCount: number }>();
     for (const g of groupRows) {
       const cur = groupMap.get(g.groupKey);
       if (cur) cur.itemCount++;
-      else groupMap.set(g.groupKey, { groupKey: g.groupKey, groupTitle: g.groupTitle, subGroupTitle: g.subGroupTitle, badgeText: g.badgeText, displayOrder: g.displayOrder, itemCount: 1 });
+      else groupMap.set(g.groupKey, { groupKey: g.groupKey, groupTitle: g.groupTitle, subGroupTitle: g.subGroupTitle, badgeText: g.badgeText, displayOrder: g.displayOrder, bannerUrl: g.bannerUrl, description: g.description, itemCount: 1 });
     }
     const groups = [...groupMap.values()].sort((a, b) => (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999) || a.groupTitle.localeCompare(b.groupTitle, "ja"));
 
