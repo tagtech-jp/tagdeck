@@ -15,6 +15,8 @@ export interface SePlayOptions {
 
 let ctx: AudioContext | null = null;
 const bufferCache = new Map<string, AudioBuffer>();
+/** 取得・デコード中の Promise。同じ URL が同時に来ても 1 回にまとめる */
+const inflight = new Map<string, Promise<AudioBuffer | null>>();
 
 export function getAudioContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -103,6 +105,45 @@ export function synthTier(tier: SeTier, volume = 0.8): void {
 const SYNTH_DURATION_S: Record<SeTier, number> = { T0: 0.15, T1: 0.45, T2: 0.85, T3: 1.35, T4: 2.4, hit: 1.6 };
 
 /**
+ * カスタム音源（URL）を取得してデコードし、キャッシュに入れる。失敗時は null（呼び出し側は合成音に落とす）。
+ * 同じ URL の取得が重なっても 1 回にまとめる
+ */
+async function loadBuffer(c: AudioContext, url: string): Promise<AudioBuffer | null> {
+  const cached = bufferCache.get(url);
+  if (cached) return cached;
+  const running = inflight.get(url);
+  if (running) return running;
+  const p = (async () => {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const buf = await c.decodeAudioData(await res.arrayBuffer());
+      bufferCache.set(url, buf);
+      return buf;
+    } catch {
+      return null;
+    } finally {
+      inflight.delete(url);
+    }
+  })();
+  inflight.set(url, p);
+  return p;
+}
+
+/**
+ * 設定済みのカスタム音源を先に取得・デコードしておく（接続時・設定変更時に呼ぶ）。
+ * 2026-09-25 計測: SE キュー待ちは 1ms まで詰まったが、アップロード音源は「その種類が初めて鳴る瞬間」に
+ * 取得＋デコードが走り、初回だけ数百 ms 余分にかかっていた。先読みしておけば初回も即時に鳴る。
+ * 取れなかった URL は無視する（鳴らす時点で改めて試み、だめなら合成音に落ちる）
+ */
+export async function preloadSe(urls: Array<string | null | undefined>): Promise<void> {
+  const c = getAudioContext();
+  if (!c) return;
+  const unique = [...new Set(urls.filter((u): u is string => typeof u === "string" && u !== ""))];
+  await Promise.all(unique.map((u) => loadBuffer(c, u)));
+}
+
+/**
  * カスタム音源（URL）を再生。取得失敗時は null、成功時は「鳴り終わるまで」の Promise を返す
  * （連続ギフトで前の音が終わってから次を鳴らすため。2026-09-25: 200ms ずらしで重ねると
  *  長めの音源では 2 発目以降が 1 発目に埋もれて「連続で鳴らない」ように聞こえた）
@@ -111,13 +152,8 @@ export async function playUrl(url: string, volume = 0.8): Promise<{ ended: Promi
   const c = getAudioContext();
   if (!c) return null;
   try {
-    let buf = bufferCache.get(url);
-    if (!buf) {
-      const res = await fetch(url);
-      if (!res.ok) return null;
-      buf = await c.decodeAudioData(await res.arrayBuffer());
-      bufferCache.set(url, buf);
-    }
+    const buf = await loadBuffer(c, url);
+    if (!buf) return null;
     const src = c.createBufferSource();
     src.buffer = buf;
     const g = c.createGain();
@@ -126,7 +162,7 @@ export async function playUrl(url: string, volume = 0.8): Promise<{ ended: Promi
     const ended = new Promise<void>((resolve) => {
       src.onended = () => resolve();
       // onended が来ない環境の保険（長さ + 少し）
-      setTimeout(resolve, Math.ceil((buf!.duration + 0.1) * 1000));
+      setTimeout(resolve, Math.ceil((buf.duration + 0.1) * 1000));
     });
     src.start();
     // await で入れ子の Promise が潰れないようオブジェクトで包む

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { getAudioContext, playSeUntilEnd, startKeepAlive, stopKeepAlive, unlockAudio } from "@/lib/se/engine";
+import { getAudioContext, playSeUntilEnd, preloadSe, startKeepAlive, stopKeepAlive, unlockAudio } from "@/lib/se/engine";
 import { createSeQueue } from "@/lib/se/queue";
 import { resolveMappingKey, tierForGift, type SeTier } from "@/lib/se/tiers";
 import { nextPollDelay, partitionFreshGifts, pollIntervalFor } from "@/lib/live/polling";
@@ -271,6 +271,12 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   useEffect(() => {
     mappingsRef.current = mappings;
   }, [mappings]);
+  // 音が有効になった時点（接続時）と設定変更時に、有効なカスタム音源を先読みしておく。
+  // 初めて鳴る種類でも取得＋デコードを待たずに即時で鳴らすため（音が未解除のうちは AudioContext を作らない）
+  useEffect(() => {
+    if (!audioReady) return;
+    void preloadSe(mappings.filter((m) => m.enabled).map((m) => m.url));
+  }, [mappings, audioReady]);
   useEffect(() => {
     autoPlayRef.current = autoPlay;
   }, [autoPlay]);
