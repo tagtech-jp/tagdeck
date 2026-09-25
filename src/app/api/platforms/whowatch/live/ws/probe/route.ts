@@ -117,14 +117,30 @@ export async function GET(request: Request) {
     u.searchParams.set("jwt", jwt);
     return u.toString();
   })();
+  // 2026-09-25 実測（v1）: comment_server_url は wss://ws.whowatch.tv/socket で、そのままの握手は Origin/認証に
+  // 関係なく全て 404 だった。/socket を土台に /socket/websocket?vsn=2.0.0 を使う Phoenix Channels 型の可能性が高いので、
+  // v2 ではそのパス形式を中心に試す（受信のみ。参加メッセージ等の送信はしない）
+  const withQuery = (baseUrl: string, params: Record<string, string>) => {
+    const u = new URL(baseUrl);
+    for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
+    return u.toString();
+  };
+  const phoenix = http.replace(/\/$/, "") + "/websocket";
+  const originWw = { ...base, Origin: "https://whowatch.tv" };
   const variants: Variant[] = [
-    { name: "A: URL そのまま + Origin whowatch.tv", url: http, headers: { ...base, Origin: "https://whowatch.tv" } },
-    { name: "B: URL そのまま + Origin tagdeck.jp（ブラウザ相当）", url: http, headers: { ...base, Origin: "https://tagdeck.jp" } },
-    { name: "C: URL そのまま + Origin なし", url: http, headers: base },
-    ...(withJwt ? [{ name: "D: ?jwt= 付き + Origin whowatch.tv", url: withJwt, headers: { ...base, Origin: "https://whowatch.tv" } }] : []),
-    ...(jwt ? [{ name: "E: Authorization: Bearer + Origin whowatch.tv", url: http, headers: { ...base, Origin: "https://whowatch.tv", Authorization: `Bearer ${jwt}` } }] : []),
+    { name: "A: /socket そのまま + Origin whowatch.tv（v1 と同じ・基準）", url: http, headers: originWw },
+    { name: "P1: /socket/websocket?vsn=2.0.0 + Origin whowatch.tv", url: withQuery(phoenix, { vsn: "2.0.0" }), headers: originWw },
+    ...(jwt
+      ? [
+          { name: "P2: /socket/websocket?vsn=2.0.0&token=jwt + Origin whowatch.tv", url: withQuery(phoenix, { vsn: "2.0.0", token: jwt }), headers: originWw },
+          { name: "P3: /socket/websocket?vsn=2.0.0&jwt=jwt + Origin whowatch.tv", url: withQuery(phoenix, { vsn: "2.0.0", jwt }), headers: originWw },
+          { name: "P4: /socket/websocket?vsn=2.0.0&token=jwt + Origin tagdeck.jp（ブラウザ相当）", url: withQuery(phoenix, { vsn: "2.0.0", token: jwt }), headers: { ...base, Origin: "https://tagdeck.jp" } },
+        ]
+      : []),
+    { name: "P5: /socket/websocket（vsn なし）+ Origin whowatch.tv", url: phoenix, headers: originWw },
+    ...(withJwt ? [{ name: "D: /socket?jwt=jwt + Origin whowatch.tv（v1 と同じ）", url: withJwt, headers: originWw }] : []),
   ];
-  // 直列に試す（同時に開くとサーバ側の接続数制限に当たる可能性がある）。サブリクエストは最大 6
+  // 直列に試す（同時に開くとサーバ側の接続数制限に当たる可能性がある）。サブリクエストは最大 8（Free の上限 50 に余裕）
   const results: VariantResult[] = [];
   for (const v of variants) results.push(await tryHandshake(v, jwt));
 
