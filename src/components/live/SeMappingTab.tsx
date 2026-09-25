@@ -51,8 +51,15 @@ interface GroupRow {
 }
 /** プルダウンの「分類なし」を表す擬似カテゴリのキー */
 const NONE_GROUP = "none";
-/** 仮想リストの 1 行: カテゴリ見出し か アイテム */
-type ListRow = { kind: "header"; group: GroupRow; count: number } | { kind: "item"; item: ItemRow; groupKey: string };
+/** 仮想リストの 1 行: カテゴリ見出し か アイテムの段（最大 GRID_COLUMNS 件をグリッドで並べる） */
+type ListRow = { kind: "header"; group: GroupRow; count: number } | { kind: "items"; items: ItemRow[]; groupKey: string };
+/** アイテムページと同じ 3 列（画面幅が狭ければ CSS 側で 2 列・1 列に落ちる） */
+const GRID_COLUMNS = 3;
+function chunkItems(items: ItemRow[], groupKey: string): ListRow[] {
+  const out: ListRow[] = [];
+  for (let i = 0; i < items.length; i += GRID_COLUMNS) out.push({ kind: "items", items: items.slice(i, i + GRID_COLUMNS), groupKey });
+  return out;
+}
 interface Mapping {
   key: string;
   url: string | null;
@@ -118,7 +125,7 @@ export function SeMappingTab() {
     const out: ListRow[] = [];
     if (groupFilter === NONE_GROUP) {
       out.push({ kind: "header", group: { groupKey: NONE_GROUP, groupTitle: "分類なし", subGroupTitle: null, badgeText: null, displayOrder: null, description: "無料アイテム・販売終了・イベント限定など、ふわっちのアイテムページの見出しに無いアイテム。無料アイテムの既定 SE は上の「価格帯ごとの既定 SE」で変えられます", itemCount: unclassified.length }, count: unclassified.length });
-      for (const item of unclassified) out.push({ kind: "item", item, groupKey: NONE_GROUP });
+      out.push(...chunkItems(unclassified, NONE_GROUP));
       return out;
     }
     const targets = groupFilter === "all" ? groups : groups.filter((g) => g.groupKey === groupFilter);
@@ -127,11 +134,11 @@ export function SeMappingTab() {
       // 「すべて」表示で 0 件のカテゴリ（絞り込みで消えた等）は見出しごと省く。単独選択なら 0 件でも見出しは出す
       if (sectionItems.length === 0 && groupFilter === "all") continue;
       out.push({ kind: "header", group, count: sectionItems.length });
-      for (const item of sectionItems) out.push({ kind: "item", item, groupKey: group.groupKey });
+      out.push(...chunkItems(sectionItems, group.groupKey));
     }
     return out;
   }, [filtered, groups, groupFilter, unclassified]);
-  const visibleItemCount = useMemo(() => rows.filter((r) => r.kind === "item").length, [rows]);
+  const visibleItemCount = useMemo(() => rows.reduce((n, r) => n + (r.kind === "items" ? r.items.length : 0), 0), [rows]);
 
   /** カテゴリの表示名。ふわっちAPIの title + badge_text（アイテムページの見出しとは異なる場合がある） */
   const groupLabel = (g: GroupRow) => `${g.badgeText ? `${g.badgeText} / ` : ""}${g.groupTitle}${g.subGroupTitle ? `（${g.subGroupTitle}）` : ""}`;
@@ -140,7 +147,7 @@ export function SeMappingTab() {
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => listRef.current,
-    estimateSize: (index) => (rows[index]?.kind === "header" ? (rows[index].group.bannerUrl ? 260 : 140) : 132),
+    estimateSize: (index) => (rows[index]?.kind === "header" ? (rows[index].group.bannerUrl ? 260 : 140) : 240),
     overscan: 6,
   });
 
@@ -361,14 +368,21 @@ export function SeMappingTab() {
                   const isPseudo = g.groupKey === NONE_GROUP;
                   const catKey = `cat:group:${g.groupKey}`;
                   // バナー画像が無いカテゴリは、所属アイテムの画像を並べて見出しにする（アイテムページの雰囲気に寄せる）
-                  const thumbs = g.bannerUrl ? [] : rows.slice(row.index + 1).filter((x): x is Extract<ListRow, { kind: "item" }> => x.kind === "item" && x.groupKey === g.groupKey).map((x) => x.item.imageUrl).filter((u): u is string => Boolean(u)).slice(0, 8);
+                  const thumbs = g.bannerUrl
+                    ? []
+                    : rows
+                        .slice(row.index + 1)
+                        .filter((x): x is Extract<ListRow, { kind: "items" }> => x.kind === "items" && x.groupKey === g.groupKey)
+                        .flatMap((x) => x.items.map((it) => it.imageUrl))
+                        .filter((u): u is string => Boolean(u))
+                        .slice(0, 8);
                   return (
                     <div key={`h:${g.groupKey}`} data-index={row.index} ref={rowVirtualizer.measureElement} style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${row.start}px)` }}>
                       <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted/40">
                         {g.bannerUrl ? (
                           // ふわっちのアイテムページのバナーをそのまま見出しに使う（外部 URL なので next/image は使わない）
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={g.bannerUrl} alt={groupLabel(g)} loading="lazy" className="max-h-48 w-full object-cover" />
+                          <img src={g.bannerUrl} alt={groupLabel(g)} loading="lazy" className="w-full object-cover" />
                         ) : (
                           <div className="flex flex-wrap items-center gap-3 bg-primary/10 px-4 py-3">
                             {thumbs.length > 0 && (
@@ -404,64 +418,69 @@ export function SeMappingTab() {
                     </div>
                   );
                 }
-                const it = r.item;
-                const tier = tierForGift({ priceYen: it.priceJpy, count: 1, isHit: false });
-                const kind = itemKind(it.patterns);
-                // パターン単位の個別割り当ては「当たり」と「名前で見分けがつくパターン」だけ出す。
-                // 見た目も名前も同じパターンが並ぶだけのアイテム（実測: 水上花火は17パターン全て同一）は
-                // 選びようが無いのでアイテム行に集約する。判定は pattern-rows.ts を参照
-                const special = expandablePatternRows(it.itemName, it.patterns);
+                // アイテムの段: ふわっちのアイテムページと同じく 3 列のグリッド（画像・名前・価格）で並べ、SE の設定をその下に付ける
                 return (
-                  <div
-                    key={`i:${r.groupKey}:${it.itemId}`}
-                    data-index={row.index}
-                    ref={rowVirtualizer.measureElement}
-                    style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${row.start}px)` }}
-                  >
-                    <div className="mb-3 flex gap-3 rounded-lg border border-border p-3">
-                      {it.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={it.imageUrl} alt={it.itemName} loading="lazy" className="size-14 shrink-0 rounded-lg border border-border bg-muted object-contain" />
-                      ) : (
-                        <div className="flex size-14 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-[10px] text-muted-foreground">画像なし</div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                      <div className="mb-1 flex flex-wrap items-center gap-2 text-xs">
-                        <span className="font-medium text-foreground">{it.itemName}</span>
-                        <span className="text-muted-foreground">{it.priceJpy !== null ? `¥${it.priceJpy.toLocaleString()}` : "無料 / 価格なし"}</span>
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{tier}</span>
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{ITEM_KIND_LABELS[kind]}</span>
-                        <span className="text-muted-foreground">{it.patterns.length} パターン</span>
-                        {(it.groups ?? [])
-                          .filter((gk) => gk !== r.groupKey)
-                          .map((gk) => {
-                            const g = groups.find((x) => x.groupKey === gk);
-                            return (
-                              <span key={gk} className="rounded-full bg-primary/10 px-2 py-0.5 text-primary" title="このカテゴリにも属しています">
-                                {g ? g.groupTitle : gk}
-                              </span>
-                            );
-                          })}
-                        {byKey.has(`item:${it.itemId}`) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5 text-status-warning">上書き中</span>}
-                      </div>
-                      <MappingControls mkeys={[`item:${it.itemId}`]} tier={tier} />
-                      {special.map((g) => {
-                        const keys = g.patternIds.map((id) => `pattern:${id}`);
+                  <div key={`r:${r.groupKey}:${r.items[0]?.itemId ?? row.index}`} data-index={row.index} ref={rowVirtualizer.measureElement} style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${row.start}px)` }}>
+                    <div className="mb-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      {r.items.map((it) => {
+                        const tier = tierForGift({ priceYen: it.priceJpy, count: 1, isHit: false });
+                        const kind = itemKind(it.patterns);
+                        // パターン単位の個別割り当ては「当たり」と「名前で見分けがつくパターン」だけ出す。
+                        // 見た目も名前も同じパターンが並ぶだけのアイテム（実測: 水上花火は17パターン全て同一）は
+                        // 選びようが無いのでアイテム行に集約する。判定は pattern-rows.ts を参照
+                        const special = expandablePatternRows(it.itemName, it.patterns);
                         return (
-                          <div key={g.label} className="mt-2 border-t border-border pt-2">
-                            <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-status-warning">
-                              <span>
-                                {ITEM_KIND_LABELS[patternKind(g.representative)]}: {g.label}
-                                {g.representative.hitGrade ? `（${g.representative.hitGrade}）` : ""}
-                              </span>
-                              {g.patternIds.length > 1 && <span className="text-muted-foreground">同名 {g.patternIds.length} パターンにまとめて割り当て</span>}
-                              {keys.some((k) => byKey.has(k)) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5">上書き中</span>}
+                          <div key={it.itemId} className="rounded-xl border border-border bg-card p-3">
+                            <div className="flex gap-3">
+                              {it.imageUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={it.imageUrl} alt={it.itemName} loading="lazy" className="size-20 shrink-0 rounded-lg bg-muted object-contain" />
+                              ) : (
+                                <div className="flex size-20 shrink-0 items-center justify-center rounded-lg bg-muted text-[10px] text-muted-foreground">画像なし</div>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold leading-tight text-foreground">{it.itemName}</p>
+                                <p className="mt-0.5 text-sm font-bold text-ember-pulse">{it.priceJpy !== null ? `¥${it.priceJpy.toLocaleString()}〜` : "無料 / 価格なし"}</p>
+                                <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px]">
+                                  <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{tier}</span>
+                                  <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{ITEM_KIND_LABELS[kind]}</span>
+                                  <span className="text-muted-foreground">{it.patterns.length} パターン</span>
+                                  {(it.groups ?? [])
+                                    .filter((gk) => gk !== r.groupKey)
+                                    .map((gk) => {
+                                      const g = groups.find((x) => x.groupKey === gk);
+                                      return (
+                                        <span key={gk} className="rounded-full bg-primary/10 px-2 py-0.5 text-primary" title="このカテゴリにも属しています">
+                                          {g ? g.groupTitle : gk}
+                                        </span>
+                                      );
+                                    })}
+                                  {byKey.has(`item:${it.itemId}`) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5 text-status-warning">上書き中</span>}
+                                </div>
+                              </div>
                             </div>
-                            <MappingControls mkeys={keys} tier={g.isHit ? "hit" : tier} />
+                            <div className="mt-2 border-t border-border pt-2">
+                              <MappingControls mkeys={[`item:${it.itemId}`]} tier={tier} />
+                            </div>
+                            {special.map((g) => {
+                              const keys = g.patternIds.map((id) => `pattern:${id}`);
+                              return (
+                                <div key={g.label} className="mt-2 border-t border-border pt-2">
+                                  <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-status-warning">
+                                    <span>
+                                      {ITEM_KIND_LABELS[patternKind(g.representative)]}: {g.label}
+                                      {g.representative.hitGrade ? `（${g.representative.hitGrade}）` : ""}
+                                    </span>
+                                    {g.patternIds.length > 1 && <span className="text-muted-foreground">同名 {g.patternIds.length} パターンにまとめて割り当て</span>}
+                                    {keys.some((k) => byKey.has(k)) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5">上書き中</span>}
+                                  </div>
+                                  <MappingControls mkeys={keys} tier={g.isHit ? "hit" : tier} />
+                                </div>
+                              );
+                            })}
                           </div>
                         );
                       })}
-                      </div>
                     </div>
                   </div>
                 );
