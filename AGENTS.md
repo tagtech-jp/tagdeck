@@ -23,7 +23,14 @@ TagDeck は配信者向けセカンドスクリーン SaaS です。ふわっち
 ### Cloudflare Workers 制約
 
 - バンドルサイズ 25MiB 上限。framer-motion・recharts 等の重いライブラリは next/dynamic で必ず遅延ロード
-- CPU time 10ms / request（Free プラン）。重い処理は Durable Objects に分離
+- **プラン: Workers Paid（$5/月）**。Cron Triggers が 19 本稼働している時点で無料プラン（上限 5 本）ではない
+  - CPU time: 30 秒 / request（既定。最大 5 分まで設定可）。無料プランの 10ms ではない
+  - Cron Triggers: 250 本 / アカウント（無料は 5 本）
+  - サブリクエスト: 10,000 / 実行（無料は 50）
+  - メモリ 128MB・`waitUntil()` はレスポンス後 30 秒まで（有料・無料とも同じ）
+  - ※ 2026-09-23 まで本項は「CPU time 10ms（Free プラン）」と誤記されており、`/items/patterns` の
+    HTTP 500 を「CPU 超過」と誤診した。真因は migration 0016 の列欠落だった
+- 重い処理は Durable Objects に分離（CPU ではなく設計上の分離として）
 - DB クライアントはグローバルに保持しない。Route Handler・Server Action 内で都度インスタンス化
 - nodejs_compat フラグ前提
 - Edge Runtime ではなく Node.js Runtime（OpenNext で nodejs_compat 経由）
