@@ -134,6 +134,13 @@
       "when": 1790000800000,
       "tag": "0018_se_presets",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790000900000,
+      "tag": "0019_se_bucket_limits",
+      "breakpoints": true
     }
   ]
 }
