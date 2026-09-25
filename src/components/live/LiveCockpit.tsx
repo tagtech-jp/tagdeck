@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { playSe } from "@/lib/se/engine";
 import { tierForGift, TIER_LABELS, type SeTier } from "@/lib/se/tiers";
 import { ACTIVE_WINDOW_MS, POLL_INTERVAL_MS, pollIntervalFor } from "@/lib/live/polling";
-import { CLIENT_BUILD_ID, useLiveConnection } from "./LiveConnectionProvider";
+import { CLIENT_BUILD_ID, useLiveConnection, type GiftSample } from "./LiveConnectionProvider";
 import type { WsState } from "@/lib/live/ws-feed";
 import { retryCountdownSec } from "@/lib/live/master-retry";
 import type { NormalizedGift as Gift } from "@/lib/whowatch/gift-normalize";
@@ -102,6 +102,23 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
 
   const waiting = autoConnectPhase === "waiting" || autoConnectPhase === "connecting";
   const badge = status === "polling" ? STATUS_BADGE.polling : waiting ? { label: "待機中（自動接続ON）", className: "bg-primary/10 text-primary" } : STATUS_BADGE[status];
+
+  // 到着ゆらぎ（時計ズレ除去）。ふわっち posted_at・Worker・手元の 3 つの時計を混ぜた「投げられた→SE」は
+  // 定数オフセット（時計のズレ）を含むため、8 秒が「本当の遅延」か「時計ズレ」かを区別できない。
+  // そこで経路ごとに最速の到着(arrivalMs)を基準(0)にし、それより何 ms 遅れて届いたか（ゆらぎ）だけを見る。
+  // 定数オフセットは打ち消されるので、ゆらぎが小さい＝実遅延ではない、大きい＝本当に配信が詰まっている。
+  const arrivalMin = (src: GiftSample["source"]): number | null => {
+    const xs = giftLog.filter((g) => g.source === src && g.arrivalMs !== null).map((g) => g.arrivalMs as number);
+    return xs.length ? Math.min(...xs) : null;
+  };
+  const wsArrivalMin = arrivalMin("ws");
+  const pollArrivalMin = arrivalMin("poll");
+  const jitterOf = (g: GiftSample): number | null => {
+    const base = g.source === "ws" ? wsArrivalMin : pollArrivalMin;
+    return g.arrivalMs !== null && base !== null ? g.arrivalMs - base : null;
+  };
+  const jitterStats = (src: GiftSample["source"]) =>
+    stats(giftLog.filter((g) => g.source === src).map(jitterOf).filter((v): v is number => v !== null));
 
   return (
     <div className="space-y-4">
@@ -276,6 +293,16 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
               受信→鳴り始め（SE キュー待ち・ネットワーク無関係）: {fmt(stats(giftLog.map((g) => g.queueMs)))}
               <span className="ml-1 text-muted-foreground">← 連投で前の音を待った分。大きければ待ち上限（4 秒）を短くする</span>
             </div>
+            <div className="font-bold text-primary">
+              到着ゆらぎ（時計ズレ除去・最速比）: WS {fmt(jitterStats("ws"))} / ポーリング {fmt(jitterStats("poll"))}
+              <span className="ml-1 font-normal text-muted-foreground">
+                ← 各経路で最速の到着を 0 とした遅れ幅。小さい＝上の「投げられた→SE」の大きさは時計ズレ（実遅延ではない）。大きい＝本当に配信が詰まっている
+              </span>
+            </div>
+            <div className="text-muted-foreground">
+              最速の到着（基準・時計ズレを含む定数）: WS {wsArrivalMin ?? "—"}ms / ポーリング {pollArrivalMin ?? "—"}ms
+              <span className="ml-1">← この値が大きく、上の「到着ゆらぎ」が小さいなら、遅延の正体は時計ズレ</span>
+            </div>
             <div>
               対策F（盛り上がり時だけ短縮）: 現在 {Math.round(pollIntervalFor({ isOther: viewingOther !== null, serverIntervalMs: pollingInterval, lastGiftAt, now: Date.now(), wsDelivering: wsState === "open" && wsGiftCount > 0 }) / 1000)} 秒間隔
               {lastGiftAt ? `（最後のギフトから ${Math.round((Date.now() - lastGiftAt) / 1000)} 秒）` : "（ギフト未検知）"}
@@ -300,8 +327,9 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
             </div>
           </div>
           <p className="mb-2 text-xs text-muted-foreground">
-            ※ ふわっちの posted_at は秒単位のため ±500ms の誤差を含む。時計ズレ補正は Worker の時計（serverNow）基準（直近 {giftLog[0]?.skewMs ?? "—"} ms）。
-            補正済と生の差が大きいときは補正側を疑うこと
+            ※ ふわっちの posted_at は秒単位のため ±500ms の誤差を含む。時計ズレ補正は Worker の時計（serverNow）基準（直近 {giftLog[0]?.skewMs ?? "—"} ms）だが、
+            posted_at はふわっちのサーバ時計・Worker とは別物のため「投げられた→SE」は 3 つの時計を混ぜた値になる。
+            遅延が本物かどうかは「到着ゆらぎ」（最速の到着を 0 にして時計ズレを打ち消した値）で判断すること。ゆらぎが小さければ実遅延ではない
           </p>
           {giftLog.length > 0 && (
             <div className="mb-3 overflow-x-auto">
@@ -313,6 +341,7 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
                     <th className="py-1 pr-2 font-medium">ギフト</th>
                     <th className="py-1 pr-2 font-medium">パターン</th>
                     <th className="py-1 pr-2 font-medium">投稿→受信</th>
+                    <th className="py-1 pr-2 font-medium">到着ゆらぎ</th>
                     <th className="py-1 pr-2 font-medium">投稿→SE(補正)</th>
                     <th className="py-1 pr-2 font-medium">投稿→SE(生)</th>
                     <th className="py-1 pr-2 font-medium">キュー待ち</th>
@@ -330,6 +359,7 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
                         {g.patternId ?? "—"} {g.patternName ?? ""} {g.kind ? `[${g.kind}]` : ""}
                       </td>
                       <td className="py-1 pr-2 font-mono">{g.arrivalMs ?? "—"}</td>
+                      <td className="py-1 pr-2 font-mono font-bold text-primary">{jitterOf(g) ?? "—"}</td>
                       <td className="py-1 pr-2 font-mono font-bold">{g.totalMs ?? "—"}</td>
                       <td className="py-1 pr-2 font-mono">{g.rawTotalMs ?? "—"}</td>
                       <td className="py-1 pr-2 font-mono">{g.queueMs}</td>
