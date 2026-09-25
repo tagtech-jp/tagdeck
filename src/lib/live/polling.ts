@@ -6,16 +6,18 @@
  * 直近にギフトがあったときだけ短い間隔、静かなときはふわっちのサーバ指定どおり 10 秒に戻す。
  * 他人の配信を見ているときは常に 10 秒（自分の配信ではないので短くする理由が無い）。
  *
- * active は 2026-09-23 に 3 秒 → 1.5 秒へ変更（平均待ちが 1.5 秒 → 0.75 秒になる）。
+ * active は 2026-09-23 に 3 秒 → 1.5 秒 → 500ms の順で変更(平均待ちが 1.5 秒 → 250ms 相当)。
  * 投げ銭が続いている間だけなので、静かな時間を含めた平均負荷はふわっちの指定値に近いまま保たれる。
+ * 500ms 化で Cloudflare 無料枠(10万 req/日)への影響が出てくるため、消費量は poll-quota.ts で
+ * ブラウザ側から見張っている(?debug=1 に表示)。実測は Cloudflare 側で確認すること。
  */
-export const POLL_INTERVAL_MS = { active: 1_500, idle: 10_000, other: 10_000 } as const;
+export const POLL_INTERVAL_MS = { active: 500, idle: 10_000, other: 10_000 } as const;
 
 /** 「盛り上がっている」と見なす時間。最後のギフトからこの時間内なら active 間隔を使う */
 export const ACTIVE_WINDOW_MS = 60_000;
 
-/** 応答が遅れても最低これだけは間を空ける */
-export const MIN_POLL_DELAY_MS = 1_000;
+/** 応答が遅れても最低これだけは間を空ける(active 間隔を 500ms にしたのに合わせて 2026-09-23 に 1,000ms → 500ms) */
+export const MIN_POLL_DELAY_MS = 500;
 
 export interface PollIntervalInput {
   /** 他人の配信を見ているか（見ているなら常に idle 間隔） */
