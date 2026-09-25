@@ -7,7 +7,8 @@ import { resolveMappingKey, tierForGift, type SeTier } from "@/lib/se/tiers";
 import { nextPollDelay, partitionFreshGifts, pollIntervalFor } from "@/lib/live/polling";
 import { idlePollInterval, INITIAL_AUTO_CONNECT_STATE, reduceAutoConnect, type AutoConnectPhase } from "@/lib/live/auto-connect";
 import { INITIAL_MASTER_STATE, masterFailed, masterSucceeded, retryCountdownSec, type MasterState } from "@/lib/live/master-retry";
-import { extractComments, isBacklogComment, parseWsMessage, WS_MAX_FAILURES_BEFORE_GIVE_UP, wsReconnectDelay, wsUrlCandidates, type WsState } from "@/lib/live/ws-feed";
+import { extractComments, isBacklogComment, parseWsMessage, WS_MAX_FAILURES_BEFORE_GIVE_UP, wsReconnectDelay, type WsState } from "@/lib/live/ws-feed";
+import { commentsFromFrame, createRefCounter, decodeFrame, heartbeatFrame, joinFrame, PHOENIX_HEARTBEAT_MS, phoenixSocketUrl, replyStatus, topicCandidates, type PhoenixFrame } from "@/lib/live/phoenix";
 import { normalizeGift, type NormalizedGift as Gift, type PatternInfo, type PickedGiftComment } from "@/lib/whowatch/gift-normalize";
 import type { ItemKind } from "@/lib/se/item-kind";
 
@@ -140,6 +141,8 @@ interface LiveConnectionValue {
   wsGiftCount: number;
   /** WS の直近の切断理由など（表示用） */
   wsInfo: string | null;
+  /** 購読できたチャンネル名（Phoenix のトピック）。未購読なら null */
+  wsTopic: string | null;
   /** WS の生メッセージ（?debug=1 のときだけ溜める） */
   wsLog: WsLogEntry[];
   /** 自動接続の状態。off 以外はチェックボックスが ON */
@@ -192,6 +195,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const [wsState, setWsState] = useState<WsState>("off");
   const [wsGiftCount, setWsGiftCount] = useState(0);
   const [wsInfo, setWsInfo] = useState<string | null>(null);
+  const [wsTopic, setWsTopic] = useState<string | null>(null);
   const [wsLog, setWsLog] = useState<WsLogEntry[]>([]);
   const [debug, setDebug] = useState(false);
 
@@ -232,7 +236,6 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const wsRef = useRef<WebSocket | null>(null);
   const wsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wsCandidatesRef = useRef<string[]>([]);
-  const wsCandidateIdxRef = useRef(0);
   /** 最後にメッセージを受け取ってからの連続切断回数（再接続の待ち時間に使う） */
   const wsClosesRef = useRef(0);
   /** この接続セッションで 1 つでもメッセージを受け取れたか（0 のまま失敗が続けば諦める） */
@@ -242,6 +245,21 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const wsConnectedAtRef = useRef(0);
   /** ポーリングで測った時計ズレの直近値。WS 経由のギフトの計測にも使う */
   const skewRef = useRef<number | null>(null);
+  // ── Phoenix Channels（決裁 2026-09-25「送信も可」: 送るのは phx_join と heartbeat だけ） ──
+  const wsJwtRef = useRef<string | null>(null);
+  const wsLiveIdRef = useRef<string | null>(null);
+  /** 参加候補のトピック名（順に試す） */
+  const wsTopicsRef = useRef<string[]>([]);
+  /** 参加が通ったトピック */
+  const wsTopicRef = useRef<string | null>(null);
+  /** 返事待ちの phx_join（ref が一致する phx_reply を待つ。5 秒で次の候補へ） */
+  const wsPendingJoinRef = useRef<{ ref: string; topic: string; idx: number; timer: ReturnType<typeof setTimeout> } | null>(null);
+  const wsHeartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wsNextRefRef = useRef<() => string>(createRefCounter());
+  /** 全候補で参加を拒否された等、再接続しても無駄なとき true */
+  const wsGiveUpRef = useRef(false);
+  /** 参加に失敗した理由（表示用） */
+  const wsJoinErrorsRef = useRef<string[]>([]);
 
   useEffect(() => {
     mappingsRef.current = mappings;
@@ -394,6 +412,12 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const closeWs = useCallback(() => {
     if (wsTimerRef.current) clearTimeout(wsTimerRef.current);
     wsTimerRef.current = null;
+    if (wsHeartbeatRef.current) clearInterval(wsHeartbeatRef.current);
+    wsHeartbeatRef.current = null;
+    if (wsPendingJoinRef.current) clearTimeout(wsPendingJoinRef.current.timer);
+    wsPendingJoinRef.current = null;
+    wsTopicRef.current = null;
+    setWsTopic(null);
     const ws = wsRef.current;
     wsRef.current = null;
     wsDeliveringRef.current = false;
@@ -501,14 +525,85 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   );
 
   // ── WebSocket 経路 ───────────────────────────────────────────────────────
-  /** WS のメッセージ 1 件を処理する。形式が未確定なので「コメントらしいもの」を拾う防御的な解析 */
+  /**
+   * 参加（phx_join）を候補トピックの順に試す。返事は handleWsMessage が ref で突き合わせる。
+   * 全候補で拒否されたら諦めてポーリングだけで続ける（再接続はしない）
+   */
+  /** 返事待ちのタイマーから自分自身を呼ぶための参照（useCallback の中で自分を直接参照しない） */
+  const tryJoinRef = useRef<(idx: number) => void>(() => {});
+  const tryJoin = useCallback((idx: number) => {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const topics = wsTopicsRef.current;
+    if (idx >= topics.length) {
+      wsGiveUpRef.current = true;
+      setWsState("failed");
+      setWsInfo(`購読できるチャンネルが見つかりません（試した: ${topics.join(", ")} / 理由: ${wsJoinErrorsRef.current.join("; ") || "—"}）。ポーリングで続行`);
+      try {
+        ws.close(1000, "no topic");
+      } catch {
+        // 既に閉じていれば無視
+      }
+      return;
+    }
+    const topic = topics[idx];
+    const ref = wsNextRefRef.current();
+    const jwt = wsJwtRef.current;
+    ws.send(joinFrame(topic, ref, jwt ? { token: jwt } : {}));
+    if (wsPendingJoinRef.current) clearTimeout(wsPendingJoinRef.current.timer);
+    wsPendingJoinRef.current = {
+      ref,
+      topic,
+      idx,
+      timer: setTimeout(() => {
+        // 返事が来ない＝そのトピックは無視されている。次へ
+        if (wsPendingJoinRef.current?.ref !== ref) return;
+        wsJoinErrorsRef.current.push(`${topic}: 返事なし`);
+        wsPendingJoinRef.current = null;
+        tryJoinRef.current(idx + 1);
+      }, 5_000),
+    };
+    setWsInfo(`購読を試行中: ${topic}`);
+  }, []);
+  useEffect(() => {
+    tryJoinRef.current = tryJoin;
+  }, [tryJoin]);
+
+  /** WS のメッセージ 1 件を処理する。Phoenix の V2 フレームとして読み、読めなければ従来の防御的解析に落とす */
   const handleWsMessage = useCallback(
     (ev: MessageEvent) => {
       const receivedAt = Date.now();
       const msg = parseWsMessage(ev.data);
       if (debugRef.current) setWsLog((prev) => [{ at: receivedAt, data: msg ?? (typeof ev.data === "string" ? ev.data.slice(0, 500) : String(ev.data)) }, ...prev].slice(0, 200));
       if (msg === null) return;
-      const comments = extractComments(msg).filter((c) => c.comment_type === "BY_PLAYITEM");
+      const frame: PhoenixFrame | null = decodeFrame(ev.data);
+      // 参加の返事（phx_reply）を ref で突き合わせる
+      const pending = wsPendingJoinRef.current;
+      if (frame && pending && frame.ref === pending.ref && frame.topic === pending.topic) {
+        const st = replyStatus(frame);
+        if (st === "ok") {
+          clearTimeout(pending.timer);
+          wsPendingJoinRef.current = null;
+          wsTopicRef.current = pending.topic;
+          setWsTopic(pending.topic);
+          setWsInfo(`購読中: ${pending.topic}`);
+          return;
+        }
+        if (st === "error") {
+          clearTimeout(pending.timer);
+          wsPendingJoinRef.current = null;
+          const reason = (frame.payload as { response?: { reason?: unknown } } | null)?.response?.reason;
+          wsJoinErrorsRef.current.push(`${pending.topic}: ${typeof reason === "string" ? reason : "error"}`);
+          tryJoinRef.current(pending.idx + 1);
+          return;
+        }
+      }
+      // サーバ側からチャンネルが閉じられた／エラーになった場合は再接続に任せる（onclose が続く）
+      if (frame && (frame.event === "phx_error" || frame.event === "phx_close") && frame.topic === wsTopicRef.current) {
+        setWsInfo(`チャンネルが閉じられました（${frame.event}）。再接続します`);
+        return;
+      }
+      const comments = (frame ? commentsFromFrame(frame) : extractComments(msg)).filter((c) => c.comment_type === "BY_PLAYITEM");
       if (comments.length === 0) return;
       let missingPattern = false;
       const normalized = comments.map((c) => normalizeGift(c, (pid) => lookupPattern(pid, () => (missingPattern = true))));
@@ -536,12 +631,11 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
 
   /** 再接続タイマーから自分自身を呼ぶための参照（useCallback の中で自分を直接参照しない） */
   const openWsRef = useRef<() => void>(() => {});
-  /** 候補 URL の 1 つへ接続する。切れたら次の候補・バックオフで再接続。ポーリングは止めない */
+  /** コメントサーバへ接続し、開いたら heartbeat を始めて購読を試す。切れたらバックオフで再接続。ポーリングは止めない */
   const openWs = useCallback(() => {
-    if (!runningRef.current) return;
-    const candidates = wsCandidatesRef.current;
-    if (candidates.length === 0) return;
-    const url = candidates[wsCandidateIdxRef.current % candidates.length];
+    if (!runningRef.current || wsGiveUpRef.current) return;
+    const url = wsCandidatesRef.current[0];
+    if (!url) return;
     let ws: WebSocket;
     try {
       ws = new WebSocket(url);
@@ -560,6 +654,13 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       wsConnectedAtRef.current = Date.now();
       setWsState("open");
       setWsInfo(null);
+      // Phoenix は一定時間 heartbeat が無いと切断する。30 秒ごとに送る（送るのはこれと phx_join だけ）
+      if (wsHeartbeatRef.current) clearInterval(wsHeartbeatRef.current);
+      wsHeartbeatRef.current = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) ws.send(heartbeatFrame(wsNextRefRef.current()));
+      }, PHOENIX_HEARTBEAT_MS);
+      wsJoinErrorsRef.current = [];
+      tryJoinRef.current(0);
     };
     ws.onmessage = (ev) => {
       if (wsRef.current !== ws) return;
@@ -572,13 +673,18 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       if (wsRef.current !== ws) return; // stop() で閉じた／差し替え済み
       wsRef.current = null;
       wsDeliveringRef.current = false;
+      if (wsHeartbeatRef.current) clearInterval(wsHeartbeatRef.current);
+      wsHeartbeatRef.current = null;
+      if (wsPendingJoinRef.current) clearTimeout(wsPendingJoinRef.current.timer);
+      wsPendingJoinRef.current = null;
+      wsTopicRef.current = null;
+      setWsTopic(null);
       if (!runningRef.current) {
         setWsState("off");
         return;
       }
+      if (wsGiveUpRef.current) return; // tryJoin が諦めた（表示は設定済み）
       wsClosesRef.current += 1;
-      // メッセージを 1 つも受け取れずに切れた＝認証方式か URL が違う可能性。次の候補を試す
-      if (!gotMessage) wsCandidateIdxRef.current += 1;
       // 1006 でも「握手で拒否された」のか「つながった後に切られた」のかで原因が違うので区別して残す
       const reason = `切断 code=${ev.code}${ev.reason ? ` ${ev.reason}` : ""}（${opened ? (gotMessage ? "受信後に切断" : "接続後・受信前に切断") : "接続前に失敗＝握手で拒否か URL/証明書の問題"}）`;
       if (!wsReceivedAnyRef.current && wsClosesRef.current >= WS_MAX_FAILURES_BEFORE_GIVE_UP) {
@@ -606,21 +712,36 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       setWsState("connecting");
       setWsInfo(null);
       setWsGiftCount(0);
+      setWsTopic(null);
       wsClosesRef.current = 0;
       wsReceivedAnyRef.current = false;
       wsDeliveringRef.current = false;
-      wsCandidateIdxRef.current = 0;
+      wsGiveUpRef.current = false;
+      wsJoinErrorsRef.current = [];
+      wsNextRefRef.current = createRefCounter();
+      wsLiveIdRef.current = id;
       try {
         const r = await fetch(`/api/platforms/whowatch/live/ws?liveId=${encodeURIComponent(id)}`);
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const d = (await r.json()) as { url: string | null; jwt: string | null };
-        const candidates = wsUrlCandidates(d.url, d.jwt);
-        if (candidates.length === 0) {
+        // 実測（2026-09-25 診断 v2）: /socket ではなく /socket/websocket?vsn=2.0.0 が入口。Origin 制限なし
+        const url = phoenixSocketUrl(d.url, d.jwt);
+        if (!url) {
           setWsState("failed");
           setWsInfo("この配信にはコメントサーバの URL が無いため、ポーリングだけで動いています");
           return;
         }
-        wsCandidatesRef.current = candidates;
+        wsJwtRef.current = d.jwt;
+        wsCandidatesRef.current = [url];
+        // トピック名は実機で確定させる。確定したら localStorage の tagdeck.live.wsTopic（{id} は live_id に置換）で先頭に差し込める
+        let topics = topicCandidates(id);
+        try {
+          const override = localStorage.getItem("tagdeck.live.wsTopic");
+          if (override) topics = [override.replace("{id}", id), ...topics.filter((t) => t !== override.replace("{id}", id))];
+        } catch {
+          // localStorage が使えない環境では候補のまま
+        }
+        wsTopicsRef.current = topics;
         if (!runningRef.current) return; // 取得中に停止された
         openWs();
       } catch (e) {
@@ -823,6 +944,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       wsState,
       wsGiftCount,
       wsInfo,
+      wsTopic,
       wsLog,
       autoConnectPhase: autoConnect.phase,
       setAutoConnect,
@@ -833,7 +955,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       setDebug,
       debug,
     }),
-    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, pollingInterval, lastPolledAt, mappings, targetId, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsInfo, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
+    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, pollingInterval, lastPolledAt, mappings, targetId, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsInfo, wsTopic, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
   );
 
   return <LiveConnectionContext.Provider value={value}>{children}</LiveConnectionContext.Provider>;

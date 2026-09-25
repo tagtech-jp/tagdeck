@@ -83,6 +83,7 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
     wsState,
     wsGiftCount,
     wsInfo,
+    wsTopic,
     wsLog,
     autoConnectPhase,
     setAutoConnect,
@@ -263,7 +264,7 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
             <div>Worker 実行拠点（cf-ray）: {[...new Set(pollLog.map((p) => p.colo).filter(Boolean))].join(", ") || "—"}</div>
             <div>対策A（保存を待たない）: {pollLog.filter((p) => p.deferredSave).length} / {pollLog.length} 回 バックグラウンド保存</div>
             <div className={wsState === "open" ? "font-bold text-status-success" : wsState === "failed" ? "font-bold text-status-warning" : ""}>
-              即時経路（WebSocket）: {WS_BADGE[wsState].label || "未使用"} / WS 経由のギフト {wsGiftCount} 件
+              即時経路（WebSocket）: {WS_BADGE[wsState].label || "未使用"} / 購読 {wsTopic ?? "—"} / WS 経由のギフト {wsGiftCount} 件
               {wsInfo ? ` / ${wsInfo}` : ""}
               {wsState === "open" && wsGiftCount === 0 && " ← 接続はできているがギフトを解釈できていない。下の WS 生ログを確認"}
             </div>
