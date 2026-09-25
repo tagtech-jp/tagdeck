@@ -109,3 +109,20 @@ export function isBacklogComment(postedAt: number | undefined, connectedAt: numb
   if (typeof postedAt !== "number") return false;
   return postedAt < connectedAt - graceMs;
 }
+
+/**
+ * WebSocket の URL を、Workers の fetch() で握手できる http(s) の形に直す（wss→https, ws→http）。
+ * サーバ側の診断（/live/ws/probe）で使う。ws(s) 以外は null
+ */
+export function wsUrlToHttp(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (/^wss:\/\//i.test(url)) return `https://${url.slice(6)}`;
+  if (/^ws:\/\//i.test(url)) return `http://${url.slice(5)}`;
+  return null;
+}
+
+/** 診断結果に秘密（jwt）が混ざらないよう伏せる。secret が空なら何もしない */
+export function redactSecret(text: string, secret: string | null | undefined): string {
+  if (!secret || secret.length < 8) return text;
+  return text.split(secret).join("***");
+}
