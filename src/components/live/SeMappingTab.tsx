@@ -7,6 +7,8 @@ import { itemKind, ITEM_KIND_LABELS, patternKind, type ItemKind } from "@/lib/se
 import { tierForGift, TIER_LABELS, type SeTier } from "@/lib/se/tiers";
 import { expandablePatternRows } from "@/lib/se/pattern-rows";
 import { VolumeSlider } from "./VolumeSlider";
+import { SePresetPanel } from "./SePresetPanel";
+import { useLiveConnection } from "./LiveConnectionProvider";
 import { mergeWithDefaults, type MergedMapping } from "@/lib/se/merge-defaults";
 
 // S1: SE タブ。アイテムマスタ（/playitems × payments3 の価格）を一覧し、アイテム／パターンごとに SE を割り当てる。
@@ -76,6 +78,7 @@ const KINDS: ItemKind[] = ["normal", "hit", "anim"];
 const KIND_PREVIEW_TIER: Record<ItemKind, SeTier> = { normal: "T2", hit: "hit", anim: "T3" };
 
 export function SeMappingTab() {
+  const { reloadMappings } = useLiveConnection();
   const [items, setItems] = useState<ItemRow[] | null>(null);
   const [syncedAt, setSyncedAt] = useState<string | null>(null);
   // 自分の se_mappings。表示・試聴には公式の既定 SE（同梱）を合成した mappings を使う
@@ -116,6 +119,22 @@ export function SeMappingTab() {
   /** その key に自分の行（上書き）があるか。既定 SE だけの key は「上書き中」にしない */
   const isUser = (key: string) => byKey.get(key)?.source === "user";
   const listRef = useRef<HTMLDivElement>(null);
+
+  /** プリセット取り込み後: この画面と再生側（LiveConnectionProvider）の両方を再読込する */
+  const reloadAll = async () => {
+    try {
+      const r = await fetch("/api/se/mappings");
+      const d = r.ok
+        ? ((await r.json()) as { mappings?: Mapping[]; defaults?: Mapping[] | null; defaultsSource?: "sync" | "bundled" })
+        : { mappings: [], defaults: null };
+      setUserRows(d.mappings ?? []);
+      setLiveDefaults(d.defaults ?? null);
+      setDefaultsSource(d.defaultsSource ?? "bundled");
+    } catch {
+      // 取得できなければ今の表示のまま
+    }
+    await reloadMappings();
+  };
 
   /** 検索・価格・種類で絞ったアイテム（カテゴリはまだ見ていない） */
   const filtered = useMemo(() => {
@@ -268,6 +287,9 @@ export function SeMappingTab() {
 
   return (
     <div className="space-y-4">
+      {/* S2: プリセットの保存・共有・取り込み */}
+      <SePresetPanel onApplied={reloadAll} />
+
       {/* ティア既定音 */}
       <div className="rounded-xl border border-border bg-card p-4">
         <h4 className="mb-1 text-sm font-bold text-foreground">価格帯ごとの既定 SE（無料アイテムを含む）</h4>

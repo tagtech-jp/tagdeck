@@ -145,6 +145,8 @@ interface LiveConnectionValue {
   pollingInterval: number;
   lastPolledAt: string | null;
   mappings: Mapping[];
+  /** se_mappings を再取得する（SE プリセットの取り込み後など、再生側へ即反映するため） */
+  reloadMappings: () => Promise<void>;
   /** 実験: スマホ用バックグラウンド再生（音楽プレイヤー扱い） */
   bgAudio: BgAudioInfo;
   setBgAudioEnabled: (v: boolean) => void;
@@ -431,18 +433,22 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     }
   }, [autoConnect.phase]);
 
-  useEffect(() => {
-    // 公式の既定 SE（同期元＝社長の現在の割り当て。無ければ同梱）と合成してから使う。
-    // 同期元がアップロードし直したものを拾うため、開いている間は 5 分ごとに読み直す
-    const load = () =>
-      fetch("/api/se/mappings")
-        .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[]; defaults?: Mapping[] | null }>) : { mappings: [], defaults: null }))
-        .then((d: { mappings?: Mapping[]; defaults?: Mapping[] | null }) => setMappings(mergeWithDefaults(d.mappings ?? [], d.defaults ?? null)))
-        .catch(() => undefined);
-    void load();
-    const id = setInterval(() => void load(), 5 * 60 * 1000);
-    return () => clearInterval(id);
+  const reloadMappings = useCallback(async () => {
+    try {
+      const r = await fetch("/api/se/mappings");
+      const d = r.ok ? ((await r.json()) as { mappings?: Mapping[]; defaults?: Mapping[] | null }) : { mappings: [], defaults: null };
+      // 公式の既定 SE（同期元＝社長の現在の割り当て。無ければ同梱）と合成してから使う
+      setMappings(mergeWithDefaults(d.mappings ?? [], d.defaults ?? null));
+    } catch {
+      // 取得できなければ今の割り当てのまま
+    }
   }, []);
+  useEffect(() => {
+    // 同期元がアップロードし直したものを拾うため、開いている間は 5 分ごとに読み直す
+    void reloadMappings();
+    const id = setInterval(() => void reloadMappings(), 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [reloadMappings]);
 
   const applyPatternMaster = useCallback((pd: ItemsPatternsResponse | null): boolean => {
     if (!pd || (pd.items?.length ?? 0) === 0) return false;
@@ -1132,6 +1138,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       pollingInterval,
       lastPolledAt,
       mappings,
+      reloadMappings,
       bgAudio: { enabled: bgEnabled, wakeLock: bgWakeLock, state: bgState, error: bgError, support: bgSupport, hiddenPollCount, hiddenPollLastAt },
       setBgAudioEnabled,
       setBgWakeLock,
@@ -1163,7 +1170,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       setDebug,
       debug,
     }),
-    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, audioState, audioRecoveredAt, pollingInterval, lastPolledAt, mappings, bgEnabled, bgWakeLock, bgState, bgError, bgSupport, hiddenPollCount, hiddenPollLastAt, setBgAudioEnabled, setBgWakeLock, targetId, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsPollGiftsSinceConnect, wsInfo, wsTopic, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
+    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, audioState, audioRecoveredAt, pollingInterval, lastPolledAt, mappings, bgEnabled, bgWakeLock, bgState, bgError, bgSupport, hiddenPollCount, hiddenPollLastAt, setBgAudioEnabled, setBgWakeLock, reloadMappings, targetId, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsPollGiftsSinceConnect, wsInfo, wsTopic, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
   );
 
   return <LiveConnectionContext.Provider value={value}>{children}</LiveConnectionContext.Provider>;
