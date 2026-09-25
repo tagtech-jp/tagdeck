@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { createClient } from "@/lib/supabase/client";
 import { playSe, unlockAudio } from "@/lib/se/engine";
 import { itemKind, ITEM_KIND_LABELS, patternKind, type ItemKind } from "@/lib/se/item-kind";
 import { tierForGift, TIER_LABELS, type SeTier } from "@/lib/se/tiers";
@@ -202,23 +201,18 @@ export function SeMappingTab() {
     setBusyKey(key);
     setMsg(null);
     try {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        setMsg("ログインが必要です");
+      // アップロードはサーバ経由（/api/se/upload）。ブラウザ側の Supabase クライアントに頼ると、
+      // Service Worker が古い JS を配っている間だけ認証が取れず「ログインが必要です」になる（2026-09-25）
+      const form = new FormData();
+      form.set("file", file);
+      form.set("key", key);
+      const res = await fetch("/api/se/upload", { method: "POST", body: form });
+      const d = (await res.json().catch(() => null)) as { url?: string; label?: string; error?: string } | null;
+      if (!res.ok || !d?.url) {
+        setMsg(res.status === 401 ? "セッションが切れています。ページを更新してログインし直してください" : (d?.error ?? `アップロード失敗（HTTP ${res.status}）`));
         return;
       }
-      const ext = file.name.split(".").pop()!.toLowerCase();
-      const path = `${user.id}/${key.replace(":", "_")}_${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("se").upload(path, file, { upsert: true, contentType: file.type || undefined });
-      if (error) {
-        setMsg(`アップロード失敗: ${error.message}（バケット se の作成と 0014 の適用を確認）`);
-        return;
-      }
-      const { data } = supabase.storage.from("se").getPublicUrl(path);
-      await upsert(keys, { url: data.publicUrl, label: file.name });
+      await upsert(keys, { url: d.url, label: d.label ?? file.name });
       setMsg(`${file.name} を割り当てました`);
     } catch (e) {
       setMsg(`アップロード失敗: ${e instanceof Error ? e.message : String(e)}`);
