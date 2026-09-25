@@ -51,19 +51,20 @@ describe("topicCandidates / createRefCounter", () => {
   });
 });
 
-describe("joinCandidates（実測: live:lobby だけ「unauthorized invalid param」だったので先頭に）", () => {
-  it("live:lobby の参加データを jwt / live_id の組み合わせで並べ、その後に他トピック", () => {
+describe("joinCandidates（実測: 公式サイトは room:<配信ID> に {\"p\": jwt} で参加）", () => {
+  it("room:<id> {p: jwt} を先頭に、その後に従来の候補", () => {
     const c = joinCandidates("76347155", "SECRETJWT");
-    expect(c[0]).toEqual({ topic: "live:lobby", payload: { jwt: "SECRETJWT" }, label: "live:lobby{jwt}" });
-    expect(c[1].payload).toEqual({ jwt: "SECRETJWT", live_id: 76347155 });
+    expect(c[0]).toEqual({ topic: "room:76347155", payload: { p: "SECRETJWT" }, label: "room:76347155{p}" });
+    expect(c[1].payload).toEqual({ p: "SECRETJWT", live_id: 76347155 });
     expect(c.filter((x) => x.topic === "live:lobby").length).toBe(8);
+    expect(c.filter((x) => x.topic === "room:76347155").length).toBe(2);
     expect(c.find((x) => x.topic === "live:76347155")?.payload).toEqual({ token: "SECRETJWT" });
     // 表示用ラベルに jwt の値が混ざらない
     expect(c.every((x) => !x.label.includes("SECRETJWT"))).toBe(true);
   });
   it("jwt が無ければ jwt 系のキーを入れない", () => {
     const c = joinCandidates("1", null);
-    expect(c[0].payload).toEqual({});
-    expect(c[1].payload).toEqual({ live_id: 1 });
+    expect(c[0]).toEqual({ topic: "room:1", payload: {}, label: "room:1{}" });
+    expect(c[1].payload).toEqual({});
   });
 });
