@@ -20,12 +20,80 @@ const inflight = new Map<string, Promise<AudioBuffer | null>>();
 
 export function getAudioContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
+  // iOS 等で OS に閉じられた（closed）コンテキストは再開できないので作り直す
+  if (ctx && ctx.state === "closed") ctx = null;
   if (!ctx) {
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return null;
     ctx = new AC();
+    // 作り直したら keep-alive も鳴らし直す（stopKeepAlive されていない限り）
+    keepAlive = null;
   }
   return ctx;
+}
+
+/** 表示用: 音声コンテキストの状態。"interrupted" は iOS Safari が割り込み時に返す独自値 */
+export type AudioState = "none" | "running" | "suspended" | "interrupted" | "closed";
+
+export function getAudioState(): AudioState {
+  if (!ctx) return "none";
+  return ctx.state as AudioState;
+}
+
+/** resume() が自動再生制限で永久に pending になる環境（Chrome）があるため、待ち時間を区切る */
+const RESUME_TIMEOUT_MS = 1_500;
+
+/**
+ * 無音が続いた後に鳴らなくなる問題（2026-09-25）への対策。
+ * ブラウザ・OS は「しばらく音を出していない」「画面を隠した」「他アプリが音を出した」などで
+ * AudioContext を suspended / interrupted / closed にする。その後 start() しても音は出ない。
+ * 鳴らす直前・画面復帰時・ユーザー操作時・定期監視で呼び、動いていなければ resume() を試みる。
+ * 戻り値: 鳴らせる状態なら true
+ */
+export async function ensureAudioRunning(): Promise<boolean> {
+  const c = getAudioContext();
+  if (!c) return false;
+  const ok = await resumeWithTimeout(c, RESUME_TIMEOUT_MS);
+  if (ok && keepAliveWanted && !keepAlive) startKeepAlive();
+  return ok;
+}
+
+/** テスト可能な本体: state が running でなければ resume() を試み、timeoutMs で打ち切る */
+export async function resumeWithTimeout(c: { state: string; resume: () => Promise<void> }, timeoutMs: number): Promise<boolean> {
+  if (c.state === "running") return true;
+  if (c.state === "closed") return false;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  try {
+    await Promise.race([
+      c.resume().catch(() => undefined),
+      new Promise<void>((r) => {
+        timer = setTimeout(r, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+  return c.state === "running";
+}
+
+let autoResumeInstalled = false;
+/**
+ * 画面復帰（visibilitychange）とユーザー操作（pointerdown / keydown / touchend）で ensureAudioRunning() を呼ぶ
+ * リスナーを一度だけ付ける。iOS は割り込み後の resume() にユーザー操作が要ることがあるため、操作のたびに試みる
+ */
+export function installAudioAutoResume(onResumed?: (state: AudioState) => void): void {
+  if (autoResumeInstalled || typeof document === "undefined") return;
+  autoResumeInstalled = true;
+  const attempt = () => {
+    if (!ctx || ctx.state === "running") return;
+    void ensureAudioRunning().then((ok) => {
+      if (ok) onResumed?.(getAudioState());
+    });
+  };
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") attempt();
+  });
+  for (const ev of ["pointerdown", "keydown", "touchend"] as const) document.addEventListener(ev, attempt, { passive: true });
 }
 
 /** ユーザー操作（クリック）内で呼んで自動再生制限を解除する */
@@ -151,6 +219,7 @@ export async function preloadSe(urls: Array<string | null | undefined>): Promise
 export async function playUrl(url: string, volume = 0.8): Promise<{ ended: Promise<void> } | null> {
   const c = getAudioContext();
   if (!c) return null;
+  await ensureAudioRunning();
   try {
     const buf = await loadBuffer(c, url);
     if (!buf) return null;
@@ -173,6 +242,8 @@ export async function playUrl(url: string, volume = 0.8): Promise<{ ended: Promi
 }
 
 let keepAlive: AudioBufferSourceNode | null = null;
+/** startKeepAlive() 済みで stopKeepAlive() されていない（コンテキスト作り直し後に鳴らし直す判断に使う） */
+let keepAliveWanted = false;
 
 /**
  * 聞こえない極小音を鳴らし続けてタブを「音声再生中」にする。
@@ -182,6 +253,7 @@ let keepAlive: AudioBufferSourceNode | null = null;
  * 配信に乗らないことは README の手順で確認する。
  */
 export function startKeepAlive(): void {
+  keepAliveWanted = true;
   const c = getAudioContext();
   if (!c || keepAlive) return;
   const buf = c.createBuffer(1, c.sampleRate, c.sampleRate);
@@ -196,7 +268,12 @@ export function startKeepAlive(): void {
 }
 
 export function stopKeepAlive(): void {
-  keepAlive?.stop();
+  keepAliveWanted = false;
+  try {
+    keepAlive?.stop();
+  } catch {
+    // 既に止まっている（コンテキスト closed 等）
+  }
   keepAlive = null;
 }
 
@@ -215,6 +292,8 @@ export async function playSe(tier: SeTier, opts: SePlayOptions = {}): Promise<vo
  */
 export async function playSeUntilEnd(tier: SeTier, opts: SePlayOptions = {}, waitForEnd = true): Promise<void> {
   const vol = opts.volume ?? 0.8;
+  // 無音が続いて suspended / interrupted になっていたら鳴らす前に戻す（合成音の経路も含む）
+  await ensureAudioRunning();
   let ended: Promise<void> | null = null;
   if (opts.url) ended = (await playUrl(opts.url, vol))?.ended ?? null;
   if (!ended) {
