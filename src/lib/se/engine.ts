@@ -99,15 +99,22 @@ export function synthTier(tier: SeTier, volume = 0.8): void {
   }
 }
 
-/** カスタム音源（URL）を再生。取得失敗時は false */
-export async function playUrl(url: string, volume = 0.8): Promise<boolean> {
+/** 合成音のおおよその長さ（秒）。連続再生で次の音を待つ目安 */
+const SYNTH_DURATION_S: Record<SeTier, number> = { T0: 0.15, T1: 0.45, T2: 0.85, T3: 1.35, T4: 2.4, hit: 1.6 };
+
+/**
+ * カスタム音源（URL）を再生。取得失敗時は null、成功時は「鳴り終わるまで」の Promise を返す
+ * （連続ギフトで前の音が終わってから次を鳴らすため。2026-09-25: 200ms ずらしで重ねると
+ *  長めの音源では 2 発目以降が 1 発目に埋もれて「連続で鳴らない」ように聞こえた）
+ */
+export async function playUrl(url: string, volume = 0.8): Promise<{ ended: Promise<void> } | null> {
   const c = getAudioContext();
-  if (!c) return false;
+  if (!c) return null;
   try {
     let buf = bufferCache.get(url);
     if (!buf) {
       const res = await fetch(url);
-      if (!res.ok) return false;
+      if (!res.ok) return null;
       buf = await c.decodeAudioData(await res.arrayBuffer());
       bufferCache.set(url, buf);
     }
@@ -116,10 +123,16 @@ export async function playUrl(url: string, volume = 0.8): Promise<boolean> {
     const g = c.createGain();
     g.gain.value = Math.max(0, Math.min(1, volume));
     src.connect(g).connect(c.destination);
+    const ended = new Promise<void>((resolve) => {
+      src.onended = () => resolve();
+      // onended が来ない環境の保険（長さ + 少し）
+      setTimeout(resolve, Math.ceil((buf!.duration + 0.1) * 1000));
+    });
     src.start();
-    return true;
+    // await で入れ子の Promise が潰れないようオブジェクトで包む
+    return { ended };
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -151,13 +164,26 @@ export function stopKeepAlive(): void {
   keepAlive = null;
 }
 
-/** ギフト 1 件を鳴らす: カスタム URL があればそれ、無ければティア合成 */
+/**
+ * ギフト 1 件を鳴らす: カスタム URL があればそれ、無ければティア合成。
+ * 戻り値は「鳴り始めた」時点で解決する（試聴ボタン等はこれで十分）。
+ * 鳴り終わりまで待ちたい場合は playSeUntilEnd を使う
+ */
 export async function playSe(tier: SeTier, opts: SePlayOptions = {}): Promise<void> {
+  await playSeUntilEnd(tier, opts, false);
+}
+
+/**
+ * ギフト 1 件を鳴らし、waitForEnd=true なら鳴り終わるまで待つ（連続ギフトのキューが順番に鳴らすため）。
+ * 合成音は目安の長さ、カスタム音源は実際の長さで待つ
+ */
+export async function playSeUntilEnd(tier: SeTier, opts: SePlayOptions = {}, waitForEnd = true): Promise<void> {
   const vol = opts.volume ?? 0.8;
-  if (opts.url) {
-    const ok = await playUrl(opts.url, vol);
-    if (!ok) synthTier(tier, vol);
-  } else {
+  let ended: Promise<void> | null = null;
+  if (opts.url) ended = (await playUrl(opts.url, vol))?.ended ?? null;
+  if (!ended) {
     synthTier(tier, vol);
+    ended = new Promise<void>((r) => setTimeout(r, Math.ceil(SYNTH_DURATION_S[tier] * 1000)));
   }
+  if (waitForEnd) await ended;
 }
