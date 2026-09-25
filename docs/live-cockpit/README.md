@@ -241,6 +241,38 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - Cron が実際に動いているかの確認: Cloudflare Dashboard → Workers & Pages → tagdeck → Logs(observability 有効)で `[ranking-sync/scheduled] targets=N ok=N failed=N` を探す。ターミナルなら `pnpm exec wrangler tail tagdeck --format pretty`(要 `wrangler login`)。DB は `SELECT captured_at, my_rank, my_point FROM ranking_snapshots ORDER BY captured_at DESC LIMIT 5;` が 5 分ごとに増える。`targets=0` なら対象シミュレーターの status/ranking_type/期間を確認、`failed` なら同行の例外メッセージを見る
 - 最終日係数 1.5 は引き続き仮置き(TODO.md)
 
+## S4: 公式の既定 SE(運営のアップロードに同期・汎用既定は「きらきら輝く1」)(実装済み・2026-09-25)
+
+社長指示「SE 欄で音源を変更したので、デフォルトに設定してほしい」→「音を自分のアップロードしているものに同期してほしい」→「デフォルトの音声を『きらきら輝く1』に変更してほしい」への対応。
+
+### 既定の優先順(上が優先)
+
+1. **同期元ユーザーの現在の割り当て**: `wrangler.jsonc` の `vars.SE_DEFAULT_SOURCE_USER_ID`(運営アカウントの users.id)の se_mappings のうち、音源あり・鳴らす ON の行。`GET /api/se/mappings` が `defaults` として返し、クライアントが合成する。**運営が SE タブでアップロードし直せば、次の読込(ライブ画面は 5 分ごと・SE タブは開いたとき)から全ユーザーの既定が変わる**。デプロイ不要
+2. **同梱スナップショット**(`src/lib/se/default-mappings.ts` + `public/se/defaults/*.mp3` 14 ファイル): 同期元が未設定・0 件のとき(ローカル開発など)。第三者の著作物と思われる音源(任天堂コイン音・牙狼保留音)は含めていない
+3. **汎用既定「きらきら輝く1」**(`public/se/defaults/kirakira.mp3`・効果音ラボ): 価格帯 tier:T0〜T4・hit のうち 1・2 に無いもの。Web Audio 合成音は音源が取れなかった時だけの保険になった
+
+ユーザー側の規則: 自分の行がある key は自分の行。ただし url が null(音量・鳴らすだけ変えた)なら音源は既定のまま。「既定に戻す」= 自分の行を消して公式音源へ。SE タブは「既定 ♪ ラベル」と表示し、自分の行がある key だけ「上書き中」「既定に戻す」を出す。
+
+### 追加・変更
+
+| 種別 | パス | 内容 |
+|---|---|---|
+| route | `GET /api/se/mappings` | `defaults`(同期元の行)と `defaultsSource`("sync" / "bundled")を追加。`Cache-Control: private, no-store` |
+| config | `wrangler.jsonc` `vars.SE_DEFAULT_SOURCE_USER_ID` | 同期元ユーザー ID(秘密ではない内部 ID)。空にすると同梱に落ちる |
+| lib | `src/lib/se/merge-defaults.ts` | `mergeWithDefaults(userRows, liveDefaults)`: 同期元 > 同梱 > 汎用の順に既定を組み、ユーザー行を重ねる。テスト 10 件 |
+| lib | `src/lib/se/default-mappings.ts` | 同梱スナップショット 18 件 + `GENERIC_DEFAULT_SOUND`(きらきら輝く1) |
+| provider/UI | `LiveConnectionProvider`・`SeMappingTab` | 合成後の mappings を使う。ライブ画面は 5 分ごとに再読込。SE タブの説明に「運営の現在の設定に同期 / 同梱」を表示 |
+
+### 権利について(社長判断)
+
+同期方式では、運営アカウントにアップロードした音源が**そのまま全ユーザーに配られる**。第三者の著作物(現在の設定では tier:T2「【任天堂】コインの音【スーパーマリオ】.wav」、item:13064「ガロ保留音(赤).mp3」)も同期される点に注意。既定から外したい音源は運営アカウントの SE タブで「既定に戻す」(同期元の行が消えると、その key は同梱または汎用既定になる)。
+
+### 動作確認手順
+
+1. `pnpm exec tsc --noEmit` / `pnpm test` / `pnpm exec next build --webpack`
+2. デプロイ後、別アカウントで `/api/se/mappings` を開くと `defaultsSource: "sync"` と運営の行が `defaults` に入る
+3. 運営アカウントの SE タブで音源を差し替える → 別アカウントで SE タブを開き直すと「既定 ♪ 新しいラベル」に変わる
+4. 運営にも同梱にも無い価格帯(例: T2 を「既定に戻す」した状態)は「既定 ♪ きらきら輝く1.mp3」で鳴る
 ## S5: 無音が続くと SE が鳴らなくなる問題の修正(実装済み・2026-09-25)
 
 社長報告「無音が続くとならなくなる」への対応。原因は 2 系統あり、両方に手を入れた。

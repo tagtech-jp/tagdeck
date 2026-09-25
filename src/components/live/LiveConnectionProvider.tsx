@@ -11,6 +11,7 @@ import { extractComments, isBacklogComment, parseWsMessage, WS_MAX_FAILURES_BEFO
 import { commentsFromFrame, createRefCounter, decodeFrame, heartbeatFrame, joinCandidates, joinFrame, PHOENIX_HEARTBEAT_MS, phoenixSocketUrl, replyStatus, type JoinCandidate, type PhoenixFrame } from "@/lib/live/phoenix";
 import { normalizeGift, type NormalizedGift as Gift, type PatternInfo, type PickedGiftComment } from "@/lib/whowatch/gift-normalize";
 import type { ItemKind } from "@/lib/se/item-kind";
+import { mergeWithDefaults } from "@/lib/se/merge-defaults";
 
 // ライブ接続の状態をアプリ全体で保持する Provider。
 // (dashboard)/layout.tsx に置いてあるため、ページを移動しても接続と SE 再生が続く。
@@ -318,10 +319,16 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   }, [autoConnect.phase]);
 
   useEffect(() => {
-    fetch("/api/se/mappings")
-      .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[] }>) : { mappings: [] }))
-      .then((d: { mappings?: Mapping[] }) => setMappings(d.mappings ?? []))
-      .catch(() => undefined);
+    // 公式の既定 SE（同期元＝社長の現在の割り当て。無ければ同梱）と合成してから使う。
+    // 同期元がアップロードし直したものを拾うため、開いている間は 5 分ごとに読み直す
+    const load = () =>
+      fetch("/api/se/mappings")
+        .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[]; defaults?: Mapping[] | null }>) : { mappings: [], defaults: null }))
+        .then((d: { mappings?: Mapping[]; defaults?: Mapping[] | null }) => setMappings(mergeWithDefaults(d.mappings ?? [], d.defaults ?? null)))
+        .catch(() => undefined);
+    void load();
+    const id = setInterval(() => void load(), 5 * 60 * 1000);
+    return () => clearInterval(id);
   }, []);
 
   const applyPatternMaster = useCallback((pd: ItemsPatternsResponse | null): boolean => {
