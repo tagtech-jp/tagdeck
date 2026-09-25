@@ -12,7 +12,7 @@ export function NiconicoSettings() {
 
   useEffect(() => {
     fetch("/api/platforms/niconico/profile")
-      .then((r) => r.json())
+      .then((r) => r.json() as Promise<{ niconicoUserId?: string }>)
       .then((data) => {
         if (data.niconicoUserId) {
           setUserId(data.niconicoUserId);
@@ -33,10 +33,10 @@ export function NiconicoSettings() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: userId.trim() }),
       });
-      const data = await res.json();
+      const data = (await res.json()) as { niconicoUserId?: string; error?: string };
       if (res.ok) {
         setMessage({ type: "success", text: "ニコニコユーザー ID を保存しました" });
-        setSavedUserId(data.niconicoUserId);
+        setSavedUserId(data.niconicoUserId ?? "");
       } else {
         setMessage({ type: "error", text: data.error ?? "保存に失敗しました" });
       }

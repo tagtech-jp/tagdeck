@@ -79,7 +79,7 @@ describe("GET /api/platforms/whowatch/live", () => {
     h.fetchLiveId.mockResolvedValue(NOT_FOUND);
     const res = await GET(new Request(`${URL_}?userId=no_such_user`));
     expect(res.status).toBe(404);
-    expect((await res.json()).error).toContain("見つかりません");
+    expect(((await res.json()) as { error?: string }).error).toContain("見つかりません");
   });
 
   it("パスとして不正な userId は 400（API を叩かない）", async () => {

@@ -28,7 +28,7 @@ describe("POST /api/platforms/whowatch/events/sync", () => {
     syncAllMock.mockResolvedValue({ at: "2026-09-21T00:00:00Z", targets: 2, processed: 2, succeeded: 2, failed: 0, next_cursor: null, results: [] });
     const res = await POST(new Request(URL_, { method: "POST", headers: { "X-Sync-Key": KEY } }));
     expect(res.status).toBe(200);
-    expect((await res.json()).targets).toBe(2);
+    expect(((await res.json()) as { targets?: number }).targets).toBe(2);
     expect(syncAllMock).toHaveBeenCalledWith({}, { force: false, limit: undefined, cursor: null, eventKey: null });
     expect(notifyMock).not.toHaveBeenCalled();
   });
@@ -46,7 +46,7 @@ describe("POST /api/platforms/whowatch/events/sync", () => {
     syncAllMock.mockResolvedValue({ at: "2026-09-21T00:00:00Z", targets: 14, processed: 3, succeeded: 3, failed: 0, next_cursor: "2026_09_gingiragin", results: [] });
     const res = await POST(new Request(URL_ + "?cursor=2026_09_autumncollectionlite&limit=3", { method: "POST", headers: { "X-Sync-Key": KEY } }));
     expect(res.status).toBe(200);
-    expect((await res.json()).next_cursor).toBe("2026_09_gingiragin");
+    expect(((await res.json()) as { next_cursor?: string | null }).next_cursor).toBe("2026_09_gingiragin");
     expect(syncAllMock).toHaveBeenLastCalledWith({}, { force: false, limit: 3, cursor: "2026_09_autumncollectionlite", eventKey: null });
 
     await POST(new Request(URL_ + "?event_key=2026_09_autumncollection&force=1", { method: "POST", headers: { "X-Sync-Key": KEY } }));

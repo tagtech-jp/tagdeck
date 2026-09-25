@@ -130,7 +130,7 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
     if (platform !== "whowatch") return;
     // events route は「開催中(open)のみ」を返す（R2）
     fetch("/api/platforms/whowatch/events")
-      .then((r) => (r.ok ? r.json() : { open: [] }))
+      .then((r) => (r.ok ? (r.json() as Promise<{ open?: WhowatchEventRow[] }>) : { open: [] }))
       .then((data: { open?: WhowatchEventRow[] }) => {
         setWhowatchEvents(data.open ?? []);
       })
