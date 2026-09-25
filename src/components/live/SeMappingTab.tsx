@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { playSe, unlockAudio } from "@/lib/se/engine";
 import { itemKind, ITEM_KIND_LABELS, patternKind, type ItemKind } from "@/lib/se/item-kind";
@@ -85,8 +85,21 @@ const KINDS: ItemKind[] = ["normal", "hit", "anim"];
 /** 種類ごとの一括割り当てを試聴するときの既定ティア */
 const KIND_PREVIEW_TIER: Record<ItemKind, SeTier> = { normal: "T2", hit: "hit", anim: "T3" };
 
+/**
+ * 2026-09-26 修正: 音源のアップロードが「何も起きない」問題。
+ * 原因は 2 つの組み合わせ。(1) SeMappingTab が useLiveConnection() で提供者の値を購読していたため、接続中のポーリングや
+ * 監視（数秒ごと）のたびに再描画されていた。(2) MappingControls がコンポーネント内で定義されていたため、親が再描画される
+ * たびに別のコンポーネントとして作り直され、<input type="file"> ごと外れて付け直されていた。ファイル選択ダイアログを
+ * 開いている数秒の間に再描画が起きると、ダイアログを開いた input は既に外れており、選択後の change が届かない。
+ * 対策: context を読むのはこの薄いラッパーだけにし（reloadMappings は安定した参照）、本体は memo で包む。
+ * MappingControls はモジュール直下の memo コンポーネントにして、再描画されても同じ要素を使い続ける
+ */
 export function SeMappingTab() {
   const { reloadMappings } = useLiveConnection();
+  return <SeMappingTabInner reloadMappings={reloadMappings} />;
+}
+
+const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { reloadMappings: () => Promise<void> }) {
   const [items, setItems] = useState<ItemRow[] | null>(null);
   const [syncedAt, setSyncedAt] = useState<string | null>(null);
   // 自分の se_mappings。表示・試聴には公式の既定 SE（同梱）を合成した mappings を使う
@@ -294,33 +307,16 @@ export function SeMappingTab() {
     await playSe(tier, { url: m?.url ?? null, volume: (volumeOverride ?? m?.volume ?? 80) / 100 });
   };
 
-  const MappingControls = ({ mkeys, tier }: { mkeys: string[]; tier: SeTier }) => {
-    const mkey = mkeys[0];
-    const m = byKey.get(mkey);
-    const busy = busyKey === mkey;
-    return (
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="min-h-9 cursor-pointer rounded-full border border-border bg-muted px-3 text-xs leading-9 text-foreground">
-          {busy ? "処理中..." : m?.url && !m.usesDefaultSound ? "音源を変更" : "音源をアップロード"}
-          <input type="file" accept={ACCEPT} className="hidden" disabled={busy} onChange={(e) => e.target.files?.[0] && void upload(mkeys, e.target.files[0])} />
-        </label>
-        <VolumeSlider value={m?.volume ?? 80} onCommit={(v) => upsert(mkeys, { volume: v })} onPreview={(v) => void preview(mkey, tier, v)} />
-        <label className="flex items-center gap-1 text-xs text-muted-foreground">
-          <input type="checkbox" checked={m?.enabled ?? true} onChange={(e) => void upsert(mkeys, { enabled: e.target.checked })} className="size-4" />
-          鳴らす
-        </label>
-        {m && m.source === "user" && (
-          <button type="button" onClick={() => void reset(mkeys)} className="min-h-9 rounded-full px-2 text-xs text-muted-foreground hover:text-destructive">
-            既定に戻す
-          </button>
-        )}
-        <span className="truncate text-xs text-muted-foreground">
-          {m?.usesDefaultSound ? `既定 ♪ ${m.label ?? "公式音源"}` : m?.url ? `♪ ${m.label ?? "カスタム音源"}` : "既定（合成音）"}
-        </span>
-        {msg && msgKey === mkey && <p className="w-full text-xs text-status-warning">{msg}</p>}
-      </div>
-    );
-  };
+  /** 行ごとの操作部品に渡す値（部品自体はモジュール直下の memo コンポーネント） */
+  const ctl = (keys: string[]) => ({
+    mapping: byKey.get(keys[0]),
+    busy: busyKey === keys[0],
+    message: msgKey === keys[0] ? msg : null,
+    onUpload: upload,
+    onUpsert: upsert,
+    onReset: reset,
+    onPreview: preview,
+  });
 
   return (
     <div className="space-y-4">
@@ -341,7 +337,7 @@ export function SeMappingTab() {
           {TIERS.map((t) => (
             <div key={t} className="flex flex-wrap items-center gap-2 border-b border-border py-2 text-xs last:border-0">
               <span className="w-44 shrink-0 text-foreground">{TIER_LABELS[t]}</span>
-              <MappingControls mkeys={[`tier:${t}`]} tier={t} />
+              <MappingControls mkeys={[`tier:${t}`]} tier={t} {...ctl([`tier:${t}`])} />
             </div>
           ))}
         </div>
@@ -358,7 +354,7 @@ export function SeMappingTab() {
                 {ITEM_KIND_LABELS[k]}
                 <span className="ml-2 text-muted-foreground">{items ? `${items.filter((i) => itemKind(i.patterns) === k).length} 件` : ""}</span>
               </span>
-              <MappingControls mkeys={[`cat:kind:${k}`]} tier={KIND_PREVIEW_TIER[k]} />
+              <MappingControls mkeys={[`cat:kind:${k}`]} tier={KIND_PREVIEW_TIER[k]} {...ctl([`cat:kind:${k}`])} />
             </div>
           ))}
         </div>
@@ -479,13 +475,13 @@ export function SeMappingTab() {
                           {!isPseudo && (
                             <div>
                               <p className="mb-1 text-xs text-muted-foreground">このカテゴリ全部にまとめて割り当て（アイテム個別・パターン個別が優先。種類ごと・価格帯の既定より優先）</p>
-                              <MappingControls mkeys={[catKey]} tier="T2" />
+                              <MappingControls mkeys={[catKey]} tier="T2" {...ctl([catKey])} />
                             </div>
                           )}
                           {g.groupKey === WEB_BONUS_GROUP && webBonusKeys.length > 0 && (
                             <div>
                               <p className="mb-1 text-xs text-muted-foreground">ここに出ている {webBonusKeys.length} アイテム全部にまとめて割り当て（アイテムごとの設定として保存されるので、あとで個別に変えられます）</p>
-                              <MappingControls mkeys={webBonusKeys} tier="T0" />
+                              <MappingControls mkeys={webBonusKeys} tier="T0" {...ctl(webBonusKeys)} />
                             </div>
                           )}
                           {r.count === 0 && <p className="text-xs text-muted-foreground">条件に合うアイテムがありません（「価格ありのみ」や種類の絞り込みを見直してください）</p>}
@@ -536,7 +532,7 @@ export function SeMappingTab() {
                               </div>
                             </div>
                             <div className="mt-2 border-t border-border pt-2">
-                              <MappingControls mkeys={[`item:${it.itemId}`]} tier={tier} />
+                              <MappingControls mkeys={[`item:${it.itemId}`]} tier={tier} {...ctl([`item:${it.itemId}`])} />
                             </div>
                             {special.map((g) => {
                               const keys = g.patternIds.map((id) => `pattern:${id}`);
@@ -550,7 +546,7 @@ export function SeMappingTab() {
                                     {g.patternIds.length > 1 && <span className="text-muted-foreground">同名 {g.patternIds.length} パターンにまとめて割り当て</span>}
                                     {keys.some((k) => isUser(k)) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5">上書き中</span>}
                                   </div>
-                                  <MappingControls mkeys={keys} tier={g.isHit ? "hit" : tier} />
+                                  <MappingControls mkeys={keys} tier={g.isHit ? "hit" : tier} {...ctl(keys)} />
                                 </div>
                               );
                             })}
@@ -567,4 +563,59 @@ export function SeMappingTab() {
       </div>
     </div>
   );
+});
+
+interface MappingControlsProps {
+  mkeys: string[];
+  tier: SeTier;
+  mapping: MergedMapping | undefined;
+  busy: boolean;
+  /** この行に対する直近のメッセージ（失敗・完了） */
+  message: string | null;
+  onUpload: (keys: string[], file: File) => void | Promise<void>;
+  onUpsert: (keys: string[], patch: Partial<Mapping>) => Promise<void>;
+  onReset: (keys: string[]) => Promise<void>;
+  onPreview: (key: string, tier: SeTier, volume?: number) => Promise<void>;
 }
+
+/**
+ * 音源アップロード・音量・鳴らす・既定に戻す の 1 行分。
+ * コンポーネント内で定義せずここに置くのが重要（親の再描画で <input type="file"> が作り直されると、
+ * 開いているファイル選択ダイアログの結果が捨てられる。2026-09-26）
+ */
+const MappingControls = memo(function MappingControls({ mkeys, tier, mapping: m, busy, message, onUpload, onUpsert, onReset, onPreview }: MappingControlsProps) {
+  const mkey = mkeys[0];
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <label className="min-h-9 cursor-pointer rounded-full border border-border bg-muted px-3 text-xs leading-9 text-foreground">
+        {busy ? "処理中..." : m?.url && !m.usesDefaultSound ? "音源を変更" : "音源をアップロード"}
+        <input
+          type="file"
+          accept={ACCEPT}
+          className="hidden"
+          disabled={busy}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            // 同じファイルをもう一度選んでも change が飛ぶよう、受け取ったら値を空にする
+            e.target.value = "";
+            if (f) void onUpload(mkeys, f);
+          }}
+        />
+      </label>
+      <VolumeSlider value={m?.volume ?? 80} onCommit={(v) => onUpsert(mkeys, { volume: v })} onPreview={(v) => void onPreview(mkey, tier, v)} />
+      <label className="flex items-center gap-1 text-xs text-muted-foreground">
+        <input type="checkbox" checked={m?.enabled ?? true} onChange={(e) => void onUpsert(mkeys, { enabled: e.target.checked })} className="size-4" />
+        鳴らす
+      </label>
+      {m && m.source === "user" && (
+        <button type="button" onClick={() => void onReset(mkeys)} className="min-h-9 rounded-full px-2 text-xs text-muted-foreground hover:text-destructive">
+          既定に戻す
+        </button>
+      )}
+      <span className="truncate text-xs text-muted-foreground">
+        {m?.usesDefaultSound ? `既定 ♪ ${m.label ?? "公式音源"}` : m?.url ? `♪ ${m.label ?? "カスタム音源"}` : "既定（合成音）"}
+      </span>
+      {message && <p className="w-full text-xs text-status-warning">{message}</p>}
+    </div>
+  );
+});
