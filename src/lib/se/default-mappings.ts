@@ -13,6 +13,13 @@ export interface DefaultSeMapping {
   label: string;
 }
 
+/**
+ * 汎用の既定音（2026-09-25 社長指定「きらきら輝く1」）。
+ * 価格帯（tier:T0〜T4・hit）のうち、同期元にも同梱スナップショットにも無いものはこれで鳴る（Web Audio 合成音は最後の保険）
+ */
+export const GENERIC_DEFAULT_SOUND = { url: "/se/defaults/kirakira.mp3", volume: 80, label: "きらきら輝く1.mp3" } as const;
+export const GENERIC_DEFAULT_TIERS = ["tier:T0", "tier:T1", "tier:T2", "tier:T3", "tier:T4", "tier:hit"] as const;
+
 export const DEFAULT_SE_MAPPINGS: readonly DefaultSeMapping[] = [
   { key: "tier:T4", url: "/se/defaults/pokyun_alert.mp3", volume: 80, label: "ポキューン！先バレ風激熱通知音.mp3" },
   { key: "item:13063", url: "/se/defaults/pokyun_alert.mp3", volume: 80, label: "ポキューン！先バレ風激熱通知音.mp3" },

@@ -10,6 +10,11 @@
     // 旧 .github/workflows/ranking-sync.yml (GitHub Actions cron) から移設。休眠手順は同ファイル参照
     "crons": ["*/5 * * * *"]
   },
+  "vars": {
+    // S4: 公式既定 SE の同期元（運営アカウントの users.id）。この人の SE 割り当てが全ユーザーの既定になる。
+    // 秘密ではない（内部 ID）ため vars に置く。変える場合はここを書き換えてデプロイ。空文字なら同梱スナップショットに落ちる
+    "SE_DEFAULT_SOURCE_USER_ID": "f7a05bb4-837a-4878-bf37-c09e2bd0ea1e"
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"

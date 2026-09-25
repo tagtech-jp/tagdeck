@@ -80,7 +80,10 @@ export function SeMappingTab() {
   const [syncedAt, setSyncedAt] = useState<string | null>(null);
   // 自分の se_mappings。表示・試聴には公式の既定 SE（同梱）を合成した mappings を使う
   const [userRows, setUserRows] = useState<Mapping[]>([]);
-  const mappings = useMemo<MergedMapping[]>(() => mergeWithDefaults(userRows), [userRows]);
+  /** 公式既定（同期元＝社長の現在の割り当て）。null なら同梱スナップショット */
+  const [liveDefaults, setLiveDefaults] = useState<Mapping[] | null>(null);
+  const [defaultsSource, setDefaultsSource] = useState<"sync" | "bundled">("bundled");
+  const mappings = useMemo<MergedMapping[]>(() => mergeWithDefaults(userRows, liveDefaults), [userRows, liveDefaults]);
   const [filter, setFilter] = useState("");
   const [onlyOnSale, setOnlyOnSale] = useState(true);
   const [kindFilter, setKindFilter] = useState<ItemKind | "all">("all");
@@ -100,8 +103,12 @@ export function SeMappingTab() {
       })
       .catch(() => setItems([]));
     fetch("/api/se/mappings")
-      .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[] }>) : { mappings: [] }))
-      .then((d: { mappings?: Mapping[] }) => setUserRows(d.mappings ?? []))
+      .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[]; defaults?: Mapping[] | null; defaultsSource?: "sync" | "bundled" }>) : { mappings: [], defaults: null }))
+      .then((d: { mappings?: Mapping[]; defaults?: Mapping[] | null; defaultsSource?: "sync" | "bundled" }) => {
+        setUserRows(d.mappings ?? []);
+        setLiveDefaults(d.defaults ?? null);
+        setDefaultsSource(d.defaultsSource ?? "bundled");
+      })
       .catch(() => undefined);
   }, []);
 
@@ -264,7 +271,9 @@ export function SeMappingTab() {
       {/* ティア既定音 */}
       <div className="rounded-xl border border-border bg-card p-4">
         <h4 className="mb-1 text-sm font-bold text-foreground">価格帯ごとの既定 SE（無料アイテムを含む）</h4>
-        <p className="mb-1 text-xs text-muted-foreground">アイテム個別・カテゴリの割り当てが無い時に使われます。既定は公式の同梱音源（無い価格帯は Web Audio 合成音）。音源を上げると差し替わり、「既定に戻す」で公式音源に戻ります</p>
+        <p className="mb-1 text-xs text-muted-foreground">
+          アイテム個別・カテゴリの割り当てが無い時に使われます。既定は公式音源（{defaultsSource === "sync" ? "運営の現在の設定に同期" : "同梱"}。どこにも無い価格帯は「きらきら輝く1」）。音源を上げると差し替わり、「既定に戻す」で公式音源に戻ります
+        </p>
         <p className="mb-3 text-xs text-muted-foreground">
           <span className="font-bold text-foreground">無料アイテム</span>
           （イベントの無料配布など価格の無いアイテム）は、ふわっちのアイテムページの見出しに無くカテゴリが付かないため、ここの「{TIER_LABELS.T0}」に従います。特定の無料アイテムだけ変えたい場合は、下のカテゴリを「分類なし」にして個別に割り当ててください

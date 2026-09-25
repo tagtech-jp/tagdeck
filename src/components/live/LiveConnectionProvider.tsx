@@ -309,11 +309,16 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   }, [autoConnect.phase]);
 
   useEffect(() => {
-    fetch("/api/se/mappings")
-      .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[] }>) : { mappings: [] }))
-      // 公式の既定 SE（同梱）と合成してから使う（自分の行が無い key は既定音、音量だけ変えた key は既定音のまま）
-      .then((d: { mappings?: Mapping[] }) => setMappings(mergeWithDefaults(d.mappings ?? [])))
-      .catch(() => undefined);
+    // 公式の既定 SE（同期元＝社長の現在の割り当て。無ければ同梱）と合成してから使う。
+    // 同期元がアップロードし直したものを拾うため、開いている間は 5 分ごとに読み直す
+    const load = () =>
+      fetch("/api/se/mappings")
+        .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[]; defaults?: Mapping[] | null }>) : { mappings: [], defaults: null }))
+        .then((d: { mappings?: Mapping[]; defaults?: Mapping[] | null }) => setMappings(mergeWithDefaults(d.mappings ?? [], d.defaults ?? null)))
+        .catch(() => undefined);
+    void load();
+    const id = setInterval(() => void load(), 5 * 60 * 1000);
+    return () => clearInterval(id);
   }, []);
 
   const applyPatternMaster = useCallback((pd: ItemsPatternsResponse | null): boolean => {

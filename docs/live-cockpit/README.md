@@ -241,35 +241,38 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - Cron が実際に動いているかの確認: Cloudflare Dashboard → Workers & Pages → tagdeck → Logs(observability 有効)で `[ranking-sync/scheduled] targets=N ok=N failed=N` を探す。ターミナルなら `pnpm exec wrangler tail tagdeck --format pretty`(要 `wrangler login`)。DB は `SELECT captured_at, my_rank, my_point FROM ranking_snapshots ORDER BY captured_at DESC LIMIT 5;` が 5 分ごとに増える。`targets=0` なら対象シミュレーターの status/ranking_type/期間を確認、`failed` なら同行の例外メッセージを見る
 - 最終日係数 1.5 は引き続き仮置き(TODO.md)
 
-## S4: 公式の既定 SE(社長の設定を製品既定に昇格)(実装済み・2026-09-25)
+## S4: 公式の既定 SE(運営のアップロードに同期・汎用既定は「きらきら輝く1」)(実装済み・2026-09-25)
 
-社長指示「SE 欄で音源を変更したので、デフォルトに設定してほしい」への対応。社長アカウントの se_mappings(21 件)のうち 18 件を同梱ファイルにして、全ユーザーの既定にした。
+社長指示「SE 欄で音源を変更したので、デフォルトに設定してほしい」→「音を自分のアップロードしているものに同期してほしい」→「デフォルトの音声を『きらきら輝く1』に変更してほしい」への対応。
+
+### 既定の優先順(上が優先)
+
+1. **同期元ユーザーの現在の割り当て**: `wrangler.jsonc` の `vars.SE_DEFAULT_SOURCE_USER_ID`(運営アカウントの users.id)の se_mappings のうち、音源あり・鳴らす ON の行。`GET /api/se/mappings` が `defaults` として返し、クライアントが合成する。**運営が SE タブでアップロードし直せば、次の読込(ライブ画面は 5 分ごと・SE タブは開いたとき)から全ユーザーの既定が変わる**。デプロイ不要
+2. **同梱スナップショット**(`src/lib/se/default-mappings.ts` + `public/se/defaults/*.mp3` 14 ファイル): 同期元が未設定・0 件のとき(ローカル開発など)。第三者の著作物と思われる音源(任天堂コイン音・牙狼保留音)は含めていない
+3. **汎用既定「きらきら輝く1」**(`public/se/defaults/kirakira.mp3`・効果音ラボ): 価格帯 tier:T0〜T4・hit のうち 1・2 に無いもの。Web Audio 合成音は音源が取れなかった時だけの保険になった
+
+ユーザー側の規則: 自分の行がある key は自分の行。ただし url が null(音量・鳴らすだけ変えた)なら音源は既定のまま。「既定に戻す」= 自分の行を消して公式音源へ。SE タブは「既定 ♪ ラベル」と表示し、自分の行がある key だけ「上書き中」「既定に戻す」を出す。
 
 ### 追加・変更
 
 | 種別 | パス | 内容 |
 |---|---|---|
-| assets | `public/se/defaults/*.mp3`(14 ファイル・計 1.15 MB) | 社長の Storage から取得して同梱。個人アップロードに依存しない(差し替え・削除の影響を受けない) |
-| lib | `src/lib/se/default-mappings.ts` | key → 同梱パス・音量・ラベル(18 件: 価格帯 T0/T1/T3/T4、アイテム 14 件) |
-| lib | `src/lib/se/merge-defaults.ts` | `mergeWithDefaults(userRows)`: 自分の行が無い key は既定、自分の行の url が null(音量・鳴らすだけ変更)なら音源は既定のまま、音源を上げた key は自分の音源。テスト 7 件 |
-| provider/UI | `LiveConnectionProvider`・`SeMappingTab` | 取得した se_mappings を合成してから使う。SE タブは「既定 ♪ ラベル」と表示し、自分の行がある key だけ「既定に戻す」「上書き中」を出す |
+| route | `GET /api/se/mappings` | `defaults`(同期元の行)と `defaultsSource`("sync" / "bundled")を追加。`Cache-Control: private, no-store` |
+| config | `wrangler.jsonc` `vars.SE_DEFAULT_SOURCE_USER_ID` | 同期元ユーザー ID(秘密ではない内部 ID)。空にすると同梱に落ちる |
+| lib | `src/lib/se/merge-defaults.ts` | `mergeWithDefaults(userRows, liveDefaults)`: 同期元 > 同梱 > 汎用の順に既定を組み、ユーザー行を重ねる。テスト 10 件 |
+| lib | `src/lib/se/default-mappings.ts` | 同梱スナップショット 18 件 + `GENERIC_DEFAULT_SOUND`(きらきら輝く1) |
+| provider/UI | `LiveConnectionProvider`・`SeMappingTab` | 合成後の mappings を使う。ライブ画面は 5 分ごとに再読込。SE タブの説明に「運営の現在の設定に同期 / 同梱」を表示 |
 
-### 既定にしなかった音源(要判断)
+### 権利について(社長判断)
 
-- `tier:T2`「【任天堂】コインの音【スーパーマリオ】.wav」と `item:13064`「ガロ保留音(赤).mp3」は第三者の著作物と思われるため、製品の既定(全ユーザーへの再配布)からは外した。社長アカウントでは引き続き自分の設定として鳴る。既定に入れる場合は権利の確認が先
-- 「ポキューン！先バレ風激熱通知音」「harakiridrive」「ziyagura-gako」「ata_a14」は出典を確認していない(効果音ラボ等のフリー素材なら問題なし)。確認できたら README に出典を書く
-- `tier:combo` は廃止キーのため対象外
+同期方式では、運営アカウントにアップロードした音源が**そのまま全ユーザーに配られる**。第三者の著作物(現在の設定では tier:T2「【任天堂】コインの音【スーパーマリオ】.wav」、item:13064「ガロ保留音(赤).mp3」)も同期される点に注意。既定から外したい音源は運営アカウントの SE タブで「既定に戻す」(同期元の行が消えると、その key は同梱または汎用既定になる)。
 
 ### 動作確認手順
 
 1. `pnpm exec tsc --noEmit` / `pnpm test` / `pnpm exec next build --webpack`
-2. 新規アカウント(または se_mappings が空のアカウント)で `/live` → テスト再生で T0/T1/T3/T4 が同梱音源で鳴る(T2 は合成音)。SE タブの各行に「既定 ♪ …」が出る
-3. 既定のある key で音量だけ変える → 音源は既定のまま音量が変わる。「既定に戻す」で自分の行が消え、公式音源に戻る
-4. 音源をアップロードすると自分の音源が優先される
-
-### 更新のしかた
-
-社長の設定を再び既定にするときは、`/api/se/mappings` の内容で `public/se/defaults/` と `default-mappings.ts` を作り直す(scratchpad の build_defaults.py 相当。手作業なら key・url・volume・label を書き換える)。将来は PR #25 のプリセットを「公式既定」に指定する方式(DB のみで更新・デプロイ不要)に置き換えられる。
+2. デプロイ後、別アカウントで `/api/se/mappings` を開くと `defaultsSource: "sync"` と運営の行が `defaults` に入る
+3. 運営アカウントの SE タブで音源を差し替える → 別アカウントで SE タブを開き直すと「既定 ♪ 新しいラベル」に変わる
+4. 運営にも同梱にも無い価格帯(例: T2 を「既定に戻す」した状態)は「既定 ♪ きらきら輝く1.mp3」で鳴る
 
 ## S1: SE タブ・ふわっちギフト取得(実装済み・2026-09-21)
 
