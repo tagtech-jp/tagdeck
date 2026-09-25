@@ -275,6 +275,85 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 4. 「今の設定を全部置き換える」は 2 回押しで実行(1 回目は赤い確認ボタンになる)
 5. 「公開する」にすると他のユーザーの「みんなのプリセット」に出る
 
+## S3: スマホ用バックグラウンド再生「音楽プレイヤー扱い」(実験・2026-09-25)
+
+社長指示「スマホでバックグラウンドでも再生できるようにしたい → 音楽プレイヤー扱いにして実験したい」への対応。ライブタブに実験スイッチを追加した。
+
+### 仕組み
+
+- `src/lib/se/background-keepalive.ts`: `<audio>` 要素で無音に近い音(25 Hz・振幅 0.4%・20 秒ループ・data URL の WAV)を再生し、OS に「音楽再生中」と見なさせる。Media Session で通知バー/ロック画面に再生カード(TagDeck ライブ SE 待機中)を出す。iOS 17+ は `navigator.audioSession.type = "playback"`。Wake Lock(画面ロック防止)は別スイッチ
+- 既存の keep-alive(engine.ts・Web Audio の無音ループ)は PC 向けで、スマホの OS はこれを「音楽再生中」と見なさないため別経路にした
+- 再生の開始は自動再生制限のためユーザー操作の中でだけ行う(スイッチ ON・接続・音を有効にする)。ページを開き直した直後はスイッチ ON でも「停止中」で、接続ボタンで再開する
+- 再生カードの「一時停止/停止」はユーザーの意思としてスイッチごと OFF。電話などの OS 割り込みは「OS に一時停止された」と表示し、画面に戻ったら再開を試みる
+- 計測: `document.hidden` 中に成功したポーリング回数と最終時刻を表示する(`bgAudio.hiddenPollCount`)。これが増えれば裏でも動いている
+
+### 追加・変更
+
+| 種別 | パス | 内容 |
+|---|---|---|
+| lib | `src/lib/se/background-keepalive.ts` | `BackgroundKeepAlive`(start/stop/setWakeLock)、`makeNearSilentWavDataUrl`、`detectBgAudioSupport`(テスト 4 件) |
+| provider | `LiveConnectionProvider` | `bgAudio`(enabled/wakeLock/state/error/support/hiddenPollCount)・`setBgAudioEnabled`・`setBgWakeLock`。localStorage `tagdeck.live.bgAudio` / `tagdeck.live.bgWakeLock` |
+| UI | `LiveCockpit` | カード「スマホでも裏で鳴らす(実験)」: スイッチ 2 つ・状態バッジ・対応状況・隠している間の取得回数・試し方 |
+
+### 実験手順(社長・実機)
+
+1. スマホで `/live` → 「接続」 → 「音楽プレイヤー扱いにする」ON → 通知バーに再生カードが出ることを確認
+2. ホームに戻る(または画面を消す)→ 2〜3 分待つ → 戻って「画面を隠している間の取得: N 回」が増えていれば裏でも動いている。ギフトを投げてもらえば SE の実鳴りも分かる
+3. 結果を Android / iPhone それぞれ「画面点灯・他アプリ」「画面ロック」の 2 条件で記録する。iPhone のロック後は OS 次第(README S3 冒頭の注意)
+4. 「画面を消さない」は電池を使うが、点灯中は確実に鳴る(両 OS)
+
+### 期待される結果と、外れた場合
+
+- Android Chrome: 他アプリ・画面ロックとも取得回数が増える見込み。増えなければ Chrome の「バックグラウンドでの音声再生」や電池最適化の設定を確認
+- iPhone Safari: 画面点灯中・他アプリは増える見込み。画面ロック後に増えなければ、現状のブラウザでは不可と判断し「画面を消さない」運用にする
+
+## S4: 公式の既定 SE(運営のアップロードに同期・汎用既定は「きらきら輝く1」)(実装済み・2026-09-25)
+
+社長指示「SE 欄で音源を変更したので、デフォルトに設定してほしい」→「音を自分のアップロードしているものに同期してほしい」→「デフォルトの音声を『きらきら輝く1』に変更してほしい」への対応。
+
+### 既定の優先順(上が優先)
+
+1. **同期元ユーザーの現在の割り当て**: `wrangler.jsonc` の `vars.SE_DEFAULT_SOURCE_USER_ID`(運営アカウントの users.id)の se_mappings のうち、音源あり・鳴らす ON の行。`GET /api/se/mappings` が `defaults` として返し、クライアントが合成する。**運営が SE タブでアップロードし直せば、次の読込(ライブ画面は 5 分ごと・SE タブは開いたとき)から全ユーザーの既定が変わる**。デプロイ不要
+2. **同梱スナップショット**(`src/lib/se/default-mappings.ts` + `public/se/defaults/*.mp3` 14 ファイル): 同期元が未設定・0 件のとき(ローカル開発など)。第三者の著作物と思われる音源(任天堂コイン音・牙狼保留音)は含めていない
+3. **汎用既定「きらきら輝く1」**(`public/se/defaults/kirakira.mp3`・効果音ラボ): 価格帯 tier:T0〜T4・hit のうち 1・2 に無いもの。Web Audio 合成音は音源が取れなかった時だけの保険になった
+
+ユーザー側の規則: 自分の行がある key は自分の行。ただし url が null(音量・鳴らすだけ変えた)なら音源は既定のまま。「既定に戻す」= 自分の行を消して公式音源へ。SE タブは「既定 ♪ ラベル」と表示し、自分の行がある key だけ「上書き中」「既定に戻す」を出す。
+
+### 追加・変更
+
+| 種別 | パス | 内容 |
+|---|---|---|
+| route | `GET /api/se/mappings` | `defaults`(同期元の行)と `defaultsSource`("sync" / "bundled")を追加。`Cache-Control: private, no-store` |
+| config | `wrangler.jsonc` `vars.SE_DEFAULT_SOURCE_USER_ID` | 同期元ユーザー ID(秘密ではない内部 ID)。空にすると同梱に落ちる |
+| lib | `src/lib/se/merge-defaults.ts` | `mergeWithDefaults(userRows, liveDefaults)`: 同期元 > 同梱 > 汎用の順に既定を組み、ユーザー行を重ねる。テスト 10 件 |
+| lib | `src/lib/se/default-mappings.ts` | 同梱スナップショット 18 件 + `GENERIC_DEFAULT_SOUND`(きらきら輝く1) |
+| provider/UI | `LiveConnectionProvider`・`SeMappingTab` | 合成後の mappings を使う。ライブ画面は 5 分ごとに再読込。SE タブの説明に「運営の現在の設定に同期 / 同梱」を表示 |
+
+### 権利について(社長判断)
+
+同期方式では、運営アカウントにアップロードした音源が**そのまま全ユーザーに配られる**。第三者の著作物(現在の設定では tier:T2「【任天堂】コインの音【スーパーマリオ】.wav」、item:13064「ガロ保留音(赤).mp3」)も同期される点に注意。既定から外したい音源は運営アカウントの SE タブで「既定に戻す」(同期元の行が消えると、その key は同梱または汎用既定になる)。
+
+### 動作確認手順
+
+1. `pnpm exec tsc --noEmit` / `pnpm test` / `pnpm exec next build --webpack`
+2. デプロイ後、別アカウントで `/api/se/mappings` を開くと `defaultsSource: "sync"` と運営の行が `defaults` に入る
+3. 運営アカウントの SE タブで音源を差し替える → 別アカウントで SE タブを開き直すと「既定 ♪ 新しいラベル」に変わる
+4. 運営にも同梱にも無い価格帯(例: T2 を「既定に戻す」した状態)は「既定 ♪ きらきら輝く1.mp3」で鳴る
+## S5: 無音が続くと SE が鳴らなくなる問題の修正(実装済み・2026-09-25)
+
+社長報告「無音が続くとならなくなる」への対応。原因は 2 系統あり、両方に手を入れた。
+
+| 原因 | 症状 | 対処 |
+|---|---|---|
+| AudioContext が suspended / interrupted / closed になる(しばらく音を出していない・画面を隠した・他アプリが音を出した・iOS の割り込み) | その後 start() しても音が出ない。keep-alive も止まる | `engine.ts`: 鳴らす直前に `ensureAudioRunning()`(resume を 1.5 秒で打ち切り)。closed なら作り直して keep-alive を鳴らし直す。画面復帰・ユーザー操作(pointerdown/keydown/touchend)で自動復帰(`installAudioAutoResume`)。接続中・待機中は 5 秒ごとに監視し、自動で戻せなければ「音を有効にする」ボタンを再表示、戻せたら「音声を再開しました」バッジ |
+| ポーリングの fetch がぶら下がる(回線切替・スリープ復帰) | inFlight ガードで以後の取得が永久に止まる → ギフトが来ても鳴らない | `POST /live/poll` と待機確認 `GET /live` に `AbortSignal.timeout(15s)`。打ち切られれば従来の再試行に乗る |
+
+### 動作確認手順
+
+1. `pnpm test`(engine 5 件を含む)、`pnpm exec tsc --noEmit`、`pnpm exec next build --webpack`
+2. 接続 → 10 分以上ギフト無しで放置 → テスト再生が鳴る。スマホでは画面を消して戻る → 状態バッジが「音声停止中」なら「音を有効にする」で復帰、自動で戻れば「音声を再開しました」
+3. 機内モードを 30 秒 ON → OFF → 「取得エラー…再試行します」の後に最終取得が進む(fetch が 15 秒で打ち切られる)
+
 ## S1: SE タブ・ふわっちギフト取得(実装済み・2026-09-21)
 
 決裁どおり公開 API のポーリングのみ(WebSocket 不使用)。
