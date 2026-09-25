@@ -22,7 +22,7 @@ For Next.js changes, verify current framework behavior before coding. This proje
 ## Critical Constraints
 
 - Do not implement unofficial API access, scraping, reverse engineering, or internal protocol analysis.
-  - Exception (owner decision, 2026-09-25): the whowatch comment server WebSocket (`comment_server_url` + `jwt` from `/lives/{id}`) may be connected from the streamer's own browser, receive-only, for the streamer's own live. No sending, no protocol analysis. See AGENTS.md.
+  - Exception (owner decision, 2026-09-25): the whowatch comment server WebSocket (`comment_server_url` + `jwt` from `/lives/{id}`) may be connected from the streamer's own browser, for the streamer's own live. The only frames sent are the Phoenix Channels subscription frames (`phx_join` / `heartbeat` / `phx_leave`; owner decision 2026-09-25 "送信も可"). No comment posting, no protocol analysis. See AGENTS.md.
 - Keep `middleware.ts`; do not migrate to `proxy.ts` until the documented OpenNext support condition changes.
 - Do not expose `.env.local`, Supabase keys, database URLs, or platform credentials.
 - Deployment and external service changes require explicit owner approval.
