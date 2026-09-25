@@ -65,7 +65,7 @@ export function useNiconicoMonitor() {
   // Load initial profile state
   useEffect(() => {
     fetch("/api/platforms/niconico/profile")
-      .then((r) => r.json())
+      .then((r) => r.json() as Promise<NiconicoProfileResponse>)
       .then((data) => {
         if (!mountedRef.current) return;
         setState((prev) => ({ ...prev, ...profileToState(data) }));
@@ -128,7 +128,7 @@ export function useNiconicoMonitor() {
       try {
         const res = await fetch("/api/platforms/niconico/profile");
         if (!res.ok || !mountedRef.current) return;
-        const data = await res.json();
+        const data = (await res.json()) as NiconicoProfileResponse;
         setState((prev) => ({ ...prev, ...profileToState(data) }));
       } catch {
         // タブ可視化時の保険なので致命的でない
@@ -145,7 +145,7 @@ export function useNiconicoMonitor() {
     try {
       const res = await fetch("/api/platforms/niconico/poll", { method: "POST" });
       if (!mountedRef.current) return;
-      const data = await res.json();
+      const data = (await res.json()) as { status?: string; title?: string; viewerCount?: number; commentCount?: number };
 
       if (data.status === "not_monitoring") {
         stopPolling();
@@ -200,7 +200,7 @@ export function useNiconicoMonitor() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "start" }),
     });
-    const data = await res.json();
+    const data = (await res.json()) as { error?: string };
     if (!res.ok) throw new Error(data.error ?? "監視開始に失敗しました");
     setState((prev) => ({ ...prev, isMonitoring: true, status: "monitoring" }));
   }, []);
@@ -211,7 +211,7 @@ export function useNiconicoMonitor() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "stop" }),
     });
-    const data = await res.json();
+    const data = (await res.json()) as { error?: string };
     if (!res.ok) throw new Error(data.error ?? "監視停止に失敗しました");
     setState((prev) => ({
       ...prev,

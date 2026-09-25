@@ -69,7 +69,7 @@ export function SeMappingTab() {
 
   useEffect(() => {
     fetch("/api/platforms/whowatch/items/patterns")
-      .then((r) => (r.ok ? r.json() : { items: [] }))
+      .then((r) => (r.ok ? (r.json() as Promise<{ items?: ItemRow[]; groups?: GroupRow[]; syncedAt?: string | null }>) : { items: [] }))
       .then((d: { items?: ItemRow[]; groups?: GroupRow[]; syncedAt?: string | null }) => {
         setItems(d.items ?? []);
         setGroups(d.groups ?? []);
@@ -77,7 +77,7 @@ export function SeMappingTab() {
       })
       .catch(() => setItems([]));
     fetch("/api/se/mappings")
-      .then((r) => (r.ok ? r.json() : { mappings: [] }))
+      .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[] }>) : { mappings: [] }))
       .then((d: { mappings?: Mapping[] }) => setMappings(d.mappings ?? []))
       .catch(() => undefined);
   }, []);

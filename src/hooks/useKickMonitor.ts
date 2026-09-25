@@ -263,7 +263,7 @@ export function useKickMonitor() {
       body: JSON.stringify({ action: "start" }),
     });
     if (!res.ok) {
-      const data = await res.json();
+      const data = (await res.json()) as { error?: string };
       throw new Error(data.error ?? "監視開始に失敗しました");
     }
     setState((prev) => ({ ...prev, isMonitoring: true }));

@@ -65,7 +65,15 @@ export async function fetchKickChannel(
     throw new KickApiException(response.status, `Kick API error: ${response.status}`);
   }
 
-  const data = await response.json();
+  // Kick 公開 API の channel 応答のうち、ここで読むフィールドだけを型にする
+  const data = (await response.json()) as {
+    id?: number | string;
+    slug?: string;
+    user?: { username?: string };
+    chatroom?: { id?: number | string };
+    followers_count?: number;
+    livestream?: { session_title?: string; viewer_count?: number; created_at?: string } | null;
+  };
 
   return {
     channelId: String(data.id),

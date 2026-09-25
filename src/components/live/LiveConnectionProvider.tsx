@@ -237,7 +237,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
 
   useEffect(() => {
     fetch("/api/se/mappings")
-      .then((r) => (r.ok ? r.json() : { mappings: [] }))
+      .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[] }>) : { mappings: [] }))
       .then((d: { mappings?: Mapping[] }) => setMappings(d.mappings ?? []))
       .catch(() => undefined);
   }, []);
