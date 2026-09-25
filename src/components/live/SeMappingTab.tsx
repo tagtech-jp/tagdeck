@@ -31,6 +31,8 @@ interface ItemRow {
   itemName: string;
   priceJpy: number | null;
   onSale: boolean;
+  /** アイテムの代表画像（/playitems の image_url から 1 枚。無ければ null） */
+  imageUrl?: string | null;
   /** 属するカテゴリ（アイテムページの並び順） */
   groups: string[];
   patterns: PatternRow[];
@@ -358,6 +360,8 @@ export function SeMappingTab() {
                   const g = r.group;
                   const isPseudo = g.groupKey === NONE_GROUP;
                   const catKey = `cat:group:${g.groupKey}`;
+                  // バナー画像が無いカテゴリは、所属アイテムの画像を並べて見出しにする（アイテムページの雰囲気に寄せる）
+                  const thumbs = g.bannerUrl ? [] : rows.slice(row.index + 1).filter((x): x is Extract<ListRow, { kind: "item" }> => x.kind === "item" && x.groupKey === g.groupKey).map((x) => x.item.imageUrl).filter((u): u is string => Boolean(u)).slice(0, 8);
                   return (
                     <div key={`h:${g.groupKey}`} data-index={row.index} ref={rowVirtualizer.measureElement} style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${row.start}px)` }}>
                       <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted/40">
@@ -366,7 +370,15 @@ export function SeMappingTab() {
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={g.bannerUrl} alt={groupLabel(g)} loading="lazy" className="max-h-48 w-full object-cover" />
                         ) : (
-                          <div className="flex items-center gap-3 bg-primary/10 px-4 py-4">
+                          <div className="flex flex-wrap items-center gap-3 bg-primary/10 px-4 py-3">
+                            {thumbs.length > 0 && (
+                              <div className="flex -space-x-2">
+                                {thumbs.map((u, i) => (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img key={`${u}-${i}`} src={u} alt="" loading="lazy" className="size-10 rounded-full border border-border bg-card object-contain" />
+                                ))}
+                              </div>
+                            )}
                             {g.badgeText && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">{g.badgeText}</span>}
                             <span className="text-base font-bold text-foreground">{g.groupTitle}</span>
                             {g.subGroupTitle && <span className="text-xs text-muted-foreground">{g.subGroupTitle}</span>}
@@ -406,7 +418,14 @@ export function SeMappingTab() {
                     ref={rowVirtualizer.measureElement}
                     style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${row.start}px)` }}
                   >
-                    <div className="mb-3 rounded-lg border border-border p-3">
+                    <div className="mb-3 flex gap-3 rounded-lg border border-border p-3">
+                      {it.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={it.imageUrl} alt={it.itemName} loading="lazy" className="size-14 shrink-0 rounded-lg border border-border bg-muted object-contain" />
+                      ) : (
+                        <div className="flex size-14 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-[10px] text-muted-foreground">画像なし</div>
+                      )}
+                      <div className="min-w-0 flex-1">
                       <div className="mb-1 flex flex-wrap items-center gap-2 text-xs">
                         <span className="font-medium text-foreground">{it.itemName}</span>
                         <span className="text-muted-foreground">{it.priceJpy !== null ? `¥${it.priceJpy.toLocaleString()}` : "無料 / 価格なし"}</span>
@@ -442,6 +461,7 @@ export function SeMappingTab() {
                           </div>
                         );
                       })}
+                      </div>
                     </div>
                   </div>
                 );

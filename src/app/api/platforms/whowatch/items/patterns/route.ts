@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
 import { itemPointMapping, whowatchItemGroups, whowatchItemPatterns } from "@/lib/db/schema";
+import { pickItemImage } from "@/lib/se/item-image";
 
 /**
  * GET /api/platforms/whowatch/items/patterns → SE タブ用アイテム一覧（S1）
@@ -16,6 +17,9 @@ import { itemPointMapping, whowatchItemGroups, whowatchItemPatterns } from "@/li
  *   カテゴリは仕分け用の付加情報で、SE の当たり判定には要らない
  * - 応答から誰も使っていない imageUrl / soundUrl を外す。4,431 パターン分の URL 文字列で
  *   応答が 1.35MB あり、Workers の CPU 時間（AGENTS.md: Free プラン 10ms/request）に対して重すぎた
+ *
+ * 2026-09-25: アイテム画像を出すため、パターンごとではなく **アイテムごとに 1 枚だけ** imageUrl を返す
+ * （pickItemImage）。約 1,970 件 × URL 1 本なので、パターン全件を返していた頃の 1/2 以下で済む
  */
 export async function GET() {
   const supabase = await createClient();
@@ -38,6 +42,8 @@ export async function GET() {
           isVariant: whowatchItemPatterns.isVariant,
           animationUrl: whowatchItemPatterns.animationUrl,
           animationFullscreen: whowatchItemPatterns.animationFullscreen,
+          // アイテム代表画像の選定用（応答にはアイテムごとに 1 枚だけ載せる）
+          imageUrl: whowatchItemPatterns.imageUrl,
           syncedAt: whowatchItemPatterns.syncedAt,
         })
         .from(whowatchItemPatterns),
@@ -81,16 +87,21 @@ export async function GET() {
     }
     const groups = [...groupMap.values()].sort((a, b) => (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999) || a.groupTitle.localeCompare(b.groupTitle, "ja"));
 
-    const items = new Map<number, { itemId: number; itemName: string; priceJpy: number | null; onSale: boolean; groups: string[]; patterns: Array<{ patternId: number; patternName: string; isHit: boolean; hitGrade: string | null; isVariant: boolean; quantity: number | null; animationUrl: string | null; animationFullscreen: boolean }> }>();
+    const items = new Map<number, { itemId: number; itemName: string; priceJpy: number | null; onSale: boolean; imageUrl: string | null; groups: string[]; patterns: Array<{ patternId: number; patternName: string; isHit: boolean; hitGrade: string | null; isVariant: boolean; quantity: number | null; animationUrl: string | null; animationFullscreen: boolean }> }>();
+    // アイテムごとの代表画像を選ぶための一時保持（応答には載せない）
+    const imageCandidates = new Map<number, Array<{ patternName: string; imageUrl: string | null; isHit: boolean }>>();
     for (const p of patterns) {
       let it = items.get(p.itemId);
       if (!it) {
         const pr = priceById.get(String(p.itemId));
-        it = { itemId: p.itemId, itemName: p.itemName, priceJpy: pr ? pr.priceJpy : null, onSale: pr?.state === "OPEN", groups: groupsByItem.get(p.itemId) ?? [], patterns: [] };
+        it = { itemId: p.itemId, itemName: p.itemName, priceJpy: pr ? pr.priceJpy : null, onSale: pr?.state === "OPEN", imageUrl: null, groups: groupsByItem.get(p.itemId) ?? [], patterns: [] };
         items.set(p.itemId, it);
+        imageCandidates.set(p.itemId, []);
       }
       it.patterns.push({ patternId: p.patternId, patternName: p.patternName, isHit: p.isHit, hitGrade: p.hitGrade, isVariant: p.isVariant, quantity: p.quantity, animationUrl: p.animationUrl, animationFullscreen: p.animationFullscreen });
+      imageCandidates.get(p.itemId)!.push({ patternName: p.patternName, imageUrl: p.imageUrl, isHit: p.isHit });
     }
+    for (const it of items.values()) it.imageUrl = pickItemImage(it.itemName, imageCandidates.get(it.itemId) ?? []);
     // 販売中（価格あり）→ 名前順に並べ、無料・非販売は後ろ
     const list = [...items.values()].sort((a, b) => Number(b.priceJpy !== null) - Number(a.priceJpy !== null) || (b.priceJpy ?? 0) - (a.priceJpy ?? 0) || a.itemName.localeCompare(b.itemName, "ja"));
     const res = NextResponse.json({ items: list, groups, patternCount: patterns.length, syncedAt: patterns[0]?.syncedAt?.toISOString() ?? null });
