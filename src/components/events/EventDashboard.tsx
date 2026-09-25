@@ -5,6 +5,8 @@ import { useCssTokens } from "@/lib/css-tokens";
 import { Trash2 } from "lucide-react";
 import { useEventForecast, type EventSimulatorRow } from "@/hooks/useEventSimulator";
 import { useHistoricalPace } from "@/hooks/useHistoricalPace";
+import { useRankingSnapshots } from "@/hooks/useRankingSnapshots";
+import { forecastRank, rivalKey, type RankForecastOutput } from "@/lib/whowatch/rank-forecast";
 import { useEventStrategy, type ItemMasterEntry } from "@/hooks/useEventStrategy";
 import { RankDistributionChart } from "./RankDistributionChart";
 import { RivalsList } from "./RivalsList";
@@ -42,6 +44,7 @@ const STATUS_COLORS = {
   at_risk: "text-status-warning",
   impossible: "text-destructive",
   completed: "text-status-success",
+  no_data: "text-muted-foreground",
 } as const;
 
 const STATUS_LABELS = {
@@ -50,7 +53,31 @@ const STATUS_LABELS = {
   at_risk: "注意",
   impossible: "困難",
   completed: "達成",
+  no_data: "未取得",
 } as const;
+
+type HeroStatus = keyof typeof STATUS_LABELS;
+
+/** 確率 → ステータス（calculator.ts の閾値と同じ） */
+function statusForProbability(p: number): HeroStatus {
+  if (p >= 90) return "ahead";
+  if (p >= 60) return "on_track";
+  if (p >= 25) return "at_risk";
+  return "impossible";
+}
+
+/** ヒーロー（主要数字）の表示用にまとめた値。ふわっち連携イベントは ranking_snapshots 由来、それ以外は calculator 由来 */
+interface HeroView {
+  status: HeroStatus;
+  message: string;
+  probability: number | null;
+  expectedRank: number | null;
+  finalScoreP50: number | null;
+  hourlyPace: number;
+  currentRank: number | null;
+  currentScore: number;
+  distribution: Record<string, number> | null;
+}
 
 // Colors come from globals.css at runtime (single source of truth)
 const SPARKLINE_TOKENS = {
@@ -67,8 +94,102 @@ function formatTime(minutes: number): string {
 }
 
 export function EventDashboard({ event, onDeleted }: Props) {
-  const { forecast } = useEventForecast(event);
+  const { forecast, now } = useEventForecast(event);
   const { data: historicalPace } = useHistoricalPace(event.id, event.eventType);
+
+  const isRankingType =
+    event.eventType === "ranking" ||
+    event.eventType === "nice" ||
+    event.eventType === "viewer";
+  // ふわっち連携（ranking_type あり）は ranking_snapshots（順位表の全員）から確率を出す
+  const usesSnapshots = isRankingType && event.platform === "whowatch" && Boolean(event.rankingType);
+  const isOpenNow =
+    now.getTime() >= new Date(event.startTime).getTime() && now.getTime() <= new Date(event.endTime).getTime();
+  const snaps = useRankingSnapshots(event.id, { enabled: usesSnapshots, autoRefresh: usesSnapshots && isOpenNow });
+  // 逆算パネルで目標順位を変えたら保存を待たずヒーローにも反映する
+  const [targetRankOverride, setTargetRankOverride] = useState<number | null>(null);
+  const effectiveTargetRank = targetRankOverride ?? event.targetRank ?? 5;
+  // 再計算は 1 分単位（残り時間の更新用。5 秒毎の now で 1 万試行を回さない）
+  const nowMinute = Math.floor(now.getTime() / 60_000);
+
+  const snapshotForecast = useMemo<RankForecastOutput | null>(() => {
+    if (!usesSnapshots || !snaps.snapshots || snaps.snapshots.length === 0) return null;
+    const sorted = [...snaps.snapshots].sort((a, b) => new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime());
+    const latest = sorted[sorted.length - 1];
+    const me = latest.myRank ? latest.entries.find((e) => e.rank === latest.myRank) ?? null : null;
+    const myKey = me ? rivalKey(me) : null;
+    const myHistory = sorted.filter((s) => s.myPoint !== null).map((s) => ({ timestamp: new Date(s.capturedAt), score: s.myPoint as number }));
+    const myPace = estimatePaceParameters(myHistory);
+    return forecastRank({
+      snapshots: sorted.map((s) => ({ capturedAt: s.capturedAt, entries: s.entries, myPoint: s.myPoint })),
+      myPoint: latest.myPoint ?? event.currentScore,
+      myPaceMean: myPace.mean,
+      myPaceStdDev: myPace.stdDev,
+      targetRank: effectiveTargetRank,
+      now: new Date(nowMinute * 60_000),
+      endTime: new Date(event.endTime),
+      eventStart: new Date(event.startTime),
+      myKey,
+    });
+  }, [usesSnapshots, snaps.snapshots, event.currentScore, event.endTime, event.startTime, effectiveTargetRank, nowMinute]);
+
+  const hero: HeroView | null = useMemo(() => {
+    if (usesSnapshots) {
+      if (!snapshotForecast || snapshotForecast.rivals.length === 0) {
+        return {
+          status: "no_data",
+          message:
+            snaps.snapshots === null
+              ? "ランキングを読み込み中"
+              : snaps.snapshots.length === 0
+                ? "ランキング未取得のため確率を計算できません。「ランキング更新」で取得します"
+                : snapshotForecast?.note ?? "ランキング未取得",
+          probability: null,
+          expectedRank: null,
+          finalScoreP50: null,
+          hourlyPace: snapshotForecast?.myPace?.paceMean ?? 0,
+          currentRank: snapshotForecast?.currentRank ?? event.currentRank,
+          currentScore: snapshotForecast?.currentPoint ?? event.currentScore,
+          distribution: null,
+        };
+      }
+      const p = snapshotForecast.rankProbability;
+      const status = snapshotForecast.remainingHours <= 0 ? (p >= 50 ? "completed" : "impossible") : statusForProbability(p);
+      const label =
+        status === "ahead"
+          ? "ほぼ確実"
+          : status === "on_track"
+            ? "達成有望"
+            : status === "at_risk"
+              ? "厳しい状況"
+              : status === "completed"
+                ? "確定"
+                : "困難";
+      return {
+        status,
+        message: `目標 ${effectiveTargetRank} 位以内${label}（${p.toFixed(1)}%）· 順位表 ${snapshotForecast.rivals.length + (snapshotForecast.currentRank ? 1 : 0)} 名で試算`,
+        probability: p,
+        expectedRank: snapshotForecast.expectedRank,
+        finalScoreP50: snapshotForecast.myFinalPoints.p50,
+        hourlyPace: snapshotForecast.myPace?.paceMean ?? forecast?.currentHourlyPace ?? 0,
+        currentRank: snapshotForecast.currentRank,
+        currentScore: snapshotForecast.currentPoint,
+        distribution: snapshotForecast.rankDistribution,
+      };
+    }
+    if (!forecast) return null;
+    return {
+      status: forecast.status,
+      message: forecast.message,
+      probability: forecast.rankProbability ?? null,
+      expectedRank: forecast.expectedRank ?? null,
+      finalScoreP50: forecast.myFinalScorePercentiles?.p50 ?? null,
+      hourlyPace: forecast.currentHourlyPace,
+      currentRank: event.currentRank,
+      currentScore: event.currentScore,
+      distribution: forecast.rankDistribution ?? null,
+    };
+  }, [usesSnapshots, snapshotForecast, snaps.snapshots, forecast, event.currentRank, event.currentScore, effectiveTargetRank]);
   // R1: イベント型テンプレート解決（whowatch連携イベントのみ・既存の開催中イベント一覧APIを再利用）
   const [strategyTemplate, setStrategyTemplate] = useState(DEFAULT_EVENT_TEMPLATE);
   useEffect(() => {
@@ -202,14 +323,10 @@ export function EventDashboard({ event, onDeleted }: Props) {
     })();
   }, [event.id, event.platform]);
 
-  const isRankingType =
-    event.eventType === "ranking" ||
-    event.eventType === "nice" ||
-    event.eventType === "viewer";
-
-  // 入賞確率の時系列 (ranking 型 / paceHistory 3 点以上 / 最大 20 サンプル)
+  // 入賞確率の時系列 (ranking 型 / paceHistory 3 点以上 / 最大 20 サンプル)。
+  // スナップショット型はライバルのペースを持たない旧モデルのままなので表示しない
   const probabilityHistory = useMemo(() => {
-    if (!isRankingType || !event.targetRank || event.paceHistory.length < 3) return [];
+    if (!isRankingType || usesSnapshots || !event.targetRank || event.paceHistory.length < 3) return [];
 
     const fullHistory = event.paceHistory.map((p) => ({
       timestamp: new Date(p.timestamp),
@@ -246,6 +363,7 @@ export function EventDashboard({ event, onDeleted }: Props) {
     });
   }, [
     isRankingType,
+    usesSnapshots,
     event.targetRank,
     event.paceHistory,
     event.rivalsSnapshot,
@@ -323,11 +441,11 @@ export function EventDashboard({ event, onDeleted }: Props) {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {forecast && (
+            {hero && (
               <span
-                className={`rounded-full border border-current px-2 py-1 text-xs font-bold ${STATUS_COLORS[forecast.status]}`}
+                className={`rounded-full border border-current px-2 py-1 text-xs font-bold ${STATUS_COLORS[hero.status]}`}
               >
-                {STATUS_LABELS[forecast.status]}
+                {STATUS_LABELS[hero.status]}
               </span>
             )}
             <button
@@ -392,7 +510,7 @@ export function EventDashboard({ event, onDeleted }: Props) {
           </div>
         )}
 
-        {forecast && <p className="mt-2 text-xs text-foreground">{forecast.message}</p>}
+        {hero && <p className="mt-2 text-xs text-foreground">{hero.message}</p>}
         {historicalPace.hasSufficientData && (
           <p className="mt-1 text-xs text-muted-foreground">
             📊 過去データ参照中 ({historicalPace.sampleCount}件)
@@ -403,7 +521,7 @@ export function EventDashboard({ event, onDeleted }: Props) {
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span>残り {formatTime(forecast.remainingMinutes)}</span>
             <span>経過 {formatTime(forecast.elapsedMinutes)}</span>
-            <span>現在ペース {Math.round(forecast.currentHourlyPace).toLocaleString()}/時</span>
+            <span>現在ペース {Math.round(hero?.hourlyPace ?? forecast.currentHourlyPace).toLocaleString()}/時</span>
           </div>
         )}
       </div>
@@ -510,46 +628,72 @@ export function EventDashboard({ event, onDeleted }: Props) {
       )}
 
       {/* ranking 型の確率表示 */}
-      {isRankingType && forecast && (
+      {isRankingType && hero && (
         <div className="space-y-3 rounded-xl border border-border bg-card p-4">
           <div>
             <div className="mb-1 flex justify-between text-xs text-foreground">
-              <span>目標 {event.targetRank} 位以内の確率</span>
+              <span>目標 {effectiveTargetRank} 位以内の確率</span>
               <span className="text-sm font-bold">
-                {(forecast.rankProbability ?? 0).toFixed(1)}%
+                {hero.probability === null ? "—" : `${hero.probability.toFixed(1)}%`}
               </span>
             </div>
             <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
-                  (forecast.rankProbability ?? 0) >= 60
+                  (hero.probability ?? 0) >= 60
                     ? "bg-status-success"
-                    : (forecast.rankProbability ?? 0) >= 25
+                    : (hero.probability ?? 0) >= 25
                     ? "bg-status-warning"
                     : "bg-destructive"
                 }`}
-                style={{ width: `${Math.min(100, forecast.rankProbability ?? 0)}%` }}
+                style={{ width: `${Math.min(100, hero.probability ?? 0)}%` }}
               />
             </div>
           </div>
 
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <span>期待順位 {(forecast.expectedRank ?? 0).toFixed(1)} 位</span>
-            {forecast.myFinalScorePercentiles && (
+            <span>期待順位 {hero.expectedRank === null ? "—" : `${hero.expectedRank.toFixed(1)} 位`}</span>
+            {hero.finalScoreP50 !== null && (
               <span>
                 最終スコア中央値{" "}
-                {forecast.myFinalScorePercentiles.p50.toLocaleString(undefined, {
+                {hero.finalScoreP50.toLocaleString(undefined, {
                   maximumFractionDigits: 0,
                 })}
               </span>
             )}
           </div>
 
-          <div className="text-xs text-muted-foreground">
-            現在スコア {event.currentScore.toLocaleString()}
-            {event.currentRank && ` · 現在 ${event.currentRank} 位`}
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+            <span>
+              現在スコア {hero.currentScore.toLocaleString()}
+              {hero.currentRank && ` · 現在 ${hero.currentRank} 位`}
+              {usesSnapshots && snaps.latest && (
+                <>
+                  {" · 最終取得 "}
+                  {new Date(snaps.latest.capturedAt).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </>
+              )}
+            </span>
+            {usesSnapshots && (
+              <button
+                type="button"
+                onClick={() => void snaps.refresh()}
+                disabled={snaps.refreshing}
+                className="min-h-8 rounded-full border border-border bg-muted px-3 text-xs text-foreground disabled:opacity-50"
+              >
+                {snaps.refreshing ? "取得中..." : "ランキング更新"}
+              </button>
+            )}
           </div>
-          {event.currentRank === null && event.rivalsSnapshot !== null && (
+          {usesSnapshots && snaps.refreshMessage && (
+            <p className="text-xs text-muted-foreground">{snaps.refreshMessage}</p>
+          )}
+          {usesSnapshots && snaps.latest && hero.currentRank === null && (
+            <p className="text-xs text-status-warning">
+              順位表に自分が見つかりません（設定のふわっち ID か、エントリ名を確認）(要確認)
+            </p>
+          )}
+          {!usesSnapshots && event.currentRank === null && event.rivalsSnapshot !== null && (
             <p className="text-xs text-status-warning">
               自分の順位を特定できません（エントリ名を確認）(要確認)
             </p>
@@ -563,7 +707,10 @@ export function EventDashboard({ event, onDeleted }: Props) {
           eventId={event.id}
           whowatchEventId={event.whowatchEventId}
           targetRank={event.targetRank ?? 5}
+          startTime={event.startTime}
           endTime={event.endTime}
+          snapshots={snaps.snapshots}
+          onTargetRankChange={setTargetRankOverride}
         />
       )}
 
@@ -679,10 +826,10 @@ export function EventDashboard({ event, onDeleted }: Props) {
                 </div>
               </div>
             )}
-            {forecast?.rankDistribution && event.targetRank && (
+            {hero?.distribution && (
               <RankDistributionChart
-                distribution={forecast.rankDistribution}
-                targetRank={event.targetRank}
+                distribution={hero.distribution}
+                targetRank={effectiveTargetRank}
               />
             )}
           </TabsContent>

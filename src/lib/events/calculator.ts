@@ -34,7 +34,7 @@ export interface ExtendedEventForecast {
   expectedRank?: number;
   rankDistribution?: Record<string, number>;
   myFinalScorePercentiles?: { p10: number; p50: number; p90: number };
-  status: "ahead" | "on_track" | "at_risk" | "impossible" | "completed";
+  status: "ahead" | "on_track" | "at_risk" | "impossible" | "completed" | "no_data";
 }
 
 export function calculateExtendedForecast(
@@ -141,6 +141,20 @@ function calcRankingForecast(
   const targetRank = state.targetRank ?? 1;
   const rivals = state.rivals ?? [];
   const remainingHours = remainingMinutes / 60;
+
+  // ライバル情報が無い状態で試行すると全試行 1 位 = 100% になってしまうため、未取得として返す
+  if (rivals.length === 0) {
+    return {
+      eventType: state.eventType,
+      remainingMinutes,
+      elapsedMinutes,
+      progressPercent: 0,
+      currentHourlyPace: paceMean,
+      paceStdDev,
+      status: "no_data",
+      message: "ランキング未取得のため確率を計算できません（ライバル情報がありません）",
+    };
+  }
 
   // フェーズ 5b でライバル個別推定に置き換え予定。現在は自分と同ペース仮定。
   const rivalStates: RivalState[] = rivals.map((r) => ({

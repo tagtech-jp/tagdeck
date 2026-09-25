@@ -2,19 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { estimatePaceParameters } from "@/lib/events/monte-carlo";
-import { forecastRank, type RankForecastOutput, type SnapshotLike } from "@/lib/whowatch/rank-forecast";
+import { forecastRank, rivalKey, type RankForecastOutput, type SnapshotLike } from "@/lib/whowatch/rank-forecast";
+import type { RankingSnapshotRow } from "@/hooks/useRankingSnapshots";
 
 // E3: ranking_snapshots（実データ）から「目標順位の達成確率・必要 pt・必要個数・1 日あたり個数」をクライアント計算する。
 // 期待倍率は rules_parsed（当たり倍率表）、基礎 pt は event_item_points（手入力 / 実測推定）。全て期待値・目安であり断定しない。
 
-interface SnapshotRow {
-  id: string;
-  capturedAt: string;
-  status: number | null;
-  myRank: number | null;
-  myPoint: number | null;
-  entries: Array<{ rank: number; point: number; user_id: string | null; user_path: string | null; name: string }>;
-}
+type SnapshotRow = RankingSnapshotRow;
 interface ItemMaster {
   id: string;
   name: string;
@@ -36,15 +30,17 @@ interface Props {
   eventId: string;
   whowatchEventId: number | null;
   targetRank: number;
+  startTime: string;
   endTime: string;
+  /** 親（EventDashboard）が useRankingSnapshots で取得したもの。null = 読み込み中 */
+  snapshots: SnapshotRow[] | null;
   onTargetRankChange?: (rank: number) => void;
 }
 
 const TARGET_RANKS = [1, 2, 3, 4, 5];
 
-export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initialTargetRank, endTime, onTargetRankChange }: Props) {
+export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initialTargetRank, startTime, endTime, snapshots, onTargetRankChange }: Props) {
   const [targetRank, setTargetRank] = useState(Math.min(5, Math.max(1, initialTargetRank || 5)));
-  const [snapshots, setSnapshots] = useState<SnapshotRow[] | null>(null);
   const [items, setItems] = useState<ItemMaster[]>([]);
   const [eventKey, setEventKey] = useState<string | null>(null);
   const [rules, setRules] = useState<RulesParsed | null>(null);
@@ -55,28 +51,11 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
   const [msg, setMsg] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
 
-  // スナップショット（5 分毎に再取得）
+  // 残り時間の更新用に 5 分毎に再計算（スナップショット自体は親が再取得する）
   useEffect(() => {
-    let cancelled = false;
-    const load = () =>
-      fetch(`/api/events/${eventId}/snapshots?limit=96`)
-        .then((r) => (r.ok ? (r.json() as Promise<{ snapshots?: SnapshotRow[] }>) : { snapshots: [] }))
-        .then((d: { snapshots?: SnapshotRow[] }) => {
-          if (!cancelled) setSnapshots(d.snapshots ?? []);
-        })
-        .catch(() => {
-          if (!cancelled) setSnapshots([]);
-        });
-    void load();
-    const id = setInterval(() => {
-      void load();
-      setTick((t) => t + 1);
-    }, 5 * 60 * 1000);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, [eventId]);
+    const id = setInterval(() => setTick((t) => t + 1), 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
 
   // アイテムマスタ（価格付き）と、whowatchEventId → event_key → ルール解析・基礎 pt
   useEffect(() => {
@@ -117,7 +96,7 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
     const sorted = [...snapshots].sort((a, b) => new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime());
     const latest = sorted[sorted.length - 1];
     const me = latest.myRank ? latest.entries.find((e) => e.rank === latest.myRank) ?? null : null;
-    const myKey = me ? me.user_id ?? me.user_path ?? me.name : null;
+    const myKey = me ? rivalKey(me) : null;
     const myHistory = sorted.filter((s) => s.myPoint !== null).map((s) => ({ timestamp: new Date(s.capturedAt), score: s.myPoint as number }));
     const myPace = estimatePaceParameters(myHistory);
     const snaps: SnapshotLike[] = sorted.map((s) => ({ capturedAt: s.capturedAt, entries: s.entries, myPoint: s.myPoint }));
@@ -129,13 +108,14 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
       targetRank,
       now: new Date(),
       endTime: new Date(endTime),
+      eventStart: new Date(startTime),
       itemBasePoint: basePoint && basePoint > 0 ? basePoint : null,
       expectedMultiplier: expectedMultiplier ?? 1,
       myKey,
     });
     // tick で 5 分毎に再計算（残り時間の更新）
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [snapshots, targetRank, endTime, basePoint, expectedMultiplier, tick]);
+  }, [snapshots, targetRank, startTime, endTime, basePoint, expectedMultiplier, tick]);
 
   const handleTargetRank = async (rank: number) => {
     setTargetRank(rank);
@@ -229,8 +209,8 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
         <div className="h-16 animate-pulse rounded-lg bg-muted" />
       ) : !forecast || forecast.rivals.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          {snapshots.length < 2
-            ? `スナップショットが ${snapshots.length} 枚です。5 分ごとの自動取得で 2 枚以上たまると計算できます`
+          {snapshots.length === 0
+            ? "スナップショットがまだありません。上の「ランキング更新」で取得すると計算できます"
             : forecast?.note ?? "計算できません"}
         </p>
       ) : (
@@ -261,7 +241,7 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
           </div>
           <p className="text-xs text-muted-foreground">
             {forecast.note}
-            {forecast.usedFinalDayCoefficient && `。最終日はライバルのペース ×${forecast.finalDayCoefficient}（仮置き・要確認）`}
+            {forecast.usedFinalDayCoefficient && `。最終日はペース ×${forecast.finalDayCoefficient}（仮置き・要確認）`}
           </p>
         </>
       )}
