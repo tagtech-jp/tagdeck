@@ -7,6 +7,8 @@ import { itemKind, ITEM_KIND_LABELS, patternKind, type ItemKind } from "@/lib/se
 import { tierForGift, TIER_LABELS, type SeTier } from "@/lib/se/tiers";
 import { expandablePatternRows } from "@/lib/se/pattern-rows";
 import { VolumeSlider } from "./VolumeSlider";
+import { SePresetPanel } from "./SePresetPanel";
+import { useLiveConnection } from "./LiveConnectionProvider";
 
 // S1: SE タブ。アイテムマスタ（/playitems × payments3 の価格）を一覧し、アイテム／パターンごとに SE を割り当てる。
 // 音源は Supabase Storage バケット "se"（mp3/ogg/wav・5MB 以下・パス {user_id}/…）。未設定は既定合成音。
@@ -75,6 +77,7 @@ const KINDS: ItemKind[] = ["normal", "hit", "anim"];
 const KIND_PREVIEW_TIER: Record<ItemKind, SeTier> = { normal: "T2", hit: "hit", anim: "T3" };
 
 export function SeMappingTab() {
+  const { reloadMappings } = useLiveConnection();
   const [items, setItems] = useState<ItemRow[] | null>(null);
   const [syncedAt, setSyncedAt] = useState<string | null>(null);
   const [mappings, setMappings] = useState<Mapping[]>([]);
@@ -104,6 +107,18 @@ export function SeMappingTab() {
 
   const byKey = useMemo(() => new Map(mappings.map((m) => [m.key, m])), [mappings]);
   const listRef = useRef<HTMLDivElement>(null);
+
+  /** プリセット取り込み後: この画面と再生側（LiveConnectionProvider）の両方を再読込する */
+  const reloadAll = async () => {
+    try {
+      const r = await fetch("/api/se/mappings");
+      const d = r.ok ? ((await r.json()) as { mappings?: Mapping[] }) : { mappings: [] };
+      setMappings(d.mappings ?? []);
+    } catch {
+      // 取得できなければ今の表示のまま
+    }
+    await reloadMappings();
+  };
 
   /** 検索・価格・種類で絞ったアイテム（カテゴリはまだ見ていない） */
   const filtered = useMemo(() => {
@@ -254,6 +269,9 @@ export function SeMappingTab() {
 
   return (
     <div className="space-y-4">
+      {/* S2: プリセットの保存・共有・取り込み */}
+      <SePresetPanel onApplied={reloadAll} />
+
       {/* ティア既定音 */}
       <div className="rounded-xl border border-border bg-card p-4">
         <h4 className="mb-1 text-sm font-bold text-foreground">価格帯ごとの既定 SE（無料アイテムを含む）</h4>

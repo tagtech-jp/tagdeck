@@ -119,6 +119,8 @@ interface LiveConnectionValue {
   pollingInterval: number;
   lastPolledAt: string | null;
   mappings: Mapping[];
+  /** se_mappings を再取得する（SE プリセットの取り込み後など、再生側へ即反映するため） */
+  reloadMappings: () => Promise<void>;
   targetId: string;
   setTargetId: (v: string) => void;
   viewingOther: string | null;
@@ -307,12 +309,18 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     }
   }, [autoConnect.phase]);
 
-  useEffect(() => {
-    fetch("/api/se/mappings")
-      .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[] }>) : { mappings: [] }))
-      .then((d: { mappings?: Mapping[] }) => setMappings(d.mappings ?? []))
-      .catch(() => undefined);
+  const reloadMappings = useCallback(async () => {
+    try {
+      const r = await fetch("/api/se/mappings");
+      const d = r.ok ? ((await r.json()) as { mappings?: Mapping[] }) : { mappings: [] };
+      setMappings(d.mappings ?? []);
+    } catch {
+      // 取得できなければ今の割り当てのまま
+    }
   }, []);
+  useEffect(() => {
+    void reloadMappings();
+  }, [reloadMappings]);
 
   const applyPatternMaster = useCallback((pd: ItemsPatternsResponse | null): boolean => {
     if (!pd || (pd.items?.length ?? 0) === 0) return false;
@@ -962,6 +970,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       pollingInterval,
       lastPolledAt,
       mappings,
+      reloadMappings,
       targetId,
       setTargetId,
       viewingOther,
@@ -990,7 +999,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       setDebug,
       debug,
     }),
-    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, pollingInterval, lastPolledAt, mappings, targetId, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsPollGiftsSinceConnect, wsInfo, wsTopic, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
+    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, pollingInterval, lastPolledAt, mappings, reloadMappings, targetId, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsPollGiftsSinceConnect, wsInfo, wsTopic, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
   );
 
   return <LiveConnectionContext.Provider value={value}>{children}</LiveConnectionContext.Provider>;

@@ -241,6 +241,40 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - Cron が実際に動いているかの確認: Cloudflare Dashboard → Workers & Pages → tagdeck → Logs(observability 有効)で `[ranking-sync/scheduled] targets=N ok=N failed=N` を探す。ターミナルなら `pnpm exec wrangler tail tagdeck --format pretty`(要 `wrangler login`)。DB は `SELECT captured_at, my_rank, my_point FROM ranking_snapshots ORDER BY captured_at DESC LIMIT 5;` が 5 分ごとに増える。`targets=0` なら対象シミュレーターの status/ranking_type/期間を確認、`failed` なら同行の例外メッセージを見る
 - 最終日係数 1.5 は引き続き仮置き(TODO.md)
 
+## S2: SE プリセット(保存・共有・取り込み)(実装済み・2026-09-25)
+
+社長指示「今の SE の状態を音を保存して他の人にも使い回せるようにしてほしい」への対応。SE タブの割り当て一式(価格帯の既定・種類・カテゴリ・アイテム・パターンの音源/音量/鳴らす)に名前を付けて保存し、8 文字の共有コード(または共有 URL)で他の配信者がそのまま取り込める。
+
+### 追加・変更
+
+| 種別 | パス | 内容 |
+|---|---|---|
+| table | `se_presets` | `owner_user_id, name, description, share_code(UNIQUE), is_public, mappings(jsonb スナップショット), mapping_count`。migration `drizzle/0018_se_presets*.sql`。RLS: 所有者は全操作、authenticated は公開行の SELECT |
+| lib | `src/lib/se/presets.ts` | 純関数。共有コード生成(I/O/0/1 を除く 32 文字 × 8 桁)、コード/共有 URL の正規化、割り当ての検証(key 書式・Supabase Storage 以外の URL は既定音に落とす・volume 0〜100)、replace/merge の規則、内訳の集計 |
+| lib | `src/lib/se/presets-db.ts` | スナップショット取得、一覧、コード検索、作成(コード衝突は再生成)、適用(1 トランザクション・1 INSERT の upsert。replace は先に自分の行を全削除) |
+| route | `GET/POST /api/se/presets` | 自分のプリセット + 公開プリセット一覧 / 今の se_mappings を保存(0 件なら 400) |
+| route | `GET/PATCH/DELETE /api/se/presets/[code]` | 内容と内訳(コードを知っていれば誰でも) / 名前・説明・公開・「今の設定で更新」(所有者のみ) / 削除(所有者のみ) |
+| route | `POST /api/se/presets/[code]/apply` | `{mode: "replace" \| "merge"}` で自分の se_mappings へ取り込む |
+| UI | `SePresetPanel`(SE タブ最上部) | 保存(名前・公開)、取り込み(コード or URL → 内容確認 → 追加取り込み/全部置き換え(2 段階確認))、自分のプリセット一覧(共有リンクコピー・今の設定で更新・公開切替・削除)、みんなのプリセット。`/live?sePreset=CODE` で開くと取り込み欄に自動入力 |
+| provider | `LiveConnectionProvider.reloadMappings()` | 取り込み後に再生側の割り当てを即再読込(ページ更新不要) |
+
+### 音源の扱い(重要)
+
+- カスタム音源はファイルを複製せず、保存した人の Storage(バケット `se`・公開読み取り)の URL をそのまま指す。保存した人が音源を差し替える・消すと、取り込んだ側も変わる/鳴らなくなる(既定合成音にはならず、取得失敗時の挙動は engine.ts の loadBuffer に従う)
+- 取り込み時に Supabase Storage 以外のホストの URL は既定音(null)に落とす(所有者側の `/api/se/mappings` でも同じ検査をしているため通常は発生しない)
+
+### 社長作業
+
+- Supabase SQL Editor で `drizzle/0018_se_presets_manual.sql` を適用(未適用だと保存・取り込みが 500 になる。SE タブの他の機能は影響なし)
+
+### 動作確認手順
+
+1. `pnpm exec tsc --noEmit` / `pnpm test`(presets 8 件を含む) / `pnpm exec next build --webpack`
+2. `/live` → SE タブ最上部「SE プリセット」で名前を入れて「今の設定を保存」→ 共有コードが出る。「共有リンクをコピー」で `https://tagdeck.jp/live?sePreset=CODE`
+3. 別アカウント(または同じアカウント)でそのコードを貼って「内容を確認」→ 件数と内訳が出る → 「追加で取り込む」で se_mappings が増え、ライブタブの試聴で同じ音が鳴る(ページ更新不要)
+4. 「今の設定を全部置き換える」は 2 回押しで実行(1 回目は赤い確認ボタンになる)
+5. 「公開する」にすると他のユーザーの「みんなのプリセット」に出る
+
 ## S1: SE タブ・ふわっちギフト取得(実装済み・2026-09-21)
 
 決裁どおり公開 API のポーリングのみ(WebSocket 不使用)。

@@ -263,6 +263,25 @@ export const seMappings = pgTable(
   (t) => [unique("se_mappings_user_key_unique").on(t.userId, t.key)],
 );
 
+// SE プリセット（S2・2026-09-25）: se_mappings の一式に名前を付けて保存し、8 文字の共有コードで他ユーザーが取り込めるようにする。
+// mappings は保存時点のスナップショット。音源 URL は所有者の Storage（バケット se は公開読み取り）をそのまま指し、複製しない
+export const sePresets = pgTable("se_presets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ownerUserId: uuid("owner_user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  shareCode: text("share_code").notNull().unique("se_presets_share_code_unique"),
+  // true なら「みんなのプリセット」一覧に出す。false でもコードを知っていれば取り込める
+  isPublic: boolean("is_public").default(false).notNull(),
+  mappings: jsonb("mappings")
+    .$type<Array<{ key: string; url: string | null; volume: number; enabled: boolean; label: string | null }>>()
+    .default(sql`'[]'::jsonb`)
+    .notNull(),
+  mappingCount: integer("mapping_count").default(0).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // 過去イベント履歴（フェーズ 5b でベイズ推定に使用）
 export const eventHistory = pgTable("event_history", {
   id: uuid("id").primaryKey().defaultRandom(),
