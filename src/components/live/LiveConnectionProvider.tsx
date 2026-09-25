@@ -141,6 +141,8 @@ interface LiveConnectionValue {
   wsState: WsState;
   /** WS 経由で受け取ったギフト数（0 のままなら形式が合っていない可能性） */
   wsGiftCount: number;
+  /** この接続でポーリングが拾ったギフト数。WS が本当に取りこぼしているかの判定用 */
+  wsPollGiftsSinceConnect: number;
   /** WS の直近の切断理由など（表示用） */
   wsInfo: string | null;
   /** 購読できたチャンネル名（Phoenix のトピック）。未購読なら null */
@@ -196,6 +198,9 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const [giftLog, setGiftLog] = useState<GiftSample[]>([]);
   const [wsState, setWsState] = useState<WsState>("off");
   const [wsGiftCount, setWsGiftCount] = useState(0);
+  // この接続でポーリングが拾ったギフト数。「WS は開いているのに WS からは 0 件」を判定するのに使う
+  // （WS 0 件でもポーリングも 0 件なら、単にまだギフトが無いだけで異常ではない）
+  const [wsPollGiftsSinceConnect, setWsPollGiftsSinceConnect] = useState(0);
   const [wsInfo, setWsInfo] = useState<string | null>(null);
   const [wsTopic, setWsTopic] = useState<string | null>(null);
   const [wsLog, setWsLog] = useState<WsLogEntry[]>([]);
@@ -477,6 +482,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     setGifts((prev) => [...fresh.slice().reverse(), ...prev].slice(0, 100));
     // 一斉に鳴らすと同じ音が同位相で重なって 1 件に聞こえるため、キューで順番に鳴らす
     if (autoPlayRef.current && toPlay.length > 0) seQueueRef.current.push(toPlay.map((gift) => ({ gift, receivedAt, skewMs, source })));
+    if (source === "poll") setWsPollGiftsSinceConnect((n) => n + fresh.length);
   }, []);
 
   const pollOnce = useCallback(
@@ -724,6 +730,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       setWsState("connecting");
       setWsInfo(null);
       setWsGiftCount(0);
+      setWsPollGiftsSinceConnect(0);
       setWsTopic(null);
       wsClosesRef.current = 0;
       wsReceivedAnyRef.current = false;
@@ -964,6 +971,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       giftLog,
       wsState,
       wsGiftCount,
+      wsPollGiftsSinceConnect,
       wsInfo,
       wsTopic,
       wsLog,
@@ -976,7 +984,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       setDebug,
       debug,
     }),
-    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, pollingInterval, lastPolledAt, mappings, targetId, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsInfo, wsTopic, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
+    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, pollingInterval, lastPolledAt, mappings, targetId, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsPollGiftsSinceConnect, wsInfo, wsTopic, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
   );
 
   return <LiveConnectionContext.Provider value={value}>{children}</LiveConnectionContext.Provider>;
