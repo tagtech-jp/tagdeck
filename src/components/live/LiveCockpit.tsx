@@ -266,10 +266,14 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
             <div className={wsState === "open" ? "font-bold text-status-success" : wsState === "failed" ? "font-bold text-status-warning" : ""}>
               即時経路（WebSocket）: {WS_BADGE[wsState].label || "未使用"} / 購読 {wsTopic ?? "—"} / WS 経由のギフト {wsGiftCount} 件
               {wsInfo ? ` / ${wsInfo}` : ""}
-              {wsState === "open" && wsGiftCount === 0 && " ← 接続はできているがギフトを解釈できていない。下の WS 生ログを確認"}
+              {wsState === "open" && wsGiftCount === 0 && lastGiftAt !== null && " ← 接続はできているが WS からギフトを解釈できていない（ポーリングでは届いている）。下の WS 生ログを確認"}
             </div>
             <div>
               投げられた→SE（経路別）: WS {fmt(stats(giftLog.filter((g) => g.source === "ws").map((g) => g.totalMs).filter((v): v is number => v !== null)))} / ポーリング {fmt(stats(giftLog.filter((g) => g.source === "poll").map((g) => g.totalMs).filter((v): v is number => v !== null)))}
+            </div>
+            <div>
+              受信→鳴り始め（SE キュー待ち・ネットワーク無関係）: {fmt(stats(giftLog.map((g) => g.queueMs)))}
+              <span className="ml-1 text-muted-foreground">← 連投で前の音を待った分。大きければ待ち上限（4 秒）を短くする</span>
             </div>
             <div>
               対策F（盛り上がり時だけ短縮）: 現在 {Math.round(pollIntervalFor({ isOther: viewingOther !== null, serverIntervalMs: pollingInterval, lastGiftAt, now: Date.now(), wsDelivering: wsState === "open" && wsGiftCount > 0 }) / 1000)} 秒間隔
@@ -310,6 +314,7 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
                     <th className="py-1 pr-2 font-medium">投稿→受信</th>
                     <th className="py-1 pr-2 font-medium">投稿→SE(補正)</th>
                     <th className="py-1 pr-2 font-medium">投稿→SE(生)</th>
+                    <th className="py-1 pr-2 font-medium">キュー待ち</th>
                     <th className="py-1 pr-2 font-medium">ズレ</th>
                     <th className="py-1 font-medium">SE再生(鳴り終わりまで)</th>
                   </tr>
@@ -326,6 +331,7 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
                       <td className="py-1 pr-2 font-mono">{g.arrivalMs ?? "—"}</td>
                       <td className="py-1 pr-2 font-mono font-bold">{g.totalMs ?? "—"}</td>
                       <td className="py-1 pr-2 font-mono">{g.rawTotalMs ?? "—"}</td>
+                      <td className="py-1 pr-2 font-mono">{g.queueMs}</td>
                       <td className="py-1 pr-2 font-mono">{g.skewMs ?? "—"}</td>
                       <td className="py-1 font-mono">{g.seMs}</td>
                     </tr>
