@@ -7,6 +7,7 @@ import { itemKind, ITEM_KIND_LABELS, patternKind, type ItemKind } from "@/lib/se
 import { tierForGift, TIER_LABELS, type SeTier } from "@/lib/se/tiers";
 import { expandablePatternRows } from "@/lib/se/pattern-rows";
 import { VolumeSlider } from "./VolumeSlider";
+import { mergeWithDefaults, type MergedMapping } from "@/lib/se/merge-defaults";
 
 // S1: SE タブ。アイテムマスタ（/playitems × payments3 の価格）を一覧し、アイテム／パターンごとに SE を割り当てる。
 // 音源は Supabase Storage バケット "se"（mp3/ogg/wav・5MB 以下・パス {user_id}/…）。未設定は既定合成音。
@@ -77,7 +78,9 @@ const KIND_PREVIEW_TIER: Record<ItemKind, SeTier> = { normal: "T2", hit: "hit", 
 export function SeMappingTab() {
   const [items, setItems] = useState<ItemRow[] | null>(null);
   const [syncedAt, setSyncedAt] = useState<string | null>(null);
-  const [mappings, setMappings] = useState<Mapping[]>([]);
+  // 自分の se_mappings。表示・試聴には公式の既定 SE（同梱）を合成した mappings を使う
+  const [userRows, setUserRows] = useState<Mapping[]>([]);
+  const mappings = useMemo<MergedMapping[]>(() => mergeWithDefaults(userRows), [userRows]);
   const [filter, setFilter] = useState("");
   const [onlyOnSale, setOnlyOnSale] = useState(true);
   const [kindFilter, setKindFilter] = useState<ItemKind | "all">("all");
@@ -98,11 +101,13 @@ export function SeMappingTab() {
       .catch(() => setItems([]));
     fetch("/api/se/mappings")
       .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[] }>) : { mappings: [] }))
-      .then((d: { mappings?: Mapping[] }) => setMappings(d.mappings ?? []))
+      .then((d: { mappings?: Mapping[] }) => setUserRows(d.mappings ?? []))
       .catch(() => undefined);
   }, []);
 
   const byKey = useMemo(() => new Map(mappings.map((m) => [m.key, m])), [mappings]);
+  /** その key に自分の行（上書き）があるか。既定 SE だけの key は「上書き中」にしない */
+  const isUser = (key: string) => byKey.get(key)?.source === "user";
   const listRef = useRef<HTMLDivElement>(null);
 
   /** 検索・価格・種類で絞ったアイテム（カテゴリはまだ見ていない） */
@@ -168,7 +173,7 @@ export function SeMappingTab() {
         const d = (await res.json()) as { mapping: Mapping };
         saved.push(d.mapping);
       }
-      setMappings((prev) => [...prev.filter((m) => !keys.includes(m.key)), ...saved]);
+      setUserRows((prev) => [...prev.filter((m) => !keys.includes(m.key)), ...saved]);
     } catch (e) {
       const message = e instanceof Error ? e.message : "通信エラー";
       setMsg(message);
@@ -182,7 +187,7 @@ export function SeMappingTab() {
     setBusyKey(keys[0]);
     try {
       for (const key of keys) await fetch(`/api/se/mappings?key=${encodeURIComponent(key)}`, { method: "DELETE" });
-      setMappings((prev) => prev.filter((m) => !keys.includes(m.key)));
+      setUserRows((prev) => prev.filter((m) => !keys.includes(m.key)));
     } finally {
       setBusyKey(null);
     }
@@ -234,7 +239,7 @@ export function SeMappingTab() {
     return (
       <div className="flex flex-wrap items-center gap-2">
         <label className="min-h-9 cursor-pointer rounded-full border border-border bg-muted px-3 text-xs leading-9 text-foreground">
-          {busy ? "処理中..." : m?.url ? "音源を変更" : "音源をアップロード"}
+          {busy ? "処理中..." : m?.url && !m.usesDefaultSound ? "音源を変更" : "音源をアップロード"}
           <input type="file" accept={ACCEPT} className="hidden" disabled={busy} onChange={(e) => e.target.files?.[0] && void upload(mkeys, e.target.files[0])} />
         </label>
         <VolumeSlider value={m?.volume ?? 80} onCommit={(v) => upsert(mkeys, { volume: v })} onPreview={(v) => void preview(mkey, tier, v)} />
@@ -242,12 +247,14 @@ export function SeMappingTab() {
           <input type="checkbox" checked={m?.enabled ?? true} onChange={(e) => void upsert(mkeys, { enabled: e.target.checked })} className="size-4" />
           鳴らす
         </label>
-        {m && (
+        {m && m.source === "user" && (
           <button type="button" onClick={() => void reset(mkeys)} className="min-h-9 rounded-full px-2 text-xs text-muted-foreground hover:text-destructive">
             既定に戻す
           </button>
         )}
-        <span className="truncate text-xs text-muted-foreground">{m?.url ? `♪ ${m.label ?? "カスタム音源"}` : "既定（合成音）"}</span>
+        <span className="truncate text-xs text-muted-foreground">
+          {m?.usesDefaultSound ? `既定 ♪ ${m.label ?? "公式音源"}` : m?.url ? `♪ ${m.label ?? "カスタム音源"}` : "既定（合成音）"}
+        </span>
       </div>
     );
   };
@@ -257,7 +264,7 @@ export function SeMappingTab() {
       {/* ティア既定音 */}
       <div className="rounded-xl border border-border bg-card p-4">
         <h4 className="mb-1 text-sm font-bold text-foreground">価格帯ごとの既定 SE（無料アイテムを含む）</h4>
-        <p className="mb-1 text-xs text-muted-foreground">アイテム個別・カテゴリの割り当てが無い時に使われます。既定は Web Audio 合成音（権利フリー）。音源を上げると差し替わります</p>
+        <p className="mb-1 text-xs text-muted-foreground">アイテム個別・カテゴリの割り当てが無い時に使われます。既定は公式の同梱音源（無い価格帯は Web Audio 合成音）。音源を上げると差し替わり、「既定に戻す」で公式音源に戻ります</p>
         <p className="mb-3 text-xs text-muted-foreground">
           <span className="font-bold text-foreground">無料アイテム</span>
           （イベントの無料配布など価格の無いアイテム）は、ふわっちのアイテムページの見出しに無くカテゴリが付かないため、ここの「{TIER_LABELS.T0}」に従います。特定の無料アイテムだけ変えたい場合は、下のカテゴリを「分類なし」にして個別に割り当ててください
@@ -397,7 +404,7 @@ export function SeMappingTab() {
                             {g.bannerUrl && g.badgeText && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">{g.badgeText}</span>}
                             {g.bannerUrl && <span className="font-bold text-foreground">{g.groupTitle}{g.subGroupTitle ? `（${g.subGroupTitle}）` : ""}</span>}
                             <span className="text-muted-foreground">{r.count} アイテム</span>
-                            {!isPseudo && byKey.has(catKey) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5 text-status-warning">カテゴリ一括 割り当て済み</span>}
+                            {!isPseudo && isUser(catKey) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5 text-status-warning">カテゴリ一括 割り当て済み</span>}
                           </div>
                           {g.description && <p className="text-xs text-muted-foreground">{g.description}</p>}
                           {!isPseudo && (
@@ -449,7 +456,7 @@ export function SeMappingTab() {
                                         </span>
                                       );
                                     })}
-                                  {byKey.has(`item:${it.itemId}`) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5 text-status-warning">上書き中</span>}
+                                  {isUser(`item:${it.itemId}`) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5 text-status-warning">上書き中</span>}
                                 </div>
                               </div>
                             </div>
@@ -466,7 +473,7 @@ export function SeMappingTab() {
                                       {g.representative.hitGrade ? `（${g.representative.hitGrade}）` : ""}
                                     </span>
                                     {g.patternIds.length > 1 && <span className="text-muted-foreground">同名 {g.patternIds.length} パターンにまとめて割り当て</span>}
-                                    {keys.some((k) => byKey.has(k)) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5">上書き中</span>}
+                                    {keys.some((k) => isUser(k)) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5">上書き中</span>}
                                   </div>
                                   <MappingControls mkeys={keys} tier={g.isHit ? "hit" : tier} />
                                 </div>

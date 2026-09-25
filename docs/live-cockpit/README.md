@@ -241,6 +241,36 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - Cron が実際に動いているかの確認: Cloudflare Dashboard → Workers & Pages → tagdeck → Logs(observability 有効)で `[ranking-sync/scheduled] targets=N ok=N failed=N` を探す。ターミナルなら `pnpm exec wrangler tail tagdeck --format pretty`(要 `wrangler login`)。DB は `SELECT captured_at, my_rank, my_point FROM ranking_snapshots ORDER BY captured_at DESC LIMIT 5;` が 5 分ごとに増える。`targets=0` なら対象シミュレーターの status/ranking_type/期間を確認、`failed` なら同行の例外メッセージを見る
 - 最終日係数 1.5 は引き続き仮置き(TODO.md)
 
+## S4: 公式の既定 SE(社長の設定を製品既定に昇格)(実装済み・2026-09-25)
+
+社長指示「SE 欄で音源を変更したので、デフォルトに設定してほしい」への対応。社長アカウントの se_mappings(21 件)のうち 18 件を同梱ファイルにして、全ユーザーの既定にした。
+
+### 追加・変更
+
+| 種別 | パス | 内容 |
+|---|---|---|
+| assets | `public/se/defaults/*.mp3`(14 ファイル・計 1.15 MB) | 社長の Storage から取得して同梱。個人アップロードに依存しない(差し替え・削除の影響を受けない) |
+| lib | `src/lib/se/default-mappings.ts` | key → 同梱パス・音量・ラベル(18 件: 価格帯 T0/T1/T3/T4、アイテム 14 件) |
+| lib | `src/lib/se/merge-defaults.ts` | `mergeWithDefaults(userRows)`: 自分の行が無い key は既定、自分の行の url が null(音量・鳴らすだけ変更)なら音源は既定のまま、音源を上げた key は自分の音源。テスト 7 件 |
+| provider/UI | `LiveConnectionProvider`・`SeMappingTab` | 取得した se_mappings を合成してから使う。SE タブは「既定 ♪ ラベル」と表示し、自分の行がある key だけ「既定に戻す」「上書き中」を出す |
+
+### 既定にしなかった音源(要判断)
+
+- `tier:T2`「【任天堂】コインの音【スーパーマリオ】.wav」と `item:13064`「ガロ保留音(赤).mp3」は第三者の著作物と思われるため、製品の既定(全ユーザーへの再配布)からは外した。社長アカウントでは引き続き自分の設定として鳴る。既定に入れる場合は権利の確認が先
+- 「ポキューン！先バレ風激熱通知音」「harakiridrive」「ziyagura-gako」「ata_a14」は出典を確認していない(効果音ラボ等のフリー素材なら問題なし)。確認できたら README に出典を書く
+- `tier:combo` は廃止キーのため対象外
+
+### 動作確認手順
+
+1. `pnpm exec tsc --noEmit` / `pnpm test` / `pnpm exec next build --webpack`
+2. 新規アカウント(または se_mappings が空のアカウント)で `/live` → テスト再生で T0/T1/T3/T4 が同梱音源で鳴る(T2 は合成音)。SE タブの各行に「既定 ♪ …」が出る
+3. 既定のある key で音量だけ変える → 音源は既定のまま音量が変わる。「既定に戻す」で自分の行が消え、公式音源に戻る
+4. 音源をアップロードすると自分の音源が優先される
+
+### 更新のしかた
+
+社長の設定を再び既定にするときは、`/api/se/mappings` の内容で `public/se/defaults/` と `default-mappings.ts` を作り直す(scratchpad の build_defaults.py 相当。手作業なら key・url・volume・label を書き換える)。将来は PR #25 のプリセットを「公式既定」に指定する方式(DB のみで更新・デプロイ不要)に置き換えられる。
+
 ## S1: SE タブ・ふわっちギフト取得(実装済み・2026-09-21)
 
 決裁どおり公開 API のポーリングのみ(WebSocket 不使用)。

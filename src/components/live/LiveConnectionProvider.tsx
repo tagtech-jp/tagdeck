@@ -11,6 +11,7 @@ import { extractComments, isBacklogComment, parseWsMessage, WS_MAX_FAILURES_BEFO
 import { commentsFromFrame, createRefCounter, decodeFrame, heartbeatFrame, joinCandidates, joinFrame, PHOENIX_HEARTBEAT_MS, phoenixSocketUrl, replyStatus, type JoinCandidate, type PhoenixFrame } from "@/lib/live/phoenix";
 import { normalizeGift, type NormalizedGift as Gift, type PatternInfo, type PickedGiftComment } from "@/lib/whowatch/gift-normalize";
 import type { ItemKind } from "@/lib/se/item-kind";
+import { mergeWithDefaults } from "@/lib/se/merge-defaults";
 
 // ライブ接続の状態をアプリ全体で保持する Provider。
 // (dashboard)/layout.tsx に置いてあるため、ページを移動しても接続と SE 再生が続く。
@@ -310,7 +311,8 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   useEffect(() => {
     fetch("/api/se/mappings")
       .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[] }>) : { mappings: [] }))
-      .then((d: { mappings?: Mapping[] }) => setMappings(d.mappings ?? []))
+      // 公式の既定 SE（同梱）と合成してから使う（自分の行が無い key は既定音、音量だけ変えた key は既定音のまま）
+      .then((d: { mappings?: Mapping[] }) => setMappings(mergeWithDefaults(d.mappings ?? [])))
       .catch(() => undefined);
   }, []);
 
