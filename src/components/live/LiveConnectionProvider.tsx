@@ -7,11 +7,17 @@ import { resolveMappingKey, tierForGift, type SeTier } from "@/lib/se/tiers";
 import { nextPollDelay, partitionFreshGifts, pollIntervalFor } from "@/lib/live/polling";
 import { idlePollInterval, INITIAL_AUTO_CONNECT_STATE, reduceAutoConnect, type AutoConnectPhase } from "@/lib/live/auto-connect";
 import { INITIAL_MASTER_STATE, masterFailed, masterSucceeded, retryCountdownSec, type MasterState } from "@/lib/live/master-retry";
+import { extractComments, isBacklogComment, parseWsMessage, WS_MAX_FAILURES_BEFORE_GIVE_UP, wsReconnectDelay, wsUrlCandidates, type WsState } from "@/lib/live/ws-feed";
 import { normalizeGift, type NormalizedGift as Gift, type PatternInfo, type PickedGiftComment } from "@/lib/whowatch/gift-normalize";
 import type { ItemKind } from "@/lib/se/item-kind";
 
 // ライブ接続の状態をアプリ全体で保持する Provider。
 // (dashboard)/layout.tsx に置いてあるため、ページを移動しても接続と SE 再生が続く。
+//
+// 経路は 2 本（決裁 2026-09-25）:
+//   1. ポーリング（/api/platforms/whowatch/live/poll）… 保存の経路。WS が切れた時の予備でもある
+//   2. WebSocket（ふわっちのコメントサーバへブラウザから直接）… SE を即時に鳴らす経路
+// 同じギフトが両方から届くので comment_id で重複を弾く（seenRef）。
 // 止まるのは「停止」を押したときと、ブラウザのタブを閉じたときだけ（タブを閉じた場合は
 // JavaScript ごと破棄されるため、これは技術的に避けられない）。
 
@@ -65,10 +71,19 @@ interface QueuedGift {
   gift: Gift;
   receivedAt: number;
   skewMs: number | null;
+  source: GiftSource;
+}
+export type GiftSource = "ws" | "poll";
+/** WS の生メッセージ（?debug=1 の学習モード用）。形式確定のための証跡 */
+export interface WsLogEntry {
+  at: number;
+  data: unknown;
 }
 export interface GiftSample {
   at: number;
   label: string;
+  /** どの経路で届いたか */
+  source: GiftSource;
   patternId: number | null;
   patternName: string | null;
   kind: ItemKind | null;
@@ -119,6 +134,14 @@ interface LiveConnectionValue {
   lastGiftAt: number | null;
   pollLog: PollSample[];
   giftLog: GiftSample[];
+  /** WebSocket 経路の状態 */
+  wsState: WsState;
+  /** WS 経由で受け取ったギフト数（0 のままなら形式が合っていない可能性） */
+  wsGiftCount: number;
+  /** WS の直近の切断理由など（表示用） */
+  wsInfo: string | null;
+  /** WS の生メッセージ（?debug=1 のときだけ溜める） */
+  wsLog: WsLogEntry[];
   /** 自動接続の状態。off 以外はチェックボックスが ON */
   autoConnectPhase: AutoConnectPhase;
   setAutoConnect: (on: boolean) => void;
@@ -166,6 +189,10 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const [lastGiftAt, setLastGiftAt] = useState<number | null>(null);
   const [pollLog, setPollLog] = useState<PollSample[]>([]);
   const [giftLog, setGiftLog] = useState<GiftSample[]>([]);
+  const [wsState, setWsState] = useState<WsState>("off");
+  const [wsGiftCount, setWsGiftCount] = useState(0);
+  const [wsInfo, setWsInfo] = useState<string | null>(null);
+  const [wsLog, setWsLog] = useState<WsLogEntry[]>([]);
   const [debug, setDebug] = useState(false);
 
   // 自動接続。チェック状態はブラウザに保存し、次に開いたときも待機から始める
@@ -201,6 +228,20 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const askedPatternsRef = useRef<Set<number>>(new Set());
   const debugRef = useRef(false);
   const autoConnectRef = useRef(autoConnect);
+  // ── WebSocket 経路 ──
+  const wsRef = useRef<WebSocket | null>(null);
+  const wsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wsCandidatesRef = useRef<string[]>([]);
+  const wsCandidateIdxRef = useRef(0);
+  /** 最後にメッセージを受け取ってからの連続切断回数（再接続の待ち時間に使う） */
+  const wsClosesRef = useRef(0);
+  /** この接続セッションで 1 つでもメッセージを受け取れたか（0 のまま失敗が続けば諦める） */
+  const wsReceivedAnyRef = useRef(false);
+  /** WS がギフトを実際に届けた実績（pollIntervalFor の wsDelivering） */
+  const wsDeliveringRef = useRef(false);
+  const wsConnectedAtRef = useRef(0);
+  /** ポーリングで測った時計ズレの直近値。WS 経由のギフトの計測にも使う */
+  const skewRef = useRef<number | null>(null);
 
   useEffect(() => {
     mappingsRef.current = mappings;
@@ -237,7 +278,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
 
   useEffect(() => {
     fetch("/api/se/mappings")
-      .then((r) => (r.ok ? r.json() : { mappings: [] }))
+      .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[] }>) : { mappings: [] }))
       .then((d: { mappings?: Mapping[] }) => setMappings(d.mappings ?? []))
       .catch(() => undefined);
   }, []);
@@ -325,6 +366,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
         [
           {
             at: playedAt,
+            source: q.source,
             label: `${q.gift.item_name ?? `不明なアイテム（#${q.gift.pattern_id ?? "?"}）`}${q.gift.count > 1 ? ` ×${q.gift.count}` : ""}`,
             patternId: q.gift.pattern_id,
             patternName: q.gift.pattern_name,
@@ -348,15 +390,61 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     seQueueRef.current = seQueue;
   }, [seQueue]);
 
+  /** WS を閉じて再接続も止める。stop() と配信終了時に呼ぶ */
+  const closeWs = useCallback(() => {
+    if (wsTimerRef.current) clearTimeout(wsTimerRef.current);
+    wsTimerRef.current = null;
+    const ws = wsRef.current;
+    wsRef.current = null;
+    wsDeliveringRef.current = false;
+    if (ws) {
+      try {
+        ws.close();
+      } catch {
+        // 既に閉じている場合は何もしない
+      }
+    }
+    setWsState("off");
+  }, []);
+
   const stop = useCallback(() => {
     runningRef.current = false;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = null;
+    closeWs();
     seQueueRef.current.clear();
     stopKeepAlive();
     setStatus("idle");
     // 自動接続が ON なら待機へ戻る（OFF ならそのまま止まる）
     dispatchAutoConnect({ type: "disconnected", now: Date.now() });
+  }, [closeWs]);
+
+  /**
+   * パターン照合（ブラウザ側キャッシュ）。ポーリングと WS の両方で同じものを使う。
+   * 縮退中は照合できなかった pattern_id を次のポーリングでサーバに聞く
+   */
+  const lookupPattern = useCallback((pid: number, onMissing: () => void): PatternInfo | null => {
+    const info = patternLookupRef.current.get(pid);
+    if (!info) {
+      onMissing();
+      if (!masterRef.current.ready) askedPatternsRef.current.add(pid);
+    }
+    return info ?? null;
+  }, []);
+
+  /**
+   * 新着ギフトを画面と SE キューへ流す（経路共通）。
+   * fresh = 未受信（画面に出す）、toPlay = そのうち鳴らすもの（接続前の分は鳴らさない）
+   */
+  const ingestFresh = useCallback((fresh: Gift[], toPlay: Gift[], receivedAt: number, skewMs: number | null, source: GiftSource) => {
+    for (const g of fresh) seenRef.current.add(g.comment_id);
+    if (fresh.length === 0) return;
+    // 対策F: ギフトが来た＝盛り上がっている。ここから一定時間は間隔を詰める
+    lastGiftAtRef.current = receivedAt;
+    setLastGiftAt(receivedAt);
+    setGifts((prev) => [...fresh.slice().reverse(), ...prev].slice(0, 100));
+    // 一斉に鳴らすと同じ音が同位相で重なって 1 件に聞こえるため、キューで順番に鳴らす
+    if (autoPlayRef.current && toPlay.length > 0) seQueueRef.current.push(toPlay.map((gift) => ({ gift, receivedAt, skewMs, source })));
   }, []);
 
   const pollOnce = useCallback(
@@ -378,6 +466,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       const receivedAt = Date.now();
       // 往復の中点で時計ズレを見る（NTP と同じ考え方）。serverNow は Worker 自身の Date.now()
       const skewMs = typeof d.serverNow === "number" ? d.serverNow - (startedAt + receivedAt) / 2 : null;
+      if (skewMs !== null) skewRef.current = skewMs;
       if (d.updatedAt !== null) lastUpdatedRef.current = d.updatedAt;
       setPollingInterval(d.pollingInterval);
       setLastPolledAt(new Date().toISOString());
@@ -393,40 +482,151 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       if (dbg && d.rawComments.length > 0) setRawLog((prev) => [...d.rawComments, ...prev].slice(0, 200));
       // 対策D: パターン照合はブラウザ側キャッシュで行う（DB往復を毎ポーリングで発生させない）
       let missingPattern = false;
-      const normalized = d.giftComments.map((c) =>
-        normalizeGift(c, (pid) => {
-          const info = patternLookupRef.current.get(pid);
-          if (!info) {
-            missingPattern = true;
-            // 縮退中は次のポーリングでサーバに照合してもらう
-            if (!masterRef.current.ready) askedPatternsRef.current.add(pid);
-          }
-          return info ?? null;
-        }),
-      );
+      const normalized = d.giftComments.map((c) => normalizeGift(c, (pid) => lookupPattern(pid, () => (missingPattern = true))));
       void refetchMasterIfStale(missingPattern);
       const { fresh, toPlay } = partitionFreshGifts(normalized, seenRef.current, firstPollRef.current);
       firstPollRef.current = false;
-      for (const g of fresh) seenRef.current.add(g.comment_id);
       if (dbg) {
         const colo = res.headers.get("cf-ray")?.split("-")[1] ?? null;
         setPollLog((prev) => [{ at: startedAt, gapMs, rttMs: receivedAt - startedAt, server: d.timings ?? null, hidden, colo, gifts: fresh.length, deferredSave: d.deferredSave }, ...prev].slice(0, 60));
       }
-      if (fresh.length > 0) {
-        // 対策F: ギフトが来た＝盛り上がっている。ここから一定時間は間隔を詰める
-        lastGiftAtRef.current = receivedAt;
-        setLastGiftAt(receivedAt);
-        setGifts((prev) => [...fresh.slice().reverse(), ...prev].slice(0, 100));
-        // 一斉に鳴らすと同じ音が同位相で重なって 1 件に聞こえるため、キューで順番に鳴らす
-        if (autoPlayRef.current) seQueueRef.current.push(toPlay.map((gift) => ({ gift, receivedAt, skewMs })));
-      }
+      ingestFresh(fresh, toPlay, receivedAt, skewMs, "poll");
       if (d.liveStatus && d.liveStatus !== "PUBLISHING") {
         setMessage(`配信が終了しました（${d.liveStatus}）`);
         return false;
       }
       return true;
     },
-    [refetchMasterIfStale],
+    [ingestFresh, lookupPattern, refetchMasterIfStale],
+  );
+
+  // ── WebSocket 経路 ───────────────────────────────────────────────────────
+  /** WS のメッセージ 1 件を処理する。形式が未確定なので「コメントらしいもの」を拾う防御的な解析 */
+  const handleWsMessage = useCallback(
+    (ev: MessageEvent) => {
+      const receivedAt = Date.now();
+      const msg = parseWsMessage(ev.data);
+      if (debugRef.current) setWsLog((prev) => [{ at: receivedAt, data: msg ?? (typeof ev.data === "string" ? ev.data.slice(0, 500) : String(ev.data)) }, ...prev].slice(0, 200));
+      if (msg === null) return;
+      const comments = extractComments(msg).filter((c) => c.comment_type === "BY_PLAYITEM");
+      if (comments.length === 0) return;
+      let missingPattern = false;
+      const normalized = comments.map((c) => normalizeGift(c, (pid) => lookupPattern(pid, () => (missingPattern = true))));
+      void refetchMasterIfStale(missingPattern);
+      const fresh: Gift[] = [];
+      const toPlay: Gift[] = [];
+      normalized.forEach((g, i) => {
+        if (seenRef.current.has(g.comment_id)) return;
+        fresh.push(g);
+        // 接続直後に過去分がまとめて流れてきても鳴らさない（ポーリングの初回と同じ考え方）
+        if (!isBacklogComment(comments[i].posted_at, wsConnectedAtRef.current)) toPlay.push(g);
+      });
+      if (fresh.length > 0) {
+        wsDeliveringRef.current = true;
+        setWsGiftCount((n) => n + fresh.length);
+      }
+      ingestFresh(fresh, toPlay, receivedAt, skewRef.current, "ws");
+    },
+    [ingestFresh, lookupPattern, refetchMasterIfStale],
+  );
+  const handleWsMessageRef = useRef(handleWsMessage);
+  useEffect(() => {
+    handleWsMessageRef.current = handleWsMessage;
+  }, [handleWsMessage]);
+
+  /** 再接続タイマーから自分自身を呼ぶための参照（useCallback の中で自分を直接参照しない） */
+  const openWsRef = useRef<() => void>(() => {});
+  /** 候補 URL の 1 つへ接続する。切れたら次の候補・バックオフで再接続。ポーリングは止めない */
+  const openWs = useCallback(() => {
+    if (!runningRef.current) return;
+    const candidates = wsCandidatesRef.current;
+    if (candidates.length === 0) return;
+    const url = candidates[wsCandidateIdxRef.current % candidates.length];
+    let ws: WebSocket;
+    try {
+      ws = new WebSocket(url);
+    } catch (e) {
+      setWsState("failed");
+      setWsInfo(`接続できません: ${e instanceof Error ? e.message : String(e)}`);
+      return;
+    }
+    wsRef.current = ws;
+    setWsState(wsClosesRef.current > 0 ? "reconnecting" : "connecting");
+    let gotMessage = false;
+    ws.onopen = () => {
+      if (wsRef.current !== ws) return;
+      wsConnectedAtRef.current = Date.now();
+      setWsState("open");
+      setWsInfo(null);
+    };
+    ws.onmessage = (ev) => {
+      if (wsRef.current !== ws) return;
+      gotMessage = true;
+      wsReceivedAnyRef.current = true;
+      wsClosesRef.current = 0;
+      handleWsMessageRef.current(ev);
+    };
+    ws.onclose = (ev) => {
+      if (wsRef.current !== ws) return; // stop() で閉じた／差し替え済み
+      wsRef.current = null;
+      wsDeliveringRef.current = false;
+      if (!runningRef.current) {
+        setWsState("off");
+        return;
+      }
+      wsClosesRef.current += 1;
+      // メッセージを 1 つも受け取れずに切れた＝認証方式か URL が違う可能性。次の候補を試す
+      if (!gotMessage) wsCandidateIdxRef.current += 1;
+      const reason = `切断 code=${ev.code}${ev.reason ? ` ${ev.reason}` : ""}`;
+      if (!wsReceivedAnyRef.current && wsClosesRef.current >= WS_MAX_FAILURES_BEFORE_GIVE_UP) {
+        setWsState("failed");
+        setWsInfo(`${reason} / ${wsClosesRef.current} 回続けて受信できなかったため WS は諦め、ポーリングで続行`);
+        return;
+      }
+      setWsState("reconnecting");
+      setWsInfo(reason);
+      wsTimerRef.current = setTimeout(() => openWsRef.current(), wsReconnectDelay(wsClosesRef.current));
+    };
+    ws.onerror = () => {
+      // onclose が続けて呼ばれるので、ここでは何もしない
+    };
+  }, []);
+
+  useEffect(() => {
+    openWsRef.current = openWs;
+  }, [openWs]);
+
+  /** 接続情報（comment_server_url / jwt）を取り、WS 接続を始める。失敗してもポーリングは動き続ける */
+  const connectWs = useCallback(
+    async (id: string) => {
+      if (typeof WebSocket === "undefined") return;
+      setWsState("connecting");
+      setWsInfo(null);
+      setWsGiftCount(0);
+      wsClosesRef.current = 0;
+      wsReceivedAnyRef.current = false;
+      wsDeliveringRef.current = false;
+      wsCandidateIdxRef.current = 0;
+      try {
+        const r = await fetch(`/api/platforms/whowatch/live/ws?liveId=${encodeURIComponent(id)}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = (await r.json()) as { url: string | null; jwt: string | null };
+        const candidates = wsUrlCandidates(d.url, d.jwt);
+        if (candidates.length === 0) {
+          setWsState("failed");
+          setWsInfo("この配信にはコメントサーバの URL が無いため、ポーリングだけで動いています");
+          return;
+        }
+        wsCandidatesRef.current = candidates;
+        if (!runningRef.current) return; // 取得中に停止された
+        openWs();
+      } catch (e) {
+        if (!runningRef.current) return; // 取得中に停止された
+        setWsState("failed");
+        setWsInfo(`接続情報を取得できませんでした（ポーリングで続行）: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    },
+    [openWs],
   );
 
   const start = useCallback(async () => {
@@ -495,15 +695,18 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
           setMessage(`取得エラー: ${e instanceof Error ? e.message : String(e)}（再試行します）`);
         }
         // 固定レート: 取得にかかった時間を差し引いて次を予約する
-        if (runningRef.current) timerRef.current = setTimeout(loop, nextPollDelay(pollIntervalFor({ isOther: readOnlyRef.current, serverIntervalMs: pollingIntervalRef.current, lastGiftAt: lastGiftAtRef.current, now: Date.now() }), Date.now() - startedAt));
+        if (runningRef.current) timerRef.current = setTimeout(loop, nextPollDelay(pollIntervalFor({ isOther: readOnlyRef.current, serverIntervalMs: pollingIntervalRef.current, lastGiftAt: lastGiftAtRef.current, now: Date.now(), wsDelivering: wsDeliveringRef.current }), Date.now() - startedAt));
       };
       void loop();
+      // WS 経路はポーリングと並行して開く（失敗してもポーリングだけで従来どおり動く）。
+      // 決裁の範囲は「本人の配信」なので、他人の配信を表示しているときはポーリングだけにする
+      if (!readOnlyRef.current) void connectWs(d.liveId);
     } catch (e) {
       setStatus("error");
       setMessage(String(e));
       dispatchAutoConnect({ type: "disconnected", now: Date.now() });
     }
-  }, [applyPatternMaster, recordMasterResult, pollOnce, stop, targetId]);
+  }, [applyPatternMaster, connectWs, recordMasterResult, pollOnce, stop, targetId]);
 
   // ── 自動接続の待機ポーリング ─────────────────────────────────────────────
   const startRef = useRef(start);
@@ -614,6 +817,10 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       lastGiftAt,
       pollLog,
       giftLog,
+      wsState,
+      wsGiftCount,
+      wsInfo,
+      wsLog,
       autoConnectPhase: autoConnect.phase,
       setAutoConnect,
       start,
@@ -623,7 +830,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       setDebug,
       debug,
     }),
-    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, pollingInterval, lastPolledAt, mappings, targetId, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
+    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, pollingInterval, lastPolledAt, mappings, targetId, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsInfo, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
   );
 
   return <LiveConnectionContext.Provider value={value}>{children}</LiveConnectionContext.Provider>;

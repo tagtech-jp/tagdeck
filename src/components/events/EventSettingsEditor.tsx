@@ -76,7 +76,7 @@ export function EventSettingsEditor({ eventId, whowatchEventId, currentRankingTy
   useEffect(() => {
     let cancelled = false;
     fetch("/api/platforms/whowatch/events/list")
-      .then((r) => (r.ok ? r.json() : { open: [], pre: [] }))
+      .then((r) => (r.ok ? (r.json() as Promise<{ open?: ListItem[]; pre?: ListItem[] }>) : { open: [], pre: [] }))
       .then((d: { open?: ListItem[]; pre?: ListItem[] }) => {
         if (cancelled) return;
         const all = [...(d.open ?? []), ...(d.pre ?? [])];
@@ -97,7 +97,7 @@ export function EventSettingsEditor({ eventId, whowatchEventId, currentRankingTy
     if (!eventKey) return;
     let cancelled = false;
     fetch(`/api/platforms/whowatch/events/${encodeURIComponent(eventKey)}`)
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => (r.ok ? (r.json() as Promise<Detail | null>) : null))
       .then((d: Detail | null) => {
         if (cancelled) return;
         if (!d) {

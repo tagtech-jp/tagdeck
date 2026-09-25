@@ -22,13 +22,13 @@ describe("dbConstraintErrorResponse", () => {
   it("maps FK violation to 409 USER_NOT_INITIALIZED", async () => {
     const res = dbConstraintErrorResponse({ code: "23503" });
     expect(res?.status).toBe(409);
-    expect((await res!.json()).code).toBe("USER_NOT_INITIALIZED");
+    expect(((await res!.json()) as { code?: string }).code).toBe("USER_NOT_INITIALIZED");
   });
 
   it("maps unique violation to 409 DUPLICATE", async () => {
     const res = dbConstraintErrorResponse({ cause: { code: "23505" } });
     expect(res?.status).toBe(409);
-    expect((await res!.json()).code).toBe("DUPLICATE");
+    expect(((await res!.json()) as { code?: string }).code).toBe("DUPLICATE");
   });
 
   it("returns null for other errors so callers rethrow", () => {

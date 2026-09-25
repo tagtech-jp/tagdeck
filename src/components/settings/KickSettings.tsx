@@ -19,7 +19,7 @@ export function KickSettings() {
 
   useEffect(() => {
     fetch("/api/platforms/kick/profile")
-      .then((res) => res.json())
+      .then((res) => res.json() as Promise<{ kickUsername?: string; kickFollowerCount?: number; kickIsLive?: boolean }>)
       .then((data) => {
         if (data.kickUsername) {
           setUsername(data.kickUsername);
@@ -45,11 +45,11 @@ export function KickSettings() {
         body: JSON.stringify({ username: username.trim() }),
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as { channelInfo?: { username: string; followerCount: number; isLive: boolean } | null; error?: string };
 
       if (res.ok) {
         setMessage({ type: "success", text: "Kick username を保存しました" });
-        setChannelInfo(data.channelInfo);
+        setChannelInfo(data.channelInfo ?? null);
       } else {
         setMessage({ type: "error", text: data.error ?? "保存に失敗しました" });
       }

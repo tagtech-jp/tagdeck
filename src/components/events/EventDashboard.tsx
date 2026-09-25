@@ -79,7 +79,7 @@ export function EventDashboard({ event, onDeleted }: Props) {
     }
     let cancelled = false;
     fetch("/api/platforms/whowatch/events")
-      .then((r) => (r.ok ? r.json() : { open: [] }))
+      .then((r) => (r.ok ? (r.json() as Promise<{ open?: Array<{ id: number; eventKey: string }> }>) : { open: [] }))
       .then((data: { open?: Array<{ id: number; eventKey: string }> }) => {
         if (cancelled) return;
         const match = data.open?.find((e) => e.id === event.whowatchEventId);
@@ -98,7 +98,7 @@ export function EventDashboard({ event, onDeleted }: Props) {
   useEffect(() => {
     let cancelled = false;
     fetch("/api/platforms/whowatch/items")
-      .then((r) => (r.ok ? r.json() : { items: [] }))
+      .then((r) => (r.ok ? (r.json() as Promise<{ items?: Array<{ id: string; name: string; basePoint: number; priceJpy?: number }> }>) : { items: [] }))
       .then((data: { items?: Array<{ id: string; name: string; basePoint: number; priceJpy?: number }> }) => {
         if (cancelled) return;
         setStrategyItems(

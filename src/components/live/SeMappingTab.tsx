@@ -11,6 +11,11 @@ import { VolumeSlider } from "./VolumeSlider";
 
 // S1: SE タブ。アイテムマスタ（/playitems × payments3 の価格）を一覧し、アイテム／パターンごとに SE を割り当てる。
 // 音源は Supabase Storage バケット "se"（mp3/ogg/wav・5MB 以下・パス {user_id}/…）。未設定は既定合成音。
+//
+// 決裁(2026-09-25) 案P: アイテム欄はふわっちのアイテムページと同じ「カテゴリごとのバナー見出し＋アイテム」の並び。
+//   - 見出しはバナー画像（payments3 に URL があれば）か、無ければ文字のカード。見出しの中でカテゴリ一括 SE を割り当てる
+//   - 「分類なし」（無料・販売終了・その他）はプルダウンで選んだときだけ表示する
+// 決裁(2026-09-25) 案Y: 無料アイテムは価格帯の既定「無料アイテム（ポップ）」に従う（カテゴリは新設しない）
 
 interface PatternRow {
   patternId: number;
@@ -37,8 +42,15 @@ interface GroupRow {
   subGroupTitle: string | null;
   badgeText: string | null;
   displayOrder: number | null;
+  /** バナー画像 URL（0017）。無ければ文字の見出し */
+  bannerUrl?: string | null;
+  description?: string | null;
   itemCount: number;
 }
+/** プルダウンの「分類なし」を表す擬似カテゴリのキー */
+const NONE_GROUP = "none";
+/** 仮想リストの 1 行: カテゴリ見出し か アイテム */
+type ListRow = { kind: "header"; group: GroupRow; count: number } | { kind: "item"; item: ItemRow; groupKey: string };
 interface Mapping {
   key: string;
   url: string | null;
@@ -69,7 +81,7 @@ export function SeMappingTab() {
 
   useEffect(() => {
     fetch("/api/platforms/whowatch/items/patterns")
-      .then((r) => (r.ok ? r.json() : { items: [] }))
+      .then((r) => (r.ok ? (r.json() as Promise<{ items?: ItemRow[]; groups?: GroupRow[]; syncedAt?: string | null }>) : { items: [] }))
       .then((d: { items?: ItemRow[]; groups?: GroupRow[]; syncedAt?: string | null }) => {
         setItems(d.items ?? []);
         setGroups(d.groups ?? []);
@@ -77,7 +89,7 @@ export function SeMappingTab() {
       })
       .catch(() => setItems([]));
     fetch("/api/se/mappings")
-      .then((r) => (r.ok ? r.json() : { mappings: [] }))
+      .then((r) => (r.ok ? (r.json() as Promise<{ mappings?: Mapping[] }>) : { mappings: [] }))
       .then((d: { mappings?: Mapping[] }) => setMappings(d.mappings ?? []))
       .catch(() => undefined);
   }, []);
@@ -85,23 +97,48 @@ export function SeMappingTab() {
   const byKey = useMemo(() => new Map(mappings.map((m) => [m.key, m])), [mappings]);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const visible = useMemo(() => {
+  /** 検索・価格・種類で絞ったアイテム（カテゴリはまだ見ていない） */
+  const filtered = useMemo(() => {
     const q = filter.trim();
     return (items ?? [])
       .filter((i) => (!onlyOnSale || i.priceJpy !== null) && (!q || i.itemName.includes(q) || i.patterns.some((p) => p.patternName.includes(q))))
-      .filter((i) => kindFilter === "all" || itemKind(i.patterns) === kindFilter)
-      .filter((i) => groupFilter === "all" || (groupFilter === "none" ? (i.groups?.length ?? 0) === 0 : (i.groups ?? []).includes(groupFilter)));
-  }, [items, filter, onlyOnSale, kindFilter, groupFilter]);
+      .filter((i) => kindFilter === "all" || itemKind(i.patterns) === kindFilter);
+  }, [items, filter, onlyOnSale, kindFilter]);
 
-  const selectedGroup = useMemo(() => groups.find((g) => g.groupKey === groupFilter) ?? null, [groups, groupFilter]);
+  /** 分類なし（どのカテゴリにも属さない）のアイテム。プルダウンで選んだときだけ表示する */
+  const unclassified = useMemo(() => filtered.filter((i) => (i.groups?.length ?? 0) === 0), [filtered]);
+
+  /**
+   * 表示する行。カテゴリごとに「見出し → そのカテゴリのアイテム」を並べる（ふわっちのアイテムページと同じ順）。
+   * 1 アイテムが複数カテゴリに属する場合はそれぞれのカテゴリに出す（アイテムページも同じ）
+   */
+  const rows = useMemo<ListRow[]>(() => {
+    const out: ListRow[] = [];
+    if (groupFilter === NONE_GROUP) {
+      out.push({ kind: "header", group: { groupKey: NONE_GROUP, groupTitle: "分類なし", subGroupTitle: null, badgeText: null, displayOrder: null, description: "無料アイテム・販売終了・イベント限定など、ふわっちのアイテムページの見出しに無いアイテム。無料アイテムの既定 SE は上の「価格帯ごとの既定 SE」で変えられます", itemCount: unclassified.length }, count: unclassified.length });
+      for (const item of unclassified) out.push({ kind: "item", item, groupKey: NONE_GROUP });
+      return out;
+    }
+    const targets = groupFilter === "all" ? groups : groups.filter((g) => g.groupKey === groupFilter);
+    for (const group of targets) {
+      const sectionItems = filtered.filter((i) => (i.groups ?? []).includes(group.groupKey));
+      // 「すべて」表示で 0 件のカテゴリ（絞り込みで消えた等）は見出しごと省く。単独選択なら 0 件でも見出しは出す
+      if (sectionItems.length === 0 && groupFilter === "all") continue;
+      out.push({ kind: "header", group, count: sectionItems.length });
+      for (const item of sectionItems) out.push({ kind: "item", item, groupKey: group.groupKey });
+    }
+    return out;
+  }, [filtered, groups, groupFilter, unclassified]);
+  const visibleItemCount = useMemo(() => rows.filter((r) => r.kind === "item").length, [rows]);
+
   /** カテゴリの表示名。ふわっちAPIの title + badge_text（アイテムページの見出しとは異なる場合がある） */
   const groupLabel = (g: GroupRow) => `${g.badgeText ? `${g.badgeText} / ` : ""}${g.groupTitle}${g.subGroupTitle ? `（${g.subGroupTitle}）` : ""}`;
 
-  // 1,900 件超を一度に描画すると重いので、見えている行だけ描画する（行の高さはパターン数で変わるため実測させる）
+  // 1,900 件超を一度に描画すると重いので、見えている行だけ描画する（行の高さはパターン数・バナーで変わるため実測させる）
   const rowVirtualizer = useVirtualizer({
-    count: visible.length,
+    count: rows.length,
     getScrollElement: () => listRef.current,
-    estimateSize: () => 132,
+    estimateSize: (index) => (rows[index]?.kind === "header" ? (rows[index].group.bannerUrl ? 260 : 140) : 132),
     overscan: 6,
   });
 
@@ -216,8 +253,12 @@ export function SeMappingTab() {
     <div className="space-y-4">
       {/* ティア既定音 */}
       <div className="rounded-xl border border-border bg-card p-4">
-        <h4 className="mb-1 text-sm font-bold text-foreground">価格帯ごとの既定 SE</h4>
-        <p className="mb-3 text-xs text-muted-foreground">アイテム個別の割り当てが無い時に使われます。既定は Web Audio 合成音（権利フリー）。音源を上げると差し替わります</p>
+        <h4 className="mb-1 text-sm font-bold text-foreground">価格帯ごとの既定 SE（無料アイテムを含む）</h4>
+        <p className="mb-1 text-xs text-muted-foreground">アイテム個別・カテゴリの割り当てが無い時に使われます。既定は Web Audio 合成音（権利フリー）。音源を上げると差し替わります</p>
+        <p className="mb-3 text-xs text-muted-foreground">
+          <span className="font-bold text-foreground">無料アイテム</span>
+          （イベントの無料配布など価格の無いアイテム）は、ふわっちのアイテムページの見出しに無くカテゴリが付かないため、ここの「{TIER_LABELS.T0}」に従います。特定の無料アイテムだけ変えたい場合は、下のカテゴリを「分類なし」にして個別に割り当ててください
+        </p>
         <div className="space-y-2">
           {TIERS.map((t) => (
             <div key={t} className="flex flex-wrap items-center gap-2 border-b border-border py-2 text-xs last:border-0">
@@ -254,7 +295,7 @@ export function SeMappingTab() {
             {syncedAt ? ` · マスタ同期 ${new Date(syncedAt).toLocaleString("ja-JP")}` : ""}
           </span>
           <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="名前で絞り込み" className="ml-auto min-h-9 w-40 rounded-sm bg-muted px-3 text-xs text-foreground" />
-          <label className="flex items-center gap-1 text-xs text-muted-foreground">
+          <label className="flex items-center gap-1 text-xs text-muted-foreground" title="OFF にすると無料・価格なしのアイテムも出ます">
             <input type="checkbox" checked={onlyOnSale} onChange={(e) => setOnlyOnSale(e.target.checked)} className="size-4" />
             価格ありのみ
           </label>
@@ -270,7 +311,7 @@ export function SeMappingTab() {
               {k === "all" ? "すべて" : ITEM_KIND_LABELS[k]}
             </button>
           ))}
-          <span className="ml-1 text-xs text-muted-foreground">{visible.length} 件</span>
+          <span className="ml-1 text-xs text-muted-foreground">{visibleItemCount} 件</span>
         </div>
 
         {/* カテゴリ（アイテムページの見出し） */}
@@ -284,45 +325,74 @@ export function SeMappingTab() {
             onChange={(e) => setGroupFilter(e.target.value)}
             className="min-h-9 max-w-full rounded-sm border border-border bg-muted px-2 text-xs text-foreground"
           >
-            <option value="all">すべて</option>
+            <option value="all">すべてのカテゴリ（アイテムページ順）</option>
             {groups.map((g) => (
               <option key={g.groupKey} value={g.groupKey}>
                 {groupLabel(g)}（{g.itemCount}）
               </option>
             ))}
-            <option value="none">分類なし（販売終了・その他）</option>
+            <option value={NONE_GROUP}>分類なし（無料・販売終了・その他）{items ? `（${(items ?? []).filter((i) => (i.groups?.length ?? 0) === 0).length}）` : ""}</option>
           </select>
         </div>
-        <p className="mb-2 text-xs text-muted-foreground">表示名はふわっちAPIの名称です。アイテムページの見出しと異なる場合があります</p>
-
-        {/* 選択中カテゴリの一括割り当て。個別（アイテム／パターン）の割り当てがあればそちらが優先される */}
-        {selectedGroup && (
-          <div className="mb-3 rounded-lg border border-border bg-muted/40 p-3">
-            <div className="mb-1 flex flex-wrap items-center gap-2 text-xs">
-              <span className="font-bold text-foreground">{groupLabel(selectedGroup)}</span>
-              <span className="text-muted-foreground">{selectedGroup.itemCount} アイテムにまとめて割り当て</span>
-              {byKey.has(`cat:group:${selectedGroup.groupKey}`) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5 text-status-warning">割り当て済み</span>}
-            </div>
-            <MappingControls mkeys={[`cat:group:${selectedGroup.groupKey}`]} tier="T2" />
-            <p className="mt-1 text-xs text-muted-foreground">アイテム個別・パターン個別の割り当てがある場合はそちらが優先されます。種類ごと・価格帯の既定より優先</p>
-          </div>
-        )}
+        <p className="mb-2 text-xs text-muted-foreground">
+          カテゴリごとの見出しの中で、そのカテゴリ全部にまとめて SE を割り当てられます（アイテム個別・パターン個別の割り当てが優先）。表示名はふわっちAPIの名称で、アイテムページの見出しと異なる場合があります。分類なしのアイテムはプルダウンから表示します
+        </p>
 
         {msg && <p className="mb-2 text-xs text-status-warning">{msg}</p>}
         {items === null ? (
           <div className="h-16 animate-pulse rounded-lg bg-muted" />
         ) : items.length === 0 ? (
           <p className="text-xs text-muted-foreground">アイテムマスタが空です。Actions「Whowatch item patterns sync」を実行してください（0014 適用後）</p>
-        ) : visible.length === 0 ? (
+        ) : rows.length === 0 || (groupFilter === "all" && groups.length === 0) ? (
           <p className="text-xs text-muted-foreground">
-            条件に合うアイテムがありません。
-            {groupFilter !== "all" && "（カテゴリは、ふわっちが現在販売中のものだけ取得できます。終了したセールのアイテムは「分類なし」に入ります）"}
+            {groups.length === 0
+              ? "カテゴリがまだ同期されていません（マスタ同期の実行後にアイテムページ順で並びます）。分類なしはプルダウンから表示できます"
+              : "条件に合うアイテムがありません（カテゴリは、ふわっちが現在販売中のものだけ取得できます。終了したセールのアイテムは「分類なし」に入ります）"}
           </p>
         ) : (
           <div ref={listRef} className="max-h-[70vh] overflow-auto">
             <div style={{ height: rowVirtualizer.getTotalSize(), position: "relative" }}>
               {rowVirtualizer.getVirtualItems().map((row) => {
-                const it = visible[row.index];
+                const r = rows[row.index];
+                if (r.kind === "header") {
+                  const g = r.group;
+                  const isPseudo = g.groupKey === NONE_GROUP;
+                  const catKey = `cat:group:${g.groupKey}`;
+                  return (
+                    <div key={`h:${g.groupKey}`} data-index={row.index} ref={rowVirtualizer.measureElement} style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${row.start}px)` }}>
+                      <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted/40">
+                        {g.bannerUrl ? (
+                          // ふわっちのアイテムページのバナーをそのまま見出しに使う（外部 URL なので next/image は使わない）
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={g.bannerUrl} alt={groupLabel(g)} loading="lazy" className="max-h-48 w-full object-cover" />
+                        ) : (
+                          <div className="flex items-center gap-3 bg-primary/10 px-4 py-4">
+                            {g.badgeText && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">{g.badgeText}</span>}
+                            <span className="text-base font-bold text-foreground">{g.groupTitle}</span>
+                            {g.subGroupTitle && <span className="text-xs text-muted-foreground">{g.subGroupTitle}</span>}
+                          </div>
+                        )}
+                        <div className="space-y-2 p-3">
+                          <div className="flex flex-wrap items-center gap-2 text-xs">
+                            {g.bannerUrl && g.badgeText && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">{g.badgeText}</span>}
+                            {g.bannerUrl && <span className="font-bold text-foreground">{g.groupTitle}{g.subGroupTitle ? `（${g.subGroupTitle}）` : ""}</span>}
+                            <span className="text-muted-foreground">{r.count} アイテム</span>
+                            {!isPseudo && byKey.has(catKey) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5 text-status-warning">カテゴリ一括 割り当て済み</span>}
+                          </div>
+                          {g.description && <p className="text-xs text-muted-foreground">{g.description}</p>}
+                          {!isPseudo && (
+                            <div>
+                              <p className="mb-1 text-xs text-muted-foreground">このカテゴリ全部にまとめて割り当て（アイテム個別・パターン個別が優先。種類ごと・価格帯の既定より優先）</p>
+                              <MappingControls mkeys={[catKey]} tier="T2" />
+                            </div>
+                          )}
+                          {r.count === 0 && <p className="text-xs text-muted-foreground">条件に合うアイテムがありません（「価格ありのみ」や種類の絞り込みを見直してください）</p>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                const it = r.item;
                 const tier = tierForGift({ priceYen: it.priceJpy, count: 1, isHit: false });
                 const kind = itemKind(it.patterns);
                 // パターン単位の個別割り当ては「当たり」と「名前で見分けがつくパターン」だけ出す。
@@ -331,7 +401,7 @@ export function SeMappingTab() {
                 const special = expandablePatternRows(it.itemName, it.patterns);
                 return (
                   <div
-                    key={it.itemId}
+                    key={`i:${r.groupKey}:${it.itemId}`}
                     data-index={row.index}
                     ref={rowVirtualizer.measureElement}
                     style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${row.start}px)` }}
@@ -343,14 +413,16 @@ export function SeMappingTab() {
                         <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{tier}</span>
                         <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{ITEM_KIND_LABELS[kind]}</span>
                         <span className="text-muted-foreground">{it.patterns.length} パターン</span>
-                        {(it.groups ?? []).map((gk) => {
-                          const g = groups.find((x) => x.groupKey === gk);
-                          return (
-                            <span key={gk} className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">
-                              {g ? g.groupTitle : gk}
-                            </span>
-                          );
-                        })}
+                        {(it.groups ?? [])
+                          .filter((gk) => gk !== r.groupKey)
+                          .map((gk) => {
+                            const g = groups.find((x) => x.groupKey === gk);
+                            return (
+                              <span key={gk} className="rounded-full bg-primary/10 px-2 py-0.5 text-primary" title="このカテゴリにも属しています">
+                                {g ? g.groupTitle : gk}
+                              </span>
+                            );
+                          })}
                         {byKey.has(`item:${it.itemId}`) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5 text-status-warning">上書き中</span>}
                       </div>
                       <MappingControls mkeys={[`item:${it.itemId}`]} tier={tier} />

@@ -2,7 +2,9 @@
 //   live_id: GET /users/{path}/profile の live[0].id（配信中のみ存在。2026-09-20 実測）
 //   本文  : GET /lives/{id}?last_updated_at=N&v5_nomask=true → comments[], updated_at, polling_interval(実測 10000ms)
 //   BY_PLAYITEM を {comment_id, pattern_id, item_id, count, is_hit, user} に正規化する。
-// AGENTS.md の法務制約どおり WebSocket は使わない。
+// 決裁(2026-09-25): 同じ応答の comment_server_url / jwt を使い、ブラウザから直接コメントサーバへ
+//   WebSocket 接続する経路を追加した（src/lib/live/ws-feed.ts）。jwt は GET /api/platforms/whowatch/live/ws
+//   だけが本人のブラウザへ返す。保存・ログ出力はしない。
 
 import { resolveWhowatchDeviceId } from "../platforms/whowatch";
 import type { LiveComment } from "./gift-normalize";
@@ -52,6 +54,9 @@ export interface LiveResponse {
   updatedAt: number | null;
   pollingInterval: number;
   liveStatus: string | null;
+  /** コメントサーバ（WebSocket）の接続情報。jwt は秘密扱い（ログ・DB に出さない） */
+  ws: { url: string | null; jwt: string | null };
+  /** jwt を除いた生応答 */
   raw: Record<string, unknown>;
 }
 
@@ -143,15 +148,15 @@ export async function fetchLive(liveId: string, lastUpdatedAt: number | string =
   const comments = Array.isArray(raw.comments) ? (raw.comments as LiveComment[]) : [];
   const live = raw.live && typeof raw.live === "object" ? (raw.live as Record<string, unknown>) : null;
   const pi = typeof raw.polling_interval === "number" ? raw.polling_interval : DEFAULT_POLL_INTERVAL_MS;
-  // jwt は保存も返却もしない（秘密扱い）
-  const { jwt: _jwt, ...rest } = raw;
-  void _jwt;
+  // jwt は raw から外す（秘密扱い）。WS 接続情報としてだけ別に持ち、live/ws ルート以外は返さない
+  const { jwt, ...rest } = raw;
   return {
     live,
     comments,
     updatedAt: typeof raw.updated_at === "number" ? raw.updated_at : null,
     pollingInterval: Math.max(MIN_POLL_INTERVAL_MS, pi),
     liveStatus: typeof live?.live_status === "string" ? (live.live_status as string) : null,
+    ws: { url: typeof raw.comment_server_url === "string" && raw.comment_server_url ? raw.comment_server_url : null, jwt: typeof jwt === "string" && jwt ? jwt : null },
     raw: rest,
   };
 }

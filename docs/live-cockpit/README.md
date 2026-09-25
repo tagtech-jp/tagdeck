@@ -4,6 +4,7 @@
 表記ルール: コード・パス・識別子・API・テーブルは `whowatch`、日本語の文章・UI は「ふわっち」。
 
 決裁(2026-09-20): ふわっちデータ取得は公開 API のポーリングのみ。WebSocket は実装しない。
+決裁(2026-09-25): 上記を変更。SE のラグ解消のため、`/lives/{id}` の `comment_server_url` / `jwt` によるコメントサーバ(WebSocket)への **受信のみ** の接続を例外として許可(AGENTS.md 参照)。ポーリングは保存と予備経路として継続。
 
 ## E1: イベント取得(実装済み・2026-09-21)
 
@@ -281,3 +282,47 @@ $4,400 以上続く巨大な単一 INSERT。認証・ルーティング(PR #25)�
 2. Actions →「Whowatch item patterns sync (manual)」→ Run workflow(入力は空のままで既定値 200 行/5 チャンク)
 3. ログに `=== batch 1..N HTTP 200`、各チャンクの `range ok rows=200 ins=.. upd=..`、最後に `=== total inserted=.. updated=.. failed=0`
 4. `SELECT count(*), max(synced_at) FROM whowatch_item_patterns;` → 4,000 件超・同期時刻が更新されている
+
+## 2026-09-25 S1 拡張: WebSocket 即時経路・カテゴリのバナー表示・無料アイテムの既定音
+
+社長の選択: 1=B(WebSocket)/ 2=Y(既定音の見出し変更)/ 3=P(バナー付きセクション)。
+
+### なぜ WebSocket か(計測)
+
+`/live?debug=1` の計測(2026-09-25 社長提供): 実効ポーリング間隔 平均 4.2 秒・最大 8.5 秒、往復 0.56 秒(うち認証 0.14 秒)、投げられた→SE 平均 3.9 秒・最大 10.6 秒。
+処理の遅さではなく「次のポーリングまでの待ち」が全てで、ポーリングを続ける限りゼロにならない(規約内の下限は平均 2〜3 秒)。
+
+### 追加・変更
+
+| 種別 | パス | 内容 |
+|---|---|---|
+| lib | `src/lib/live/ws-feed.ts` | 純関数: 接続候補(`wsUrlCandidates`: URL そのまま → `?jwt=` 付き)、再接続バックオフ(1→2→4…30 秒、受信ゼロのまま 5 回で諦める)、`extractComments`(JSON の入れ子から `comment_type` と `id` を持つオブジェクトを拾う防御的解析)、`isBacklogComment`(接続の 10 秒以上前の投稿は鳴らさない) |
+| lib | `src/lib/whowatch/live-feed.ts` | `fetchLive()` が `ws: { url, jwt }` を別枠で返す(`raw` には jwt を含めない。従来どおり poll 応答・ログ・DB には出さない) |
+| route | `GET /api/platforms/whowatch/live/ws?liveId=` | 認証必須・DB 不使用。`{url, jwt}` を本人のブラウザへ返す唯一の経路。`Cache-Control: no-store` |
+| lib | `src/lib/live/polling.ts` | `pollIntervalFor()` に `wsDelivering`(WS でギフトを 1 件以上受け取れた実績)を追加。true の間はポーリングを idle(10 秒)に戻す(保存と予備経路のため止めない)。「開いているだけ」では短縮を止めない(形式不一致で解析できない場合に今より遅くならないように) |
+| UI | `LiveConnectionProvider` | 接続時にポーリングと並行して WS を開く。WS のギフトもポーリングのギフトも `comment_id` で重複排除し、同じ SE キューへ。切断時は候補を切り替えつつ再接続。停止で閉じる |
+| UI | `LiveCockpit` | 接続バッジ「即時経路: 接続済み(N 件受信)/再接続中/使えず」。`?debug=1` に WS 状態・経路別(WS/ポーリング)の遅延・ギフト表の「経路」列・**WebSocket 生ログ(直近 200 件)** を追加 |
+| schema / migration | `whowatch_item_groups.banner_url` `description`、`drizzle/0017_item_group_banner*.sql` | カテゴリのバナー画像 URL と説明文(案P) |
+| lib | `src/lib/whowatch/item-groups-sync.ts` | `pickBannerUrl()` / `pickDescription()`: payments3 のフィールド名が未確認のため候補キー(banner / banner_url / image_url 等)を総当たり。無ければ null |
+| route | `GET /api/platforms/whowatch/items/patterns` | `groups[]` に `bannerUrl` / `description` を追加 |
+| UI | `SeMappingTab` | アイテム欄を「カテゴリごとのバナー見出し → アイテム」の並び(アイテムページ順・1 アイテムが複数カテゴリなら各所に表示)。見出し内でカテゴリ一括 SE を割り当て。バナー URL が無ければ文字のカード。「分類なし(無料・販売終了・その他)」はプルダウンで選んだときだけ表示 |
+| UI | `SeMappingTab` / `tiers.ts` | 案Y: 価格帯既定の T0 を「無料アイテム(ポップ)」に改名し、「無料アイテムはここに従う」と明記。カテゴリ新設はしない |
+
+### 社長作業
+
+1. Supabase SQL Editor で `drizzle/0017_item_group_banner_manual.sql` を適用(列追加のみ・冪等)。**0017 適用前に本 PR をデプロイすると items/patterns ルートが 500 になる**(SELECT する列が無い)ので、先に適用する
+2. マージ後、Actions「Whowatch item patterns sync (manual)」を 1 回実行(バナー列を埋める)。`SELECT group_key, banner_url FROM whowatch_item_groups` で全て null なら TODO.md Q3
+3. 配信中に `/live?debug=1` で接続 → 「即時経路: 接続済み」になるか、WS 経由のギフトが増えるかを確認。増えなければ「WebSocket 生ログ」の内容を渡す(TODO.md Q1b)
+
+### 動作確認手順
+
+1. `pnpm exec tsc --noEmit`(既存の `res.json()` 由来のエラー 52 件は TypeScript 5.9 の `Response.json(): Promise<unknown>` によるもので本 PR 以前から存在・件数増減なし)/ `pnpm test`(ws-feed 12 件・polling 1 件・item-groups-sync 5 件を追加、全 307 件)/ `pnpm exec next build --webpack`
+2. `/live` 接続 → バッジに「即時経路」が出る。WS が使えない配信でも「使えず(ポーリングで動作中)」と出て従来どおり鳴る
+3. `/live?debug=1` → ギフト表の「経路」が WS の行は投げられた→SE が 1 秒前後、ポーリングの行は従来どおり
+4. SE タブ → カテゴリごとに見出しが並び、見出し内の「音源をアップロード」でカテゴリ一括の割り当てができる。プルダウン「分類なし」で無料アイテム等が出る(「価格ありのみ」OFF)
+
+### 未確定(TODO.md Q1b / Q2 / Q3)
+
+- WS のメッセージ形式・認証方式は未実測。形式が違っても落ちず、ポーリングで従来どおり鳴る設計
+- 無料アイテムの設定が反映されない原因(a/b)は実データ待ち
+- payments3 のバナー URL フィールド名は未確認

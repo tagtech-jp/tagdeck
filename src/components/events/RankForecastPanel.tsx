@@ -60,7 +60,7 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
     let cancelled = false;
     const load = () =>
       fetch(`/api/events/${eventId}/snapshots?limit=96`)
-        .then((r) => (r.ok ? r.json() : { snapshots: [] }))
+        .then((r) => (r.ok ? (r.json() as Promise<{ snapshots?: SnapshotRow[] }>) : { snapshots: [] }))
         .then((d: { snapshots?: SnapshotRow[] }) => {
           if (!cancelled) setSnapshots(d.snapshots ?? []);
         })
@@ -82,25 +82,25 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
   useEffect(() => {
     let cancelled = false;
     fetch("/api/platforms/whowatch/items")
-      .then((r) => (r.ok ? r.json() : { items: [] }))
+      .then((r) => (r.ok ? (r.json() as Promise<{ items?: ItemMaster[] }>) : { items: [] }))
       .then((d: { items?: ItemMaster[] }) => {
         if (!cancelled) setItems(d.items ?? []);
       })
       .catch(() => undefined);
     if (whowatchEventId === null) return;
     fetch("/api/platforms/whowatch/events/list")
-      .then((r) => (r.ok ? r.json() : { open: [], pre: [] }))
+      .then((r) => (r.ok ? (r.json() as Promise<{ open?: Array<{ id: number; eventKey: string }>; pre?: Array<{ id: number; eventKey: string }> }>) : { open: [], pre: [] }))
       .then(async (d: { open?: Array<{ id: number; eventKey: string }>; pre?: Array<{ id: number; eventKey: string }> }) => {
         const hit = [...(d.open ?? []), ...(d.pre ?? [])].find((e) => e.id === whowatchEventId);
         if (!hit || cancelled) return;
         setEventKey(hit.eventKey);
         const [detail, points] = await Promise.all([
-          fetch(`/api/platforms/whowatch/events/${encodeURIComponent(hit.eventKey)}`).then((r) => (r.ok ? r.json() : null)),
-          fetch(`/api/platforms/whowatch/events/${encodeURIComponent(hit.eventKey)}/item-points`).then((r) => (r.ok ? r.json() : { items: [] })),
+          fetch(`/api/platforms/whowatch/events/${encodeURIComponent(hit.eventKey)}`).then((r) => (r.ok ? (r.json() as Promise<{ rulesParsed?: RulesParsed | null } | null>) : null)),
+          fetch(`/api/platforms/whowatch/events/${encodeURIComponent(hit.eventKey)}/item-points`).then((r) => (r.ok ? (r.json() as Promise<{ items?: ItemPointRow[] }>) : { items: [] })),
         ]);
         if (cancelled) return;
-        setRules((detail?.rulesParsed as RulesParsed | null) ?? null);
-        setItemPoints((points?.items as ItemPointRow[]) ?? []);
+        setRules(detail?.rulesParsed ?? null);
+        setItemPoints(points?.items ?? []);
       })
       .catch(() => undefined);
     return () => {

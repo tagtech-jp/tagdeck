@@ -4,7 +4,8 @@ import { useEffect } from "react";
 import { playSe } from "@/lib/se/engine";
 import { tierForGift, TIER_LABELS, type SeTier } from "@/lib/se/tiers";
 import { ACTIVE_WINDOW_MS, POLL_INTERVAL_MS, pollIntervalFor } from "@/lib/live/polling";
-import { CLIENT_BUILD_ID, useLiveConnection, type GiftSample, type PollSample } from "./LiveConnectionProvider";
+import { CLIENT_BUILD_ID, useLiveConnection } from "./LiveConnectionProvider";
+import type { WsState } from "@/lib/live/ws-feed";
 import { retryCountdownSec } from "@/lib/live/master-retry";
 import type { NormalizedGift as Gift } from "@/lib/whowatch/gift-normalize";
 import { VolumeSlider } from "./VolumeSlider";
@@ -32,8 +33,17 @@ const STATUS_BADGE: Record<Status, { label: string; className: string }> = {
   error: { label: "エラー", className: "bg-destructive/10 text-destructive" },
 };
 
+/** WS 経路の状態表示（決裁 2026-09-25）。ポーリングは常に動いているので、WS が無くても配信は追える */
+const WS_BADGE: Record<WsState, { label: string; className: string }> = {
+  off: { label: "", className: "" },
+  connecting: { label: "即時経路: 接続中", className: "bg-muted text-muted-foreground" },
+  open: { label: "即時経路: 接続済み", className: "bg-status-success/10 text-status-success" },
+  reconnecting: { label: "即時経路: 再接続中", className: "bg-status-warning/10 text-status-warning" },
+  failed: { label: "即時経路: 使えず（ポーリングで動作中）", className: "bg-status-warning/10 text-status-warning" },
+};
+
 const TEST_GIFTS: Array<{ label: string; tier: SeTier; gift: Partial<Gift> }> = [
-  { label: "無料（ポップ）", tier: "T0", gift: { item_name: "オータムリース", price_yen: 0, count: 1 } },
+  { label: TIER_LABELS.T0, tier: "T0", gift: { item_name: "オータムリース", price_yen: 0, count: 1 } },
   { label: "〜¥499（チャイム・短）", tier: "T1", gift: { item_name: "ぶたさん", price_yen: 160, count: 1 } },
   { label: "¥500〜（チャイム）", tier: "T2", gift: { item_name: "ぶたさん ×4", price_yen: 160, count: 4 } },
   { label: "¥2,000〜（ファンファーレ・短）", tier: "T3", gift: { item_name: "花火", price_yen: 1000, count: 2 } },
@@ -70,6 +80,10 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
     lastGiftAt,
     pollLog,
     giftLog,
+    wsState,
+    wsGiftCount,
+    wsInfo,
+    wsLog,
     autoConnectPhase,
     setAutoConnect,
     start,
@@ -96,10 +110,16 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
           {waiting && !audioReady && <span className="rounded-full bg-status-warning/10 px-2 py-1 text-xs font-bold text-status-warning">音声未許可</span>}
           {viewingOther && <span className="rounded-full bg-status-warning/10 px-2 py-1 text-xs font-bold text-status-warning">{viewingOther}さんを表示のみ・記録しません</span>}
           {selfByTypedId && <span className="rounded-full bg-status-success/10 px-2 py-1 text-xs font-bold text-status-success">自分の配信として記録します</span>}
+          {status === "polling" && wsState !== "off" && (
+            <span className={`rounded-full px-2 py-1 text-xs font-bold ${WS_BADGE[wsState].className}`} title={wsInfo ?? undefined}>
+              {WS_BADGE[wsState].label}
+              {wsState === "open" ? `（${wsGiftCount} 件受信）` : ""}
+            </span>
+          )}
           {liveId && (
             <span className="text-xs text-muted-foreground">
               live_id {liveId}
-              {title ? ` · ${title}` : ""} · {Math.round(pollIntervalFor({ isOther: viewingOther !== null, serverIntervalMs: pollingInterval, lastGiftAt, now: Date.now() }) / 1000)} 秒間隔
+              {title ? ` · ${title}` : ""} · ポーリング {Math.round(pollIntervalFor({ isOther: viewingOther !== null, serverIntervalMs: pollingInterval, lastGiftAt, now: Date.now(), wsDelivering: wsState === "open" && wsGiftCount > 0 }) / 1000)} 秒間隔
               {lastPolledAt ? ` · 最終取得 ${new Date(lastPolledAt).toLocaleTimeString("ja-JP")}` : ""}
             </span>
           )}
@@ -242,17 +262,27 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
             <div>タブ非表示でのポーリング: {pollLog.filter((p) => p.hidden).length} / {pollLog.length} 回</div>
             <div>Worker 実行拠点（cf-ray）: {[...new Set(pollLog.map((p) => p.colo).filter(Boolean))].join(", ") || "—"}</div>
             <div>対策A（保存を待たない）: {pollLog.filter((p) => p.deferredSave).length} / {pollLog.length} 回 バックグラウンド保存</div>
+            <div className={wsState === "open" ? "font-bold text-status-success" : wsState === "failed" ? "font-bold text-status-warning" : ""}>
+              即時経路（WebSocket）: {WS_BADGE[wsState].label || "未使用"} / WS 経由のギフト {wsGiftCount} 件
+              {wsInfo ? ` / ${wsInfo}` : ""}
+              {wsState === "open" && wsGiftCount === 0 && " ← 接続はできているがギフトを解釈できていない。下の WS 生ログを確認"}
+            </div>
             <div>
-              対策F（盛り上がり時だけ短縮）: 現在 {Math.round(pollIntervalFor({ isOther: viewingOther !== null, serverIntervalMs: pollingInterval, lastGiftAt, now: Date.now() }) / 1000)} 秒間隔
+              投げられた→SE（経路別）: WS {fmt(stats(giftLog.filter((g) => g.source === "ws").map((g) => g.totalMs).filter((v): v is number => v !== null)))} / ポーリング {fmt(stats(giftLog.filter((g) => g.source === "poll").map((g) => g.totalMs).filter((v): v is number => v !== null)))}
+            </div>
+            <div>
+              対策F（盛り上がり時だけ短縮）: 現在 {Math.round(pollIntervalFor({ isOther: viewingOther !== null, serverIntervalMs: pollingInterval, lastGiftAt, now: Date.now(), wsDelivering: wsState === "open" && wsGiftCount > 0 }) / 1000)} 秒間隔
               {lastGiftAt ? `（最後のギフトから ${Math.round((Date.now() - lastGiftAt) / 1000)} 秒）` : "（ギフト未検知）"}
               {" / 理由: "}
               {pollingInterval > POLL_INTERVAL_MS.idle
                 ? `ふわっちが ${Math.round(pollingInterval / 1000)} 秒を指示`
                 : viewingOther !== null
                   ? "他人の配信のため固定"
-                  : lastGiftAt === null || Date.now() - lastGiftAt > ACTIVE_WINDOW_MS
-                    ? "静かなので通常間隔"
-                    : "盛り上がり中のため短縮"}
+                  : wsState === "open" && wsGiftCount > 0
+                    ? "WS がギフトを届けているのでポーリングは保存用の通常間隔"
+                    : lastGiftAt === null || Date.now() - lastGiftAt > ACTIVE_WINDOW_MS
+                      ? "静かなので通常間隔"
+                      : "盛り上がり中のため短縮"}
             </div>
             <div className={master.ready ? "" : "font-bold text-destructive"}>
               マスタ: {master.ready ? `正常（${masterPatternCount.toLocaleString()}パターン）` : `縮退中（サーバ照合で補完 ${masterFilledCount} 件）`}
@@ -273,6 +303,7 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
                 <thead className="text-muted-foreground">
                   <tr>
                     <th className="py-1 pr-2 font-medium">時刻</th>
+                    <th className="py-1 pr-2 font-medium">経路</th>
                     <th className="py-1 pr-2 font-medium">ギフト</th>
                     <th className="py-1 pr-2 font-medium">パターン</th>
                     <th className="py-1 pr-2 font-medium">投稿→受信</th>
@@ -286,6 +317,7 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
                   {giftLog.map((g) => (
                     <tr key={`${g.at}-${g.label}`} className="border-t border-border">
                       <td className="py-1 pr-2 font-mono">{new Date(g.at).toLocaleTimeString("ja-JP")}</td>
+                      <td className={`py-1 pr-2 font-mono ${g.source === "ws" ? "text-status-success" : ""}`}>{g.source === "ws" ? "WS" : "poll"}</td>
                       <td className="py-1 pr-2 truncate">{g.label}</td>
                       <td className="py-1 pr-2 truncate font-mono">
                         {g.patternId ?? "—"} {g.patternName ?? ""} {g.kind ? `[${g.kind}]` : ""}
@@ -331,6 +363,16 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {debug && (
+        <div className="rounded-xl border border-border bg-card p-4">
+          <h4 className="mb-1 text-sm font-bold text-foreground">学習モード（?debug=1）: WebSocket 生ログ 直近 200 件</h4>
+          <p className="mb-2 text-xs text-muted-foreground">
+            コメントサーバから届いたメッセージをそのまま表示します（形式確定のための証跡）。「即時経路: 接続済み」なのに WS 経由のギフトが 0 件のままなら、ここの内容をそのまま渡してください
+          </p>
+          {wsLog.length === 0 ? <p className="text-xs text-muted-foreground">まだ受信していません（{WS_BADGE[wsState].label || "未接続"}{wsInfo ? ` / ${wsInfo}` : ""}）</p> : <pre className="max-h-96 overflow-auto rounded-lg bg-muted p-2 text-[10px] leading-tight text-foreground">{JSON.stringify(wsLog, null, 1)}</pre>}
         </div>
       )}
 

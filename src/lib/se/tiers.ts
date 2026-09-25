@@ -24,7 +24,7 @@ export function tierForGift(g: TierInput): SeTier {
 }
 
 export const TIER_LABELS: Record<SeTier, string> = {
-  T0: "無料（ポップ）",
+  T0: "無料アイテム（ポップ）",
   T1: "〜¥499（チャイム・短）",
   T2: "¥500〜1,999（チャイム）",
   T3: "¥2,000〜4,999（ファンファーレ・短）",

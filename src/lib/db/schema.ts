@@ -236,6 +236,10 @@ export const whowatchItemGroups = pgTable(
     displayOrder: integer("display_order"),
     // whowatch_events に実在するイベントにだけ入れる（恒常カテゴリは null）
     eventKey: text("event_key"),
+    // アイテムページのバナー画像 URL（0017）。payments3 にフィールドが無ければ null（SE タブは文字の見出しで代替）
+    bannerUrl: text("banner_url"),
+    // カテゴリの説明文（0017）。無ければ null
+    description: text("description"),
     syncedAt: timestamp("synced_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [primaryKey({ columns: [t.itemId, t.groupKey] })],
