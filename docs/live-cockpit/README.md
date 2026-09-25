@@ -237,7 +237,8 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 
 ### 未確定・運用
 
-- 本番で 5 分毎のスナップショットを溜めるには Workers Cron 版(`wrangler.jsonc` の `triggers.crons`)の**デプロイが必要**。GitHub Actions の `deploy.yml` は課金停止中のため、社長のターミナルで `pnpm deploy`(opennextjs-cloudflare build && deploy)を実行する。画面側の自動取得は「開いている間」だけの保険
+- 5 分毎のスナップショットは Workers Cron(`wrangler.jsonc` の `triggers.crons` → `src/worker.ts` の scheduled)が担う。**Cron Trigger は移行後の初回デプロイから本番に載っている**(tagtech-jp/tagdeck では `deploy.yml` が main push で動き、ログに「Deployed tagdeck triggers」が出る。旧 nikkun22 側の課金停止は新リポジトリには及んでいない)。PR #23 のマージで Deploy run が走った(2026-09-25T11:00Z)。画面側の自動取得は Cron が止まった時の保険
+- Cron が実際に動いているかの確認: Cloudflare Dashboard → Workers & Pages → tagdeck → Logs(observability 有効)で `[ranking-sync/scheduled] targets=N ok=N failed=N` を探す。ターミナルなら `pnpm exec wrangler tail tagdeck --format pretty`(要 `wrangler login`)。DB は `SELECT captured_at, my_rank, my_point FROM ranking_snapshots ORDER BY captured_at DESC LIMIT 5;` が 5 分ごとに増える。`targets=0` なら対象シミュレーターの status/ranking_type/期間を確認、`failed` なら同行の例外メッセージを見る
 - 最終日係数 1.5 は引き続き仮置き(TODO.md)
 
 ## S1: SE タブ・ふわっちギフト取得(実装済み・2026-09-21)
