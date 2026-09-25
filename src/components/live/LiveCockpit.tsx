@@ -83,6 +83,8 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
     lastPolledAt,
     targetId,
     setTargetId,
+    targetIdPinned,
+    setTargetIdPinned,
     viewingOther,
     selfByTypedId,
     masterWarning,
@@ -190,9 +192,15 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
           </div>
         </div>
         <div className="mt-3 space-y-1">
-          <label htmlFor="live-target-id" className="text-xs font-medium text-foreground">
-            配信者ID（空欄なら設定の自分のID）
-          </label>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label htmlFor="live-target-id" className="text-xs font-medium text-foreground">
+              配信者ID（空欄なら設定の自分のID）
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-foreground" title="ON にすると、この ID を次に開いたときも入力済みにします">
+              <input type="checkbox" checked={targetIdPinned} onChange={(e) => setTargetIdPinned(e.target.checked)} className="size-4" />
+              このIDを固定（次回も引き継ぐ）
+            </label>
+          </div>
           <input
             id="live-target-id"
             type="text"
@@ -204,6 +212,9 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
             className="min-h-11 w-full rounded-sm border border-border bg-muted px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring disabled:opacity-50"
           />
           <p className="text-xs text-muted-foreground">他の配信者を入力して接続した場合は表示のみで、ギフトは記録しません（設定のふわっちIDは変わりません）。</p>
+          {targetIdPinned && targetId.trim() !== "" && (
+            <p className="text-xs text-status-warning">固定中: 次回もこの ID で始まります。自分以外の ID を固定している間は「配信開始時に自動接続」は待機しません（自分の配信を待つ機能のため）。</p>
+          )}
           <p className="text-xs text-muted-foreground">接続したまま他のページへ移動しても SE は鳴り続けます（停止を押すまで）。ただしブラウザのタブを閉じると止まります。</p>
         </div>
         {serverBuildId && serverBuildId !== CLIENT_BUILD_ID && (
