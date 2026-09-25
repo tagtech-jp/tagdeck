@@ -273,6 +273,20 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 2. デプロイ後、別アカウントで `/api/se/mappings` を開くと `defaultsSource: "sync"` と運営の行が `defaults` に入る
 3. 運営アカウントの SE タブで音源を差し替える → 別アカウントで SE タブを開き直すと「既定 ♪ 新しいラベル」に変わる
 4. 運営にも同梱にも無い価格帯(例: T2 を「既定に戻す」した状態)は「既定 ♪ きらきら輝く1.mp3」で鳴る
+## S5: 無音が続くと SE が鳴らなくなる問題の修正(実装済み・2026-09-25)
+
+社長報告「無音が続くとならなくなる」への対応。原因は 2 系統あり、両方に手を入れた。
+
+| 原因 | 症状 | 対処 |
+|---|---|---|
+| AudioContext が suspended / interrupted / closed になる(しばらく音を出していない・画面を隠した・他アプリが音を出した・iOS の割り込み) | その後 start() しても音が出ない。keep-alive も止まる | `engine.ts`: 鳴らす直前に `ensureAudioRunning()`(resume を 1.5 秒で打ち切り)。closed なら作り直して keep-alive を鳴らし直す。画面復帰・ユーザー操作(pointerdown/keydown/touchend)で自動復帰(`installAudioAutoResume`)。接続中・待機中は 5 秒ごとに監視し、自動で戻せなければ「音を有効にする」ボタンを再表示、戻せたら「音声を再開しました」バッジ |
+| ポーリングの fetch がぶら下がる(回線切替・スリープ復帰) | inFlight ガードで以後の取得が永久に止まる → ギフトが来ても鳴らない | `POST /live/poll` と待機確認 `GET /live` に `AbortSignal.timeout(15s)`。打ち切られれば従来の再試行に乗る |
+
+### 動作確認手順
+
+1. `pnpm test`(engine 5 件を含む)、`pnpm exec tsc --noEmit`、`pnpm exec next build --webpack`
+2. 接続 → 10 分以上ギフト無しで放置 → テスト再生が鳴る。スマホでは画面を消して戻る → 状態バッジが「音声停止中」なら「音を有効にする」で復帰、自動で戻れば「音声を再開しました」
+3. 機内モードを 30 秒 ON → OFF → 「取得エラー…再試行します」の後に最終取得が進む(fetch が 15 秒で打ち切られる)
 
 ## S1: SE タブ・ふわっちギフト取得(実装済み・2026-09-21)
 
