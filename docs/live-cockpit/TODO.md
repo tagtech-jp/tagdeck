@@ -12,6 +12,7 @@
 - [ ] **Q1b(WS のメッセージ形式・実測で確定)** コメントサーバのメッセージ形式と認証方式(URL そのまま / `?jwt=`)はリポジトリに実測が無い。`/live?debug=1` の「WebSocket 生ログ」に出た内容を社長から受け取り、`extractComments()` を実形に狭める。「即時経路: 接続済み」なのに WS 経由のギフトが 0 件なら形式不一致(ポーリングで従来どおり鳴る)
 - [ ] **Q2(無料アイテムの設定反映)** 「無料アイテムの SE 設定が反映されない」の原因は 2 通りあり実データでしか判別できない。(a) イベントカテゴリの一括 SE を付けたが無料アイテムはカテゴリに属さず既定音に落ちる (b) 無料アイテムの pattern_id がマスタに無く個別設定に到達できない。確認 SQL: `SELECT occurred_at, payload->>'item_name', payload->>'pattern_id', payload->>'item_id', payload->>'price_yen', payload->'groups' FROM events WHERE platform='whowatch' AND event_type='gift' ORDER BY occurred_at DESC LIMIT 20;`
 - [ ] **Q3(payments3 のバナー URL)** カテゴリのバナー画像 URL が payments3 にあるかは未確認(この環境からふわっち API へ接続できなかった)。0017 適用・同期後に `SELECT group_key, banner_url FROM whowatch_item_groups` で確認。全て null なら `pickBannerUrl()` の候補キーを実応答に合わせて足す(SE タブは文字見出しで動作する)
+- [ ] **Q4(0017 適用と同期実行の状況・2026-09-25)** PR #1 / #2 は main にマージ済みだが、Supabase での `drizzle/0017_item_group_banner_manual.sql` の適用と、マージ後の Actions「Whowatch item patterns sync (manual)」の実行は本セッションでは未確認。0017 未適用のままデプロイされていると `GET /api/platforms/whowatch/items/patterns` が 500 になる(README「2026-09-25 S1 拡張」社長作業 1)。適用・実行済みかを確認し、済んでいれば Q3 の確認 SQL へ進む
 
 ## 要確認(Claude Cowork / 実測で確定)
 
