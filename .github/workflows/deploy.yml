@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+  # 手動再デプロイ用（Secrets 投入後の再実行など）。空コミットで push を起こさずに済む
+  workflow_dispatch: {}
 
 jobs:
   deploy:
