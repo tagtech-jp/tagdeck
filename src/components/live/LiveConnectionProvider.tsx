@@ -553,8 +553,10 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     wsRef.current = ws;
     setWsState(wsClosesRef.current > 0 ? "reconnecting" : "connecting");
     let gotMessage = false;
+    let opened = false;
     ws.onopen = () => {
       if (wsRef.current !== ws) return;
+      opened = true;
       wsConnectedAtRef.current = Date.now();
       setWsState("open");
       setWsInfo(null);
@@ -577,7 +579,8 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       wsClosesRef.current += 1;
       // メッセージを 1 つも受け取れずに切れた＝認証方式か URL が違う可能性。次の候補を試す
       if (!gotMessage) wsCandidateIdxRef.current += 1;
-      const reason = `切断 code=${ev.code}${ev.reason ? ` ${ev.reason}` : ""}`;
+      // 1006 でも「握手で拒否された」のか「つながった後に切られた」のかで原因が違うので区別して残す
+      const reason = `切断 code=${ev.code}${ev.reason ? ` ${ev.reason}` : ""}（${opened ? (gotMessage ? "受信後に切断" : "接続後・受信前に切断") : "接続前に失敗＝握手で拒否か URL/証明書の問題"}）`;
       if (!wsReceivedAnyRef.current && wsClosesRef.current >= WS_MAX_FAILURES_BEFORE_GIVE_UP) {
         setWsState("failed");
         setWsInfo(`${reason} / ${wsClosesRef.current} 回続けて受信できなかったため WS は諦め、ポーリングで続行`);

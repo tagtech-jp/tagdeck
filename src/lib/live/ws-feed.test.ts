@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractComments, isBacklogComment, looksLikeComment, parseWsMessage, WS_RECONNECT_MAX_MS, wsReconnectDelay, wsUrlCandidates } from "./ws-feed";
+import { extractComments, isBacklogComment, looksLikeComment, parseWsMessage, redactSecret, WS_RECONNECT_MAX_MS, wsReconnectDelay, wsUrlCandidates, wsUrlToHttp } from "./ws-feed";
 
 const GIFT = { id: 123, comment_type: "BY_PLAYITEM", play_item_pattern_id: 10365, item_count: 1, posted_at: 1_800_000_000_000 };
 const TEXT = { id: "124", comment_type: "BY_USER", message: "こんにちは" };
@@ -69,5 +69,19 @@ describe("isBacklogComment", () => {
   });
   it("posted_at が無ければ鳴らす側に倒す", () => {
     expect(isBacklogComment(undefined, CONNECTED)).toBe(false);
+  });
+});
+
+describe("wsUrlToHttp / redactSecret（サーバ側診断用）", () => {
+  it("wss→https, ws→http。それ以外は null", () => {
+    expect(wsUrlToHttp("wss://c.example/lives/1?x=1")).toBe("https://c.example/lives/1?x=1");
+    expect(wsUrlToHttp("ws://c.example/l")).toBe("http://c.example/l");
+    expect(wsUrlToHttp("https://c.example/l")).toBeNull();
+    expect(wsUrlToHttp(null)).toBeNull();
+  });
+  it("jwt を伏せる（短すぎる secret や空は無視）", () => {
+    expect(redactSecret("url?jwt=abcdefghij&x=abcdefghij", "abcdefghij")).toBe("url?jwt=***&x=***");
+    expect(redactSecret("keep", "")).toBe("keep");
+    expect(redactSecret("keep short", "short")).toBe("keep short");
   });
 });
