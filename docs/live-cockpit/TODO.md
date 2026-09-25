@@ -9,12 +9,14 @@
   2. WS は個人ツール(whowatch-feed)に留め、TagDeck 側は `/lives/{id}` の `comments[]` を `polling_interval`(10秒)でポーリングしてギフトを取る(規約内)
   3. Phase 3 以降を保留
   → **決裁(2026-09-25): 1 を採用**(2026-09-20 の「ポーリングのみ」を変更)。SE のラグがポーリング間隔そのもの(静か=10 秒)で、ポーリングでは平均 2〜3 秒が下限だったため。AGENTS.md / CODEX_CLAUDE.md に例外条件を明記。実装は README「2026-09-25 S1 拡張」参照
-- [ ] **Q1b(WS のメッセージ形式・実測で確定)** コメントサーバのメッセージ形式と認証方式(URL そのまま / `?jwt=`)はリポジトリに実測が無い。`/live?debug=1` の「WebSocket 生ログ」に出た内容を社長から受け取り、`extractComments()` を実形に狭める。「即時経路: 接続済み」なのに WS 経由のギフトが 0 件なら形式不一致(ポーリングで従来どおり鳴る)
+- [x] **Q1b(WS のメッセージ形式・実測で確定)** コメントサーバのメッセージ形式と認証方式(URL そのまま / `?jwt=`)はリポジトリに実測が無い。`/live?debug=1` の「WebSocket 生ログ」に出た内容を社長から受け取り、`extractComments()` を実形に狭める。「即時経路: 接続済み」なのに WS 経由のギフトが 0 件なら形式不一致(ポーリングで従来どおり鳴る)
+  → **確定(2026-09-25)**: 入口 `wss://ws.whowatch.tv/socket/websocket?vsn=2.0.0`、購読 `room:<配信ID>` + `{"p": jwt}`(phx_join → `{"status":"ok"}`)、heartbeat 30 秒、ギフトは `shout` の `payload.comment`。PR #9〜#13 で到達。本番で WS 経由のギフト 4 件、投げられた→SE 平均 957ms(補正済)。詳細は README「即時経路(WebSocket)の到達点」
 - [ ] **Q2(無料アイテムの設定反映)** 「無料アイテムの SE 設定が反映されない」の原因は 2 通りあり実データでしか判別できない。(a) イベントカテゴリの一括 SE を付けたが無料アイテムはカテゴリに属さず既定音に落ちる (b) 無料アイテムの pattern_id がマスタに無く個別設定に到達できない。確認 SQL: `SELECT occurred_at, payload->>'item_name', payload->>'pattern_id', payload->>'item_id', payload->>'price_yen', payload->'groups' FROM events WHERE platform='whowatch' AND event_type='gift' ORDER BY occurred_at DESC LIMIT 20;`
 - [ ] **Q3(payments3 のバナー URL)** カテゴリのバナー画像 URL が payments3 にあるかは未確認(この環境からふわっち API へ接続できなかった)。0017 適用・同期後に `SELECT group_key, banner_url FROM whowatch_item_groups` で確認。全て null なら `pickBannerUrl()` の候補キーを実応答に合わせて足す(SE タブは文字見出しで動作する)
 - [x] **Q4(0017 適用と同期実行の状況・2026-09-25)** PR #1 / #2 は main にマージ済みだが、Supabase での `drizzle/0017_item_group_banner_manual.sql` の適用と、マージ後の Actions「Whowatch item patterns sync (manual)」の実行は本セッションでは未確認。0017 未適用のままデプロイされていると `GET /api/platforms/whowatch/items/patterns` が 500 になる(README「2026-09-25 S1 拡張」社長作業 1)。適用・実行済みかを確認し、済んでいれば Q3 の確認 SQL へ進む
   → **完了(2026-09-25)**: 0017 は社長が Supabase で適用済み(「Success. No rows returned」)。同期は 06:02Z に実行し成功(パターン inserted 8 / updated 4,420 / failed 0、カテゴリ 22 件・137 行 inserted)。`banner_url` の有無は Q3 で継続
 - [ ] **Q5(Supabase 無料枠の課金警告・2026-09-25)** Supabase ダッシュボード上部に「Grace period is over … projects will not be able to serve requests when you use up your quota」が表示されていた(無料枠の猶予期間終了)。quota を使い切ると本番がリクエストを受け付けなくなる。Billing 画面で現在の使用量と超過している項目を確認し、有料プランへの移行か使用量削減かを決める。どの quota(DB 容量 / Egress / MAU 等)が対象かは未確認
+- [ ] **Q6(即時経路の残り遅延の内訳・2026-09-25)** WS 経路の投げられた→SE は平均 957ms / 最大 2202ms(4 件・補正済)。残り約 1 秒の内訳は「`posted_at` が秒単位の誤差」「時計ズレ補正(1411ms)の精度」「連投時の SE キュー待ち(前の音が鳴り終わるまで最大 4 秒)」に分かれるが、どれがどれだけかは未計測。キュー待ちの計測列を `?debug=1` に追加中(ブランチ `claude/ws-metrics`)。追加後に配信中の実測値を社長から受け取り、内訳を確定する。ふわっち内部の遅れは手が出せない
 
 ## 要確認(Claude Cowork / 実測で確定)
 
