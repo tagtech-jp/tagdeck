@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Trophy, Radio, Sparkles, Settings } from "lucide-react";
+import { Home, Trophy, Radio, Settings } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "ホーム", icon: Home },
   { href: "/events", label: "イベント", icon: Trophy },
   { href: "/live", label: "ライブ", icon: Radio },
-  { href: "/ai-prompter", label: "攻略", icon: Sparkles },
   { href: "/settings", label: "設定", icon: Settings },
 ];
 

@@ -208,6 +208,38 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - 基礎 pt(アイテム 1 個あたりのランキングポイント)は公式本文に無い。手入力か、S1 のギフト保存後に「実測から推定」
 - 最終日係数 1.5 は仮置き。過去 closed イベントの伸び率から求める処理は未実装
 
+## E5: 順位予測の精度改善・攻略ページ廃止(実装済み・2026-09-25)
+
+### 背景(本番で観測した症状)
+
+- 7 位・33,050 pt なのに「目標 3 位以内の確率 100.0%・期待順位 1.0 位・現在スコア 0」と表示された。原因は 2 つ
+  1. ランキング同期が止まっていた(GitHub Actions の課金停止で `ranking-sync.yml` が停止、Workers Cron 版は本番未反映)ため `ranking_snapshots` が 0 枚・`rivals_snapshot` が null
+  2. `calculator.ts` の旧モデルはライバル 0 名で 1 万試行すると全試行 1 位 = 100% になる。さらにライバルを「目標順位の前後 + 直上」の数名に絞っていたため、順位表 13 名でも試算上は 5 名以下となり順位が実際より良く出る
+
+### 追加・変更
+
+| 種別 | パス | 内容 |
+|---|---|---|
+| lib | `src/lib/whowatch/rank-forecast.ts` | 順位表の**全員**(自分を含む)を同じ推定器で扱う。各人の pt/時 = 直近 36 組(3 時間)の増分平均と「現在 pt ÷ イベント開始からの経過時間」をサンプル数で重み付け(w = n/(n+12))。残り時間の獲得 = pace × 実効残り時間 × m、m は平均 1 の対数正規(σ はサンプル 0 で 0.7、288 で 0.36)。出力に期待順位・順位分布・現在順位・自分の最終 pt 分布を追加。開始時刻があればスナップショット 1 枚でも計算できる |
+| lib | `src/lib/events/calculator.ts` | ライバル 0 名のとき `status: "no_data"` を返す(100% を出さない) |
+| hook | `src/hooks/useRankingSnapshots.ts` | スナップショット取得・5 分毎再読込・**最新が 6 分より古い/無いときは画面側から `POST /api/events/[id]/refresh-ranking` を自動で呼ぶ**(cron 停止時の保険。5 分に 1 回まで) |
+| route | `POST /api/events/[id]/refresh-ranking` | 直近 45 秒以内にスナップショットがあれば公開 API を叩かず `throttled: true` で返す(複数タブ対策) |
+| UI | `EventDashboard` | ふわっち連携イベントのヒーロー(確率・期待順位・現在順位/スコア)を `ranking_snapshots` 由来に統一(逆算パネルと同じ数字になる)。「最終取得」と「ランキング更新」ボタンをヒーローに追加。未取得時は「未取得」バッジ + 「—」表示 |
+| UI | `RankForecastPanel` | スナップショットは親から受け取る(二重取得をやめた)。開始時刻を渡して同じモデルで計算 |
+| 廃止 | `src/app/(dashboard)/ai-prompter/page.tsx`、ナビの「攻略」 | 攻略(AI 接客カンペ)ページを削除。`/ai-prompter` は `/events` へ恒久リダイレクト(next.config.ts)。ダッシュボード内の攻略セクション(`NEXT_PUBLIC_FEATURE_STRATEGY_PANEL`)は既定非表示のまま残置 |
+
+### 動作確認手順
+
+1. `pnpm exec tsc --noEmit` / `pnpm test`(rank-forecast 13 件・calculator 2 件を含む) / `pnpm exec next build --webpack`
+2. `/events` を開く → スナップショットが無ければ数秒で自動取得され、「現在 N 位 · 最終取得 …」が出る。確率は順位表全員との比較になる(7 位・33,050 pt・3 位が 170,710 pt・残り 51h なら目標 3 位は 15% 未満、期待順位は 5〜8 位程度)
+3. 「ランキング更新」を 1 分以内に 2 回押すと 2 回目は「直前に取得済みです」
+4. `/ai-prompter` にアクセスすると `/events` へ移る
+
+### 未確定・運用
+
+- 本番で 5 分毎のスナップショットを溜めるには Workers Cron 版(`wrangler.jsonc` の `triggers.crons`)の**デプロイが必要**。GitHub Actions の `deploy.yml` は課金停止中のため、社長のターミナルで `pnpm deploy`(opennextjs-cloudflare build && deploy)を実行する。画面側の自動取得は「開いている間」だけの保険
+- 最終日係数 1.5 は引き続き仮置き(TODO.md)
+
 ## S1: SE タブ・ふわっちギフト取得(実装済み・2026-09-21)
 
 決裁どおり公開 API のポーリングのみ(WebSocket 不使用)。
