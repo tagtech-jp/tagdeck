@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  async redirects() {
+    return [
+      // 攻略（AI接客カンペ）ページは 2026-09-25 に廃止。旧 URL・ブックマークはイベントへ送る
+      { source: "/ai-prompter", destination: "/events", permanent: true },
+    ];
+  },
 };
 
 export default withSerwist(nextConfig);
