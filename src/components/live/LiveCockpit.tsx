@@ -9,6 +9,7 @@ import type { WsState } from "@/lib/live/ws-feed";
 import { retryCountdownSec } from "@/lib/live/master-retry";
 import type { NormalizedGift as Gift } from "@/lib/whowatch/gift-normalize";
 import { VolumeSlider } from "./VolumeSlider";
+import type { BgAudioState } from "@/lib/se/background-keepalive";
 
 // S1: ライブページの画面。接続状態そのものは LiveConnectionProvider が持っている
 // （ページを移動しても接続と SE 再生が続くようにするため）。ここは表示と操作だけを担当する。
@@ -51,6 +52,14 @@ const TEST_GIFTS: Array<{ label: string; tier: SeTier; gift: Partial<Gift> }> = 
   { label: "当たり（ジングル）", tier: "hit", gift: { item_name: "ひよこのあたり", price_yen: 0, count: 1, is_hit: true } },
 ];
 
+const BG_STATE_BADGE: Record<BgAudioState, { label: string; className: string }> = {
+  off: { label: "停止中", className: "bg-muted text-muted-foreground" },
+  starting: { label: "開始中", className: "bg-primary/10 text-primary" },
+  playing: { label: "再生カード表示中", className: "bg-status-success/10 text-status-success" },
+  paused: { label: "OS に一時停止された", className: "bg-status-warning/10 text-status-warning" },
+  error: { label: "エラー", className: "bg-destructive/10 text-destructive" },
+};
+
 export function LiveCockpit({ debug = false }: { debug?: boolean }) {
   const {
     status,
@@ -61,6 +70,9 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
     rawLog,
     autoPlay,
     setAutoPlay,
+    bgAudio,
+    setBgAudioEnabled,
+    setBgWakeLock,
     volume,
     setVolume,
     audioReady,
@@ -214,6 +226,39 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
           />
           {!audioReady && <span className="text-muted-foreground">※ 最初にテストボタンか「接続」を押すと音が有効になります（ブラウザの自動再生制限）</span>}
         </div>
+      </div>
+
+      {/* 実験（2026-09-25）: スマホ用バックグラウンド再生（音楽プレイヤー扱い） */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <h4 className="text-sm font-bold text-foreground">スマホでも裏で鳴らす（実験）</h4>
+          <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${BG_STATE_BADGE[bgAudio.state].className}`}>{BG_STATE_BADGE[bgAudio.state].label}</span>
+          {bgAudio.enabled && bgAudio.wakeLock && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">画面ロック防止 ON</span>}
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          無音に近い音をループ再生して OS に「音楽プレイヤー」と思わせ、通知バーに再生カードを出します。Android は他のアプリに切り替えても画面を消しても取得と SE が続く見込み。iPhone は画面ロック後の継続を実機で確認します
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-4 text-xs">
+          <label className="flex items-center gap-2 text-foreground">
+            <input type="checkbox" checked={bgAudio.enabled} onChange={(e) => setBgAudioEnabled(e.target.checked)} className="size-4" />
+            音楽プレイヤー扱いにする
+          </label>
+          <label className="flex items-center gap-2 text-foreground" title="画面を点けたままにします（電池は減ります）">
+            <input type="checkbox" checked={bgAudio.wakeLock} disabled={!bgAudio.support.wakeLock} onChange={(e) => setBgWakeLock(e.target.checked)} className="size-4" />
+            画面を消さない{!bgAudio.support.wakeLock && "（非対応）"}
+          </label>
+          <span className="text-muted-foreground">
+            対応: 再生カード {bgAudio.support.mediaSession ? "○" : "×"} · 画面ロック防止 {bgAudio.support.wakeLock ? "○" : "×"} · iOS 音声セッション {bgAudio.support.audioSession ? "○" : "×"}
+          </span>
+        </div>
+        {bgAudio.error && <p className="mt-1 text-xs text-status-warning">{bgAudio.error}</p>}
+        <p className="mt-2 text-xs text-foreground">
+          画面を隠している間の取得: <span className="font-mono">{bgAudio.hiddenPollCount}</span> 回
+          {bgAudio.hiddenPollLastAt ? `（最終 ${new Date(bgAudio.hiddenPollLastAt).toLocaleTimeString("ja-JP")}）` : ""}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          試し方: ①「接続」→ ② 上のスイッチ ON（再生カードが出る）→ ③ ホームに戻る / 画面を消す → ④ 2〜3 分後に戻り、この回数が増えていれば裏でも動いています。ギフトを投げてもらえば SE の実鳴りも確認できます
+        </p>
       </div>
 
       {/* テストボタン: 各ティア・当たり・コンボ（ダミー再生） */}

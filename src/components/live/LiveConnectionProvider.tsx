@@ -11,6 +11,7 @@ import { extractComments, isBacklogComment, parseWsMessage, WS_MAX_FAILURES_BEFO
 import { commentsFromFrame, createRefCounter, decodeFrame, heartbeatFrame, joinCandidates, joinFrame, PHOENIX_HEARTBEAT_MS, phoenixSocketUrl, replyStatus, type JoinCandidate, type PhoenixFrame } from "@/lib/live/phoenix";
 import { normalizeGift, type NormalizedGift as Gift, type PatternInfo, type PickedGiftComment } from "@/lib/whowatch/gift-normalize";
 import type { ItemKind } from "@/lib/se/item-kind";
+import { BackgroundKeepAlive, detectBgAudioSupport, type BgAudioState, type BgAudioSupport } from "@/lib/se/background-keepalive";
 
 // ライブ接続の状態をアプリ全体で保持する Provider。
 // (dashboard)/layout.tsx に置いてあるため、ページを移動しても接続と SE 再生が続く。
@@ -102,6 +103,22 @@ export type Status = "idle" | "checking" | "offline" | "notfound" | "polling" | 
 /** このバンドルのビルド識別子。Worker の値と食い違えば古い JS で動いている（Service Worker 対策） */
 export const CLIENT_BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "unknown";
 const AUTO_CONNECT_STORAGE_KEY = "tagdeck.live.autoConnect";
+// 実験（2026-09-25）: スマホ用バックグラウンド再生（音楽プレイヤー扱い）と画面ロック防止のスイッチ
+const BG_AUDIO_STORAGE_KEY = "tagdeck.live.bgAudio";
+const BG_WAKELOCK_STORAGE_KEY = "tagdeck.live.bgWakeLock";
+const NO_BG_SUPPORT: BgAudioSupport = { audioElement: false, mediaSession: false, wakeLock: false, audioSession: false };
+
+/** 実験: スマホ用バックグラウンド再生の状態（画面表示用） */
+export interface BgAudioInfo {
+  enabled: boolean;
+  wakeLock: boolean;
+  state: BgAudioState;
+  error: string | null;
+  support: BgAudioSupport;
+  /** 画面を隠している間（document.hidden）に成功したポーリング回数。実験の成否を測る */
+  hiddenPollCount: number;
+  hiddenPollLastAt: string | null;
+}
 
 interface LiveConnectionValue {
   status: Status;
@@ -119,6 +136,10 @@ interface LiveConnectionValue {
   pollingInterval: number;
   lastPolledAt: string | null;
   mappings: Mapping[];
+  /** 実験: スマホ用バックグラウンド再生（音楽プレイヤー扱い） */
+  bgAudio: BgAudioInfo;
+  setBgAudioEnabled: (v: boolean) => void;
+  setBgWakeLock: (v: boolean) => void;
   targetId: string;
   setTargetId: (v: string) => void;
   viewingOther: string | null;
@@ -205,6 +226,98 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const [wsTopic, setWsTopic] = useState<string | null>(null);
   const [wsLog, setWsLog] = useState<WsLogEntry[]>([]);
   const [debug, setDebug] = useState(false);
+
+  // 実験（2026-09-25）: スマホ用バックグラウンド再生。<audio> の無音ループ + Media Session（+ Wake Lock）。
+  // スイッチは localStorage に保存するが、再生の開始は自動再生制限のためユーザー操作（スイッチ ON・接続・音を有効にする）の中でだけ行う
+  const [bgEnabled, setBgEnabledState] = useState(false);
+  const [bgWakeLock, setBgWakeLockState] = useState(false);
+  const [bgState, setBgState] = useState<BgAudioState>("off");
+  const [bgError, setBgError] = useState<string | null>(null);
+  const [bgSupport, setBgSupport] = useState<BgAudioSupport>(NO_BG_SUPPORT);
+  const [hiddenPollCount, setHiddenPollCount] = useState(0);
+  const [hiddenPollLastAt, setHiddenPollLastAt] = useState<string | null>(null);
+  const bgRef = useRef<BackgroundKeepAlive | null>(null);
+  const bgEnabledRef = useRef(false);
+  const bgWakeLockRef = useRef(false);
+  useEffect(() => {
+    // effect 内の同期 setState を避ける（react-hooks/set-state-in-effect）。サーバ描画と一致させるため初期値は「非対応」
+    queueMicrotask(() => {
+      setBgSupport(detectBgAudioSupport());
+      try {
+        const en = localStorage.getItem(BG_AUDIO_STORAGE_KEY) === "1";
+        const wl = localStorage.getItem(BG_WAKELOCK_STORAGE_KEY) === "1";
+        bgEnabledRef.current = en;
+        bgWakeLockRef.current = wl;
+        setBgEnabledState(en);
+        setBgWakeLockState(wl);
+      } catch {
+        // localStorage が使えなければ OFF
+      }
+    });
+  }, []);
+  const getBg = useCallback(() => {
+    if (!bgRef.current) {
+      bgRef.current = new BackgroundKeepAlive({
+        onStateChange: (s, err) => {
+          setBgState(s);
+          setBgError(err);
+        },
+        // 再生カードの「一時停止」「停止」はユーザーの意思なのでスイッチごと OFF にする
+        onUserPause: () => {
+          bgRef.current?.stop();
+          bgEnabledRef.current = false;
+          setBgEnabledState(false);
+          try {
+            localStorage.setItem(BG_AUDIO_STORAGE_KEY, "0");
+          } catch {
+            // 無視
+          }
+        },
+        metadata: {
+          title: "TagDeck ライブ SE 待機中",
+          artist: "TagDeck",
+          artwork: [
+            { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+            { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+          ],
+        },
+      });
+    }
+    return bgRef.current;
+  }, []);
+  /** ユーザー操作の中で呼ぶ: スイッチが ON なら再生を（再）開始する */
+  const kickBgAudio = useCallback(() => {
+    if (!bgEnabledRef.current) return;
+    const bg = getBg();
+    if (bg.getState() === "playing" || bg.getState() === "starting") return;
+    void bg.setWakeLock(bgWakeLockRef.current);
+    void bg.start();
+  }, [getBg]);
+  const setBgAudioEnabled = useCallback(
+    (v: boolean) => {
+      bgEnabledRef.current = v;
+      setBgEnabledState(v);
+      try {
+        localStorage.setItem(BG_AUDIO_STORAGE_KEY, v ? "1" : "0");
+      } catch {
+        // 無視
+      }
+      if (v) kickBgAudio();
+      else bgRef.current?.stop();
+    },
+    [kickBgAudio],
+  );
+  const setBgWakeLock = useCallback((v: boolean) => {
+    bgWakeLockRef.current = v;
+    setBgWakeLockState(v);
+    try {
+      localStorage.setItem(BG_WAKELOCK_STORAGE_KEY, v ? "1" : "0");
+    } catch {
+      // 無視
+    }
+    void bgRef.current?.setWakeLock(v);
+  }, []);
+  useEffect(() => () => bgRef.current?.stop(), []);
 
   // 自動接続。チェック状態はブラウザに保存し、次に開いたときも待機から始める
   const [autoConnect, dispatchAutoConnect] = useReducer(reduceAutoConnect, INITIAL_AUTO_CONNECT_STATE, (init) => {
@@ -535,6 +648,11 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
         setPollLog((prev) => [{ at: startedAt, gapMs, rttMs: receivedAt - startedAt, server: d.timings ?? null, hidden, colo, gifts: fresh.length, deferredSave: d.deferredSave }, ...prev].slice(0, 60));
       }
       ingestFresh(fresh, toPlay, receivedAt, skewMs, "poll");
+      if (hidden) {
+        // 実験の計測: 画面を隠している間も取得できた回数
+        setHiddenPollCount((n) => n + 1);
+        setHiddenPollLastAt(new Date(receivedAt).toISOString());
+      }
       if (d.liveStatus && d.liveStatus !== "PUBLISHING") {
         setMessage(`配信が終了しました（${d.liveStatus}）`);
         return false;
@@ -792,6 +910,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     setViewingOther(null);
     setSelfByTypedId(false);
     await unlockAudio().then(setAudioReady);
+    kickBgAudio();
     try {
       const target = targetId.trim();
       // 対策D: パターンマスタは接続時に一度だけ取得（ライブ状態確認と並行）。
@@ -935,7 +1054,8 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     setAudioReady(ok);
     // 待機中なら、音が有効になった時点で keepAlive を鳴らし始める
     if (ok && autoConnectRef.current.phase === "waiting") startKeepAlive();
-  }, []);
+    kickBgAudio();
+  }, [kickBgAudio]);
 
   const pushTestGift = useCallback((g: Gift) => {
     setGifts((prev) => [g, ...prev].slice(0, 100));
@@ -962,6 +1082,9 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       pollingInterval,
       lastPolledAt,
       mappings,
+      bgAudio: { enabled: bgEnabled, wakeLock: bgWakeLock, state: bgState, error: bgError, support: bgSupport, hiddenPollCount, hiddenPollLastAt },
+      setBgAudioEnabled,
+      setBgWakeLock,
       targetId,
       setTargetId,
       viewingOther,
@@ -990,7 +1113,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       setDebug,
       debug,
     }),
-    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, pollingInterval, lastPolledAt, mappings, targetId, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsPollGiftsSinceConnect, wsInfo, wsTopic, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
+    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, pollingInterval, lastPolledAt, mappings, bgEnabled, bgWakeLock, bgState, bgError, bgSupport, hiddenPollCount, hiddenPollLastAt, setBgAudioEnabled, setBgWakeLock, targetId, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsPollGiftsSinceConnect, wsInfo, wsTopic, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
   );
 
   return <LiveConnectionContext.Provider value={value}>{children}</LiveConnectionContext.Provider>;
