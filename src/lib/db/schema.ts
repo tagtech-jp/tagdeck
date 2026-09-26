@@ -245,6 +245,22 @@ export const whowatchItemGroups = pgTable(
   (t) => [primaryKey({ columns: [t.itemId, t.groupKey] })],
 );
 
+// アイテムの 1 個あたりの単価（2026-09-26・drizzle/0020）。/playitems/payments3 の商品（1 個/5 個/10 個…）から
+// unit_price_jpy = 最小個数の商品の price ÷ quantity（定価の単価）、min_unit_price_jpy = まとめ買いの最安単価。
+// item_point_mapping.price_jpy（最初の商品の価格・Python 日次同期）は予備として残す
+export const whowatchItemPrices = pgTable("whowatch_item_prices", {
+  itemId: integer("item_id").primaryKey(),
+  itemName: text("item_name").default("").notNull(),
+  unitPriceJpy: integer("unit_price_jpy").notNull(),
+  minUnitPriceJpy: integer("min_unit_price_jpy").notNull(),
+  onSale: boolean("on_sale").default(true).notNull(),
+  products: jsonb("products")
+    .$type<Array<{ productId: string; price: number; quantity: number; state: string }>>()
+    .default(sql`'[]'::jsonb`)
+    .notNull(),
+  syncedAt: timestamp("synced_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // SE 割り当て（S1）。key: "pattern:{id}" | "item:{id}" | "tier:{T0..T4|hit}"。url が null なら既定合成音で volume/enabled だけ適用
 // コンボ機能の廃止前に保存された "tier:combo" の行が残っている場合があるが、解決時に参照されないため放置している
 export const seMappings = pgTable(

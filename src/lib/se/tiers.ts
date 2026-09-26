@@ -6,13 +6,17 @@ import type { ItemKind } from "./item-kind";
 export type SeTier = "T0" | "T1" | "T2" | "T3" | "T4" | "hit";
 
 export interface TierInput {
-  /** 1 個あたりの円（無料・不明は 0/null） */
+  /** 1 個あたりの単価（円）。whowatch_item_prices の unit_price_jpy（最小個数の商品の price ÷ quantity）。無料・不明は 0/null */
   priceYen: number | null;
+  /** 1 回のコメントの個数 = item_count × パターンの quantity（束パターン） */
   count: number;
   isHit: boolean;
 }
 
-/** 価格帯（1 回の投げ銭の合計 = 単価 × 個数）で T0〜T4。当たりは hit を優先 */
+/**
+ * 価格帯は **1 回のコメントの合計金額 = 単価 × 個数** で T0〜T4（社長指示 2026-09-26: まとめ投げは合計で判定）。
+ * 当たりは hit を優先
+ */
 export function tierForGift(g: TierInput): SeTier {
   if (g.isHit) return "hit";
   const total = (g.priceYen ?? 0) * Math.max(1, g.count);

@@ -4,7 +4,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
-import { events, itemPointMapping, listeners, streamerProfiles, whowatchItemGroups, whowatchItemPatterns } from "@/lib/db/schema";
+import { events, itemPointMapping, listeners, streamerProfiles, whowatchItemGroups, whowatchItemPatterns, whowatchItemPrices } from "@/lib/db/schema";
 import { fetchLive, isGiftComment, normalizeGift, pickGiftComment, WhowatchLiveApiError, type LiveComment, type PatternInfo } from "@/lib/whowatch/live-feed";
 
 /**
@@ -17,11 +17,14 @@ async function lookupPatterns(db: ReturnType<typeof createDbClient>, patternIds:
   const rows = await db.select().from(whowatchItemPatterns).where(inArray(whowatchItemPatterns.patternId, patternIds));
   const itemIds = [...new Set(rows.map((r) => String(r.itemId)))];
   const itemIdNums = [...new Set(rows.map((r) => r.itemId))];
-  const [prices, groupRows] = await Promise.all([
+  const [prices, unitPrices, groupRows] = await Promise.all([
     itemIds.length > 0 ? db.select({ itemId: itemPointMapping.itemId, priceJpy: itemPointMapping.priceJpy }).from(itemPointMapping).where(and(eq(itemPointMapping.platform, "whowatch"), inArray(itemPointMapping.itemId, itemIds))) : Promise.resolve([]),
+    // 1 個あたりの単価（2026-09-26）。0020 未適用・未同期なら空で、item_point_mapping.price_jpy に落ちる
+    itemIdNums.length > 0 ? db.select({ itemId: whowatchItemPrices.itemId, unitPriceJpy: whowatchItemPrices.unitPriceJpy }).from(whowatchItemPrices).where(inArray(whowatchItemPrices.itemId, itemIdNums)).catch(() => []) : Promise.resolve([]),
     itemIdNums.length > 0 ? db.select({ itemId: whowatchItemGroups.itemId, groupKey: whowatchItemGroups.groupKey, displayOrder: whowatchItemGroups.displayOrder }).from(whowatchItemGroups).where(inArray(whowatchItemGroups.itemId, itemIdNums)) : Promise.resolve([]),
   ]);
   const priceById = new Map(prices.map((p) => [p.itemId, p.priceJpy]));
+  for (const u of unitPrices) priceById.set(String(u.itemId), u.unitPriceJpy);
   // アイテムページの並び順で持つ（resolveMappingKey は渡された順で最初に一致したものを使う）
   const groupsByItem = new Map<number, string[]>();
   for (const g of [...groupRows].sort((a, b) => (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999))) {

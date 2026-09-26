@@ -387,6 +387,35 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - 対策: context を読むのは薄いラッパー `SeMappingTab` だけにし(`reloadMappings` は安定参照)、本体 `SeMappingTabInner` を `memo` で包む。`MappingControls` はモジュール直下の `memo` コンポーネントに移し、親が再描画されても同じ要素を使い続ける。ついでに同じファイルを続けて選んでも change が飛ぶよう、受け取ったら `input.value` を空にする
 - 確認: 接続中(ポーリングが動いている状態)で SE タブを開き、ファイル選択ダイアログを 10 秒以上開いたまま選ぶ → 「… を割り当てました」が出る
 
+## S10: 1 個ごとの単価とまとめ投げの合計判定(実装済み・2026-09-26)
+
+社長指示「単価取得が曖昧になっているので、1 個ごとの単価を算出してほしい。1 回のコメントでまとめ投げしたときに合計金額で判定するようにすること」への対応。
+
+### 何が曖昧だったか(2026-09-26 に payments3 の実応答で確認)
+
+- 商品は 1 アイテムに複数ある(111 アイテム中 86 が複数商品。例: ぶたさん 1 個 ¥160 / 5 個 ¥800 / 10 個 ¥1,580 / … / 1,000 個 ¥145,000)。`item_point_mapping.price_jpy` は Python 日次同期が**最初の商品の価格**を入れており、たまたま 1 個入りが先頭なら合っていたが、「スター」のように最小商品が 3 個 ¥90 のアイテムは 1 個 ¥30 なのに ¥90 が単価になっていた
+- 個数: コメントの `item_count` だけを見ており、「風船 × 10」のような束パターン(`quantity` 10。現在 2 パターン)を 1 個と数えていた
+
+### 対応
+
+| 種別 | パス | 内容 |
+|---|---|---|
+| table | `whowatch_item_prices`(0020) | `unit_price_jpy` = 最小個数の商品の price ÷ quantity(定価の単価)、`min_unit_price_jpy` = まとめ買いの最安単価、`products`(商品ごとの価格・個数)。RLS: authenticated は SELECT |
+| lib | `src/lib/whowatch/item-prices.ts` | `unitPriceFromProducts`(純関数・テスト 5 件)、`flattenPrices`、`syncItemPrices`、`giftTotalYen` |
+| route | `POST /api/platforms/whowatch/items/sync` | payments3 を 1 回取得してカテゴリと単価を同期(応答に `prices`)。0020 未適用なら `prices.error` に出てパターン同期は続く |
+| route | `POST /live/poll`・`GET /items/patterns` | 単価は `whowatch_item_prices` を優先し、無ければ従来の `price_jpy` |
+| lib | `gift-normalize.ts` | `count` = item_count × パターン quantity、`total_yen` = 単価 × count を追加。ティア判定(`tiers.ts`)は従来どおり 単価 × 個数 = 合計で行う |
+
+### 社長作業
+
+1. Supabase SQL Editor で `drizzle/0020_item_prices_manual.sql` を適用
+2. GitHub → Actions →「Whowatch item patterns sync (manual)」を Run workflow(応答の `prices.rows` が 100 前後なら成功)。以後は daily-sync で毎日更新
+
+### 確認
+
+- SE タブの価格表示がぶたさん ¥160、スター ¥30 になる(以前はスター ¥90)
+- ライブでぶたさんを 4 個まとめ投げ → 合計 ¥640 → T2「¥500〜1,999」で鳴る(1 個なら T1)
+
 ## S1: SE タブ・ふわっちギフト取得(実装済み・2026-09-21)
 
 決裁どおり公開 API のポーリングのみ(WebSocket 不使用)。

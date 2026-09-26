@@ -54,12 +54,16 @@ export interface NormalizedGift {
   item_id: number | null;
   item_name: string | null;
   pattern_name: string | null;
+  /** 個数 = コメントの item_count × パターンの quantity（「風船 × 10」のような束パターン）。合計金額 = price_yen × count */
   count: number;
   is_hit: boolean;
   hit_grade: string | null;
   /** 種類（通常/当たり/演出付き）。cat:kind の SE 解決に使う。パターン未登録なら null */
   kind: ItemKind | null;
+  /** 1 個あたりの単価（whowatch_item_prices の unit_price_jpy。無ければ item_point_mapping.price_jpy） */
   price_yen: number | null;
+  /** 1 回のコメントの合計金額 = price_yen × count。SE のティアはこれで判定する（まとめ投げは合計） */
+  total_yen: number | null;
   /** このアイテムが属するカテゴリ（アイテムページの並び順）。cat:group: の解決に使う */
   groups: string[];
   message: string | null;
@@ -109,7 +113,10 @@ export function pickGiftComment(c: LiveComment): PickedGiftComment {
 export function normalizeGift(c: GiftCommentInput, lookup: (patternId: number) => PatternInfo | null): NormalizedGift {
   const patternId = typeof c.play_item_pattern_id === "number" ? c.play_item_pattern_id : null;
   const info = patternId !== null ? lookup(patternId) : null;
-  const count = typeof c.item_count === "number" && c.item_count > 0 ? c.item_count : 1;
+  const itemCount = typeof c.item_count === "number" && c.item_count > 0 ? c.item_count : 1;
+  // 「風船 × 10」のような束パターンは quantity > 1。個数は item_count × quantity（合計金額の判定に使う）
+  const perPattern = info?.quantity && info.quantity > 1 ? info.quantity : 1;
+  const count = itemCount * perPattern;
   const anonymized = Boolean(c.anonymized);
   return {
     comment_id: String(c.id),
@@ -122,6 +129,7 @@ export function normalizeGift(c: GiftCommentInput, lookup: (patternId: number) =
     hit_grade: info?.hitGrade ?? null,
     kind: info ? patternKind({ isHit: info.isHit, animationUrl: info.animationUrl, animationFullscreen: info.animationFullscreen }) : null,
     price_yen: info?.priceJpy ?? null,
+    total_yen: info?.priceJpy != null ? info.priceJpy * count : null,
     groups: info?.groups ?? [],
     message: typeof c.message === "string" ? c.message : null,
     posted_at: typeof c.posted_at === "number" ? new Date(c.posted_at).toISOString() : null,

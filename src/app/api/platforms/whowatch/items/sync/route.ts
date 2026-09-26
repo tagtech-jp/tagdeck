@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createDbClient } from "@/lib/db/client";
 import { syncItemPatterns } from "@/lib/whowatch/item-patterns-sync";
-import { syncItemGroups, type SyncItemGroupsResult } from "@/lib/whowatch/item-groups-sync";
+import { fetchPaymentCategories, syncItemGroups, type SyncItemGroupsResult } from "@/lib/whowatch/item-groups-sync";
+import { syncItemPrices, type SyncItemPricesResult } from "@/lib/whowatch/item-prices";
 import { verifySyncKey } from "@/lib/whowatch/sync-auth";
 import { sendNotifyGw } from "@/lib/notify-gw";
 import { findSyncRoute } from "@/lib/sync-routes";
@@ -40,13 +41,26 @@ export async function POST(request: Request) {
     // 失敗してもパターン同期は続ける（カテゴリはアイテムの仕分け用で、当たり判定には影響しない）
     // 何もしていない場合と成功を区別できるよう、結果は必ずレスポンスに載せる
     let groups: SyncItemGroupsResult | { error: string } | { skipped: string } = { skipped: "初回バッチ以外（cursor あり）のため実行していない" };
+    // 単価（whowatch_item_prices・2026-09-26）も同じ payments3 の応答から同期する。0020 未適用なら error に出る
+    let prices: SyncItemPricesResult | { error: string } | { skipped: string } = { skipped: "初回バッチ以外（cursor あり）のため実行していない" };
     if (!cursor) {
+      let categories: Awaited<ReturnType<typeof fetchPaymentCategories>> | null = null;
       try {
-        groups = await syncItemGroups(db);
+        categories = await fetchPaymentCategories();
+        groups = await syncItemGroups(db, categories);
         console.log("[items/sync] カテゴリ同期", groups);
       } catch (e) {
         groups = { error: e instanceof Error ? e.message : String(e) };
         console.error("[items/sync] カテゴリ同期に失敗（パターン同期は続行）", groups.error);
+      }
+      if (categories) {
+        try {
+          prices = await syncItemPrices(db, categories);
+          console.log("[items/sync] 単価同期", prices);
+        } catch (e) {
+          prices = { error: describeDbError(e) };
+          console.error("[items/sync] 単価同期に失敗（パターン同期は続行）", prices.error);
+        }
       }
     }
 
@@ -65,7 +79,7 @@ export async function POST(request: Request) {
     }
 
     // result に ok / inserted / updated / failed / next_cursor が含まれる
-    return NextResponse.json({ ...result, groups, at: new Date().toISOString() });
+    return NextResponse.json({ ...result, groups, prices, at: new Date().toISOString() });
   } catch (err) {
     const message = describeDbError(err);
     console.error("[items/sync] failed", message);
