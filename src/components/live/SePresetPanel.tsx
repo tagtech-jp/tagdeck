@@ -47,6 +47,10 @@ export function SePresetPanel({ onApplied }: Props) {
   const [busyCode, setBusyCode] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [copied, setCodeCopied] = useState<string | null>(null);
+  // 公式の既定 SE（運営アカウントの現在の割り当て）をコード無しで取り込む（2026-09-26 社長指示）
+  const [official, setOfficial] = useState<{ available: boolean; summary: PresetSummary | null } | null>(null);
+  const [applyingOfficial, setApplyingOfficial] = useState<PresetApplyMode | null>(null);
+  const [confirmOfficialReplace, setConfirmOfficialReplace] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -65,6 +69,10 @@ export function SePresetPanel({ onApplied }: Props) {
 
   useEffect(() => {
     void load();
+    fetch("/api/se/presets/default")
+      .then((r) => (r.ok ? (r.json() as Promise<{ available: boolean; summary: PresetSummary | null }>) : { available: false, summary: null }))
+      .then((d: { available: boolean; summary: PresetSummary | null }) => setOfficial(d))
+      .catch(() => setOfficial({ available: false, summary: null }));
     // 共有 URL（/live?sePreset=CODE）で来たら取り込み欄に入れておく
     try {
       const code = new URLSearchParams(window.location.search).get(SHARE_QUERY_PARAM);
@@ -195,6 +203,30 @@ export function SePresetPanel({ onApplied }: Props) {
     }
   };
 
+  const applyOfficial = async (mode: PresetApplyMode) => {
+    if (mode === "replace" && !confirmOfficialReplace) {
+      setConfirmOfficialReplace(true);
+      return;
+    }
+    setApplyingOfficial(mode);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/se/presets/default", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode }) });
+      if (!res.ok) {
+        setMsg(await readError(res, "取り込みに失敗しました"));
+        return;
+      }
+      const d = (await res.json()) as { applied: number; removed: number };
+      setMsg(mode === "replace" ? `公式の既定 SE で置き換えました（${d.applied} 件を設定、${d.removed} 件を削除）` : `公式の既定 SE を追加で取り込みました（${d.applied} 件を上書き）`);
+      setConfirmOfficialReplace(false);
+      await onApplied();
+    } catch {
+      setMsg("通信エラー");
+    } finally {
+      setApplyingOfficial(null);
+    }
+  };
+
   const summaryText = (s: PresetSummary) =>
     [
       s.tiers > 0 ? `価格帯 ${s.tiers}` : null,
@@ -256,6 +288,32 @@ export function SePresetPanel({ onApplied }: Props) {
           {saving ? "保存中..." : "今の設定を保存"}
         </button>
       </div>
+
+      {/* 公式の既定（コード不要） */}
+      {official?.available && official.summary && (
+        <div className="mb-3 space-y-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
+          <div className="text-foreground">
+            <span className="font-bold">公式の既定 SE（コード不要）</span>
+            <span className="ml-2 text-muted-foreground">運営が今使っている設定。何もしなくても既定として鳴りますが、取り込むと自分の設定になり、運営が後で変えても影響を受けません</span>
+          </div>
+          <p className="text-muted-foreground">
+            {official.summary.total} 件（{summaryText(official.summary)}）
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={() => void applyOfficial("merge")} disabled={applyingOfficial !== null} className="min-h-9 rounded-full bg-primary px-4 text-xs font-medium text-primary-foreground disabled:opacity-50">
+              {applyingOfficial === "merge" ? "取り込み中..." : "追加で取り込む（同じ項目は上書き）"}
+            </button>
+            <button type="button" onClick={() => void applyOfficial("replace")} disabled={applyingOfficial !== null} className={`min-h-9 rounded-full px-4 text-xs disabled:opacity-50 ${confirmOfficialReplace ? "bg-destructive text-destructive-foreground" : "border border-border bg-card text-foreground"}`}>
+              {applyingOfficial === "replace" ? "取り込み中..." : confirmOfficialReplace ? "本当に置き換える（今の設定は消えます）" : "今の設定を全部置き換える"}
+            </button>
+            {confirmOfficialReplace && (
+              <button type="button" onClick={() => setConfirmOfficialReplace(false)} className="min-h-9 rounded-full px-2 text-xs text-muted-foreground">
+                やめる
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 取り込み */}
       <div className="mb-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">

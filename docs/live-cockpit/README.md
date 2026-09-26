@@ -426,6 +426,14 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - 効果: SE タブでそのイベントのカテゴリに無料アイテムが並び、「カテゴリ全部にまとめて割り当て」も効く(再生時の cat:group: 解決は whowatch_item_groups 由来)。有料化・イベント終了で作らなくなった無料行は同期時に掃除
 - 社長作業: (1) `drizzle/0021_free_event_items_manual.sql` を適用 (2) Actions「Whowatch item patterns sync (manual)」を 1 回実行(応答 `freeItems.rows`)
 
+## S12: 公式の既定 SE をコード無しで取り込む(実装済み・2026-09-26)
+
+社長指示「SE のプリセットを共有コード無しでデフォルトにしてください」への対応。
+
+- 公式の既定 SE(運営アカウント = `SE_DEFAULT_SOURCE_USER_ID` の現在の割り当て)は S4 のとおり**何もしなくても全ユーザーの既定として鳴る**。この節は、それを「自分の設定」として取り込む入口を共有コード無しで用意したもの(取り込むと自分の行になるので、以後運営が差し替えても影響を受けない=固定したい人向け)
+- route `GET/POST /api/se/presets/default`: GET は件数と内訳、POST `{mode: "merge" | "replace"}` は運営の行(音源あり・鳴らす ON)を自分の se_mappings へ upsert(replace は自分の行を全消し)
+- UI `SePresetPanel` 最上部「公式の既定 SE(コード不要)」: 追加で取り込む / 全部置き換える(2 段階確認)。共有コードの仕組みはそのまま残す(他の配信者同士の共有用)
+
 ## S1: SE タブ・ふわっちギフト取得(実装済み・2026-09-21)
 
 決裁どおり公開 API のポーリングのみ(WebSocket 不使用)。
