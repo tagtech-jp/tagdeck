@@ -241,7 +241,9 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - Cron が実際に動いているかの確認: Cloudflare Dashboard → Workers & Pages → tagdeck → Logs(observability 有効)で `[ranking-sync/scheduled] targets=N ok=N failed=N` を探す。ターミナルなら `pnpm exec wrangler tail tagdeck --format pretty`(要 `wrangler login`)。DB は `SELECT captured_at, my_rank, my_point FROM ranking_snapshots ORDER BY captured_at DESC LIMIT 5;` が 5 分ごとに増える。`targets=0` なら対象シミュレーターの status/ranking_type/期間を確認、`failed` なら同行の例外メッセージを見る
 - 最終日係数 1.5 は引き続き仮置き(TODO.md)
 
-## S2: SE プリセット(保存・共有・取り込み)(実装済み・2026-09-25)
+## S2: SE プリセット(保存・共有・取り込み)(実装済み・2026-09-25 → **2026-09-26 廃止**)
+
+> 2026-09-26 社長指示「SE プリセットは不要。社長が SE を入れるたびに他の人にも同期する仕組みに」により、UI(SePresetPanel)・API(/api/se/presets*)・lib(presets*.ts)を削除した。同期は S4 の仕組み(運営アカウント = SE_DEFAULT_SOURCE_USER_ID の現在の割り当てを全員の既定にする)で、SE タブ最上部に同期状況と「今すぐ同期」を出す。読み直しは 開いたとき・5 分ごと・タブに戻ったとき。se_presets テーブルは残置。以下は記録として残す。
 
 社長指示「今の SE の状態を音を保存して他の人にも使い回せるようにしてほしい」への対応。SE タブの割り当て一式(価格帯の既定・種類・カテゴリ・アイテム・パターンの音源/音量/鳴らす)に名前を付けて保存し、8 文字の共有コード(または共有 URL)で他の配信者がそのまま取り込める。
 
@@ -427,7 +429,7 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - 表示(2026-09-26 追記): SE タブの「価格ありのみ」(既定 ON)がカテゴリ内の無料アイテムまで隠していたため「反映されていない」ように見えた。イベントのカテゴリに属する無料アイテムは ON でも表示し、価格欄は「無料(イベント配布)」と出す。「価格ありのみ」が隠すのは分類なしの無料アイテムだけ
 - 社長作業: (1) `drizzle/0021_free_event_items_manual.sql` を適用 (2) Actions「Whowatch item patterns sync (manual)」を 1 回実行(応答 `freeItems.rows`)
 
-## S12: 公式の既定 SE をコード無しで取り込む(実装済み・2026-09-26)
+## S12: 公式の既定 SE をコード無しで取り込む(実装済み・2026-09-26 → **同日廃止**、S2 の廃止に伴い削除)
 
 社長指示「SE のプリセットを共有コード無しでデフォルトにしてください」への対応。
 

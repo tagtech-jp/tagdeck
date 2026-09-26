@@ -8,7 +8,6 @@ import { tierForGift, TIER_LABELS, type SeTier } from "@/lib/se/tiers";
 import { expandablePatternRows } from "@/lib/se/pattern-rows";
 import { WEB_BONUS_GROUP, WEB_BONUS_LABEL, isWebBonusItem } from "@/lib/se/web-bonus";
 import { VolumeSlider } from "./VolumeSlider";
-import { SePresetPanel } from "./SePresetPanel";
 import { useLiveConnection } from "./LiveConnectionProvider";
 import { mergeWithDefaults, type MergedMapping } from "@/lib/se/merge-defaults";
 
@@ -107,6 +106,9 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
   /** 公式既定（同期元＝社長の現在の割り当て）。null なら同梱スナップショット */
   const [liveDefaults, setLiveDefaults] = useState<Mapping[] | null>(null);
   const [defaultsSource, setDefaultsSource] = useState<"sync" | "bundled">("bundled");
+  /** 公式既定を最後に読み込んだ時刻（同期状況の表示用） */
+  const [defaultsLoadedAt, setDefaultsLoadedAt] = useState<Date | null>(null);
+  const [syncing, setSyncing] = useState(false);
   const mappings = useMemo<MergedMapping[]>(() => mergeWithDefaults(userRows, liveDefaults), [userRows, liveDefaults]);
   const [filter, setFilter] = useState("");
   const [onlyOnSale, setOnlyOnSale] = useState(true);
@@ -138,6 +140,7 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
         setUserRows(d.mappings ?? []);
         setLiveDefaults(d.defaults ?? null);
         setDefaultsSource(d.defaultsSource ?? "bundled");
+        setDefaultsLoadedAt(new Date());
       })
       .catch(() => undefined);
   }, []);
@@ -147,21 +150,40 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
   const isUser = (key: string) => byKey.get(key)?.source === "user";
   const listRef = useRef<HTMLDivElement>(null);
 
-  /** プリセット取り込み後: この画面と再生側（LiveConnectionProvider）の両方を再読込する */
+  /**
+   * 公式の既定 SE（運営の現在の設定）を読み直し、この画面と再生側（LiveConnectionProvider）の両方に反映する。
+   * 2026-09-26 社長指示「社長が SE を入れるたびに他の人にも同期」: 開いたとき・5 分ごと・タブに戻ったとき・「今すぐ同期」で呼ぶ
+   */
   const reloadAll = async () => {
+    setSyncing(true);
     try {
-      const r = await fetch("/api/se/mappings");
+      const r = await fetch("/api/se/mappings", { cache: "no-store" });
       const d = r.ok
         ? ((await r.json()) as { mappings?: Mapping[]; defaults?: Mapping[] | null; defaultsSource?: "sync" | "bundled" })
         : { mappings: [], defaults: null };
       setUserRows(d.mappings ?? []);
       setLiveDefaults(d.defaults ?? null);
       setDefaultsSource(d.defaultsSource ?? "bundled");
+      setDefaultsLoadedAt(new Date());
     } catch {
       // 取得できなければ今の表示のまま
     }
     await reloadMappings();
+    setSyncing(false);
   };
+  const reloadAllRef = useRef(reloadAll);
+  reloadAllRef.current = reloadAll;
+  useEffect(() => {
+    const id = setInterval(() => void reloadAllRef.current(), 5 * 60 * 1000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void reloadAllRef.current();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
 
   const query = filter.trim();
   /**
@@ -324,8 +346,24 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
 
   return (
     <div className="space-y-4">
-      {/* S2: プリセットの保存・共有・取り込み */}
-      <SePresetPanel onApplied={reloadAll} />
+      {/* 運営の SE 設定への自動同期（S2 のプリセットは 2026-09-26 に廃止） */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h4 className="text-sm font-bold text-foreground">公式の既定 SE は運営の設定に自動同期</h4>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {defaultsSource === "sync"
+                ? `運営が SE を追加・変更すると、そのまま全員の既定になります（公式既定 ${liveDefaults?.length ?? 0} 件）。この画面を開いたとき・5 分ごと・タブに戻ったときに読み直します`
+                : "運営の設定を取得できていないため、同梱の既定音を使っています"}
+              {defaultsLoadedAt ? ` · 最終同期 ${defaultsLoadedAt.toLocaleTimeString("ja-JP")}` : ""}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">自分で音源を上げた項目はそちらが優先されます。「既定に戻す」を押すと公式既定に戻ります</p>
+          </div>
+          <button type="button" onClick={() => void reloadAll()} disabled={syncing} className="min-h-9 rounded-full border border-border bg-muted px-3 text-xs text-foreground disabled:opacity-50">
+            {syncing ? "同期中..." : "今すぐ同期"}
+          </button>
+        </div>
+      </div>
 
       {/* ティア既定音 */}
       <div className="rounded-xl border border-border bg-card p-4">

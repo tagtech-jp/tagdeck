@@ -282,6 +282,7 @@ export const seMappings = pgTable(
 );
 
 // SE プリセット（S2・2026-09-25）: se_mappings の一式に名前を付けて保存し、8 文字の共有コードで他ユーザーが取り込めるようにする。
+// 2026-09-26 社長指示で UI・API は廃止（公式既定の自動同期だけ残す）。テーブルは保存済みデータごと残置（削除は別途判断）
 // mappings は保存時点のスナップショット。音源 URL は所有者の Storage（バケット se は公開読み取り）をそのまま指し、複製しない
 export const sePresets = pgTable("se_presets", {
   id: uuid("id").primaryKey().defaultRandom(),

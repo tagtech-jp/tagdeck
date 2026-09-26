@@ -481,10 +481,17 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     }
   }, []);
   useEffect(() => {
-    // 同期元がアップロードし直したものを拾うため、開いている間は 5 分ごとに読み直す
+    // 同期元（運営）がアップロードし直したものを拾うため、開いている間は 5 分ごと・タブに戻ったときに読み直す（2026-09-26）
     void reloadMappings();
     const id = setInterval(() => void reloadMappings(), 5 * 60 * 1000);
-    return () => clearInterval(id);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void reloadMappings();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [reloadMappings]);
 
   const applyPatternMaster = useCallback((pd: ItemsPatternsResponse | null): boolean => {
