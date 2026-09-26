@@ -424,6 +424,7 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - 手がかり(2026-09-26 実応答): アイテム画像 URL のフォルダ `events/2026/09_autumncollection/…` がイベントキー `2026_09_autumncollection` に対応し、イベント詳細 `/event_lists/{key}` の ITEM タブ detail が payments3 のカテゴリ key と一致する(autumncollection と autumncollectionlite → "autumncollection"、2026_09_gingiragin → "gingiragin_2026"、2026_09_rookie_2 → "rookie_renewal2026")。RANKING タブの prefix とは別物
 - 対応: `src/lib/whowatch/free-event-items.ts`(`eventKeyFromImageUrl` / `buildFreeItemGroupRows` 純関数・テスト 4 件 / `syncFreeEventItems`)。単価テーブルに無い(＝無料)× 画像がイベントフォルダ × そのイベントの ITEM タブ key がカテゴリにある → `whowatch_item_groups` に `is_free=true` で追加。ITEM タブ key は `whowatch_events.item_group_key`(0021)に保存し、未取得の open/pre イベントだけ同期時に取りに行く(上限 20 件/回)
 - 効果: SE タブでそのイベントのカテゴリに無料アイテムが並び、「カテゴリ全部にまとめて割り当て」も効く(再生時の cat:group: 解決は whowatch_item_groups 由来)。有料化・イベント終了で作らなくなった無料行は同期時に掃除
+- 表示(2026-09-26 追記): SE タブの「価格ありのみ」(既定 ON)がカテゴリ内の無料アイテムまで隠していたため「反映されていない」ように見えた。イベントのカテゴリに属する無料アイテムは ON でも表示し、価格欄は「無料(イベント配布)」と出す。「価格ありのみ」が隠すのは分類なしの無料アイテムだけ
 - 社長作業: (1) `drizzle/0021_free_event_items_manual.sql` を適用 (2) Actions「Whowatch item patterns sync (manual)」を 1 回実行(応答 `freeItems.rows`)
 
 ## S12: 公式の既定 SE をコード無しで取り込む(実装済み・2026-09-26)
