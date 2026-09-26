@@ -240,6 +240,8 @@ export const whowatchItemGroups = pgTable(
     bannerUrl: text("banner_url"),
     // カテゴリの説明文（0017）。無ければ null
     description: text("description"),
+    // イベントの無料配布アイテム（画像のイベントフォルダから紐づけた行・0021）。payments3 由来の有料行は false
+    isFree: boolean("is_free").default(false).notNull(),
     syncedAt: timestamp("synced_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [primaryKey({ columns: [t.itemId, t.groupKey] })],
@@ -372,6 +374,8 @@ export const whowatchEvents = pgTable("whowatch_events", {
   kind: text("kind"),
   // RANKING タブの detail（/resources/json/rankings/{prefix} と /rankings/{prefix}_... の prefix）
   rankingPrefix: text("ranking_prefix"),
+  // ITEM タブの detail = payments3 のカテゴリ key（0021）。null=未取得、""=ITEM タブ無し
+  itemGroupKey: text("item_group_key"),
   // /resources/json/rankings/{prefix} の応答そのまま
   struct: jsonb("struct").$type<Record<string, unknown> | null>().default(null),
   // NOTIFICATION タブ（概要）の body HTML と、全 NOTIFICATION をテキスト化したもの

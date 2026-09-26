@@ -211,6 +211,8 @@ export async function syncEventDetail(db: Db, eventKey: string, opts: SyncEventD
       shortName: sanitizeText(detail.shortName) || null,
       kind,
       rankingPrefix: detail.rankingPrefix,
+      // ITEM タブの key（無料イベントアイテムの分類用・0021）。ITEM タブが無いイベントは "" にして再取得しない
+      itemGroupKey: detail.itemGroupKey ?? "",
       periods: periodsClean,
       rulesParsed: rulesParsed ? (sanitizeJson(rulesParsed) as unknown as Record<string, unknown>) : null,
       detailFetchedAt: now,
