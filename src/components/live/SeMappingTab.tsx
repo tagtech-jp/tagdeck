@@ -164,11 +164,15 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
   };
 
   const query = filter.trim();
-  /** 検索・価格・種類で絞ったアイテム（カテゴリはまだ見ていない）。検索中は「価格ありのみ」を無視して全アイテムから探す（2026-09-26: WEBおまけ等が見つからなかった対策） */
+  /**
+   * 検索・価格・種類で絞ったアイテム（カテゴリはまだ見ていない）。検索中は「価格ありのみ」を無視して全アイテムから探す（2026-09-26: WEBおまけ等が見つからなかった対策）。
+   * イベントのカテゴリに属する無料配布アイテム（オータムリース・バスケット等。0021 で分類）は「価格ありのみ」でも隠さない
+   * （2026-09-26 社長報告「無料アイテムが反映されていない」の原因がこの絞り込みだった）
+   */
   const filtered = useMemo(() => {
     const q = query;
     return (items ?? [])
-      .filter((i) => (!onlyOnSale || q !== "" || i.priceJpy !== null) && (!q || i.itemName.includes(q) || i.patterns.some((p) => p.patternName.includes(q))))
+      .filter((i) => (!onlyOnSale || q !== "" || i.priceJpy !== null || (i.groups?.length ?? 0) > 0) && (!q || i.itemName.includes(q) || i.patterns.some((p) => p.patternName.includes(q))))
       .filter((i) => kindFilter === "all" || itemKind(i.patterns) === kindFilter);
   }, [items, query, onlyOnSale, kindFilter]);
 
@@ -369,7 +373,7 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
             {syncedAt ? ` · マスタ同期 ${new Date(syncedAt).toLocaleString("ja-JP")}` : ""}
           </span>
           <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="名前で検索（全アイテム）" className="ml-auto min-h-9 w-44 rounded-sm bg-muted px-3 text-xs text-foreground" />
-          <label className="flex items-center gap-1 text-xs text-muted-foreground" title="OFF にすると無料・価格なしのアイテムも出ます">
+          <label className="flex items-center gap-1 text-xs text-muted-foreground" title="OFF にすると分類なしの無料・価格なしアイテムも出ます（イベント配布の無料アイテムは ON でもカテゴリ内に出ます）">
             <input type="checkbox" checked={onlyOnSale} onChange={(e) => setOnlyOnSale(e.target.checked)} className="size-4" />
             価格ありのみ
           </label>
@@ -512,7 +516,7 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
                               )}
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-bold leading-tight text-foreground">{it.itemName}</p>
-                                <p className="mt-0.5 text-sm font-bold text-ember-pulse">{it.priceJpy !== null ? `¥${it.priceJpy.toLocaleString()}〜` : "無料 / 価格なし"}</p>
+                                <p className="mt-0.5 text-sm font-bold text-ember-pulse">{it.priceJpy !== null ? `¥${it.priceJpy.toLocaleString()}〜` : (it.groups?.length ?? 0) > 0 ? "無料（イベント配布）" : "無料 / 価格なし"}</p>
                                 <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px]">
                                   <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{tier}</span>
                                   <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{ITEM_KIND_LABELS[kind]}</span>
