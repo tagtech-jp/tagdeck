@@ -54,6 +54,8 @@ jobs:
             jq -r '.results[] | "  \(.range)\t\(if .ok then "ok" else "FAILED" end)\trows=\(.rows)\tins=\(.inserted)\tupd=\(.updated)\t\(.error // "")"' /tmp/out.json
             # カテゴリ同期（初回バッチのみ実行）の結果。成功と「何もしていない」を区別できるようにする
             jq -r 'if .groups then "groups: \(.groups)" else "groups: (なし)" end' /tmp/out.json
+            jq -r 'if .prices then "prices: \(.prices)" else "prices: (なし)" end' /tmp/out.json
+            jq -r 'if .freeItems then "freeItems: \(.freeItems)" else "freeItems: (なし)" end' /tmp/out.json
             total_inserted=$((total_inserted + $(jq -r '.inserted' /tmp/out.json)))
             total_updated=$((total_updated + $(jq -r '.updated' /tmp/out.json)))
             total_failed=$((total_failed + $(jq -r '.failed' /tmp/out.json)))
