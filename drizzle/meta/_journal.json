@@ -148,6 +148,13 @@
       "when": 1790001000000,
       "tag": "0020_item_prices",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790001100000,
+      "tag": "0021_free_event_items",
+      "breakpoints": true
     }
   ]
 }

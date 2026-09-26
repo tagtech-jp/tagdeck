@@ -153,6 +153,8 @@ export async function syncItemGroups(db: Db, preloaded?: RawCategory[]): Promise
         eventKey: sql`excluded.event_key`,
         bannerUrl: sql`excluded.banner_url`,
         description: sql`excluded.description`,
+        // payments3 に載った＝買えるアイテムなので無料フラグは落とす（0021）
+        isFree: sql`false`,
         syncedAt: sql`excluded.synced_at`,
       },
     })

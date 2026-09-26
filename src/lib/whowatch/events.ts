@@ -51,6 +51,8 @@ export interface EventDetail {
   tabs: EventTab[];
   /** RANKING タブの detail（無ければ null） */
   rankingPrefix: string | null;
+  /** ITEM タブの detail = /playitems/payments3 のカテゴリ key（無ければ null）。無料イベントアイテムの分類に使う（2026-09-26） */
+  itemGroupKey: string | null;
   /** NOTIFICATION タブの detail 一覧（順序維持） */
   notificationIds: string[];
 }
@@ -300,12 +302,14 @@ export async function getEventDetail(eventKey: string): Promise<EventDetail> {
       detail: String(t.detail ?? ""),
     }));
     const ranking = tabs.find((t) => t.type === "RANKING" && t.detail);
+    const itemTab = tabs.find((t) => t.type === "ITEM" && t.detail);
     return {
       eventKey: String(d.event_key ?? eventKey),
       name: String(d.name ?? ""),
       shortName: String(d.short_name ?? d.name ?? ""),
       tabs,
       rankingPrefix: ranking ? ranking.detail : null,
+      itemGroupKey: itemTab ? itemTab.detail : null,
       notificationIds: tabs.filter((t) => t.type === "NOTIFICATION" && t.detail).map((t) => t.detail),
     };
   });

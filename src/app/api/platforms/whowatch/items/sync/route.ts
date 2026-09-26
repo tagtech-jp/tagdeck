@@ -3,6 +3,7 @@ import { createDbClient } from "@/lib/db/client";
 import { syncItemPatterns } from "@/lib/whowatch/item-patterns-sync";
 import { fetchPaymentCategories, syncItemGroups, type SyncItemGroupsResult } from "@/lib/whowatch/item-groups-sync";
 import { syncItemPrices, type SyncItemPricesResult } from "@/lib/whowatch/item-prices";
+import { syncFreeEventItems, type SyncFreeEventItemsResult } from "@/lib/whowatch/free-event-items";
 import { verifySyncKey } from "@/lib/whowatch/sync-auth";
 import { sendNotifyGw } from "@/lib/notify-gw";
 import { findSyncRoute } from "@/lib/sync-routes";
@@ -43,6 +44,8 @@ export async function POST(request: Request) {
     let groups: SyncItemGroupsResult | { error: string } | { skipped: string } = { skipped: "初回バッチ以外（cursor あり）のため実行していない" };
     // 単価（whowatch_item_prices・2026-09-26）も同じ payments3 の応答から同期する。0020 未適用なら error に出る
     let prices: SyncItemPricesResult | { error: string } | { skipped: string } = { skipped: "初回バッチ以外（cursor あり）のため実行していない" };
+    // イベントの無料配布アイテムをイベントのカテゴリへ（0021）。単価同期の後（無料判定に単価テーブルを使う）
+    let freeItems: SyncFreeEventItemsResult | { error: string } | { skipped: string } = { skipped: "初回バッチ以外（cursor あり）のため実行していない" };
     if (!cursor) {
       let categories: Awaited<ReturnType<typeof fetchPaymentCategories>> | null = null;
       try {
@@ -60,6 +63,13 @@ export async function POST(request: Request) {
         } catch (e) {
           prices = { error: describeDbError(e) };
           console.error("[items/sync] 単価同期に失敗（パターン同期は続行）", prices.error);
+        }
+        try {
+          freeItems = await syncFreeEventItems(db, categories);
+          console.log("[items/sync] 無料イベントアイテム分類", freeItems);
+        } catch (e) {
+          freeItems = { error: describeDbError(e) };
+          console.error("[items/sync] 無料イベントアイテム分類に失敗（パターン同期は続行）", freeItems.error);
         }
       }
     }
@@ -79,7 +89,7 @@ export async function POST(request: Request) {
     }
 
     // result に ok / inserted / updated / failed / next_cursor が含まれる
-    return NextResponse.json({ ...result, groups, prices, at: new Date().toISOString() });
+    return NextResponse.json({ ...result, groups, prices, freeItems, at: new Date().toISOString() });
   } catch (err) {
     const message = describeDbError(err);
     console.error("[items/sync] failed", message);
