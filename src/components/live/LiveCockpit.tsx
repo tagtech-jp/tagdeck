@@ -293,7 +293,7 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
               onClick={async () => {
                 await enableAudio();
                 await playGift({ pattern_id: null, item_id: null, price_yen: t.gift.price_yen ?? 0, count: t.gift.count ?? 1, is_hit: Boolean(t.gift.is_hit), kind: null, groups: [] }, t.tier);
-                pushTestGift({ comment_id: `test-${Date.now()}`, pattern_id: null, item_id: null, item_name: `[テスト] ${t.gift.item_name}`, pattern_name: null, count: t.gift.count ?? 1, is_hit: Boolean(t.gift.is_hit), hit_grade: null, kind: null, price_yen: t.gift.price_yen ?? 0, groups: [], message: TIER_LABELS[t.tier], posted_at: new Date().toISOString(), user: { id: null, name: "テスト", user_path: null, anonymized: false } });
+                pushTestGift({ comment_id: `test-${Date.now()}`, pattern_id: null, item_id: null, item_name: `[テスト] ${t.gift.item_name}`, pattern_name: null, count: t.gift.count ?? 1, is_hit: Boolean(t.gift.is_hit), hit_grade: null, kind: null, price_yen: t.gift.price_yen ?? 0, total_yen: (t.gift.price_yen ?? 0) * (t.gift.count ?? 1), groups: [], message: TIER_LABELS[t.tier], posted_at: new Date().toISOString(), user: { id: null, name: "テスト", user_path: null, anonymized: false } });
               }}
               className="min-h-11 rounded-full border border-border bg-muted px-3 text-xs text-foreground hover:border-foreground/30"
             >

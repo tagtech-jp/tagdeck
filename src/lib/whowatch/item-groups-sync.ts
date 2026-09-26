@@ -131,8 +131,9 @@ export interface SyncItemGroupsResult {
  * 行数は 100 件前後と小さいので、アイテムパターン同期のようなチャンク分割は不要。
  * 応答から消えたカテゴリの行は削除する（終了したセールが残り続けないように）。
  */
-export async function syncItemGroups(db: Db): Promise<SyncItemGroupsResult> {
-  const categories = await fetchPaymentCategories();
+export async function syncItemGroups(db: Db, preloaded?: RawCategory[]): Promise<SyncItemGroupsResult> {
+  // 単価同期（item-prices.ts）と同じ応答を使い回せるよう、取得済みのカテゴリを受け取れる
+  const categories = preloaded ?? (await fetchPaymentCategories());
   const rows = flattenGroups(categories, new Date());
   if (rows.length === 0) {
     // 応答が空のときに全削除すると事故になるので、掃除はしない

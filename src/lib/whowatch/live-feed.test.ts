@@ -121,6 +121,17 @@ describe("normalizeGift", () => {
     expect(g.count).toBe(1);
     expect(g.is_hit).toBe(false);
   });
+  it("束パターン（風船 × 10・quantity 10）は個数 = item_count × quantity、合計 = 単価 × 個数", () => {
+    const bundleLookup = (id: number) => (id === 2 ? { patternId: 2, itemId: 1, itemName: "風船", patternName: "風船 × 10", isHit: false, hitGrade: null, quantity: 10, priceJpy: 10, animationUrl: null, animationFullscreen: false, groups: [] } : null);
+    const g = normalizeGift({ id: 1, comment_type: "BY_PLAYITEM", play_item_pattern_id: 2, item_count: 3, anonymized: false }, bundleLookup);
+    expect(g.count).toBe(30);
+    expect(g.price_yen).toBe(10);
+    expect(g.total_yen).toBe(300);
+  });
+  it("単価不明なら total_yen は null", () => {
+    const g = normalizeGift({ id: 2, comment_type: "BY_PLAYITEM", play_item_pattern_id: 99999, item_count: 2, anonymized: false }, lookup);
+    expect(g.total_yen).toBeNull();
+  });
   it("BY_PUBLIC はギフトではない", () => {
     expect(isGiftComment({ id: 1, comment_type: "BY_PUBLIC" })).toBe(false);
   });

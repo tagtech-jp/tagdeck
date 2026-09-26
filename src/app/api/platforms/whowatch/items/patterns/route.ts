@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
-import { itemPointMapping, whowatchItemGroups, whowatchItemPatterns } from "@/lib/db/schema";
+import { itemPointMapping, whowatchItemGroups, whowatchItemPatterns, whowatchItemPrices } from "@/lib/db/schema";
 import { pickItemImage } from "@/lib/se/item-image";
 
 /**
@@ -50,6 +50,13 @@ export async function GET() {
       db.select({ itemId: itemPointMapping.itemId, priceJpy: itemPointMapping.priceJpy, state: itemPointMapping.state }).from(itemPointMapping).where(eq(itemPointMapping.platform, "whowatch")),
     ]);
     const priceById = new Map(prices.map((p) => [p.itemId, p]));
+    // 1 個あたりの単価（whowatch_item_prices・2026-09-26）で上書き。0020 未適用・未同期なら従来の price_jpy のまま
+    try {
+      const unit = await db.select({ itemId: whowatchItemPrices.itemId, unitPriceJpy: whowatchItemPrices.unitPriceJpy, onSale: whowatchItemPrices.onSale }).from(whowatchItemPrices);
+      for (const u of unit) priceById.set(String(u.itemId), { itemId: String(u.itemId), priceJpy: u.unitPriceJpy, state: u.onSale ? "OPEN" : "CLOSED" });
+    } catch (e) {
+      console.warn("[items/patterns] 単価テーブルが読めないため price_jpy を使う", e instanceof Error ? e.message : String(e));
+    }
 
     // カテゴリは付加情報。ここで落ちてもアイテム一覧は返す（/live の SE 判定を道連れにしない）
     let groupRows: Array<{ itemId: number; groupKey: string; groupTitle: string; subGroupTitle: string | null; badgeText: string | null; displayOrder: number | null; bannerUrl: string | null; description: string | null }> = [];
