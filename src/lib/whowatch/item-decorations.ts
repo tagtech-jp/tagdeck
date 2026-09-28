@@ -4,6 +4,8 @@
 // アイテム（≒ 現行カタログ 88 件）が user_retain_items に並び、各アイテムの patterns[0] に
 //   pattern_decorations: [{count, pattern_decoration: "COOL" | "GREAT" | "FANTASTIC" | "MIRACLE" | …}]
 // が入る。/playitems（マスタ）にはこのフィールドが無い。配信 ID は /lives2（配信中一覧）の先頭を使う。
+// 認証なしで載るのは購入できるアイテム（実測 88 件・うち 86 件にしきい値。無いのは投票券・サイコロ）。
+// イベントの無料配布（バスケット・どんぐり等）は載らないが pattern_limit=3 なので段階が付くことはない。
 // 判定ロジックはブラウザと共有するため se/bulk-grade.ts に置き、ここは取得と保存だけ。
 
 import { sql } from "drizzle-orm";

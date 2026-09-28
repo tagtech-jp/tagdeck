@@ -52,10 +52,10 @@ const TEST_GIFTS: Array<{ label: string; tier: SeTier; gift: Partial<Gift>; bulk
   { label: "¥5,000〜（ファンファーレ）", tier: "T4", gift: { item_name: "大花火 ×3", price_yen: 2000, count: 3 } },
   { label: "当たり（ジングル）", tier: "hit", gift: { item_name: "ひよこのあたり", price_yen: 0, count: 1, is_hit: true } },
   // まとめ投げの段階（2026-09-28）。SE タブ「まとめ投げの段階ごとの SE」の割り当てが無ければ tier の既定音
-  { label: `まとめ投げ ${BULK_GRADE_LABELS.COOL}（バスケット ×25）`, tier: "T2", gift: { item_name: "バスケット ×25", price_yen: 0, count: 25 }, bulkGrade: "COOL" },
-  { label: `まとめ投げ ${BULK_GRADE_LABELS.GREAT}（バスケット ×50）`, tier: "T3", gift: { item_name: "バスケット ×50", price_yen: 0, count: 50 }, bulkGrade: "GREAT" },
-  { label: `まとめ投げ ${BULK_GRADE_LABELS.FANTASTIC}（花火 ×5）`, tier: "T4", gift: { item_name: "花火 ×5", price_yen: 1000, count: 5 }, bulkGrade: "FANTASTIC" },
-  { label: `まとめ投げ ${BULK_GRADE_LABELS.MIRACLE}（花火 ×10）`, tier: "T4", gift: { item_name: "花火 ×10", price_yen: 1000, count: 10 }, bulkGrade: "MIRACLE" },
+  { label: `まとめ投げ ${BULK_GRADE_LABELS.COOL}（花火 ×2）`, tier: "T3", gift: { item_name: "花火 ×2", price_yen: 1000, count: 2 }, bulkGrade: "COOL" },
+  { label: `まとめ投げ ${BULK_GRADE_LABELS.GREAT}（ぶたさん ×45）`, tier: "T4", gift: { item_name: "トンでもない応援をするぶたさん ×45", price_yen: 160, count: 45 }, bulkGrade: "GREAT" },
+  { label: `まとめ投げ ${BULK_GRADE_LABELS.FANTASTIC}（花火 ×10）`, tier: "T4", gift: { item_name: "花火 ×10", price_yen: 1000, count: 10 }, bulkGrade: "FANTASTIC" },
+  { label: `まとめ投げ ${BULK_GRADE_LABELS.MIRACLE}（釣り竿 ×200）`, tier: "T4", gift: { item_name: "釣り竿 ×200", price_yen: 100, count: 200 }, bulkGrade: "MIRACLE" },
 ];
 
 const BG_STATE_BADGE: Record<BgAudioState, { label: string; className: string }> = {

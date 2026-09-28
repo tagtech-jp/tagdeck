@@ -420,7 +420,7 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
       <div className="rounded-xl border border-border bg-card p-4">
         <h4 className="mb-1 text-sm font-bold text-foreground">まとめ投げの段階ごとの SE（クール / グレート / ファンタスティック / ミラクル）</h4>
         <p className="mb-1 text-xs text-muted-foreground">
-          1 回のコメントでまとめて投げられた個数がアイテムごとのしきい値に達すると、ふわっちの画面と同じ段階が付きます（例: バスケットはクール 25個〜・グレート 50個〜・ファンタスティック 100個〜・ミラクル 200個〜、花火系はクール 2個〜・ミラクル 10個〜）。
+          1 回のコメントでまとめて投げられた個数がアイテムごとのしきい値に達すると、ふわっちの画面と同じ段階が付きます（例: 花火はクール 2個〜・グレート 5個〜・ファンタスティック 10個〜、ぶたさん・ゾウなどのイベント応援はクール 15個〜・グレート 45個〜・ファンタスティック 100個〜、釣り竿はミラクル 200個〜）。イベントの無料配布アイテムは 1 回 3 個までなので段階は付きません。
           しきい値はふわっちから毎日同期し、各アイテムのカードに表示します。段階が付いたギフトはここの音が鳴り、アイテム個別の音より優先されます（当たりの個別割り当ては段階より優先）
         </p>
         <p className="mb-3 text-xs text-muted-foreground">
