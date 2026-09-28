@@ -40,6 +40,20 @@ describe("buildExportItems", () => {
     expect(out.find((o) => o.item_id === "13100")?.event_id).toBe(900);
   });
 
+  it("同じ数値 id の行は 1 行にする（数値 item_id の同期行を優先。無ければ last_fetched_at が新しい方）", () => {
+    const dup = [
+      { itemId: "ouen_zou", itemName: "イベント応援するゾウ!", priceJpy: 160, productId: "", state: "OPEN", whowatchId: 10773, lastFetchedAt: new Date("2026-09-28T00:00:00Z") },
+      { itemId: "10773", itemName: "イベント応援するゾウ！", priceJpy: 160, productId: "web.ranking.ouen_zou.1.sale", state: "OPEN", whowatchId: 10773, lastFetchedAt: new Date("2026-09-27T00:00:00Z") },
+      { itemId: "legacy_a", itemName: "古い", priceJpy: 100, productId: "", state: "OPEN", whowatchId: 555, lastFetchedAt: new Date("2026-09-01T00:00:00Z") },
+      { itemId: "legacy_b", itemName: "新しい", priceJpy: 120, productId: "", state: "OPEN", whowatchId: 555, lastFetchedAt: new Date("2026-09-20T00:00:00Z") },
+    ];
+    const out = buildExportItems(dup, [], []);
+    expect(out.map((o) => [o.item_id, o.item_name, o.price_jpy, o.purchasable])).toEqual([
+      ["555", "新しい", 120, false],
+      ["10773", "イベント応援するゾウ！", 160, true],
+    ]);
+  });
+
   it("numericItemId は whowatch_id を優先し、無ければ数値の item_id、それも無ければ null", () => {
     expect(numericItemId({ itemId: "1", whowatchId: 13100 })).toBe(13100);
     expect(numericItemId({ itemId: "42", whowatchId: 0 })).toBe(42);

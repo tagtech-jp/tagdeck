@@ -73,8 +73,25 @@ export function buildExportItems(rows: readonly ExportMappingRow[], groups: read
     list.push(g);
     groupsByItem.set(g.itemId, list);
   }
-  const out: ExportItem[] = [];
+  // 同じ数値 id を持つ行が複数ある場合（旧シード行 "ouen_zou" 等が whowatch_id=10773 を持ち、日次同期の行 "10773" と重なる。
+  // 2026-09-28 本番で 7 件）は 1 行にする。優先: item_id が数値そのもの（日次同期の行）→ last_fetched_at が新しい方
+  const bestByKey = new Map<string, ExportMappingRow>();
+  const prefer = (a: ExportMappingRow, b: ExportMappingRow): ExportMappingRow => {
+    const an = /^\d+$/.test(a.itemId);
+    const bn = /^\d+$/.test(b.itemId);
+    if (an !== bn) return an ? a : b;
+    const at = a.lastFetchedAt ? new Date(a.lastFetchedAt).getTime() : 0;
+    const bt = b.lastFetchedAt ? new Date(b.lastFetchedAt).getTime() : 0;
+    return bt > at ? b : a;
+  };
   for (const r of rows) {
+    const id = numericItemId(r);
+    const key = id !== null ? String(id) : r.itemId;
+    const cur = bestByKey.get(key);
+    bestByKey.set(key, cur ? prefer(cur, r) : r);
+  }
+  const out: ExportItem[] = [];
+  for (const r of bestByKey.values()) {
     const id = numericItemId(r);
     const itemId = id !== null ? String(id) : r.itemId;
     const gs = [...(id !== null ? (groupsByItem.get(id) ?? []) : [])].sort((a, b) => (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999) || a.groupKey.localeCompare(b.groupKey));
