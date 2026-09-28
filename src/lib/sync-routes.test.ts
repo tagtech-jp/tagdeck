@@ -9,6 +9,8 @@ function makeFakeDb() {
   chain.select = () => chain;
   chain.from = () => chain;
   chain.where = () => Promise.resolve([]);
+  // items/export は where 無しの select().from() を await するので、チェーン自体も空配列に解決させる
+  chain.then = (resolve: (v: unknown[]) => void) => resolve([]);
   return chain;
 }
 vi.mock("@/lib/db/client", () => ({ createDbClient: () => makeFakeDb() }));
@@ -29,6 +31,7 @@ const ROUTE_IMPORTERS: Record<string, () => Promise<{ POST: (req: Request) => Pr
   "/api/platforms/whowatch/rankings/sync": () => import("@/app/api/platforms/whowatch/rankings/sync/route"),
   "/api/platforms/whowatch/events/sync": () => import("@/app/api/platforms/whowatch/events/sync/route"),
   "/api/platforms/whowatch/items/sync": () => import("@/app/api/platforms/whowatch/items/sync/route"),
+  "/api/platforms/whowatch/items/export": () => import("@/app/api/platforms/whowatch/items/export/route"),
 };
 
 describe("SYNC_ROUTES 登録漏れ検知", () => {

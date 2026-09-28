@@ -114,7 +114,9 @@ export async function GET() {
       let it = items.get(p.itemId);
       if (!it) {
         const pr = priceById.get(String(p.itemId));
-        it = { itemId: p.itemId, itemName: p.itemName, priceJpy: pr ? pr.priceJpy : null, onSale: pr?.state === "OPEN", imageUrl: null, groups: groupsByItem.get(p.itemId) ?? [], decorations: decorationsByItem.get(p.itemId) ?? [], patterns: [] };
+        // 2026-09-28: item_point_mapping にイベントの無料配布（state=FREE・price 0）も入るようになった。SE タブの表示（「無料（イベント配布）」）と
+        // T0 判定は「価格なし＝null」のままにする（0 を ¥0〜 と表示しない）
+        it = { itemId: p.itemId, itemName: p.itemName, priceJpy: pr && pr.priceJpy > 0 && pr.state !== "FREE" ? pr.priceJpy : null, onSale: pr?.state === "OPEN", imageUrl: null, groups: groupsByItem.get(p.itemId) ?? [], decorations: decorationsByItem.get(p.itemId) ?? [], patterns: [] };
         items.set(p.itemId, it);
         imageCandidates.set(p.itemId, []);
       }
