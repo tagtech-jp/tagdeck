@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { bulkGradeFor, bulkItemKey, bulkKey, BULK_KEY_RE_SOURCE, describeDecorations, parseDecorations } from "./bulk-grade";
 
-// しきい値は 2026-09-28 の /lives/{id}/playitems3 実応答（バスケット・花火系）
-const basket = parseDecorations([
+// しきい値は 2026-09-28 の /lives/{id}/playitems3 実応答（釣り竿 25/50/100/200・花火 2/5/10 など）
+const rod = parseDecorations([
   { count: 25, pattern_decoration: "COOL" },
   { count: 50, pattern_decoration: "GREAT" },
   { count: 100, pattern_decoration: "FANTASTIC" },
@@ -11,7 +11,7 @@ const basket = parseDecorations([
 
 describe("parseDecorations", () => {
   it("API の pattern_decorations を count 昇順の段階配列にする", () => {
-    expect(basket).toEqual([
+    expect(rod).toEqual([
       { count: 25, grade: "COOL" },
       { count: 50, grade: "GREAT" },
       { count: 100, grade: "FANTASTIC" },
@@ -28,12 +28,12 @@ describe("parseDecorations", () => {
 
 describe("bulkGradeFor", () => {
   it("ふわっち本体と同じく、count の降順で最初に count <= 個数 を満たす段階", () => {
-    expect(bulkGradeFor(basket, 1)).toBeNull();
-    expect(bulkGradeFor(basket, 24)).toBeNull();
-    expect(bulkGradeFor(basket, 25)).toBe("COOL");
-    expect(bulkGradeFor(basket, 99)).toBe("GREAT");
-    expect(bulkGradeFor(basket, 100)).toBe("FANTASTIC");
-    expect(bulkGradeFor(basket, 999)).toBe("MIRACLE");
+    expect(bulkGradeFor(rod, 1)).toBeNull();
+    expect(bulkGradeFor(rod, 24)).toBeNull();
+    expect(bulkGradeFor(rod, 25)).toBe("COOL");
+    expect(bulkGradeFor(rod, 99)).toBe("GREAT");
+    expect(bulkGradeFor(rod, 100)).toBe("FANTASTIC");
+    expect(bulkGradeFor(rod, 999)).toBe("MIRACLE");
   });
 
   it("しきい値の無いアイテム（投票券）は何個投げても段階なし", () => {
@@ -41,7 +41,7 @@ describe("bulkGradeFor", () => {
     expect(bulkGradeFor(null, 122)).toBeNull();
   });
 
-  it("花火系（COOL 2 / GREAT 3 / FANTASTIC 5 / MIRACLE 10）", () => {
+  it("一部の花火系（COOL 2 / GREAT 3 / FANTASTIC 5 / MIRACLE 10）", () => {
     const fw = parseDecorations([{ count: 10, pattern_decoration: "MIRACLE" }, { count: 2, pattern_decoration: "COOL" }, { count: 5, pattern_decoration: "FANTASTIC" }, { count: 3, pattern_decoration: "GREAT" }]);
     expect(bulkGradeFor(fw, 2)).toBe("COOL");
     expect(bulkGradeFor(fw, 4)).toBe("GREAT");
@@ -61,7 +61,7 @@ describe("keys", () => {
   });
 
   it("describeDecorations は日本語の段階名と個数を並べる", () => {
-    expect(describeDecorations(basket)).toBe("クール 25個〜 / グレート 50個〜 / ファンタスティック 100個〜 / ミラクル 200個〜");
+    expect(describeDecorations(rod)).toBe("クール 25個〜 / グレート 50個〜 / ファンタスティック 100個〜 / ミラクル 200個〜");
     expect(describeDecorations([])).toBe("");
   });
 });

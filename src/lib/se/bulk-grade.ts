@@ -7,8 +7,10 @@
 //     gradeMaxSortedArray = (custom_pattern_decorations + pattern_decorations) を count の降順に並べ、
 //     最初に count <= 投げた個数 を満たすものが段階（COOL / GREAT / FANTASTIC / MIRACLE / TAMAYA / NYANDERFUL / WONDERFUL / KP）
 // - しきい値は `GET /lives/{id}/playitems3`（認証不要）の user_retain_items[].patterns[0].pattern_decorations にある。
-//   実測: バスケット COOL 25・GREAT 50・FANTASTIC 100・MIRACLE 200 / 花火系 COOL 2・GREAT 3・FANTASTIC 5・MIRACLE 10 /
-//         イベント応援 COOL 100・GREAT 200・FANTASTIC 500 / 投票券 なし
+//   実測（2026-09-28 本番同期・88 アイテム中 86 にしきい値）: 釣り竿 COOL 25・GREAT 50・FANTASTIC 100・MIRACLE 200 /
+//         花火 COOL 2・GREAT 5・FANTASTIC 10 / ぶたさん・ゾウ（イベント応援）COOL 15・GREAT 45・FANTASTIC 100 / 投票券・サイコロ なし
+//   認証なしの playitems3 に載るのは購入できるアイテムだけ。イベントの無料配布（バスケット・どんぐり等）は載らないが、
+//   それらは pattern_limit=3（1 回に 3 個まで）なので、そもそもまとめ投げの段階が付かない
 // - `_x5` `_x10` `_x20` の画像を持つ別パターンは**まとめ投げではなく「5 倍・10 倍・20 倍」の当たり**（コメント本文も「【10倍】…」）。
 //   これは別の pattern_id で届くので当たりとして個別に扱う（item-patterns-sync.ts の estimateHit）
 //

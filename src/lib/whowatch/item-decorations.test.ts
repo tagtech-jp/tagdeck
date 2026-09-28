@@ -15,15 +15,15 @@ describe("flattenDecorations", () => {
     const now = new Date("2026-09-28T00:00:00Z");
     const rows = flattenDecorations(
       [
-        { play_item_id: 13098, patterns: [{ name: "バスケット", pattern_limit: 999, pattern_decorations: [{ count: 50, pattern_decoration: "GREAT" }, { count: 25, pattern_decoration: "COOL" }] }] },
+        { play_item_id: 11367, patterns: [{ name: "釣り竿", pattern_limit: 200, pattern_decorations: [{ count: 50, pattern_decoration: "GREAT" }, { count: 25, pattern_decoration: "COOL" }] }] },
         { play_item_id: 11182, patterns: [{ name: "投票券", pattern_limit: 999, pattern_decorations: [] }] },
-        { play_item_id: 13098, patterns: [{ name: "バスケット" }] },
+        { play_item_id: 11367, patterns: [{ name: "釣り竿" }] },
         { patterns: [{ name: "id なし" }] },
       ],
       now,
     );
     expect(rows).toEqual([
-      { itemId: 13098, itemName: "バスケット", decorations: [{ count: 25, grade: "COOL" }, { count: 50, grade: "GREAT" }], patternLimit: 999, syncedAt: now },
+      { itemId: 11367, itemName: "釣り竿", decorations: [{ count: 25, grade: "COOL" }, { count: 50, grade: "GREAT" }], patternLimit: 200, syncedAt: now },
       { itemId: 11182, itemName: "投票券", decorations: [], patternLimit: 999, syncedAt: now },
     ]);
   });
