@@ -2,6 +2,7 @@
 // 既定パックは Web Audio 合成（権利問題なし）。ユーザーの se_mappings が優先される。
 
 import type { ItemKind } from "./item-kind";
+import type { BulkGrade } from "./bulk-grade";
 
 export type SeTier = "T0" | "T1" | "T2" | "T3" | "T4" | "hit";
 
@@ -37,8 +38,11 @@ export const TIER_LABELS: Record<SeTier, string> = {
 };
 
 /**
- * se_mappings の key を pattern:{id} → item:{id} → cat:group:{key} → cat:kind:{種類} → tier:{T0..}
+ * se_mappings の key を
+ *   bulk:item:{id}:{段階} → pattern:{id} → bulk:{段階} → item:{id} → cat:group:{key} → cat:kind:{種類} → tier:{T0..}
  * の順で解決する。個別（pattern / item）がカテゴリ一括（cat:）より常に優先される。
+ * まとめ投げの段階（bulk:・2026-09-28）は「そのアイテムの段階別」が最優先、次に当たり等のパターン個別、その次に全アイテム共通の段階。
+ * 段階の音はアイテム個別より優先する（100 個投げたときの盛り上がりを、そのアイテムの通常音で潰さないため）
  *
  * groups は「そのアイテムが属するカテゴリ」。ふわっちでは 1 アイテムが複数カテゴリに同時所属する
  * （例: イベント応援セール かつ オータムグッズ かつ 配信の番長）ため配列で受け、
@@ -46,9 +50,11 @@ export const TIER_LABELS: Record<SeTier, string> = {
  */
 export function resolveMappingKey(
   keys: Set<string>,
-  g: { patternId: number | null; itemId: number | null; tier: SeTier; kind?: ItemKind | null; groups?: readonly string[] | null },
+  g: { patternId: number | null; itemId: number | null; tier: SeTier; kind?: ItemKind | null; groups?: readonly string[] | null; bulkGrade?: BulkGrade | null },
 ): string | null {
+  if (g.bulkGrade && g.itemId !== null && keys.has(`bulk:item:${g.itemId}:${g.bulkGrade}`)) return `bulk:item:${g.itemId}:${g.bulkGrade}`;
   if (g.patternId !== null && keys.has(`pattern:${g.patternId}`)) return `pattern:${g.patternId}`;
+  if (g.bulkGrade && keys.has(`bulk:${g.bulkGrade}`)) return `bulk:${g.bulkGrade}`;
   if (g.itemId !== null && keys.has(`item:${g.itemId}`)) return `item:${g.itemId}`;
   for (const group of g.groups ?? []) {
     if (keys.has(`cat:group:${group}`)) return `cat:group:${group}`;

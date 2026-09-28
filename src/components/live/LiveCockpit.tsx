@@ -10,6 +10,7 @@ import { retryCountdownSec } from "@/lib/live/master-retry";
 import type { NormalizedGift as Gift } from "@/lib/whowatch/gift-normalize";
 import { VolumeSlider } from "./VolumeSlider";
 import type { BgAudioState } from "@/lib/se/background-keepalive";
+import { BULK_GRADE_LABELS, type BulkGrade } from "@/lib/se/bulk-grade";
 
 // S1: ライブページの画面。接続状態そのものは LiveConnectionProvider が持っている
 // （ページを移動しても接続と SE 再生が続くようにするため）。ここは表示と操作だけを担当する。
@@ -43,13 +44,18 @@ const WS_BADGE: Record<WsState, { label: string; className: string }> = {
   failed: { label: "即時経路: 使えず（ポーリングで動作中）", className: "bg-status-warning/10 text-status-warning" },
 };
 
-const TEST_GIFTS: Array<{ label: string; tier: SeTier; gift: Partial<Gift> }> = [
+const TEST_GIFTS: Array<{ label: string; tier: SeTier; gift: Partial<Gift>; bulkGrade?: BulkGrade }> = [
   { label: TIER_LABELS.T0, tier: "T0", gift: { item_name: "オータムリース", price_yen: 0, count: 1 } },
   { label: "〜¥499（チャイム・短）", tier: "T1", gift: { item_name: "ぶたさん", price_yen: 160, count: 1 } },
   { label: "¥500〜（チャイム）", tier: "T2", gift: { item_name: "ぶたさん ×4", price_yen: 160, count: 4 } },
   { label: "¥2,000〜（ファンファーレ・短）", tier: "T3", gift: { item_name: "花火", price_yen: 1000, count: 2 } },
   { label: "¥5,000〜（ファンファーレ）", tier: "T4", gift: { item_name: "大花火 ×3", price_yen: 2000, count: 3 } },
   { label: "当たり（ジングル）", tier: "hit", gift: { item_name: "ひよこのあたり", price_yen: 0, count: 1, is_hit: true } },
+  // まとめ投げの段階（2026-09-28）。SE タブ「まとめ投げの段階ごとの SE」の割り当てが無ければ tier の既定音
+  { label: `まとめ投げ ${BULK_GRADE_LABELS.COOL}（バスケット ×25）`, tier: "T2", gift: { item_name: "バスケット ×25", price_yen: 0, count: 25 }, bulkGrade: "COOL" },
+  { label: `まとめ投げ ${BULK_GRADE_LABELS.GREAT}（バスケット ×50）`, tier: "T3", gift: { item_name: "バスケット ×50", price_yen: 0, count: 50 }, bulkGrade: "GREAT" },
+  { label: `まとめ投げ ${BULK_GRADE_LABELS.FANTASTIC}（花火 ×5）`, tier: "T4", gift: { item_name: "花火 ×5", price_yen: 1000, count: 5 }, bulkGrade: "FANTASTIC" },
+  { label: `まとめ投げ ${BULK_GRADE_LABELS.MIRACLE}（花火 ×10）`, tier: "T4", gift: { item_name: "花火 ×10", price_yen: 1000, count: 10 }, bulkGrade: "MIRACLE" },
 ];
 
 const BG_STATE_BADGE: Record<BgAudioState, { label: string; className: string }> = {
@@ -288,12 +294,12 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
         <div className="flex flex-wrap gap-2">
           {TEST_GIFTS.map((t) => (
             <button
-              key={t.tier}
+              key={t.label}
               type="button"
               onClick={async () => {
                 await enableAudio();
-                await playGift({ pattern_id: null, item_id: null, price_yen: t.gift.price_yen ?? 0, count: t.gift.count ?? 1, is_hit: Boolean(t.gift.is_hit), kind: null, groups: [] }, t.tier);
-                pushTestGift({ comment_id: `test-${Date.now()}`, pattern_id: null, item_id: null, item_name: `[テスト] ${t.gift.item_name}`, pattern_name: null, count: t.gift.count ?? 1, is_hit: Boolean(t.gift.is_hit), hit_grade: null, kind: null, price_yen: t.gift.price_yen ?? 0, total_yen: (t.gift.price_yen ?? 0) * (t.gift.count ?? 1), groups: [], message: TIER_LABELS[t.tier], posted_at: new Date().toISOString(), user: { id: null, name: "テスト", user_path: null, anonymized: false } });
+                await playGift({ pattern_id: null, item_id: null, price_yen: t.gift.price_yen ?? 0, count: t.gift.count ?? 1, is_hit: Boolean(t.gift.is_hit), kind: null, groups: [], bulk_grade: t.bulkGrade ?? null }, t.tier);
+                pushTestGift({ comment_id: `test-${Date.now()}`, pattern_id: null, item_id: null, item_name: `[テスト] ${t.gift.item_name}`, pattern_name: null, count: t.gift.count ?? 1, item_count: t.gift.count ?? 1, bulk_grade: t.bulkGrade ?? null, is_hit: Boolean(t.gift.is_hit), hit_grade: null, kind: null, price_yen: t.gift.price_yen ?? 0, total_yen: (t.gift.price_yen ?? 0) * (t.gift.count ?? 1), groups: [], message: t.bulkGrade ? `まとめ投げ ${BULK_GRADE_LABELS[t.bulkGrade]}` : TIER_LABELS[t.tier], posted_at: new Date().toISOString(), user: { id: null, name: "テスト", user_path: null, anonymized: false } });
               }}
               className="min-h-11 rounded-full border border-border bg-muted px-3 text-xs text-foreground hover:border-foreground/30"
             >

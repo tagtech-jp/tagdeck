@@ -48,3 +48,17 @@ describe("resolveMappingKey", () => {
     expect(resolveMappingKey(keys, { patternId: null, itemId: null, tier: "T1" })).toBe("tier:T1");
   });
 });
+
+describe("resolveMappingKey（まとめ投げの段階・2026-09-28）", () => {
+  it("bulk:item:{id}:{段階} → pattern → bulk:{段階} → item の順", () => {
+    const keys = new Set(["bulk:item:13098:FANTASTIC", "pattern:10644", "bulk:FANTASTIC", "item:13098", "tier:T0"]);
+    expect(resolveMappingKey(keys, { patternId: 10643, itemId: 13098, tier: "T0", bulkGrade: "FANTASTIC" })).toBe("bulk:item:13098:FANTASTIC");
+    // 10 倍の当たり（別 pattern_id）はアイテム別の段階が無ければパターン個別が勝つ
+    expect(resolveMappingKey(keys, { patternId: 10644, itemId: 13098, tier: "hit", bulkGrade: "COOL" })).toBe("pattern:10644");
+    // 全アイテム共通の段階はアイテム個別より優先
+    expect(resolveMappingKey(keys, { patternId: 10643, itemId: 13098, tier: "T0", bulkGrade: "COOL" })).toBe("item:13098");
+    expect(resolveMappingKey(new Set(["bulk:COOL", "item:13098"]), { patternId: 10643, itemId: 13098, tier: "T0", bulkGrade: "COOL" })).toBe("bulk:COOL");
+    // 段階なし（しきい値未満）は従来どおり
+    expect(resolveMappingKey(keys, { patternId: 10643, itemId: 13098, tier: "T0", bulkGrade: null })).toBe("item:13098");
+  });
+});

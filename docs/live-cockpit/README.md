@@ -429,6 +429,25 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - 表示(2026-09-26 追記): SE タブの「価格ありのみ」(既定 ON)がカテゴリ内の無料アイテムまで隠していたため「反映されていない」ように見えた。イベントのカテゴリに属する無料アイテムは ON でも表示し、価格欄は「無料(イベント配布)」と出す。「価格ありのみ」が隠すのは分類なしの無料アイテムだけ
 - 社長作業: (1) `drizzle/0021_free_event_items_manual.sql` を適用 (2) Actions「Whowatch item patterns sync (manual)」を 1 回実行(応答 `freeItems.rows`)
 
+## S13: まとめ投げの段階(クール / グレート / ファンタスティック / ミラクル)と倍率の当たりを個別に設定(実装済み・2026-09-28)
+
+社長指示「イベントアイテムなどのまとめ投げしたときのクール・グレート・ファンタスティック・ミラクルも個別に設定できるようにしたい。解析と修正可能か?」への対応。
+
+- 解析(2026-09-28・実データ):
+  - ギフトコメントは**基本パターンの pattern_id + item_count** で届く(例: バスケット 10643 × item_count 3)。段階名は API のコメントに無い
+  - 段階はふわっち本体(whowatch.tv `chunk-C4NMZPGA.js` の `setGradeImagePath`)が**アイテムごとのしきい値**から決める: `pattern_decorations`(`[{count, pattern_decoration: COOL|GREAT|FANTASTIC|MIRACLE|TAMAYA|NYANDERFUL|WONDERFUL|KP}]`)を count 降順に並べ、最初に `count <= 投げた個数` を満たすものが段階
+  - しきい値は `GET /lives/{id}/playitems3`(**認証不要**)の `user_retain_items[].patterns[0].pattern_decorations` にある(`/playitems` には無い)。実測: バスケット 25/50/100/200、花火系 2/3/5/10、イベント応援 100/200/500、投票券 なし
+  - `_x5` `_x10` `_x20` 画像の別パターン(バスケット 10644 等)は**まとめ投げではなく「5 倍・10 倍・20 倍」の当たり**(コメント本文「【10倍】バスケットを3個プレゼントしました」)。社長指摘どおり倍率の表記
+- 対応:
+  - `src/lib/se/bulk-grade.ts`(純関数・テスト 8 件): `parseDecorations` / `bulkGradeFor`(本体と同じ判定)/ key `bulk:{段階}`(全アイテム共通)・`bulk:item:{item_id}:{段階}`(アイテム別)
+  - `src/lib/whowatch/item-decorations.ts`: `/lives2` で配信中の 1 本を選び `playitems3` を取って `whowatch_item_decorations`(0022)に upsert。`items/sync` の初回バッチで毎日同期(応答 `decorations`)
+  - `gift-normalize.ts`: `item_count`(生の個数)と `bulk_grade` を持つ。段階判定は item_count(束パターンの quantity は掛けない=本体の presentCount と同じ)
+  - `tiers.ts resolveMappingKey`: **bulk:item → pattern → bulk → item → cat:group → cat:kind → tier**。段階の音はアイテム個別より優先(100 個投げの盛り上がりをアイテムの通常音で潰さない)。当たり等のパターン個別は段階より優先
+  - 倍率の当たり: `item-patterns-sync.ts estimateHit` が画像 `_xN` を `is_hit=true, hit_grade="N倍"` にする(束パターンには適用しない)。`pattern-rows.ts` は同名でも hit_grade が違えば別行にするので、SE タブに「バスケット(10倍)」「(5倍)」の行が出て倍率ごとに音を分けられる。**再同期が必要**(下記)
+  - SE タブ: 新セクション「まとめ投げの段階ごとの SE」(4 段階)。各アイテムのカードに「まとめ投げ: クール 25個〜 / …」を表示し、「段階ごとに設定」でアイテム別の行を開ける。ライブタブのテスト再生に段階 4 本を追加
+- 社長作業: (1) `drizzle/0022_item_decorations_manual.sql` を適用 (2) Actions「Whowatch item patterns sync (manual)」を 1 回実行(応答 `decorations.rows` ≒ 88・`withGrades` ≒ 86。同時に倍率の当たりも再判定される)
+- 未確定: 段階名の変種(TAMAYA / NYANDERFUL / WONDERFUL / KP)は現行アイテムに出ていないため行を出していない(key は受け付ける)。ふわっち側の custom_pattern_decorations(画像だけの段階)は名前が無いので落としている
+
 ## S12: 公式の既定 SE をコード無しで取り込む(実装済み・2026-09-26 → **同日廃止**、S2 の廃止に伴い削除)
 
 社長指示「SE のプリセットを共有コード無しでデフォルトにしてください」への対応。

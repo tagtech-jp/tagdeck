@@ -4,6 +4,7 @@
 // 依存を足すとクライアントバンドルにサーバ側の実装が引きずられるので、import は se/item-kind だけに保つこと。
 
 import { patternKind, type ItemKind } from "../se/item-kind";
+import { bulkGradeFor, type BulkDecoration, type BulkGrade } from "../se/bulk-grade";
 
 export interface LiveComment {
   id: number | string;
@@ -45,6 +46,8 @@ export interface PatternInfo {
   animationFullscreen: boolean;
   /** このアイテムが属するカテゴリ（アイテムページの並び順）。cat:group: の解決に使う */
   groups: string[];
+  /** まとめ投げの段階しきい値（whowatch_item_decorations・2026-09-28）。無ければ段階なし */
+  decorations?: readonly BulkDecoration[] | null;
 }
 
 /** 正規化ギフト（S1 仕様: pattern_id, item_id, count, is_hit, comment_id + 表示用） */
@@ -56,6 +59,10 @@ export interface NormalizedGift {
   pattern_name: string | null;
   /** 個数 = コメントの item_count × パターンの quantity（「風船 × 10」のような束パターン）。合計金額 = price_yen × count */
   count: number;
+  /** コメントの item_count そのもの（まとめ投げの段階判定に使う。ふわっちの presentCount と同じ） */
+  item_count: number;
+  /** まとめ投げの段階（クール / グレート / ファンタスティック / ミラクル…）。しきい値未満・しきい値なしは null */
+  bulk_grade: BulkGrade | null;
   is_hit: boolean;
   hit_grade: string | null;
   /** 種類（通常/当たり/演出付き）。cat:kind の SE 解決に使う。パターン未登録なら null */
@@ -125,6 +132,8 @@ export function normalizeGift(c: GiftCommentInput, lookup: (patternId: number) =
     item_name: info?.itemName ?? null,
     pattern_name: info?.patternName ?? null,
     count,
+    item_count: itemCount,
+    bulk_grade: bulkGradeFor(info?.decorations, itemCount),
     is_hit: info?.isHit ?? false,
     hit_grade: info?.hitGrade ?? null,
     kind: info ? patternKind({ isHit: info.isHit, animationUrl: info.animationUrl, animationFullscreen: info.animationFullscreen }) : null,

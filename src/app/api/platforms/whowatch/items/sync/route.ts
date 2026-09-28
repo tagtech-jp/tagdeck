@@ -4,6 +4,7 @@ import { syncItemPatterns } from "@/lib/whowatch/item-patterns-sync";
 import { fetchPaymentCategories, syncItemGroups, type SyncItemGroupsResult } from "@/lib/whowatch/item-groups-sync";
 import { syncItemPrices, type SyncItemPricesResult } from "@/lib/whowatch/item-prices";
 import { syncFreeEventItems, type SyncFreeEventItemsResult } from "@/lib/whowatch/free-event-items";
+import { syncItemDecorations, type SyncItemDecorationsResult } from "@/lib/whowatch/item-decorations";
 import { verifySyncKey } from "@/lib/whowatch/sync-auth";
 import { sendNotifyGw } from "@/lib/notify-gw";
 import { findSyncRoute } from "@/lib/sync-routes";
@@ -46,7 +47,16 @@ export async function POST(request: Request) {
     let prices: SyncItemPricesResult | { error: string } | { skipped: string } = { skipped: "初回バッチ以外（cursor あり）のため実行していない" };
     // イベントの無料配布アイテムをイベントのカテゴリへ（0021）。単価同期の後（無料判定に単価テーブルを使う）
     let freeItems: SyncFreeEventItemsResult | { error: string } | { skipped: string } = { skipped: "初回バッチ以外（cursor あり）のため実行していない" };
+    // まとめ投げの段階しきい値（whowatch_item_decorations・0022・2026-09-28）。/lives/{id}/playitems3 から。0022 未適用なら error に出る
+    let decorations: SyncItemDecorationsResult | { error: string } | { skipped: string } = { skipped: "初回バッチ以外（cursor あり）のため実行していない" };
     if (!cursor) {
+      try {
+        decorations = await syncItemDecorations(db);
+        console.log("[items/sync] まとめ投げ段階しきい値同期", decorations);
+      } catch (e) {
+        decorations = { error: describeDbError(e) };
+        console.error("[items/sync] まとめ投げ段階しきい値同期に失敗（パターン同期は続行）", decorations.error);
+      }
       let categories: Awaited<ReturnType<typeof fetchPaymentCategories>> | null = null;
       try {
         categories = await fetchPaymentCategories();
@@ -89,7 +99,7 @@ export async function POST(request: Request) {
     }
 
     // result に ok / inserted / updated / failed / next_cursor が含まれる
-    return NextResponse.json({ ...result, groups, prices, freeItems, at: new Date().toISOString() });
+    return NextResponse.json({ ...result, groups, prices, freeItems, decorations, at: new Date().toISOString() });
   } catch (err) {
     const message = describeDbError(err);
     console.error("[items/sync] failed", message);

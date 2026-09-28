@@ -5,9 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
 import { seMappings } from "@/lib/db/schema";
 import { ensureUserRow } from "@/lib/db/ensure-user";
+import { BULK_KEY_RE_SOURCE } from "@/lib/se/bulk-grade";
 
 // cat:kind = 種類の一括割り当て / cat:group = イベント別（第 2 弾）
-const KEY_RE = /^(pattern:\d{1,10}|item:\d{1,10}|cat:kind:(normal|hit|anim)|cat:group:[A-Za-z0-9_#-]{1,64}|tier:(T0|T1|T2|T3|T4|hit))$/;
+// bulk: = まとめ投げの段階（全アイテム共通 / アイテム別・2026-09-28）
+const KEY_RE = new RegExp(`^(pattern:\\d{1,10}|item:\\d{1,10}|cat:kind:(normal|hit|anim)|cat:group:[A-Za-z0-9_#-]{1,64}|tier:(T0|T1|T2|T3|T4|hit)|${BULK_KEY_RE_SOURCE})$`);
 
 /**
  * GET /api/se/mappings → 自分の SE 割り当て一覧（S1）+ 公式既定（S4: 同期元ユーザーの現在の割り当て）
@@ -46,7 +48,7 @@ export async function PUT(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const parsed = putSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "key は pattern:{id} / item:{id} / tier:{T0..T4|hit}、volume は 0〜100" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "key は pattern:{id} / item:{id} / bulk:{段階} / tier:{T0..T4|hit}、volume は 0〜100" }, { status: 400 });
   const d = parsed.data;
   if (d.url) {
     const allowedHost = process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host : null;
