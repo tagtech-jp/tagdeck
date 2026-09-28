@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
-import { itemPointMapping, whowatchItemGroups, whowatchItemPatterns, whowatchItemPrices } from "@/lib/db/schema";
+import { itemPointMapping, whowatchItemDecorations, whowatchItemGroups, whowatchItemPatterns, whowatchItemPrices } from "@/lib/db/schema";
+import { parseDecorations, type BulkDecoration } from "@/lib/se/bulk-grade";
 import { pickItemImage } from "@/lib/se/item-image";
 
 /**
@@ -58,6 +59,18 @@ export async function GET() {
       console.warn("[items/patterns] 単価テーブルが読めないため price_jpy を使う", e instanceof Error ? e.message : String(e));
     }
 
+    // まとめ投げの段階しきい値（0022・2026-09-28）。テーブル未作成・未同期なら空（段階なし＝従来どおり）
+    const decorationsByItem = new Map<number, BulkDecoration[]>();
+    try {
+      const rows = await db.select({ itemId: whowatchItemDecorations.itemId, decorations: whowatchItemDecorations.decorations }).from(whowatchItemDecorations);
+      for (const r of rows) {
+        const d = parseDecorations(r.decorations);
+        if (d.length > 0) decorationsByItem.set(r.itemId, d);
+      }
+    } catch (e) {
+      console.warn("[items/patterns] しきい値テーブルが読めないため段階なしで返す", e instanceof Error ? e.message : String(e));
+    }
+
     // カテゴリは付加情報。ここで落ちてもアイテム一覧は返す（/live の SE 判定を道連れにしない）
     let groupRows: Array<{ itemId: number; groupKey: string; groupTitle: string; subGroupTitle: string | null; badgeText: string | null; displayOrder: number | null; bannerUrl: string | null; description: string | null }> = [];
     try {
@@ -94,14 +107,14 @@ export async function GET() {
     }
     const groups = [...groupMap.values()].sort((a, b) => (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999) || a.groupTitle.localeCompare(b.groupTitle, "ja"));
 
-    const items = new Map<number, { itemId: number; itemName: string; priceJpy: number | null; onSale: boolean; imageUrl: string | null; groups: string[]; patterns: Array<{ patternId: number; patternName: string; isHit: boolean; hitGrade: string | null; isVariant: boolean; quantity: number | null; animationUrl: string | null; animationFullscreen: boolean }> }>();
+    const items = new Map<number, { itemId: number; itemName: string; priceJpy: number | null; onSale: boolean; imageUrl: string | null; groups: string[]; decorations: BulkDecoration[]; patterns: Array<{ patternId: number; patternName: string; isHit: boolean; hitGrade: string | null; isVariant: boolean; quantity: number | null; animationUrl: string | null; animationFullscreen: boolean }> }>();
     // アイテムごとの代表画像を選ぶための一時保持（応答には載せない）
     const imageCandidates = new Map<number, Array<{ patternName: string; imageUrl: string | null; isHit: boolean }>>();
     for (const p of patterns) {
       let it = items.get(p.itemId);
       if (!it) {
         const pr = priceById.get(String(p.itemId));
-        it = { itemId: p.itemId, itemName: p.itemName, priceJpy: pr ? pr.priceJpy : null, onSale: pr?.state === "OPEN", imageUrl: null, groups: groupsByItem.get(p.itemId) ?? [], patterns: [] };
+        it = { itemId: p.itemId, itemName: p.itemName, priceJpy: pr ? pr.priceJpy : null, onSale: pr?.state === "OPEN", imageUrl: null, groups: groupsByItem.get(p.itemId) ?? [], decorations: decorationsByItem.get(p.itemId) ?? [], patterns: [] };
         items.set(p.itemId, it);
         imageCandidates.set(p.itemId, []);
       }

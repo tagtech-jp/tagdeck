@@ -45,7 +45,20 @@ interface RawItem {
 
 export type PatternRow = typeof whowatchItemPatterns.$inferInsert;
 
-export function estimateHit(item: { name: string; patternCount: number }, p: { name: string }): { isHit: boolean; grade: string | null; isVariant: boolean } {
+/**
+ * 画像ファイル名の `_x5` `_x10` `_x20`（例: item_side_omake_x10.png）は「ランキングポイント N 倍」の当たり（2026-09-28 実データ:
+ * pattern 10644 = バスケット x10 は「【10倍】バスケットを3個プレゼントしました」で届く）。まとめ投げの段階ではない。
+ * 束パターン（quantity > 1）には付かないことを /playitems 全件で確認済み
+ */
+export function multiplierFromImage(imageUrl: string | null | undefined): number | null {
+  if (!imageUrl) return null;
+  const m = /_x(\d{1,3})(?:_animation)?\.(?:png|webp|gif|jpe?g)(?:[?#]|$)/i.exec(imageUrl);
+  return m ? Number(m[1]) : null;
+}
+
+export function estimateHit(item: { name: string; patternCount: number }, p: { name: string; image_url?: string | null; quantity?: number | null }): { isHit: boolean; grade: string | null; isVariant: boolean } {
+  const mult = (p.quantity ?? 1) <= 1 ? multiplierFromImage(p.image_url) : null;
+  if (mult) return { isHit: true, grade: `${mult}倍`, isVariant: false };
   const grade = GRADE_WORDS.find((g) => p.name.includes(g) && !item.name.includes(g)) ?? null;
   for (const w of HIT_WORDS) if (p.name.includes(w) && !item.name.includes(w)) return { isHit: true, grade, isVariant: false };
   if (grade && p.name !== item.name && item.patternCount > 1 && /ボーナス|BONUS/i.test(item.name)) return { isHit: true, grade, isVariant: false };

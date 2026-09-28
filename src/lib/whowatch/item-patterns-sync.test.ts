@@ -8,6 +8,13 @@ describe("estimateHit", () => {
     expect(estimateHit({ name: "風船", patternCount: 3 }, { name: "風船 × 10" })).toEqual({ isHit: false, grade: null, isVariant: true });
     expect(estimateHit({ name: "ひよこ", patternCount: 2 }, { name: "ひよこ" })).toEqual({ isHit: false, grade: null, isVariant: false });
   });
+
+  it("画像の _x5 / _x10 / _x20 は倍率の当たり（まとめ投げの段階ではない）。束パターンには適用しない", () => {
+    expect(estimateHit({ name: "バスケット", patternCount: 3 }, { name: "バスケット", image_url: "https://img.whowatch.tv/events/2026/09_wolf/item_side_omake_x10.png" })).toEqual({ isHit: true, grade: "10倍", isVariant: false });
+    expect(estimateHit({ name: "ぶたさん", patternCount: 5 }, { name: "ぶたさん", image_url: "https://img.whowatch.tv/p/item_ouen-pig_x20.png?v=2" })).toEqual({ isHit: true, grade: "20倍", isVariant: false });
+    expect(estimateHit({ name: "バスケット", patternCount: 3 }, { name: "バスケット", image_url: "https://img.whowatch.tv/events/2026/09_wolf/item_side_omake.png" })).toEqual({ isHit: false, grade: null, isVariant: false });
+    expect(estimateHit({ name: "風船", patternCount: 3 }, { name: "風船 × 10", image_url: "https://img.whowatch.tv/p/balloon_x10.png", quantity: 10 })).toEqual({ isHit: false, grade: null, isVariant: true });
+  });
 });
 
 describe("flattenPatterns", () => {

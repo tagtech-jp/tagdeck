@@ -9,11 +9,17 @@
 //
 // そこで「名前で区別できるか」を条件にする。同じ名前のパターンが複数 pattern_id に散っている場合は
 // 1 行にまとめ、割り当ては その名前が持つ全 pattern_id へ書く（どれが飛んできても同じ音が鳴る）。
+//
+// 2026-09-28: 同名でも hitGrade が違えば別行にする。`_x5` `_x10` `_x20` 画像の「5 倍 / 10 倍 / 20 倍」の当たり
+// （item-patterns-sync.ts の estimateHit が hitGrade="10倍" 等を付ける）は名前がアイテム名と同じだが別 pattern_id で届くので、
+// 倍率ごとに音を分けられるようにする。
 
 export interface PatternLike {
   patternId: number;
   patternName: string;
   isHit: boolean;
+  /** 当たりの等級（「10倍」「メガ」等）。同名でも等級が違えば別行 */
+  hitGrade?: string | null;
 }
 
 export interface PatternRowGroup<T extends PatternLike> {
@@ -37,7 +43,8 @@ export interface PatternRowGroup<T extends PatternLike> {
 export function expandablePatternRows<T extends PatternLike>(itemName: string, patterns: T[]): PatternRowGroup<T>[] {
   const byName = new Map<string, PatternRowGroup<T>>();
   for (const p of patterns) {
-    const cur = byName.get(p.patternName);
+    const groupKey = `${p.patternName}|${p.hitGrade ?? ""}`;
+    const cur = byName.get(groupKey);
     if (cur) {
       cur.patternIds.push(p.patternId);
       if (p.isHit && !cur.isHit) {
@@ -45,9 +52,9 @@ export function expandablePatternRows<T extends PatternLike>(itemName: string, p
         cur.representative = p;
       }
     } else {
-      byName.set(p.patternName, { label: p.patternName, patternIds: [p.patternId], isHit: p.isHit, representative: p });
+      byName.set(groupKey, { label: p.patternName, patternIds: [p.patternId], isHit: p.isHit, representative: p });
     }
   }
-  const distinctNames = byName.size;
+  const distinctNames = new Set(patterns.map((p) => p.patternName)).size;
   return [...byName.values()].filter((g) => g.isHit || (distinctNames > 1 && g.label !== itemName));
 }

@@ -263,7 +263,20 @@ export const whowatchItemPrices = pgTable("whowatch_item_prices", {
   syncedAt: timestamp("synced_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-// SE 割り当て（S1）。key: "pattern:{id}" | "item:{id}" | "tier:{T0..T4|hit}"。url が null なら既定合成音で volume/enabled だけ適用
+// まとめ投げの段階しきい値（2026-09-28・drizzle/0022）。GET /lives/{id}/playitems3 の patterns[0].pattern_decorations
+// （[{count, pattern_decoration: COOL|GREAT|FANTASTIC|MIRACLE|…}]）をアイテムごとに持つ。判定は src/lib/se/bulk-grade.ts
+export const whowatchItemDecorations = pgTable("whowatch_item_decorations", {
+  itemId: integer("item_id").primaryKey(),
+  itemName: text("item_name").default("").notNull(),
+  decorations: jsonb("decorations")
+    .$type<Array<{ count: number; grade: string }>>()
+    .default(sql`'[]'::jsonb`)
+    .notNull(),
+  patternLimit: integer("pattern_limit"),
+  syncedAt: timestamp("synced_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// SE 割り当て（S1）。key: "pattern:{id}" | "item:{id}" | "bulk:{段階}" | "bulk:item:{id}:{段階}" | "tier:{T0..T4|hit}"。url が null なら既定合成音で volume/enabled だけ適用
 // コンボ機能の廃止前に保存された "tier:combo" の行が残っている場合があるが、解決時に参照されないため放置している
 export const seMappings = pgTable(
   "se_mappings",

@@ -13,6 +13,7 @@ import { normalizeGift, type NormalizedGift as Gift, type PatternInfo, type Pick
 import type { ItemKind } from "@/lib/se/item-kind";
 import { BackgroundKeepAlive, detectBgAudioSupport, type BgAudioState, type BgAudioSupport } from "@/lib/se/background-keepalive";
 import { mergeWithDefaults } from "@/lib/se/merge-defaults";
+import { parseDecorations } from "@/lib/se/bulk-grade";
 
 // ライブ接続の状態をアプリ全体で保持する Provider。
 // (dashboard)/layout.tsx に置いてあるため、ページを移動しても接続と SE 再生が続く。
@@ -57,6 +58,8 @@ export interface ItemsPatternsResponse {
     patterns: Array<{ patternId: number; patternName: string; isHit: boolean; hitGrade: string | null; quantity?: number | null; animationUrl: string | null; animationFullscreen: boolean }>;
     itemName: string;
     groups?: string[];
+    /** まとめ投げの段階しきい値（0022・2026-09-28）。無ければ段階なし */
+    decorations?: Array<{ count: number; grade: string }>;
   }>;
 }
 
@@ -191,7 +194,7 @@ interface LiveConnectionValue {
   setAutoConnect: (on: boolean) => void;
   start: () => Promise<void>;
   stop: () => void;
-  playGift: (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[] }, forceTier?: SeTier, waitForEnd?: boolean) => Promise<void>;
+  playGift: (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[]; bulk_grade?: Gift["bulk_grade"] }, forceTier?: SeTier, waitForEnd?: boolean) => Promise<void>;
   pushTestGift: (g: Gift) => void;
   /** ?debug=1 のときだけ生コメントと計測ログを集める */
   setDebug: (v: boolean) => void;
@@ -498,8 +501,9 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     if (!pd || (pd.items?.length ?? 0) === 0) return false;
     const map = new Map<number, PatternInfo>();
     for (const it of pd.items ?? []) {
+      const decorations = parseDecorations(it.decorations);
       for (const p of it.patterns) {
-        map.set(p.patternId, { patternId: p.patternId, itemId: it.itemId, itemName: it.itemName, patternName: p.patternName, isHit: p.isHit, hitGrade: p.hitGrade, quantity: p.quantity ?? null, priceJpy: it.priceJpy, animationUrl: p.animationUrl, animationFullscreen: p.animationFullscreen, groups: it.groups ?? [] });
+        map.set(p.patternId, { patternId: p.patternId, itemId: it.itemId, itemName: it.itemName, patternName: p.patternName, isHit: p.isHit, hitGrade: p.hitGrade, quantity: p.quantity ?? null, priceJpy: it.priceJpy, animationUrl: p.animationUrl, animationFullscreen: p.animationFullscreen, groups: it.groups ?? [], decorations });
       }
     }
     patternLookupRef.current = map;
@@ -557,9 +561,10 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
    * ギフト 1 件の SE を鳴らす。waitForEnd=true（キューからの呼び出し）なら鳴り終わるまで待つ。
    * 連続ギフトは前の音が終わってから次を鳴らす（重ねると長い音源で 2 発目以降が埋もれる）
    */
-  const playGift = useCallback(async (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[] }, forceTier?: SeTier, waitForEnd = false) => {
+  const playGift = useCallback(async (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[]; bulk_grade?: Gift["bulk_grade"] }, forceTier?: SeTier, waitForEnd = false) => {
     const tier = forceTier ?? tierForGift({ priceYen: g.price_yen, count: g.count, isHit: g.is_hit });
-    const target = { patternId: g.pattern_id, itemId: g.item_id, tier, kind: g.kind, groups: g.groups };
+    // まとめ投げの段階（2026-09-28）: bulk:item:{id}:{段階} → pattern → bulk:{段階} → item … の順で解決（tiers.ts）
+    const target = { patternId: g.pattern_id, itemId: g.item_id, tier, kind: g.kind, groups: g.groups, bulkGrade: g.bulk_grade ?? null };
     const enabledKeys = new Set(mappingsRef.current.filter((m) => m.enabled).map((m) => m.key));
     const disabledKeys = new Set(mappingsRef.current.filter((m) => !m.enabled).map((m) => m.key));
     const key = resolveMappingKey(enabledKeys, target);

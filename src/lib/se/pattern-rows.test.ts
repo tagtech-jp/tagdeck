@@ -49,3 +49,17 @@ describe("expandablePatternRows", () => {
     expect(expandablePatternRows("表示名ちがい", [p(1, "内部名"), p(2, "内部名")])).toEqual([]);
   });
 });
+
+describe("expandablePatternRows（倍率の当たり・2026-09-28）", () => {
+  it("同名でも hitGrade（10倍 / 5倍）が違えば別行にし、倍率ごとに音を分けられる", () => {
+    const rows = expandablePatternRows("バスケット", [
+      { patternId: 10643, patternName: "バスケット", isHit: false, hitGrade: null },
+      { patternId: 10644, patternName: "バスケット", isHit: true, hitGrade: "10倍" },
+      { patternId: 10646, patternName: "バスケット", isHit: true, hitGrade: "5倍" },
+    ]);
+    expect(rows.map((r) => [r.label, r.representative.hitGrade, r.patternIds])).toEqual([
+      ["バスケット", "10倍", [10644]],
+      ["バスケット", "5倍", [10646]],
+    ]);
+  });
+});

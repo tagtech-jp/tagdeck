@@ -7,6 +7,7 @@ import { itemKind, ITEM_KIND_LABELS, patternKind, type ItemKind } from "@/lib/se
 import { tierForGift, TIER_LABELS, type SeTier } from "@/lib/se/tiers";
 import { expandablePatternRows } from "@/lib/se/pattern-rows";
 import { WEB_BONUS_GROUP, WEB_BONUS_LABEL, isWebBonusItem } from "@/lib/se/web-bonus";
+import { BULK_GRADE_LABELS, MAIN_BULK_GRADES, bulkItemKey, bulkKey, describeDecorations, type BulkDecoration, type BulkGrade } from "@/lib/se/bulk-grade";
 import { VolumeSlider } from "./VolumeSlider";
 import { useLiveConnection } from "./LiveConnectionProvider";
 import { mergeWithDefaults, type MergedMapping } from "@/lib/se/merge-defaults";
@@ -37,6 +38,8 @@ interface ItemRow {
   imageUrl?: string | null;
   /** 属するカテゴリ（アイテムページの並び順） */
   groups: string[];
+  /** まとめ投げの段階しきい値（0022・2026-09-28）。無ければ段階なし（投票券など） */
+  decorations?: BulkDecoration[];
   patterns: PatternRow[];
 }
 /** アイテムページの見出し（/playitems/payments3 のカテゴリ） */
@@ -83,6 +86,8 @@ const TIERS: SeTier[] = ["T0", "T1", "T2", "T3", "T4", "hit"];
 const KINDS: ItemKind[] = ["normal", "hit", "anim"];
 /** 種類ごとの一括割り当てを試聴するときの既定ティア */
 const KIND_PREVIEW_TIER: Record<ItemKind, SeTier> = { normal: "T2", hit: "hit", anim: "T3" };
+/** まとめ投げの段階を試聴するときの既定ティア（段階が上がるほど派手な既定音） */
+const BULK_PREVIEW_TIER: Record<BulkGrade, SeTier> = { COOL: "T2", GREAT: "T3", FANTASTIC: "T4", MIRACLE: "T4", TAMAYA: "T4", NYANDERFUL: "T4", WONDERFUL: "T4", KP: "T3" };
 
 /**
  * 2026-09-26 修正: 音源のアップロードが「何も起きない」問題。
@@ -117,6 +122,15 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
   /** "all" = すべて / "none" = 分類なし（販売終了・その他） / それ以外は group_key */
   const [groupFilter, setGroupFilter] = useState<string>("all");
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  /** アイテム別のまとめ投げ段階（bulk:item:{id}:{段階}）の行を開いているアイテム */
+  const [bulkOpen, setBulkOpen] = useState<Set<number>>(() => new Set());
+  const toggleBulk = (itemId: number) =>
+    setBulkOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      return next;
+    });
   const [msg, setMsg] = useState<string | null>(null);
   // 2026-09-26: メッセージは一覧の上にしか出ておらず、価格帯・種類の行でアップロードに失敗しても気付けなかった。操作した行の直下にも出す
   const [msgKey, setMsgKey] = useState<string | null>(null);
@@ -402,6 +416,31 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
         </div>
       </div>
 
+      {/* まとめ投げの段階ごとの割り当て（2026-09-28） */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h4 className="mb-1 text-sm font-bold text-foreground">まとめ投げの段階ごとの SE（クール / グレート / ファンタスティック / ミラクル）</h4>
+        <p className="mb-1 text-xs text-muted-foreground">
+          1 回のコメントでまとめて投げられた個数がアイテムごとのしきい値に達すると、ふわっちの画面と同じ段階が付きます（例: バスケットはクール 25個〜・グレート 50個〜・ファンタスティック 100個〜・ミラクル 200個〜、花火系はクール 2個〜・ミラクル 10個〜）。
+          しきい値はふわっちから毎日同期し、各アイテムのカードに表示します。段階が付いたギフトはここの音が鳴り、アイテム個別の音より優先されます（当たりの個別割り当ては段階より優先）
+        </p>
+        <p className="mb-3 text-xs text-muted-foreground">
+          {items ? `しきい値のあるアイテム ${items.filter((i) => (i.decorations?.length ?? 0) > 0).length} 件` : ""}
+          {items && items.every((i) => (i.decorations?.length ?? 0) === 0) ? " · しきい値が未同期です（drizzle/0022 の適用と「Whowatch item patterns sync」の実行が必要）" : ""}
+          。特定のアイテムだけ段階ごとに変えたい場合は、そのアイテムのカードの「段階ごとに設定」を開いてください
+        </p>
+        <div className="space-y-2">
+          {MAIN_BULK_GRADES.map((g) => (
+            <div key={g} className="flex flex-wrap items-center gap-2 border-b border-border py-2 text-xs last:border-0">
+              <span className="w-44 shrink-0 text-foreground">
+                {BULK_GRADE_LABELS[g]}
+                <span className="ml-2 text-muted-foreground">{g}</span>
+              </span>
+              <MappingControls mkeys={[bulkKey(g)]} tier={BULK_PREVIEW_TIER[g]} {...ctl([bulkKey(g)])} />
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* アイテム一覧 */}
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -576,6 +615,35 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
                             <div className="mt-2 border-t border-border pt-2">
                               <MappingControls mkeys={[`item:${it.itemId}`]} tier={tier} {...ctl([`item:${it.itemId}`])} />
                             </div>
+                            {(it.decorations?.length ?? 0) > 0 && (
+                              <div className="mt-2 border-t border-border pt-2 text-xs">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="text-muted-foreground">まとめ投げ: {describeDecorations(it.decorations)}</span>
+                                  <button type="button" onClick={() => toggleBulk(it.itemId)} className="min-h-8 rounded-full border border-border bg-muted px-2 text-[11px] text-foreground hover:border-foreground/30">
+                                    {bulkOpen.has(it.itemId) ? "段階ごとの設定を閉じる" : "段階ごとに設定"}
+                                  </button>
+                                  {MAIN_BULK_GRADES.some((g) => isUser(bulkItemKey(it.itemId, g))) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5 text-status-warning">段階別 割り当て済み</span>}
+                                </div>
+                                {bulkOpen.has(it.itemId) &&
+                                  [...(it.decorations ?? [])]
+                                    .sort((a, b) => a.count - b.count)
+                                    .map((d) => {
+                                      const k = bulkItemKey(it.itemId, d.grade);
+                                      return (
+                                        <div key={k} className="mt-2 border-t border-border pt-2">
+                                          <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-status-warning">
+                                            <span>
+                                              {BULK_GRADE_LABELS[d.grade]}（{d.count}個〜）
+                                            </span>
+                                            <span className="text-muted-foreground">このアイテムだけ。未設定なら上の「まとめ投げの段階ごとの SE」が鳴る</span>
+                                            {isUser(k) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5">上書き中</span>}
+                                          </div>
+                                          <MappingControls mkeys={[k]} tier={BULK_PREVIEW_TIER[d.grade]} {...ctl([k])} />
+                                        </div>
+                                      );
+                                    })}
+                              </div>
+                            )}
                             {special.map((g) => {
                               const keys = g.patternIds.map((id) => `pattern:${id}`);
                               return (
