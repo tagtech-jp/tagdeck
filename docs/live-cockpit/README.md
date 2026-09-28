@@ -429,6 +429,22 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - 表示(2026-09-26 追記): SE タブの「価格ありのみ」(既定 ON)がカテゴリ内の無料アイテムまで隠していたため「反映されていない」ように見えた。イベントのカテゴリに属する無料アイテムは ON でも表示し、価格欄は「無料(イベント配布)」と出す。「価格ありのみ」が隠すのは分類なしの無料アイテムだけ
 - 社長作業: (1) `drizzle/0021_free_event_items_manual.sql` を適用 (2) Actions「Whowatch item patterns sync (manual)」を 1 回実行(応答 `freeItems.rows`)
 
+## S14: item_point_mapping のイベント限定アイテム漏れ・単価の定義統一・OBS 向け JSON エクスポート(実装済み・2026-09-28)
+
+社長指示「item_point_mapping にイベント限定アイテムが漏れている。漏れを完全になくす」への対応。
+
+- 原因は 2 つ。(1) 13100 おばあさんたぬっち・有料 5 種は本番 DB には日次同期で入っていたが、tagtech-OBS の単価表が社長の手作業 CSV(9/25)のままで反映されていなかった。(2) 13097/13098/13099 の無料配布は取得元 `/playitems/payments3` が**買えるアイテムしか返さない**ため構造的に同期対象外だった
+- `scripts/platforms/whowatch/sync_items_and_events.py`(GitHub Actions `daily-sync.yml`・毎日 JST 0:00)
+  - **単価の定義を「1 個あたりの定価(まとめ買い割引前)」に統一**(社長決定 2026-09-28)。`price_jpy` = `base_point` = OPEN 商品のうち最小個数の商品の price ÷ quantity(四捨五入。SE 側 `whowatch_item_prices.unit_price_jpy` と同じ定義)。従来は「最初の商品の価格」で、3 個入り ¥90 のスターが 90、40 個入り ¥50 の風船が 50 になっていた(37 行が変わる。同期ログの `prices_changed` と stderr の明細で確認できる)
+  - **無料配布アイテムを追加**: `/playitems`(マスタ・認証不要)のうち payments3 に無く、画像フォルダ `events/YYYY/MM_key/` が pre/open イベントの event_key に一致するものを `price_jpy=0, state=FREE, product_id=""` で入れる(`free-event-items.ts` と同じ規則)。過去イベント・販売終了は価格不明なので行を作らない(0 を推測で書かない。`price_jpy` は NOT NULL)
+  - 列の意味: `price_jpy` 1 個あたりの定価(円)/ `base_point` 同値(互換)/ `product_id` 定価の元になった商品 / `state` OPEN・CLOSED(商品の state)・FREE(無料配布)/ `whowatch_id` 数値 item_id
+  - `--dry-run --out rows.json` で DB に書かず行を確認できる。完了ログに `items_free` / `items_added` / `prices_changed`
+  - pytest 29 件(`cd scripts/platforms/whowatch && python -m pytest test_sync_items_and_events.py`)。古い fixture 3 件(has_animation の位置・ended_at のエポック ms)も 2026-07 の実 API 形に直した
+- **`GET /api/platforms/whowatch/items/export`(新規)**: tagtech-OBS の単価表用。認証は X-Sync-Key(`RANKING_SYNC_KEY`・`SYNC_ROUTES` に登録)またはログイン Cookie。`{item_id, item_name, price_jpy, purchasable, event_id, event_key, group_keys, state, on_sale, last_fetched_at}`。`purchasable` = FREE でなく商品あり、`event_key` = `whowatch_item_groups.event_key`(無料行)→ 無ければカテゴリ key を `whowatch_events.item_group_key` で逆引き(有料行の event_key が null のままになる `syncItemGroups` の既存不具合の回避。不具合自体は未修正・TODO)。純関数 `src/lib/whowatch/item-export.ts`
+- `items/patterns` ルート: item_point_mapping 由来の価格が 0 / FREE のときは従来どおり `priceJpy=null`(SE タブの「無料(イベント配布)」表示と T0 判定を維持)
+- スキーマ変更なし(社長決定)。ロールバック: PR を revert → `daily-sync` 再実行で 37 行は旧定義に戻る。無料行は `DELETE FROM item_point_mapping WHERE platform='whowatch' AND state='FREE';`
+- 運用: イベント開始時に人手ですることは無い(翌 0:00 の同期で入る。急ぐなら Actions `daily-sync` を手動実行)。OBS 側は起動時にこのルートを取りに来る(tagtech-OBS AGENTS.md「単価の取り込み」)
+
 ## S13: まとめ投げの段階(クール / グレート / ファンタスティック / ミラクル)と倍率の当たりを個別に設定(実装済み・2026-09-28)
 
 社長指示「イベントアイテムなどのまとめ投げしたときのクール・グレート・ファンタスティック・ミラクルも個別に設定できるようにしたい。解析と修正可能か?」への対応。
