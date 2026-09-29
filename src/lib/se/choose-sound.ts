@@ -3,7 +3,7 @@
 // 優先順（S15）:
 //   1. ユーザー／公式既定の個別行: bulk:item:{id}:{段階} → pattern:{id} → bulk:{段階} → item:{id}
 //      同じ key の変種（key#2〜key#5）があればランダムに 1 本（鳴らす ON かつ音源あり。全部 OFF なら「鳴らさない」）
-//   2. 自動ライブラリ（auto-library.ts）: 段階 → 当たり → アイテム名のテーマ
+//   2. 自動ライブラリ（auto-library.ts）: 段階 → 当たり → アイテム名のテーマ（無料アイテムは控えめな音 lite-hit / lite-{テーマ}）
 //   3. ユーザー／公式既定の一括行: cat:group:{key} → cat:kind:{種類} → tier:{T0..T4|hit}（変種ランダム）
 //   4. 自動ライブラリの価格帯の既定（tier-T0..T4 / hit）
 //   5. null（engine.ts の合成音）
@@ -34,6 +34,8 @@ export interface PlayTarget {
   kind?: ItemKind | null;
   groups?: readonly string[] | null;
   bulkGrade?: BulkGrade | null;
+  /** 無料アイテム（単価 0・不明）。自動ライブラリは控えめな音にする（2026-09-30） */
+  free?: boolean;
 }
 
 export interface SoundChoice {
@@ -110,7 +112,7 @@ export function chooseSound(mappings: readonly SoundRow[], t: PlayTarget, rand: 
   if (s1 === DISABLED) return "disabled";
   if (s1) return s1;
 
-  const auto = chooseAutoForItem({ itemName: t.itemName, groups: t.groups, tier: t.tier, isHit: t.isHit, bulkGrade: t.bulkGrade }, rand);
+  const auto = chooseAutoForItem({ itemName: t.itemName, groups: t.groups, tier: t.tier, isHit: t.isHit, bulkGrade: t.bulkGrade, free: t.free }, rand);
   if (auto) return { url: auto.file.file, volume: 80, label: auto.file.title, key: auto.set, source: "auto", theme: auto.theme };
 
   const generic: string[] = [];

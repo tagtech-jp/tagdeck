@@ -91,3 +91,34 @@ describe("chooseSound（価格帯の既定は素材ライブラリ・2026-09-29�
     expect(chooseSound([row("tier:T2", null, false)], t)).toBe("disabled");
   });
 });
+
+describe("chooseSound（無料アイテムは控えめ・2026-09-30 社長指示「無料が派手すぎる」）", () => {
+  const t = { patternId: 10643, itemId: 13098, itemName: "赤ずきんサイコロ", tier: "T0" as const, isHit: false, groups: ["wolfcoming"], kind: "normal" as const, free: true };
+
+  it("無料でテーマがあれば lite-{テーマ}（素材 1 つの短い音。ミックスではない）", () => {
+    const c = chooseSound([], t, () => 0);
+    expect(c).not.toBe("disabled");
+    if (c !== "disabled") {
+      expect(c.key).toBe("lite-wolf");
+      expect(c.theme).toBe("wolf");
+      expect(c.url).toMatch(/^\/se\/lib\/lite-wolf\//);
+    }
+  });
+
+  it("無料の当たり・まとめ投げも控えめ（hit / bulk のミックスにしない）", () => {
+    const hit = chooseSound([], { ...t, tier: "hit", isHit: true }, () => 0);
+    if (hit !== "disabled") expect(hit.key).toBe("lite-hit");
+    const bulk = chooseSound([], { ...t, bulkGrade: "MIRACLE" }, () => 0);
+    if (bulk !== "disabled") expect(bulk.key).toBe("lite-wolf");
+  });
+
+  it("無料でテーマが無ければカテゴリの行、それも無ければ価格帯の既定 tier-T0（控えめなポップ）", () => {
+    expect(chooseSound([row("cat:group:wgp")], { ...t, itemName: "うろこ", groups: ["wgp"] })).toMatchObject({ key: "cat:group:wgp" });
+    const c = chooseSound([], { ...t, itemName: "うろこ", groups: [] });
+    if (c !== "disabled") expect(c.key).toBe("tier-T0");
+  });
+
+  it("自分で割り当てた個別行は無料でも優先", () => {
+    expect(chooseSound([row("item:13098")], t)).toMatchObject({ key: "item:13098", source: "user" });
+  });
+});

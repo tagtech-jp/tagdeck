@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { AUTO_LIBRARY, AUTO_LIBRARY_FILE_COUNT } from "./auto-library-data";
-import { bulkSetName, chooseAutoForItem, chooseAutoForTier, coreLibraryUrls, hasLibrarySet, pickVariant, THEME_LABELS, themeForItem } from "./auto-library";
+import { AUTO_LIBRARY, AUTO_LIBRARY_FILE_COUNT, AUTO_LIBRARY_NICOMMONS_CREDITS } from "./auto-library-data";
+import { bulkSetName, chooseAutoForItem, chooseAutoForTier, coreLibraryUrls, hasLibrarySet, liteSetFor, pickVariant, THEME_LABELS, themeForItem } from "./auto-library";
 
 describe("themeForItem（アイテム名 → テーマ）", () => {
   it.each([
@@ -50,7 +50,24 @@ describe("自動ライブラリのデータ", () => {
     }
     for (const rows of Object.values(AUTO_LIBRARY)) for (const f of rows) expect(f.file).toMatch(/^\/se\/lib\/[A-Za-z0-9-]+\/[A-Za-z0-9_-]+\.mp3$/);
     expect(AUTO_LIBRARY_FILE_COUNT).toBeGreaterThan(200);
-    for (const theme of Object.keys(AUTO_LIBRARY)) if (!/^(tier-|bulk-|hit$)/.test(theme)) expect(THEME_LABELS[theme], theme).toBeDefined();
+    for (const theme of Object.keys(AUTO_LIBRARY)) if (!/^(tier-|bulk-|lite-|hit$)/.test(theme)) expect(THEME_LABELS[theme], theme).toBeDefined();
+    // 無料アイテムの控えめな音（2026-09-30）: テーマごとの lite-* はテーマ名が THEME_LABELS にあり、1 本 3 秒未満
+    for (const [set, rows] of Object.entries(AUTO_LIBRARY)) {
+      if (!set.startsWith("lite-") || set === "lite-hit") continue;
+      expect(THEME_LABELS[set.slice(5)], set).toBeDefined();
+      for (const f of rows) expect(f.seconds, f.file).toBeLessThan(3);
+    }
+    for (const f of [...AUTO_LIBRARY["tier-T0"], ...AUTO_LIBRARY["lite-hit"]]) expect(f.seconds, f.file).toBeLessThan(3);
+  });
+
+  it("ニコニ・コモンズのクレジットは素材番号・タイトル・作者名があり、重複しない", () => {
+    expect(AUTO_LIBRARY_NICOMMONS_CREDITS.length).toBeGreaterThan(0);
+    for (const c of AUTO_LIBRARY_NICOMMONS_CREDITS) {
+      expect(c.id).toMatch(/^nc\d+$/);
+      expect(c.title.length, c.id).toBeGreaterThan(0);
+      expect(c.author.length, c.id).toBeGreaterThan(0);
+    }
+    expect(new Set(AUTO_LIBRARY_NICOMMONS_CREDITS.map((c) => c.id)).size).toBe(AUTO_LIBRARY_NICOMMONS_CREDITS.length);
   });
 
   it("pickVariant は同じセットで直前と同じ音を避け、1 本しか無ければそれを返す", () => {
@@ -70,6 +87,16 @@ describe("自動ライブラリのデータ", () => {
     expect(chooseAutoForTier("T4")?.set).toBe("tier-T4");
     expect(chooseAutoForTier("hit")?.set).toBe("hit");
     expect(bulkSetName("TAMAYA")).toBe("bulk-FANTASTIC");
+  });
+
+  it("無料アイテムは控えめ: 当たり → lite-hit、テーマ → lite-{テーマ}、どちらも無ければ null（カテゴリ・価格帯へ）", () => {
+    expect(liteSetFor("花火", null, true)).toBe("lite-hit");
+    expect(liteSetFor("花火", null, false)).toBe("lite-fireworks");
+    expect(liteSetFor("うろこ", null, false)).toBeNull();
+    expect(chooseAutoForItem({ itemName: "花火", tier: "T0", isHit: false, bulkGrade: "MIRACLE", free: true })?.set).toBe("lite-fireworks");
+    expect(chooseAutoForItem({ itemName: "花火", tier: "hit", isHit: true, free: true })?.set).toBe("lite-hit");
+    expect(chooseAutoForItem({ itemName: "うろこ", tier: "T0", isHit: false, free: true })).toBeNull();
+    expect(chooseAutoForItem({ itemName: "花火", tier: "T3", isHit: false, free: false })?.set).toBe("fireworks");
   });
 
   it("coreLibraryUrls は価格帯・段階・当たりのセットから各 2 本（先読み用）", () => {

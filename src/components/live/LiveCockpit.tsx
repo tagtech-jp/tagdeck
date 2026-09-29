@@ -53,7 +53,9 @@ const TEST_GIFTS: Array<{ label: string; tier: SeTier; gift: Partial<Gift>; bulk
   { label: "¥500〜（チャイム）", tier: "T2", gift: { item_name: "ぶたさん ×4", price_yen: 160, count: 4 } },
   { label: "¥2,000〜（ファンファーレ・短）", tier: "T3", gift: { item_name: "花火", price_yen: 1000, count: 2 } },
   { label: "¥5,000〜（ファンファーレ）", tier: "T4", gift: { item_name: "大花火 ×3", price_yen: 2000, count: 3 } },
-  { label: "当たり（ジングル）", tier: "hit", gift: { item_name: "ひよこのあたり", price_yen: 0, count: 1, is_hit: true } },
+  { label: "当たり（ジングル）", tier: "hit", gift: { item_name: "ひよこのあたり", price_yen: 160, count: 1, is_hit: true } },
+  // 無料アイテムは控えめ（2026-09-30 社長指示「無料が派手すぎる」）: 当たりでも短い 1 音
+  { label: "無料の当たり（控えめ）", tier: "hit", gift: { item_name: "バスケット", price_yen: 0, count: 1, is_hit: true } },
   // まとめ投げの段階（2026-09-28）。SE タブ「まとめ投げの段階ごとの SE」の割り当てが無ければ tier の既定音
   { label: `まとめ投げ ${BULK_GRADE_LABELS.COOL}（花火 ×2）`, tier: "T3", gift: { item_name: "花火 ×2", price_yen: 1000, count: 2 }, bulkGrade: "COOL" },
   { label: `まとめ投げ ${BULK_GRADE_LABELS.GREAT}（ぶたさん ×45）`, tier: "T4", gift: { item_name: "トンでもない応援をするぶたさん ×45", price_yen: 160, count: 45 }, bulkGrade: "GREAT" },
