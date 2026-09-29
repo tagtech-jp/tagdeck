@@ -624,7 +624,8 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     const choice = chooseSound(mappingsRef.current, { patternId: g.pattern_id, itemId: g.item_id, itemName: g.item_name ?? null, tier, isHit: g.is_hit, kind: g.kind, groups: g.groups, bulkGrade: g.bulk_grade ?? null, free });
     if (choice === "disabled") return; // 明示的に無効化
     const vol = (volumeRef.current / 100) * (choice.volume / 100);
-    await playSeUntilEnd(tier, { url: choice.url, volume: vol }, waitForEnd);
+    // 音源が取れなかったときの予備も、無料なら無料の控えめな音（tier-T0）から（無料の当たりで当たりミックスに落ちないように）
+    await playSeUntilEnd(free ? "T0" : tier, { url: choice.url, volume: vol }, waitForEnd);
   }, []);
 
   const playQueued = useCallback(

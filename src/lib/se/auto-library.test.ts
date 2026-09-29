@@ -58,6 +58,11 @@ describe("自動ライブラリのデータ", () => {
       for (const f of rows) expect(f.seconds, f.file).toBeLessThan(3);
     }
     for (const f of [...AUTO_LIBRARY["tier-T0"], ...AUTO_LIBRARY["lite-hit"]]) expect(f.seconds, f.file).toBeLessThan(3);
+    // 無料アイテムの音（tier-T0・lite-*）は単発の短い音だけ（1.3 秒以内）
+    for (const [set, rows] of Object.entries(AUTO_LIBRARY)) {
+      if (set !== "tier-T0" && !set.startsWith("lite-")) continue;
+      for (const f of rows) expect(f.seconds, f.file).toBeLessThanOrEqual(1.3);
+    }
   });
 
   it("ニコニ・コモンズのクレジットは素材番号・タイトル・作者名があり、重複しない", () => {
@@ -120,6 +125,11 @@ describe("自動ライブラリのデータ", () => {
     ["どうぶつアイスクリーム", "food"],
     ["バスケット", "pop"],
     ["ふわっちの絆", null],
+    // 2026-09-30「全てチェックして差し替えて」: 鳴き声の大きい動物・パーティー等も落ち着いたテーマへ
+    ["イベント応援するゾウ！", "cute"],
+    ["バースデーケーキ", "food"],
+    ["もりあげねこさん", "cat"],
+    ["ワイン de KP", "drink"],
   ])("無料 %s → %s", (name, theme) => {
     expect(freeThemeFor(name)).toBe(theme);
     if (theme) expect(hasLibrarySet(`lite-${theme}`), theme).toBe(true);
