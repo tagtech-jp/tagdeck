@@ -1,9 +1,11 @@
 // 自動ライブラリ（2026-09-29 社長指示「まだ音源が入っていないアイテムに似合う SE を自動で。主要アイテムは 5 種類をランダムで」）。
 //
 // 仕組み:
-//   - 音源は public/se/lib/<テーマ>/<id>.mp3 に同梱（Mixkit Sound Effects Free License・商用可・帰属不要。
-//     scratchpad の build_se_library.py がカテゴリページから 5 本ずつ選び、ffmpeg で先頭無音カット・最大 6〜8 秒・
-//     ラウドネス正規化 -16 LUFS・mp3 128k にして置く。一覧は auto-library-data.ts と public/se/lib/manifest.json）
+//   - 音源は public/se/lib/<セット>/mix1..5.mp3 に同梱。v3（2026-09-29 社長指示「パチンコの演出のように派手に・3 倍の長さ・
+//     最大 15 秒・複数音源を MIX」）: scratchpad の build_se_mix.py が Mixkit / Freesound CC0 / 魔王魂 の素材を
+//     ライザー → インパクト → テーマ音の連打 → ファンファーレ／ジャックポット／歓声 ＋ コインシャワー ＋ きらきら の順に
+//     ffmpeg で重ね（loudnorm -14 LUFS・mono 96k）、セットの派手さ（LEVEL 1〜4）で 3〜15 秒にする。
+//     各ファイルの素材と出典は public/se/lib/manifest.json の components
 //   - アイテム名（とカテゴリ key）のキーワードからテーマを決める（themeForItem）。1 テーマ最大 5 本からランダムに 1 本
 //     （直前と同じ音は避ける）
 //   - まとめ投げの段階（COOL/GREAT/FANTASTIC/MIRACLE）・当たり・価格帯の既定にもセットがある
@@ -220,8 +222,11 @@ export function chooseAutoForTier(tier: SeTier, rand: () => number = Math.random
   return f ? { set, theme: null, file: f } : null;
 }
 
-/** 起動時に先読みしておくセット（価格帯・段階・当たり）。テーマの音は鳴らす直前に取る */
-export function coreLibraryUrls(): string[] {
+/**
+ * 起動時に先読みしておくセット（価格帯・段階・当たり）。1 セット 2 本まで（v3 のミックスは 1 本 最大 15 秒 mono で
+ * デコード後 約 2.9MB。10 セット × 2 本 ≒ 60MB が上限）。残りとテーマの音は鳴らす直前に取る（engine.ts の LRU に載る）
+ */
+export function coreLibraryUrls(perSet = 2): string[] {
   const sets = ["tier-T0", "tier-T1", "tier-T2", "tier-T3", "tier-T4", "hit", "bulk-COOL", "bulk-GREAT", "bulk-FANTASTIC", "bulk-MIRACLE"];
-  return sets.flatMap((s) => libraryFiles(s).map((f) => f.file));
+  return sets.flatMap((s) => libraryFiles(s).slice(0, perSet).map((f) => f.file));
 }

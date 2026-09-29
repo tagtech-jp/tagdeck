@@ -1,9 +1,10 @@
 "use client";
 
-// S1: SE エンジン（ブラウザ専用・Web Audio）。既定パックは合成音で権利問題なし。
-//   T0 無料 = 短いポップ / T1〜T4 = 金額帯ごとに音の厚み・長さ・音量を段階化 / hit = ジングル
-//   ユーザーがアップロードした音源（URL）があればそれを再生する。
+// S1: SE エンジン（ブラウザ専用・Web Audio で音源ファイルを再生）。
+//   2026-09-29: 既定の音は素材ライブラリ（public/se/lib・auto-library.ts）。音源が無い・取れないときもライブラリの価格帯セットから鳴らす。
+//   synthTier（オシレーター合成）は素材が 1 本も取得できないとき（オフライン等）だけの非常用
 
+import { chooseAutoForTier } from "./auto-library";
 import type { SeTier } from "./tiers";
 
 export interface SePlayOptions {
@@ -16,10 +17,10 @@ export interface SePlayOptions {
 let ctx: AudioContext | null = null;
 const bufferCache = new Map<string, AudioBuffer>();
 /**
- * デコード済みバッファの上限（2026-09-29）。自動ライブラリ（約 280 本）を全部持つと数百 MB になるため、
- * 直近に使った順で残す（Map の挿入順を LRU として使う）。価格帯・段階・当たりの先読み分（約 50 本）は収まる
+ * デコード済みバッファの上限（2026-09-29）。自動ライブラリ（約 280 本・パチンコ風ミックスは 1 本 最大 15 秒）を全部持つと
+ * 数百 MB になるため、直近に使った順で残す（Map の挿入順を LRU として使う）。先読み分（価格帯・段階・当たり × 2 本 = 20 本）は収まる
  */
-export const BUFFER_CACHE_LIMIT = 96;
+export const BUFFER_CACHE_LIMIT = 24; // 2026-09-29 v3: 1 本 最大 15 秒 mono（48kHz で約 2.9MB）に合わせて 96 → 24
 function touchCache(url: string, buf: AudioBuffer): void {
   bufferCache.delete(url);
   bufferCache.set(url, buf);
@@ -309,13 +310,26 @@ export async function playSe(tier: SeTier, opts: SePlayOptions = {}): Promise<vo
  */
 export async function playSeUntilEnd(tier: SeTier, opts: SePlayOptions = {}, waitForEnd = true): Promise<void> {
   const vol = opts.volume ?? 0.8;
-  // 無音が続いて suspended / interrupted になっていたら鳴らす前に戻す（合成音の経路も含む）
+  // 無音が続いて suspended / interrupted になっていたら鳴らす前に戻す
   await ensureAudioRunning();
   let ended: Promise<void> | null = null;
   if (opts.url) ended = (await playUrl(opts.url, vol))?.ended ?? null;
+  // 2026-09-29 社長指示「既定の SE も Web Audio を使わず素材から」: 音源が無い・取れないときは素材ライブラリの
+  // 価格帯セット（public/se/lib/tier-*・hit のミックス）から鳴らす。取れなければ同じセットの別の 1 本を試す
+  for (let i = 0; !ended && i < 2; i++) {
+    const fb = libraryFallbackUrl(tier);
+    if (!fb || fb === opts.url) continue;
+    ended = (await playUrl(fb, vol))?.ended ?? null;
+  }
   if (!ended) {
+    // 非常用: 素材が 1 本も取得できない（オフライン等）ときだけ合成音。無音よりは気付けるため残す
     synthTier(tier, vol);
     ended = new Promise<void>((r) => setTimeout(r, Math.ceil(SYNTH_DURATION_S[tier] * 1000)));
   }
   if (waitForEnd) await ended;
+}
+
+/** 素材ライブラリの価格帯セットから 1 本（auto-library.ts の chooseAutoForTier）。セットが無ければ null */
+function libraryFallbackUrl(tier: SeTier): string | null {
+  return chooseAutoForTier(tier)?.file.file ?? null;
 }

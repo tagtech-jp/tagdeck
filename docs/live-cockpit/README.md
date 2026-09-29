@@ -442,7 +442,7 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 
 社長指示(2026-09-29)「まとめ投げの COOL/GREAT/FANTASTIC/MIRACLE をそれぞれ個別のアイテムに割り振る」「まだ音源が入っていないアイテムに、様々なサイトから拾った似合う SE を自動で。元の音源はクオリティが低いので豪華な音を」「主要アイテムは 5 種類の SE をランダムで」「ニコニコモンズ・DOVA-SYNDROME・freebgm.jp・魔王魂・Jamendo・Freesound なども活用」への対応。「今後はオートモードで自走して完走」の指示により承認待ちなしで実装。
 
-- **音源(約 280 本・約 12MB・`public/se/lib/<セット>/<id>.mp3`)**: 3 つの出典から自動収集し、ffmpeg で先頭無音カット・最大 3〜8 秒(セットごと)・0.4 秒フェードアウト・ラウドネス正規化(-16 LUFS)・mp3 128k に整えた。出典・作者・ライセンスは `public/se/lib/manifest.json`
+- **音源 v3「パチンコ風ミックス」(285 本・`public/se/lib/<セット>/mix1..5.mp3`)**: 社長追加指示(2026-09-29)「もっとパチンコの演出のように派手に。3 倍の長さ・最大 15 秒で組み合わせて MIX」。scratchpad `build_se_mix.py` がセットごとに素材プール(ライザー／インパクト／ドラムロール／きらきら／コイン／小・中の決め音／ファンファーレ／歓声／スロットのサイレン／花火／壮大オーケストラ)とテーマ音(Mixkit・Freesound CC0・魔王魂から上位 8 本)を用意し、乱数(セット名＋番号で固定)で 1 本 4〜15 素材を時間軸に置いて ffmpeg(adelay＋amix→loudnorm -14 LUFS→リミッター→mono 96k)で合成。派手さ LEVEL 1〜4 で長さ 3 / 6.5 / 9.5 / 14 秒(T0 3s・T4 15s・当たり 10s・COOL 6s・GREAT 9s・FANTASTIC 12s・MIRACLE 15s)。当たり・カジノ・ジャックポットにはスロットのサイレン、特大には花火＋歓声＋オーケストラを重ねる。各ファイルの素材・出典は `manifest.json` の components。v2(単発・128k・約 12MB)は _moved へ退避。engine の LRU は 24 本、先読みは価格帯・段階・当たり × 2 本
   - Mixkit(Sound Effects Free License・商用可・帰属不要): カテゴリページ(119 カテゴリ・2,477 本)からタイトル語・長さで選定
   - Freesound(検索フィルタ `license:"Creative Commons 0"`・帰属不要): 英語クエリ(pig oink / elephant trumpet / champagne cork pop 等)・ダウンロード数順・HQ プレビュー(128kbps)
   - 魔王魂(商用可・改変可・可能な限り「効果音：魔王魂」の著作表記 → SE タブと本節に記載)
@@ -453,6 +453,7 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - **1 キー最大 5 本のランダム再生**: `se_mappings.key` の末尾 `#2`〜`#5` を同じ key の変種として扱う(KEY_RE に `(?:#[2-5])?`・スキーマ変更なし)。SE タブの各行に「＋ 別の音を追加(n/5)」と変種の一覧(試聴・外す)。再生時は鳴らす ON かつ音源ありの変種からランダム
 - **まとめ投げの段階**: 個別行が無ければ自動の段階セット(COOL: 短い達成音 / GREAT: 歓声・拍手 / FANTASTIC: ファンファーレ・花火 / MIRACLE: 壮大なオーケストラ)。アイテムごとに変えたいときは従来どおり `bulk:item:{id}:{段階}` に上げる(変種も可)。TAMAYA 等の変種段階は FANTASTIC 相当
 - **再生側**: `engine.ts` のデコード済みバッファに LRU 上限 96 本(自動ライブラリ全部を持つと数百 MB になるため)。価格帯・段階・当たりのセット(約 50 本)は接続時に先読み、テーマの音は鳴らす直前に取得。`next.config.ts` の Serwist は **public/ の事前キャッシュ一覧を自前で作って `additionalPrecacheEntries` に渡し、`se/**` を除外**(全ユーザーが初回に 14MB 落とさないため。鳴らした音は runtimeCaching の static-audio-assets に載る)。経緯: `globPublicPatterns` の `"!se/**"` は glob v10 が否定を解釈せず(PR #47 で本番 sw.js に音源 305 本)、`manifestTransforms` は additionalPrecacheEntries に掛からず(PR #48 でも残った)、一覧を渡す方式で解決(PR #51 相当)。確認は `curl -s https://tagdeck.jp/sw.js | grep -o '/se/lib/' | wc -l` が 0(CF のエッジキャッシュは数分残る)
+- **既定 SE も素材から(2026-09-29 社長指示「既定の SE も Web Audio を使わず、素材から探して」)**: 価格帯(tier:T0〜T4・hit)は **自分で上げた行だけ** を優先し、公式既定の旧音源(クイズ正解・コイン・レジ等)と汎用の「きらきら輝く1」は使わず、素材ライブラリの価格帯セット(tier-T0〜T4・hit のパチンコ風ミックス 5 本ランダム)を鳴らす(`choose-sound.ts`)。音量・鳴らすだけ変えた自分の行(url null)はその音量でライブラリ。`engine.ts` の予備も合成音ではなくライブラリの価格帯セット(別の 1 本まで再試行)。Web Audio 合成は **素材が 1 本も取得できないとき(オフライン等)だけ** の非常用。SE タブの価格帯行は「既定 ♪ 素材ライブラリ」と表示し、試聴もライブラリ
 - **UI**: SE タブに「自動ライブラリ」カード(価格帯・段階・当たりの試聴)、各アイテムのカードに「自動: テーマ名(n 本ランダム)▶試聴」。ライブタブのテスト再生に「自動: 花火」「自動: ねこ」
 - 未対応: テーマ×段階の組み合わせ(花火の COOL だけ別音 等)は手動の `bulk:item` で。テーマ判定は名前ベースなので固有名詞(「ガラスの靴」「セバスチャン」等 約 800 件)は価格帯の既定に落ちる。魔王魂の SE はカタログ(約 90 本・システム音・戦闘・ボイス中心)からキーワード一致分だけ
 
