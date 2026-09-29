@@ -8,8 +8,8 @@ import { ensureUserRow } from "@/lib/db/ensure-user";
 import { BULK_KEY_RE_SOURCE } from "@/lib/se/bulk-grade";
 
 // cat:kind = 種類の一括割り当て / cat:group = イベント別（第 2 弾）
-// bulk: = まとめ投げの段階（全アイテム共通 / アイテム別・2026-09-28）
-const KEY_RE = new RegExp(`^(pattern:\\d{1,10}|item:\\d{1,10}|cat:kind:(normal|hit|anim)|cat:group:[A-Za-z0-9_#-]{1,64}|tier:(T0|T1|T2|T3|T4|hit)|${BULK_KEY_RE_SOURCE})$`);
+// bulk: = まとめ投げの段階（全アイテム共通 / アイテム別・2026-09-28）。末尾 #2〜#5 は同じ key の変種（最大 5 本をランダム再生・2026-09-29）
+const KEY_RE = new RegExp(`^(pattern:\\d{1,10}|item:\\d{1,10}|cat:kind:(normal|hit|anim)|cat:group:[A-Za-z0-9_#-]{1,64}|tier:(T0|T1|T2|T3|T4|hit)|${BULK_KEY_RE_SOURCE})(?:#[2-5])?$`);
 
 /**
  * GET /api/se/mappings → 自分の SE 割り当て一覧（S1）+ 公式既定（S4: 同期元ユーザーの現在の割り当て）

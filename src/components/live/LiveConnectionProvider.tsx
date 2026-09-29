@@ -3,7 +3,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { ensureAudioRunning, getAudioContext, getAudioState, installAudioAutoResume, playSeUntilEnd, preloadSe, startKeepAlive, stopKeepAlive, unlockAudio, type AudioState } from "@/lib/se/engine";
 import { createSeQueue } from "@/lib/se/queue";
-import { resolveMappingKey, tierForGift, type SeTier } from "@/lib/se/tiers";
+import { tierForGift, type SeTier } from "@/lib/se/tiers";
+import { chooseSound } from "@/lib/se/choose-sound";
+import { coreLibraryUrls } from "@/lib/se/auto-library";
 import { nextPollDelay, partitionFreshGifts, pollIntervalFor } from "@/lib/live/polling";
 import { idlePollInterval, INITIAL_AUTO_CONNECT_STATE, reduceAutoConnect, type AutoConnectPhase } from "@/lib/live/auto-connect";
 import { INITIAL_MASTER_STATE, masterFailed, masterSucceeded, retryCountdownSec, type MasterState } from "@/lib/live/master-retry";
@@ -194,7 +196,7 @@ interface LiveConnectionValue {
   setAutoConnect: (on: boolean) => void;
   start: () => Promise<void>;
   stop: () => void;
-  playGift: (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[]; bulk_grade?: Gift["bulk_grade"] }, forceTier?: SeTier, waitForEnd?: boolean) => Promise<void>;
+  playGift: (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[]; bulk_grade?: Gift["bulk_grade"]; item_name?: string | null }, forceTier?: SeTier, waitForEnd?: boolean) => Promise<void>;
   pushTestGift: (g: Gift) => void;
   /** ?debug=1 のときだけ生コメントと計測ログを集める */
   setDebug: (v: boolean) => void;
@@ -441,7 +443,8 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   // 初めて鳴る種類でも取得＋デコードを待たずに即時で鳴らすため（音が未解除のうちは AudioContext を作らない）
   useEffect(() => {
     if (!audioReady) return;
-    void preloadSe(mappings.filter((m) => m.enabled).map((m) => m.url));
+    // 自動ライブラリの価格帯・段階・当たり（約 50 本）も先読み。テーマの音は鳴らす直前に取る（engine の LRU に載る）
+    void preloadSe([...mappings.filter((m) => m.enabled).map((m) => m.url), ...coreLibraryUrls()]);
   }, [mappings, audioReady]);
   useEffect(() => {
     autoPlayRef.current = autoPlay;
@@ -561,17 +564,13 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
    * ギフト 1 件の SE を鳴らす。waitForEnd=true（キューからの呼び出し）なら鳴り終わるまで待つ。
    * 連続ギフトは前の音が終わってから次を鳴らす（重ねると長い音源で 2 発目以降が埋もれる）
    */
-  const playGift = useCallback(async (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[]; bulk_grade?: Gift["bulk_grade"] }, forceTier?: SeTier, waitForEnd = false) => {
+  const playGift = useCallback(async (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[]; bulk_grade?: Gift["bulk_grade"]; item_name?: string | null }, forceTier?: SeTier, waitForEnd = false) => {
     const tier = forceTier ?? tierForGift({ priceYen: g.price_yen, count: g.count, isHit: g.is_hit });
-    // まとめ投げの段階（2026-09-28）: bulk:item:{id}:{段階} → pattern → bulk:{段階} → item … の順で解決（tiers.ts）
-    const target = { patternId: g.pattern_id, itemId: g.item_id, tier, kind: g.kind, groups: g.groups, bulkGrade: g.bulk_grade ?? null };
-    const enabledKeys = new Set(mappingsRef.current.filter((m) => m.enabled).map((m) => m.key));
-    const disabledKeys = new Set(mappingsRef.current.filter((m) => !m.enabled).map((m) => m.key));
-    const key = resolveMappingKey(enabledKeys, target);
-    if (!key && resolveMappingKey(disabledKeys, target)) return; // 明示的に無効化
-    const m = key ? mappingsRef.current.find((x) => x.key === key) : undefined;
-    const vol = (volumeRef.current / 100) * ((m?.volume ?? 80) / 100);
-    await playSeUntilEnd(tier, { url: m?.url ?? null, volume: vol }, waitForEnd);
+    // 2026-09-29: 個別行（変種ランダム）→ 自動ライブラリ（段階・当たり・アイテム名のテーマ）→ 一括行 → 自動の価格帯既定 → 合成音（choose-sound.ts）
+    const choice = chooseSound(mappingsRef.current, { patternId: g.pattern_id, itemId: g.item_id, itemName: g.item_name ?? null, tier, isHit: g.is_hit, kind: g.kind, groups: g.groups, bulkGrade: g.bulk_grade ?? null });
+    if (choice === "disabled") return; // 明示的に無効化
+    const vol = (volumeRef.current / 100) * (choice.volume / 100);
+    await playSeUntilEnd(tier, { url: choice.url, volume: vol }, waitForEnd);
   }, []);
 
   const playQueued = useCallback(
