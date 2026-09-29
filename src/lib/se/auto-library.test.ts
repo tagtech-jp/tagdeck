@@ -58,10 +58,10 @@ describe("自動ライブラリのデータ", () => {
       for (const f of rows) expect(f.seconds, f.file).toBeLessThan(3);
     }
     for (const f of [...AUTO_LIBRARY["tier-T0"], ...AUTO_LIBRARY["lite-hit"]]) expect(f.seconds, f.file).toBeLessThan(3);
-    // 無料アイテムの音（tier-T0・lite-*）は単発の短い音だけ（1.3 秒以内）
+    // 無料アイテムの音（tier-T0・lite-*）は単発の短い音だけ（1.5 秒まで）
     for (const [set, rows] of Object.entries(AUTO_LIBRARY)) {
       if (set !== "tier-T0" && !set.startsWith("lite-")) continue;
-      for (const f of rows) expect(f.seconds, f.file).toBeLessThanOrEqual(1.3);
+      for (const f of rows) expect(f.seconds, f.file).toBeLessThanOrEqual(1.6);
     }
   });
 
@@ -96,37 +96,39 @@ describe("自動ライブラリのデータ", () => {
 
   it("無料アイテムは控えめ: 当たり → lite-hit、名前のテーマ → lite-{落ち着いたテーマ}、どちらも無ければ null（カテゴリ・価格帯へ）", () => {
     expect(liteSetFor("花火", null, true)).toBe("lite-hit");
-    expect(liteSetFor("花火", null, false)).toBe("lite-sparkle");
+    expect(liteSetFor("花火", null, false)).toBe("lite-fireworks");
     expect(liteSetFor("うろこ", null, false)).toBeNull();
-    expect(liteSetFor("バスケット", ["wolfcoming"], false)).toBe("lite-pop"); // イベントのカテゴリからは決めない（オオカミの遠吠えにしない）
-    expect(chooseAutoForItem({ itemName: "花火", tier: "T0", isHit: false, bulkGrade: "MIRACLE", free: true })?.set).toBe("lite-sparkle");
+    expect(liteSetFor("バスケット", ["wolfcoming"], false)).toBe("lite-wolf"); // 名前で決まらなければイベントのカテゴリから（「バス」ケットは乗り物にしない）
+    expect(chooseAutoForItem({ itemName: "花火", tier: "T0", isHit: false, bulkGrade: "MIRACLE", free: true })?.set).toBe("lite-fireworks");
     expect(chooseAutoForItem({ itemName: "花火", tier: "hit", isHit: true, free: true })?.set).toBe("lite-hit");
     expect(chooseAutoForItem({ itemName: "うろこ", tier: "T0", isHit: false, free: true })).toBeNull();
     expect(chooseAutoForItem({ itemName: "花火", tier: "T3", isHit: false, free: false })?.set).toBe("fireworks");
   });
 
   it.each([
-    // 2026-09-30 時点のイベントの無料アイテム（実データ）。派手なテーマは落ち着いたテーマに置き換える
+    // 2026-09-30 時点のイベントの無料アイテム（実データ）。アイテム名の最後に出てくる言葉のテーマ
     ["赤ずきんサイコロ", "dice"],
     ["赤ずきんダッシュサイコロ", "dice"],
-    ["ジャックポットチャンス", "coin"],
-    ["石油王スロット", "coin"],
-    ["オータムチャレンジカード", "sparkle"],
-    ["オータムチャレンジ倍率決定", "sparkle"],
-    ["夏祭りカード", "sparkle"],
-    ["突入", "sparkle"],
-    ["ふわっち11周年記念花火", "sparkle"],
-    ["花火", "sparkle"],
+    ["ジャックポットチャンス", "casino"],
+    ["石油王スロット", "jackpot"],
+    ["オータムチャレンジカード", "casino"],
+    ["オータムチャレンジ倍率決定", "casino"],
+    ["夏祭りカード", "casino"],
+    ["突入", "casino"],
+    ["ふわっち11周年記念花火", "fireworks"],
+    ["花火", "fireworks"],
     ["11周年バルーン", "balloon"],
-    ["銀のいいね！", "pop"],
+    ["銀のいいね！", "cheer"],
     ["銀の貯金箱", "coin"],
     ["銀のKP", "drink"],
     ["クリスタルハート", "heart"],
     ["どうぶつアイスクリーム", "food"],
-    ["バスケット", "pop"],
+    ["バスケット", null],
     ["ふわっちの絆", null],
-    // 2026-09-30「全てチェックして差し替えて」: 鳴き声の大きい動物・パーティー等も落ち着いたテーマへ
-    ["イベント応援するゾウ！", "cute"],
+    // 応援アイテムは動物名が最後に来る（応援 → 歓声 ではなく動物の声）
+    ["イベント応援するゾウ！", "elephant"],
+    ["トンでもない応援をするぶたさん", "pig"],
+    ["ワンチャン33倍の応援をするワンちゃんさん", "dog"],
     ["バースデーケーキ", "food"],
     ["もりあげねこさん", "cat"],
     ["ワイン de KP", "drink"],

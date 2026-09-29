@@ -102,13 +102,13 @@ describe("chooseSound（無料アイテムは控えめ・2026-09-30 社長指示
       expect(c.key).toBe("lite-dice");
       expect(c.theme).toBe("dice");
       expect(c.url).toMatch(/^\/se\/lib\/lite-dice\//);
-      expect(c.volume).toBe(55);
+      expect(c.volume).toBe(65);
     }
   });
 
   it("無料の当たり・まとめ投げも控えめ（hit / bulk のミックスにしない）", () => {
     const hit = chooseSound([], { ...t, tier: "hit", isHit: true }, () => 0);
-    if (hit !== "disabled") expect(hit).toMatchObject({ key: "lite-hit", volume: 55 });
+    if (hit !== "disabled") expect(hit).toMatchObject({ key: "lite-hit", volume: 65 });
     const bulk = chooseSound([], { ...t, bulkGrade: "MIRACLE" }, () => 0);
     if (bulk !== "disabled") expect(bulk.key).toBe("lite-dice");
   });
@@ -121,10 +121,10 @@ describe("chooseSound（無料アイテムは控えめ・2026-09-30 社長指示
   it("無料でテーマが無ければカテゴリの行、それも無ければ価格帯の既定 tier-T0（控えめなポップ）", () => {
     expect(chooseSound([row("cat:group:wgp")], { ...t, itemName: "うろこ", groups: ["wgp"] })).toMatchObject({ key: "cat:group:wgp" });
     const c = chooseSound([], { ...t, itemName: "うろこ", groups: [] });
-    if (c !== "disabled") expect(c).toMatchObject({ key: "tier-T0", volume: 55 });
-    // イベントのカテゴリ（wolfcoming）からはテーマを決めない（バスケットはオオカミの遠吠えではなく控えめなポップ音）
+    if (c !== "disabled") expect(c).toMatchObject({ key: "tier-T0", volume: 65 });
+    // 名前で決まらなければイベントのカテゴリ（wolfcoming）から（バスケット → オオカミの単発音）
     const basket = chooseSound([], { ...t, itemName: "バスケット" }, () => 0);
-    if (basket !== "disabled") expect(basket.key).toBe("lite-pop");
+    if (basket !== "disabled") expect(basket.key).toBe("lite-wolf");
   });
 
   it("自分で割り当てた個別行は無料でも優先", () => {

@@ -9,8 +9,9 @@
 //     v4（2026-09-30 社長指示「ニコニ・コモンズも活用」）: build_se_mix4.py がニコニ・コモンズの素材（利用範囲がインターネット上・
 //     配信での収益化 OK・親作品登録不要・権利や内容を 1 件ずつ確認したもの）をテーマ音の主役・確定音（キュイン）・フィーバー・
 //     ファンファーレ・歓声などに加え、素材ごとに音量をそろえて v4-1..5.mp3 を作る。使った素材の一覧は AUTO_LIBRARY_NICOMMONS_CREDITS。
-//     無料アイテム（2026-09-30 社長指示「無料が派手すぎる」「全てチェックして差し替えて」）は build_se_calm.py の控えめな音:
-//     tier-T0（テーマなし）・lite-hit（当たり）・lite-{落ち着いたテーマ}（素材を 1 本ずつ選んだ単発音・1.0〜1.2 秒・-22 LUFS）
+//     無料アイテム（2026-09-30 社長指示「無料が派手すぎる」→「控え目すぎるのでもうすこしテーマに合わせて」）は build_se_theme_lite.py の
+//     単発音: tier-T0（テーマなし）・lite-hit（当たり）・lite-{テーマ}（全テーマ・素材を 1 本ずつ選んだ単発音・1.5 秒まで・-19 LUFS）。
+//     テーマはアイテム名の最後の言葉（freeThemeFor）
 //   - アイテム名（とカテゴリ key）のキーワードからテーマを決める（themeForItem）。1 テーマ最大 5 本からランダムに 1 本
 //     （直前と同じ音は避ける）
 //   - まとめ投げの段階（COOL/GREAT/FANTASTIC/MIRACLE）・当たり・価格帯の既定にもセットがある
@@ -117,7 +118,7 @@ const NAME_RULES: ReadonlyArray<readonly [string, RegExp]> = [
   ["music", /音符|マイク|歌|ダンス|DJ|ラジオ|ピアノ|ギター|太鼓|音楽|ミュージック|オーケストラ|楽器|リクエスト|オトノバ/],
   ["food", /ケーキ|パン|バーガー|ドーナツ|アイス|パフェ|クレープ|オムライス|カレー|スイーツ|チョコ|団子|さくらんぼ|いちご|スイカ|柿|ポテト|えだまめ|クッキー|ピザ|寿司|ラーメン|たこ焼き|焼き|肉|フルーツ|バナナ|りんご|メロン|ぶどう|パンケーキ|プリン|タルト|ベーカリー|グルメ|飯|弁当|おにぎり|カフェ|バーベキュー|クッキング/],
   ["flower", /花|バラ|ローズ|ブーケ|花束|リース|どんぐり|紅葉|葉|桜|さくら|チューリップ|ひまわり|コスモス|梅|藤|あじさい|紫陽花|クローバー|オータム|春|秋|森|ガーデン|木/],
-  ["vehicle", /トラック|車|バイク|電車|新幹線|飛行機|バス|タクシー|パトカー|救急車|消防車/],
+  ["vehicle", /トラック|車|バイク|電車|新幹線|飛行機|バス(?!ケット)|タクシー|パトカー|救急車|消防車/],
   ["kids", /こども|子ども|赤ちゃん|ベビー|おもちゃ|トイ|園児|ランドセル/],
   ["laser", /レーザー|ビーム|電撃|サイバー|ネオン|エレクトリック|ハイテク/],
   ["epic", /ウルトラ|ペタ|テラ|ギガ|メガ|超|究極|デラックス|スペシャル|プレミアム|ゴージャス|豪華|最高級|パック/],
@@ -201,55 +202,46 @@ export function bulkSetName(grade: BulkGrade): string {
 }
 
 /**
- * 無料アイテムでもそのまま使う落ち着いたテーマ。控えめな音（lite-{テーマ}）はこのテーマだけ作る（scratchpad build_se_calm.py・
- * 素材を 1 本ずつ選んだ単発の短い音・1.0〜1.2 秒・-22 LUFS）。2026-09-30 社長指示「無料がまだ派手な音があるので全てチェックして差し替えて」で
- * ゾウ・さる・うま（叫び・いななき）、子ども（笑い声）、パーティー（クラッカー）、音楽（リフ・ジングル）、魔法（雷の攻撃音）を外した
+ * 無料アイテムのテーマ（2026-09-30 社長指示「無料が控え目すぎるのでもうすこしテーマに合わせてほしい」）。
+ * アイテム名の **最後に出てくる言葉**（日本語の複合語の中心になる名詞）でテーマを決める: 赤ずきんサイコロ → サイコロ、
+ * ふわっち11周年記念花火 → 花火（「花」より「花火」が後ろまで続く）、イベント応援するゾウ！ → ゾウ、石油王スロット → スロット。
+ * 同じ位置で終わるときは NAME_RULES の順。名前で決まらなければカテゴリ key（GROUP_RULES）から補う（バスケット → wolfcoming → オオカミ）。
+ * 無料の音はどのテーマも「そのテーマらしい単発の音」（lite-{テーマ}・素材 1 つ・1.5 秒まで・-19 LUFS。scratchpad build_se_theme_lite.py）なので、
+ * 派手なテーマを別のテーマに置き換えることはしない（v5 で置き換えたら控えめすぎた）
  */
-const CALM_THEMES: ReadonlySet<string> = new Set(["pop", "cute", "sparkle", "heart", "balloon", "coin", "bell", "flower", "food", "drink", "dice", "cat", "dog", "pig", "cow", "bird", "christmas", "sea"]);
-/** 落ち着いたテーマのうち汎用のもの（派手なテーマの代わりを名前から探すときは使わない） */
-const GENERIC_CALM_THEMES: ReadonlySet<string> = new Set(["flower", "sparkle", "pop"]);
-/** 派手なテーマ → 無料アイテムで代わりに使う落ち着いたテーマ（2026-09-30 社長指示「イベントの無料アイテムが派手すぎる」ほか） */
-const FREE_THEME_MAP: Readonly<Record<string, string>> = {
-  jackpot: "coin", casino: "sparkle", fanfare: "sparkle", trophy: "sparkle", win: "sparkle", epic: "sparkle", fireworks: "sparkle",
-  party: "sparkle", music: "sparkle", magic: "sparkle",
-  cheer: "pop", wow: "pop", explosion: "pop", thunder: "pop", fire: "pop", laser: "pop", battle: "pop", rocket: "pop", vehicle: "pop", whoosh: "pop", notify: "pop",
-  wolf: "cute", lion: "cute", bear: "cute", halloween: "cute", elephant: "cute", monkey: "cute", horse: "cute", kids: "cute",
-};
-
-/**
- * 無料アイテムのテーマ。名前だけで決め（イベントのカテゴリからは決めない: バスケット → オオカミの遠吠え を避ける）、
- * 最初に当たったテーマが落ち着いていればそれ。派手なら、名前に当たる具体的な物の落ち着いたテーマを探し（赤ずきんサイコロ →
- * オオカミではなくサイコロ）、無ければ FREE_THEME_MAP で置き換える（石油王スロット → コイン、花火 → キラキラ）。名前で決まらなければ null
- */
-export function freeThemeFor(itemName: string | null | undefined): string | null {
+export function freeThemeFor(itemName: string | null | undefined, groups: readonly string[] | null | undefined = null): string | null {
   const name = (itemName ?? "").replace(STRIP_RE, "");
-  if (!name) return null;
-  let first: string | null = null;
-  for (const [theme, re] of NAME_RULES) {
-    if (!re.test(name)) continue;
-    if (first === null) {
-      if (CALM_THEMES.has(theme)) return theme;
-      first = theme;
-      continue;
+  let best: { theme: string; end: number } | null = null;
+  if (name) {
+    for (const [theme, re] of NAME_RULES) {
+      const g = new RegExp(re.source, "g");
+      let m: RegExpExecArray | null;
+      let end = -1;
+      while ((m = g.exec(name)) !== null) {
+        end = Math.max(end, m.index + m[0].length);
+        if (m[0].length === 0) g.lastIndex++;
+      }
+      if (end > (best?.end ?? -1)) best = { theme, end };
     }
-    // 派手なテーマが先に当たったときは、具体的な物の落ち着いたテーマ（サイコロ・コイン・動物など）だけを探す。
-    // 花・祭り・キラキラのような汎用テーマは部分一致しやすい（「花火」の「花」）ので探さない
-    if (CALM_THEMES.has(theme) && !GENERIC_CALM_THEMES.has(theme)) return theme;
   }
-  return first ? (FREE_THEME_MAP[first] ?? "pop") : null;
+  if (best) return best.theme;
+  for (const g of groups ?? []) {
+    for (const [theme, re] of GROUP_RULES) if (re.test(g)) return theme;
+  }
+  return null;
 }
 
-/** 無料アイテムの音量（自動ライブラリの有料は 80）。控えめな音をさらに一段小さく（2026-09-30） */
-export const FREE_AUTO_VOLUME = 55;
+/** 無料アイテムの音量（自動ライブラリの有料は 80）。v5 の 55 は控えめすぎたので 65（2026-09-30） */
+export const FREE_AUTO_VOLUME = 65;
 
 /**
- * 無料アイテムの控えめな音のセット（2026-09-30 社長指示「無料が派手すぎる」「イベントの無料アイテムが派手すぎる」）。
- * ミックスではなく素材 1 つ・1.2〜2.2 秒・小さめの音量。当たり → lite-hit / 名前のテーマ（freeThemeFor）→ lite-{テーマ}。
- * どちらも無ければ null（カテゴリの既定 → 価格帯の既定 tier-T0 も控えめなポップ音）。groups は互換のため受け取るが使わない
+ * 無料アイテムの音のセット（2026-09-30 社長指示「無料が派手すぎる」→「控え目すぎるのでもうすこしテーマに合わせて」）。
+ * ミックスではなく素材 1 つの単発音。当たり → lite-hit / テーマ（freeThemeFor）→ lite-{テーマ}。
+ * どちらも無ければ null（カテゴリの既定 → 価格帯の既定 tier-T0 のポップ音）
  */
-export function liteSetFor(itemName: string | null | undefined, _groups: readonly string[] | null | undefined, isHit: boolean): string | null {
+export function liteSetFor(itemName: string | null | undefined, groups: readonly string[] | null | undefined, isHit: boolean): string | null {
   if (isHit && hasLibrarySet("lite-hit")) return "lite-hit";
-  const theme = freeThemeFor(itemName);
+  const theme = freeThemeFor(itemName, groups);
   return theme && hasLibrarySet(`lite-${theme}`) ? `lite-${theme}` : null;
 }
 

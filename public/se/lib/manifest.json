@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-09-29T13:30:04Z",
- "style": "pachinko-mix v4（ライザー→インパクト→テーマ連打（ニコニ・コモンズが主役）→確定音→ファンファーレ/フィーバー/歓声/コイン/きらきら。最大 15 秒・mono 96k） / 無料アイテムは控えめ（tier-T0・lite-hit・lite-<落ち着いたテーマ>: 素材 1 つの単発音・1.0〜1.2 秒まで・-22 LUFS。v5）",
+ "generated_at": "2026-09-29T13:55:54Z",
+ "style": "pachinko-mix v4（ライザー→インパクト→テーマ連打（ニコニ・コモンズが主役）→確定音→ファンファーレ/フィーバー/歓声/コイン/きらきら。最大 15 秒・mono 96k） / 無料アイテムはテーマの単発音（tier-T0・lite-hit・lite-<テーマ>: 素材 1 つ・1.5 秒まで・-19 LUFS。v6）",
  "sources": {
   "mixkit": "Mixkit Sound Effects Free License（商用可・帰属不要・音源単体の再配布は不可）https://mixkit.co/license/#sfxFree",
   "freesound": "Creative Commons 0（CC0・帰属不要）検索フィルタで絞り込み https://freesound.org/",
@@ -28598,9 +28598,9 @@
   ],
   "tier-T0": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/tier-T0/v5-1.mp3",
-    "title": "tier-T0 控えめ 1（「スポッ」抜ける音・ポップ音・0.2s）",
+    "id": "v6-1",
+    "file": "/se/lib/tier-T0/v6-1.mp3",
+    "title": "tier-T0 単発 1（「スポッ」抜ける音・ポップ音・0.2s）",
     "seconds": 0.24,
     "bytes": 3831,
     "components": [
@@ -28618,9 +28618,9 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/tier-T0/v5-2.mp3",
-    "title": "tier-T0 控えめ 2（アクセント効果音、キラン・0.8s）",
+    "id": "v6-2",
+    "file": "/se/lib/tier-T0/v6-2.mp3",
+    "title": "tier-T0 単発 2（アクセント効果音、キラン・0.8s）",
     "seconds": 0.84,
     "bytes": 11015,
     "components": [
@@ -28638,9 +28638,9 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/tier-T0/v5-3.mp3",
-    "title": "tier-T0 控えめ 3（【SE】決定音３・0.5s）",
+    "id": "v6-3",
+    "file": "/se/lib/tier-T0/v6-3.mp3",
+    "title": "tier-T0 単発 3（【SE】決定音３・0.5s）",
     "seconds": 0.55,
     "bytes": 7567,
     "components": [
@@ -28658,9 +28658,9 @@
     ]
    },
    {
-    "id": "v5-4",
-    "file": "/se/lib/tier-T0/v5-4.mp3",
-    "title": "tier-T0 控えめ 4（Bubble pop up alert noti・0.4s）",
+    "id": "v6-4",
+    "file": "/se/lib/tier-T0/v6-4.mp3",
+    "title": "tier-T0 単発 4（Bubble pop up alert noti・0.4s）",
     "seconds": 0.38,
     "bytes": 5373,
     "components": [
@@ -28678,10 +28678,10 @@
     ]
    },
    {
-    "id": "v5-5",
-    "file": "/se/lib/tier-T0/v5-5.mp3",
-    "title": "tier-T0 控えめ 5（【効果音】キュピーン♪・1.0s）",
-    "seconds": 1.0,
+    "id": "v6-5",
+    "file": "/se/lib/tier-T0/v6-5.mp3",
+    "title": "tier-T0 単発 5（【効果音】キュピーン♪・1.0s）",
+    "seconds": 1.01,
     "bytes": 12896,
     "components": [
      {
@@ -31894,11 +31894,11 @@
   ],
   "lite-hit": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-hit/v5-1.mp3",
-    "title": "lite-hit 控えめ 1（正解音１・1.2s）",
-    "seconds": 1.2,
-    "bytes": 15150,
+    "id": "v6-1",
+    "file": "/se/lib/lite-hit/v6-1.mp3",
+    "title": "lite-hit 単発 1（正解音１・1.4s）",
+    "seconds": 1.41,
+    "bytes": 17658,
     "components": [
      {
       "id": "nc45833",
@@ -31914,9 +31914,49 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-hit/v5-2.mp3",
-    "title": "lite-hit 控えめ 2（【効果音】ピンポン（クイズ正解音）・1.1s）",
+    "id": "v6-2",
+    "file": "/se/lib/lite-hit/v6-2.mp3",
+    "title": "lite-hit 単発 2（パパーン！・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18900,
+    "components": [
+     {
+      "id": "nc268083",
+      "title": "パパーン！",
+      "source": "nicommons",
+      "author": "morichan",
+      "user_id": 122308207,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: そのまま再配布だけはお止めください。",
+      "page": "https://commons.nicovideo.jp/works/nc268083",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-hit/v6-3.mp3",
+    "title": "lite-hit 単発 3（【効果音】テッテレー♪３・1.1s）",
+    "seconds": 1.15,
+    "bytes": 14463,
+    "components": [
+     {
+      "id": "nc170763",
+      "title": "【効果音】テッテレー♪３",
+      "source": "nicommons",
+      "author": "tces",
+      "user_id": 59521698,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc170763",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-4",
+    "file": "/se/lib/lite-hit/v6-4.mp3",
+    "title": "lite-hit 単発 4（【効果音】ピンポン（クイズ正解音）・1.1s）",
     "seconds": 1.11,
     "bytes": 14150,
     "components": [
@@ -31934,29 +31974,9 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-hit/v5-3.mp3",
-    "title": "lite-hit 控えめ 3（correct・0.3s）",
-    "seconds": 0.32,
-    "bytes": 4746,
-    "components": [
-     {
-      "id": "fs243701",
-      "title": "correct",
-      "source": "freesound",
-      "author": "ertfelda",
-      "user_id": null,
-      "license": "CC0",
-      "page": "https://freesound.org/people/ertfelda/sounds/243701/",
-      "notice": "",
-      "at": 0.0
-     }
-    ]
-   },
-   {
-    "id": "v5-4",
-    "file": "/se/lib/lite-hit/v5-4.mp3",
-    "title": "lite-hit 控えめ 4（アクセント効果音、キラン・0.8s）",
+    "id": "v6-5",
+    "file": "/se/lib/lite-hit/v6-5.mp3",
+    "title": "lite-hit 単発 5（アクセント効果音、キラン・0.8s）",
     "seconds": 0.84,
     "bytes": 11015,
     "components": [
@@ -31972,34 +31992,14 @@
       "at": 0.0
      }
     ]
-   },
-   {
-    "id": "v5-5",
-    "file": "/se/lib/lite-hit/v5-5.mp3",
-    "title": "lite-hit 控えめ 5（【効果音】キュピーン♪・1.0s）",
-    "seconds": 1.01,
-    "bytes": 12896,
-    "components": [
-     {
-      "id": "nc169415",
-      "title": "【効果音】キュピーン♪",
-      "source": "nicommons",
-      "author": "tces",
-      "user_id": 59521698,
-      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
-      "page": "https://commons.nicovideo.jp/works/nc169415",
-      "notice": "",
-      "at": 0.0
-     }
-    ]
    }
   ],
   "lite-coin": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-coin/v5-1.mp3",
-    "title": "lite-coin 控えめ 1（コイントス（コインを弾く）音２・1.0s）",
-    "seconds": 1.0,
+    "id": "v6-1",
+    "file": "/se/lib/lite-coin/v6-1.mp3",
+    "title": "lite-coin 単発 1（コイントス（コインを弾く）音２・1.0s）",
+    "seconds": 1.01,
     "bytes": 12967,
     "components": [
      {
@@ -32016,9 +32016,9 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-coin/v5-2.mp3",
-    "title": "lite-coin 控えめ 2（Clinking coins・0.7s）",
+    "id": "v6-2",
+    "file": "/se/lib/lite-coin/v6-2.mp3",
+    "title": "lite-coin 単発 2（Clinking coins・0.7s）",
     "seconds": 0.74,
     "bytes": 9761,
     "components": [
@@ -32036,9 +32036,9 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-coin/v5-3.mp3",
-    "title": "lite-coin 控えめ 3（Fluttering coin・0.5s）",
+    "id": "v6-3",
+    "file": "/se/lib/lite-coin/v6-3.mp3",
+    "title": "lite-coin 単発 3（Fluttering coin・0.5s）",
     "seconds": 0.51,
     "bytes": 6940,
     "components": [
@@ -32058,9 +32058,9 @@
   ],
   "lite-sparkle": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-sparkle/v5-1.mp3",
-    "title": "lite-sparkle 控えめ 1（アクセント効果音、キラン・0.8s）",
+    "id": "v6-1",
+    "file": "/se/lib/lite-sparkle/v6-1.mp3",
+    "title": "lite-sparkle 単発 1（アクセント効果音、キラン・0.8s）",
     "seconds": 0.84,
     "bytes": 11015,
     "components": [
@@ -32078,10 +32078,10 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-sparkle/v5-2.mp3",
-    "title": "lite-sparkle 控えめ 2（【効果音】キュピーン♪・1.0s）",
-    "seconds": 1.0,
+    "id": "v6-2",
+    "file": "/se/lib/lite-sparkle/v6-2.mp3",
+    "title": "lite-sparkle 単発 2（【効果音】キュピーン♪・1.0s）",
+    "seconds": 1.01,
     "bytes": 12896,
     "components": [
      {
@@ -32098,9 +32098,9 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-sparkle/v5-3.mp3",
-    "title": "lite-sparkle 控えめ 3（Fairy magic sparkle・0.8s）",
+    "id": "v6-3",
+    "file": "/se/lib/lite-sparkle/v6-3.mp3",
+    "title": "lite-sparkle 単発 3（Fairy magic sparkle・0.8s）",
     "seconds": 0.77,
     "bytes": 10075,
     "components": [
@@ -32120,9 +32120,9 @@
   ],
   "lite-heart": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-heart/v5-1.mp3",
-    "title": "lite-heart 控えめ 1（ちゅっちゅ音・0.3s）",
+    "id": "v6-1",
+    "file": "/se/lib/lite-heart/v6-1.mp3",
+    "title": "lite-heart 単発 1（ちゅっちゅ音・0.3s）",
     "seconds": 0.33,
     "bytes": 4746,
     "components": [
@@ -32140,9 +32140,9 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-heart/v5-2.mp3",
-    "title": "lite-heart 控えめ 2（Cartoon Kiss_cjohnstone.・0.5s）",
+    "id": "v6-2",
+    "file": "/se/lib/lite-heart/v6-2.mp3",
+    "title": "lite-heart 単発 2（Cartoon Kiss_cjohnstone.・0.5s）",
     "seconds": 0.5,
     "bytes": 6940,
     "components": [
@@ -32160,9 +32160,9 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-heart/v5-3.mp3",
-    "title": "lite-heart 控えめ 3（perfect_kiss.mp3・0.6s）",
+    "id": "v6-3",
+    "file": "/se/lib/lite-heart/v6-3.mp3",
+    "title": "lite-heart 単発 3（perfect_kiss.mp3・0.6s）",
     "seconds": 0.61,
     "bytes": 8194,
     "components": [
@@ -32182,9 +32182,29 @@
   ],
   "lite-balloon": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-balloon/v5-1.mp3",
-    "title": "lite-balloon 控えめ 1（風船ガムが破裂した様な軽い感じの爆発音・0.2s）",
+    "id": "v6-1",
+    "file": "/se/lib/lite-balloon/v6-1.mp3",
+    "title": "lite-balloon 単発 1（風船破裂１・0.3s）",
+    "seconds": 0.29,
+    "bytes": 4432,
+    "components": [
+     {
+      "id": "nc88789",
+      "title": "風船破裂１",
+      "source": "nicommons",
+      "author": "無料効果音で遊ぼう！（小森平）",
+      "user_id": 4160907,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: HP・ブログ・YOUTUBEチャンネル・SNSなどをお持ちの方は効果音を使用した際、以下のページにリンクを貼っていただけるととても嬉しいです。 無料効果音で遊ぼう！ https://taira-komori.net/ Audacityの音付きエフェクト解説なんかもやってます。",
+      "page": "https://commons.nicovideo.jp/works/nc88789",
+      "notice": "効果音：小森平「無料効果音で遊ぼう！」https://taira-komori.net/",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-balloon/v6-2.mp3",
+    "title": "lite-balloon 単発 2（風船ガムが破裂した様な軽い感じの爆発音・0.2s）",
     "seconds": 0.18,
     "bytes": 2865,
     "components": [
@@ -32202,9 +32222,9 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-balloon/v5-2.mp3",
-    "title": "lite-balloon 控えめ 2（【効果音】ゴムパッチン　・0.2s）",
+    "id": "v6-3",
+    "file": "/se/lib/lite-balloon/v6-3.mp3",
+    "title": "lite-balloon 単発 3（【効果音】ゴムパッチン　・0.2s）",
     "seconds": 0.18,
     "bytes": 2865,
     "components": [
@@ -32222,11 +32242,11 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-balloon/v5-3.mp3",
-    "title": "lite-balloon 控えめ 3（Game balloon or bubble p・1.0s）",
-    "seconds": 1.0,
-    "bytes": 12896,
+    "id": "v6-4",
+    "file": "/se/lib/lite-balloon/v6-4.mp3",
+    "title": "lite-balloon 単発 4（Game balloon or bubble p・1.2s）",
+    "seconds": 1.18,
+    "bytes": 15090,
     "components": [
      {
       "id": "mk3069",
@@ -32244,9 +32264,9 @@
   ],
   "lite-cat": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-cat/v5-1.mp3",
-    "title": "lite-cat 控えめ 1（【効果音】 猫の鳴き声01 にゃ～ん・0.8s）",
+    "id": "v6-1",
+    "file": "/se/lib/lite-cat/v6-1.mp3",
+    "title": "lite-cat 単発 1（【効果音】 猫の鳴き声01 にゃ～ん・0.8s）",
     "seconds": 0.81,
     "bytes": 10388,
     "components": [
@@ -32264,9 +32284,9 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-cat/v5-2.mp3",
-    "title": "lite-cat 控えめ 2（【猫】かまってほしげな鳴き声4・1.0s）",
+    "id": "v6-2",
+    "file": "/se/lib/lite-cat/v6-2.mp3",
+    "title": "lite-cat 単発 2（【猫】かまってほしげな鳴き声4・1.0s）",
     "seconds": 0.95,
     "bytes": 12269,
     "components": [
@@ -32284,10 +32304,10 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-cat/v5-3.mp3",
-    "title": "lite-cat 控えめ 3（【猫】かまってほしげな鳴き声3・1.0s）",
-    "seconds": 1.0,
+    "id": "v6-3",
+    "file": "/se/lib/lite-cat/v6-3.mp3",
+    "title": "lite-cat 単発 3（【猫】かまってほしげな鳴き声3・1.0s）",
+    "seconds": 1.01,
     "bytes": 12896,
     "components": [
      {
@@ -32302,13 +32322,33 @@
       "at": 0.0
      }
     ]
+   },
+   {
+    "id": "v6-4",
+    "file": "/se/lib/lite-cat/v6-4.mp3",
+    "title": "lite-cat 単発 4（猫がニャーン・1.3s）",
+    "seconds": 1.26,
+    "bytes": 16070,
+    "components": [
+     {
+      "id": "nc45144",
+      "title": "猫がニャーン",
+      "source": "nicommons",
+      "author": "無料効果音で遊ぼう！（小森平）",
+      "user_id": 4160907,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: HP・ブログ・YOUTUBEチャンネル・SNSなどをお持ちの方は効果音を使用した際、以下のページにリンクを貼っていただけるととても嬉しいです。 無料効果音で遊ぼう！ https://taira-komori.net/ Audacityの音付きエフェクト解説なんかもやってます。",
+      "page": "https://commons.nicovideo.jp/works/nc45144",
+      "notice": "効果音：小森平「無料効果音で遊ぼう！」https://taira-komori.net/",
+      "at": 0.0
+     }
+    ]
    }
   ],
   "lite-dog": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-dog/v5-1.mp3",
-    "title": "lite-dog 控えめ 1（【効果音】 犬の鳴き声02 （中高音わん）・0.3s）",
+    "id": "v6-1",
+    "file": "/se/lib/lite-dog/v6-1.mp3",
+    "title": "lite-dog 単発 1（【効果音】 犬の鳴き声02 （中高音わん）・0.3s）",
     "seconds": 0.31,
     "bytes": 4432,
     "components": [
@@ -32326,9 +32366,9 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-dog/v5-2.mp3",
-    "title": "lite-dog 控えめ 2（【効果音】 犬の鳴き声03 （低めわん）・0.4s）",
+    "id": "v6-2",
+    "file": "/se/lib/lite-dog/v6-2.mp3",
+    "title": "lite-dog 単発 2（【効果音】 犬の鳴き声03 （低めわん）・0.4s）",
     "seconds": 0.44,
     "bytes": 5999,
     "components": [
@@ -32346,9 +32386,9 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-dog/v5-3.mp3",
-    "title": "lite-dog 控えめ 3（15-PerritoGuauTierno.wav・0.4s）",
+    "id": "v6-3",
+    "file": "/se/lib/lite-dog/v6-3.mp3",
+    "title": "lite-dog 単発 3（15-PerritoGuauTierno.wav・0.4s）",
     "seconds": 0.43,
     "bytes": 5999,
     "components": [
@@ -32366,9 +32406,9 @@
     ]
    },
    {
-    "id": "v5-4",
-    "file": "/se/lib/lite-dog/v5-4.mp3",
-    "title": "lite-dog 控えめ 4（Single Dog Bark・0.2s）",
+    "id": "v6-4",
+    "file": "/se/lib/lite-dog/v6-4.mp3",
+    "title": "lite-dog 単発 4（Single Dog Bark・0.2s）",
     "seconds": 0.19,
     "bytes": 3178,
     "components": [
@@ -32388,9 +32428,9 @@
   ],
   "lite-pig": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-pig/v5-1.mp3",
-    "title": "lite-pig 控えめ 1（Pig Oink・0.7s）",
+    "id": "v6-1",
+    "file": "/se/lib/lite-pig/v6-1.mp3",
+    "title": "lite-pig 単発 1（Pig Oink・0.7s）",
     "seconds": 0.74,
     "bytes": 9761,
     "components": [
@@ -32408,9 +32448,9 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-pig/v5-2.mp3",
-    "title": "lite-pig 控えめ 2（Pig Sound・0.6s）",
+    "id": "v6-2",
+    "file": "/se/lib/lite-pig/v6-2.mp3",
+    "title": "lite-pig 単発 2（Pig Sound・0.6s）",
     "seconds": 0.65,
     "bytes": 8507,
     "components": [
@@ -32428,9 +32468,9 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-pig/v5-3.mp3",
-    "title": "lite-pig 控えめ 3（Pig Grunt・0.4s）",
+    "id": "v6-3",
+    "file": "/se/lib/lite-pig/v6-3.mp3",
+    "title": "lite-pig 単発 3（Pig Grunt・0.4s）",
     "seconds": 0.38,
     "bytes": 5373,
     "components": [
@@ -32450,11 +32490,11 @@
   ],
   "lite-bird": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-bird/v5-1.mp3",
-    "title": "lite-bird 控えめ 1（ひよこっぽい・1.0s）",
-    "seconds": 1.0,
-    "bytes": 12896,
+    "id": "v6-1",
+    "file": "/se/lib/lite-bird/v6-1.mp3",
+    "title": "lite-bird 単発 1（ひよこっぽい・1.1s）",
+    "seconds": 1.09,
+    "bytes": 13836,
     "components": [
      {
       "id": "nc99094",
@@ -32470,9 +32510,9 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-bird/v5-2.mp3",
-    "title": "lite-bird 控えめ 2（Double little bird chirp・0.6s）",
+    "id": "v6-2",
+    "file": "/se/lib/lite-bird/v6-2.mp3",
+    "title": "lite-bird 単発 2（Double little bird chirp・0.6s）",
     "seconds": 0.59,
     "bytes": 7880,
     "components": [
@@ -32490,11 +32530,11 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-bird/v5-3.mp3",
-    "title": "lite-bird 控えめ 3（Little bird calling chir・1.0s）",
-    "seconds": 1.0,
-    "bytes": 12896,
+    "id": "v6-3",
+    "file": "/se/lib/lite-bird/v6-3.mp3",
+    "title": "lite-bird 単発 3（Little bird calling chir・1.0s）",
+    "seconds": 1.04,
+    "bytes": 13209,
     "components": [
      {
       "id": "mk23",
@@ -32508,15 +32548,35 @@
       "at": 0.0
      }
     ]
+   },
+   {
+    "id": "v6-4",
+    "file": "/se/lib/lite-bird/v6-4.mp3",
+    "title": "lite-bird 単発 4（鶏(にわとり)の鳴き声・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "nc110454",
+      "title": "鶏(にわとり)の鳴き声",
+      "source": "nicommons",
+      "author": "Beardman",
+      "user_id": 19174588,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc110454",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
    }
   ],
   "lite-cow": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-cow/v5-1.mp3",
-    "title": "lite-cow 控えめ 1（Cow single moo・1.0s）",
-    "seconds": 1.0,
-    "bytes": 12896,
+    "id": "v6-1",
+    "file": "/se/lib/lite-cow/v6-1.mp3",
+    "title": "lite-cow 単発 1（Cow single moo・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
     "components": [
      {
       "id": "mk1747",
@@ -32532,11 +32592,11 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-cow/v5-2.mp3",
-    "title": "lite-cow 控えめ 2（Cow dry moo・1.0s）",
-    "seconds": 1.0,
-    "bytes": 12896,
+    "id": "v6-2",
+    "file": "/se/lib/lite-cow/v6-2.mp3",
+    "title": "lite-cow 単発 2（Cow dry moo・1.5s）",
+    "seconds": 1.48,
+    "bytes": 18538,
     "components": [
      {
       "id": "mk1748",
@@ -32552,11 +32612,11 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-cow/v5-3.mp3",
-    "title": "lite-cow 控えめ 3（牛舎の牛のモー・1.0s）",
-    "seconds": 1.0,
-    "bytes": 12923,
+    "id": "v6-3",
+    "file": "/se/lib/lite-cow/v6-3.mp3",
+    "title": "lite-cow 単発 3（牛舎の牛のモー・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18879,
     "components": [
      {
       "id": "nc186892",
@@ -32574,9 +32634,9 @@
   ],
   "lite-cute": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-cute/v5-1.mp3",
-    "title": "lite-cute 控えめ 1（何かがポンッと生まれるような効果音・0.4s）",
+    "id": "v6-1",
+    "file": "/se/lib/lite-cute/v6-1.mp3",
+    "title": "lite-cute 単発 1（何かがポンッと生まれるような効果音・0.4s）",
     "seconds": 0.43,
     "bytes": 6090,
     "components": [
@@ -32594,9 +32654,9 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-cute/v5-2.mp3",
-    "title": "lite-cute 控えめ 2（Squeaky Toy #1・0.4s）",
+    "id": "v6-2",
+    "file": "/se/lib/lite-cute/v6-2.mp3",
+    "title": "lite-cute 単発 2（Squeaky Toy #1・0.4s）",
     "seconds": 0.45,
     "bytes": 6313,
     "components": [
@@ -32614,9 +32674,9 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-cute/v5-3.mp3",
-    "title": "lite-cute 控えめ 3（Long pop・0.5s）",
+    "id": "v6-3",
+    "file": "/se/lib/lite-cute/v6-3.mp3",
+    "title": "lite-cute 単発 3（Long pop・0.5s）",
     "seconds": 0.48,
     "bytes": 6626,
     "components": [
@@ -32636,9 +32696,9 @@
   ],
   "lite-drink": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-drink/v5-1.mp3",
-    "title": "lite-drink 控えめ 1（【効果音】 飲食：グラスがぶつかった時の音01（・0.4s）",
+    "id": "v6-1",
+    "file": "/se/lib/lite-drink/v6-1.mp3",
+    "title": "lite-drink 単発 1（【効果音】 飲食：グラスがぶつかった時の音01（・0.4s）",
     "seconds": 0.42,
     "bytes": 5999,
     "components": [
@@ -32656,9 +32716,9 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-drink/v5-2.mp3",
-    "title": "lite-drink 控えめ 2（コップを置く２・0.4s）",
+    "id": "v6-2",
+    "file": "/se/lib/lite-drink/v6-2.mp3",
+    "title": "lite-drink 単発 2（コップを置く２・0.4s）",
     "seconds": 0.42,
     "bytes": 5999,
     "components": [
@@ -32676,9 +32736,9 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-drink/v5-3.mp3",
-    "title": "lite-drink 控えめ 3（Champagne Cork・0.5s）",
+    "id": "v6-3",
+    "file": "/se/lib/lite-drink/v6-3.mp3",
+    "title": "lite-drink 単発 3（Champagne Cork・0.5s）",
     "seconds": 0.52,
     "bytes": 7253,
     "components": [
@@ -32698,9 +32758,9 @@
   ],
   "lite-food": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-food/v5-1.mp3",
-    "title": "lite-food 控えめ 1（食べる音・0.3s）",
+    "id": "v6-1",
+    "file": "/se/lib/lite-food/v6-1.mp3",
+    "title": "lite-food 単発 1（食べる音・0.3s）",
     "seconds": 0.35,
     "bytes": 5059,
     "components": [
@@ -32718,9 +32778,9 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-food/v5-2.mp3",
-    "title": "lite-food 控えめ 2（carrotnom.wav・0.6s）",
+    "id": "v6-2",
+    "file": "/se/lib/lite-food/v6-2.mp3",
+    "title": "lite-food 単発 2（carrotnom.wav・0.6s）",
     "seconds": 0.58,
     "bytes": 7880,
     "components": [
@@ -32738,9 +32798,9 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-food/v5-3.mp3",
-    "title": "lite-food 控えめ 3（Bite (Apple)・0.7s）",
+    "id": "v6-3",
+    "file": "/se/lib/lite-food/v6-3.mp3",
+    "title": "lite-food 単発 3（Bite (Apple)・0.7s）",
     "seconds": 0.69,
     "bytes": 9134,
     "components": [
@@ -32760,9 +32820,9 @@
   ],
   "lite-bell": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-bell/v5-1.mp3",
-    "title": "lite-bell 控えめ 1（correct・0.3s）",
+    "id": "v6-1",
+    "file": "/se/lib/lite-bell/v6-1.mp3",
+    "title": "lite-bell 単発 1（correct・0.3s）",
     "seconds": 0.32,
     "bytes": 4746,
     "components": [
@@ -32780,11 +32840,11 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-bell/v5-2.mp3",
-    "title": "lite-bell 控えめ 2（Relaxing bell chime・1.0s）",
-    "seconds": 1.0,
-    "bytes": 12896,
+    "id": "v6-2",
+    "file": "/se/lib/lite-bell/v6-2.mp3",
+    "title": "lite-bell 単発 2（Relaxing bell chime・1.2s）",
+    "seconds": 1.21,
+    "bytes": 15404,
     "components": [
      {
       "id": "mk3109",
@@ -32800,9 +32860,9 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-bell/v5-3.mp3",
-    "title": "lite-bell 控えめ 3（Page forward single chim・0.9s）",
+    "id": "v6-3",
+    "file": "/se/lib/lite-bell/v6-3.mp3",
+    "title": "lite-bell 単発 3（Page forward single chim・0.9s）",
     "seconds": 0.9,
     "bytes": 11642,
     "components": [
@@ -32822,11 +32882,11 @@
   ],
   "lite-christmas": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-christmas/v5-1.mp3",
-    "title": "lite-christmas 控えめ 1（【効果音・素材】シャン……【鈴】・1.0s）",
-    "seconds": 1.0,
-    "bytes": 12896,
+    "id": "v6-1",
+    "file": "/se/lib/lite-christmas/v6-1.mp3",
+    "title": "lite-christmas 単発 1（【効果音・素材】シャン……【鈴】・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
     "components": [
      {
       "id": "nc168168",
@@ -32842,9 +32902,9 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-christmas/v5-2.mp3",
-    "title": "lite-christmas 控えめ 2（Sleigh bells hit・0.9s）",
+    "id": "v6-2",
+    "file": "/se/lib/lite-christmas/v6-2.mp3",
+    "title": "lite-christmas 単発 2（Sleigh bells hit・0.9s）",
     "seconds": 0.88,
     "bytes": 11328,
     "components": [
@@ -32862,9 +32922,9 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-christmas/v5-3.mp3",
-    "title": "lite-christmas 控えめ 3（Small Bell #2・0.7s）",
+    "id": "v6-3",
+    "file": "/se/lib/lite-christmas/v6-3.mp3",
+    "title": "lite-christmas 単発 3（Small Bell #2・0.7s）",
     "seconds": 0.74,
     "bytes": 9761,
     "components": [
@@ -32884,9 +32944,9 @@
   ],
   "lite-sea": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-sea/v5-1.mp3",
-    "title": "lite-sea 控えめ 1（Water bubble・0.2s）",
+    "id": "v6-1",
+    "file": "/se/lib/lite-sea/v6-1.mp3",
+    "title": "lite-sea 単発 1（Water bubble・0.2s）",
     "seconds": 0.21,
     "bytes": 3492,
     "components": [
@@ -32904,9 +32964,9 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-sea/v5-2.mp3",
-    "title": "lite-sea 控えめ 2（Liquid bubble・0.5s）",
+    "id": "v6-2",
+    "file": "/se/lib/lite-sea/v6-2.mp3",
+    "title": "lite-sea 単発 2（Liquid bubble・0.5s）",
     "seconds": 0.48,
     "bytes": 6626,
     "components": [
@@ -32924,11 +32984,11 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-sea/v5-3.mp3",
-    "title": "lite-sea 控えめ 3（水に落ちる・1.0s）",
-    "seconds": 1.0,
-    "bytes": 12924,
+    "id": "v6-3",
+    "file": "/se/lib/lite-sea/v6-3.mp3",
+    "title": "lite-sea 単発 3（水に落ちる・1.3s）",
+    "seconds": 1.33,
+    "bytes": 16999,
     "components": [
      {
       "id": "nc165444",
@@ -32946,11 +33006,11 @@
   ],
   "lite-flower": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-flower/v5-1.mp3",
-    "title": "lite-flower 控えめ 1（キラリン、ベルのかわいい効果音・1.0s）",
-    "seconds": 1.0,
-    "bytes": 12896,
+    "id": "v6-1",
+    "file": "/se/lib/lite-flower/v6-1.mp3",
+    "title": "lite-flower 単発 1（キラリン、ベルのかわいい効果音・1.4s）",
+    "seconds": 1.41,
+    "bytes": 17598,
     "components": [
      {
       "id": "nc134337",
@@ -32966,11 +33026,11 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-flower/v5-2.mp3",
-    "title": "lite-flower 控えめ 2（生のウインドチャイムのシャラララーンの音。キラキ・1.0s）",
-    "seconds": 1.0,
-    "bytes": 12896,
+    "id": "v6-2",
+    "file": "/se/lib/lite-flower/v6-2.mp3",
+    "title": "lite-flower 単発 2（生のウインドチャイムのシャラララーンの音。キラキ・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
     "components": [
      {
       "id": "nc134346",
@@ -32986,11 +33046,11 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-flower/v5-3.mp3",
-    "title": "lite-flower 控えめ 3（Mystical Wind Chimes Tra・1.0s）",
-    "seconds": 1.0,
-    "bytes": 12896,
+    "id": "v6-3",
+    "file": "/se/lib/lite-flower/v6-3.mp3",
+    "title": "lite-flower 単発 3（Mystical Wind Chimes Tra・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
     "components": [
      {
       "id": "fs419594",
@@ -33008,9 +33068,9 @@
   ],
   "lite-pop": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-pop/v5-1.mp3",
-    "title": "lite-pop 控えめ 1（【SE】決定音３・0.5s）",
+    "id": "v6-1",
+    "file": "/se/lib/lite-pop/v6-1.mp3",
+    "title": "lite-pop 単発 1（【SE】決定音３・0.5s）",
     "seconds": 0.55,
     "bytes": 7567,
     "components": [
@@ -33028,9 +33088,9 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-pop/v5-2.mp3",
-    "title": "lite-pop 控えめ 2（Bubble pop up alert noti・0.4s）",
+    "id": "v6-2",
+    "file": "/se/lib/lite-pop/v6-2.mp3",
+    "title": "lite-pop 単発 2（Bubble pop up alert noti・0.4s）",
     "seconds": 0.38,
     "bytes": 5373,
     "components": [
@@ -33048,9 +33108,9 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-pop/v5-3.mp3",
-    "title": "lite-pop 控えめ 3（「スポッ」抜ける音・ポップ音・0.2s）",
+    "id": "v6-3",
+    "file": "/se/lib/lite-pop/v6-3.mp3",
+    "title": "lite-pop 単発 3（「スポッ」抜ける音・ポップ音・0.2s）",
     "seconds": 0.24,
     "bytes": 3831,
     "components": [
@@ -33068,9 +33128,9 @@
     ]
    },
    {
-    "id": "v5-4",
-    "file": "/se/lib/lite-pop/v5-4.mp3",
-    "title": "lite-pop 控えめ 4（Dry pop up notification ・0.3s）",
+    "id": "v6-4",
+    "file": "/se/lib/lite-pop/v6-4.mp3",
+    "title": "lite-pop 単発 4（Dry pop up notification ・0.3s）",
     "seconds": 0.3,
     "bytes": 4432,
     "components": [
@@ -33090,11 +33150,11 @@
   ],
   "lite-dice": [
    {
-    "id": "v5-1",
-    "file": "/se/lib/lite-dice/v5-1.mp3",
-    "title": "lite-dice 控えめ 1（ダイス音・2（2D10）・1.2s）",
-    "seconds": 1.2,
-    "bytes": 15090,
+    "id": "v6-1",
+    "file": "/se/lib/lite-dice/v6-1.mp3",
+    "title": "lite-dice 単発 1（ダイス音・2（2D10）・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
     "components": [
      {
       "id": "nc42340",
@@ -33110,11 +33170,11 @@
     ]
    },
    {
-    "id": "v5-2",
-    "file": "/se/lib/lite-dice/v5-2.mp3",
-    "title": "lite-dice 控えめ 2（ダイス音・1（1D10）・1.2s）",
-    "seconds": 1.2,
-    "bytes": 15090,
+    "id": "v6-2",
+    "file": "/se/lib/lite-dice/v6-2.mp3",
+    "title": "lite-dice 単発 2（ダイス音・1（1D10）・1.4s）",
+    "seconds": 1.44,
+    "bytes": 18225,
     "components": [
      {
       "id": "nc42339",
@@ -33130,11 +33190,11 @@
     ]
    },
    {
-    "id": "v5-3",
-    "file": "/se/lib/lite-dice/v5-3.mp3",
-    "title": "lite-dice 控えめ 3（ダイスロール音 2d6・1.2s）",
-    "seconds": 1.2,
-    "bytes": 15090,
+    "id": "v6-3",
+    "file": "/se/lib/lite-dice/v6-3.mp3",
+    "title": "lite-dice 単発 3（ダイスロール音 2d6・1.2s）",
+    "seconds": 1.21,
+    "bytes": 15404,
     "components": [
      {
       "id": "nc36141",
@@ -33144,6 +33204,1744 @@
       "user_id": 310396,
       "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: 素材そのものの二次配布は有償・無償を問わず不可 素材の利用を通じて何ものかの尊厳を傷つけないこと 加工可能だが、加工後も利用条件は依然として保持する (2021/11/27更新)",
       "page": "https://commons.nicovideo.jp/works/nc36141",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-fireworks": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-fireworks/v6-1.mp3",
+    "title": "lite-fireworks 単発 1（Small firework explosion・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk3104",
+      "title": "Small firework explosion",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/fireworks/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-fireworks/v6-2.mp3",
+    "title": "lite-fireworks 単発 2（Clear firework explosion・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk2994",
+      "title": "Clear firework explosions",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/fireworks/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-fireworks/v6-3.mp3",
+    "title": "lite-fireworks 単発 3（ピューン（発射音）・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "nc96405",
+      "title": "ピューン（発射音）",
+      "source": "nicommons",
+      "author": "退会済みのユーザー",
+      "user_id": 8232853,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc96405",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-fanfare": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-fanfare/v6-1.mp3",
+    "title": "lite-fanfare 単発 1（ファンファーレ　レトロ　ゲームクリア　達成　勝利・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "nc174799",
+      "title": "ファンファーレ　レトロ　ゲームクリア　達成　勝利",
+      "source": "nicommons",
+      "author": "スタジオランス",
+      "user_id": 34958611,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: ●ご利用の際はコンテンツツリーへの登録をご協力お願いいたします。連絡の必要はありません。 ●この他、様々な効果音、ＢＧＭを販売中です。 オーディオストック https://audiostock.jp/account/1151/audio_list?audio_category=0&;page=23 ディーエルサイトコム",
+      "page": "https://commons.nicovideo.jp/works/nc174799",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-fanfare/v6-2.mp3",
+    "title": "lite-fanfare 単発 2（ファンファーレ [8bitFanfare186W・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "nc137849",
+      "title": "ファンファーレ [8bitFanfare186WL]　8bit　ピコピコ音　クリア",
+      "source": "nicommons",
+      "author": "スタジオランス",
+      "user_id": 34958611,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: ●ご利用の際はコンテンツツリーへの登録をご協力お願いいたします。 ●別のバージョンは以下で購入出来ます。 [Fanfare186WL] https://audiostock.jp/audio/84510 [Fanfare186A2WL] https://audiostock.jp/audio/84511 ＜オーディオス",
+      "page": "https://commons.nicovideo.jp/works/nc137849",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-fanfare/v6-3.mp3",
+    "title": "lite-fanfare 単発 3（Video game win・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk2016",
+      "title": "Video game win",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/win/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-trophy": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-trophy/v6-1.mp3",
+    "title": "lite-trophy 単発 1（ファンファーレ [8bitFanfare186W・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "nc137849",
+      "title": "ファンファーレ [8bitFanfare186WL]　8bit　ピコピコ音　クリア",
+      "source": "nicommons",
+      "author": "スタジオランス",
+      "user_id": 34958611,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: ●ご利用の際はコンテンツツリーへの登録をご協力お願いいたします。 ●別のバージョンは以下で購入出来ます。 [Fanfare186WL] https://audiostock.jp/audio/84510 [Fanfare186A2WL] https://audiostock.jp/audio/84511 ＜オーディオス",
+      "page": "https://commons.nicovideo.jp/works/nc137849",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-trophy/v6-2.mp3",
+    "title": "lite-trophy 単発 2（ファンファーレ・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "nc86818",
+      "title": "ファンファーレ",
+      "source": "nicommons",
+      "author": "ガン★ガゼ",
+      "user_id": 22190715,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc86818",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-trophy/v6-3.mp3",
+    "title": "lite-trophy 単発 3（Game loot win・0.9s）",
+    "seconds": 0.9,
+    "bytes": 11642,
+    "components": [
+     {
+      "id": "mk2013",
+      "title": "Game loot win",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/win/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-win": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-win/v6-1.mp3",
+    "title": "lite-win 単発 1（【効果音】テッテレー♪・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "nc169011",
+      "title": "【効果音】テッテレー♪",
+      "source": "nicommons",
+      "author": "tces",
+      "user_id": 59521698,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc169011",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-win/v6-2.mp3",
+    "title": "lite-win 単発 2（【効果音】テッテレー♪３・1.1s）",
+    "seconds": 1.15,
+    "bytes": 14463,
+    "components": [
+     {
+      "id": "nc170763",
+      "title": "【効果音】テッテレー♪３",
+      "source": "nicommons",
+      "author": "tces",
+      "user_id": 59521698,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc170763",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-win/v6-3.mp3",
+    "title": "lite-win 単発 3（Game loot win・0.9s）",
+    "seconds": 0.9,
+    "bytes": 11642,
+    "components": [
+     {
+      "id": "mk2013",
+      "title": "Game loot win",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/win/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-jackpot": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-jackpot/v6-1.mp3",
+    "title": "lite-jackpot 単発 1（インパクト・スロット・パチスロ・その８・0.8s）",
+    "seconds": 0.8,
+    "bytes": 10388,
+    "components": [
+     {
+      "id": "nc460510",
+      "title": "インパクト・スロット・パチスロ・その８",
+      "source": "nicommons",
+      "author": "たつろー・Tスタ",
+      "user_id": 118207019,
+      "license": "ニコニ・コモンズ（利用範囲: 制限なし・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc460510",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-jackpot/v6-2.mp3",
+    "title": "lite-jackpot 単発 2（Gold coin prize・1.4s）",
+    "seconds": 1.36,
+    "bytes": 16971,
+    "components": [
+     {
+      "id": "mk1999",
+      "title": "Gold coin prize",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/coin/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-jackpot/v6-3.mp3",
+    "title": "lite-jackpot 単発 3（インパクト・スロット・パチスロ・その２・1.3s）",
+    "seconds": 1.33,
+    "bytes": 16657,
+    "components": [
+     {
+      "id": "nc460504",
+      "title": "インパクト・スロット・パチスロ・その２",
+      "source": "nicommons",
+      "author": "たつろー・Tスタ",
+      "user_id": 118207019,
+      "license": "ニコニ・コモンズ（利用範囲: 制限なし・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc460504",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-casino": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-casino/v6-1.mp3",
+    "title": "lite-casino 単発 1（ピロピロピロピロ・1.4s）",
+    "seconds": 1.42,
+    "bytes": 17994,
+    "components": [
+     {
+      "id": "nc129326",
+      "title": "ピロピロピロピロ",
+      "source": "nicommons",
+      "author": "Picatrix(ぴかとりくす)",
+      "user_id": 3526639,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: 利用登録してくれると助かりますm(_ _)m",
+      "page": "https://commons.nicovideo.jp/works/nc129326",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-casino/v6-2.mp3",
+    "title": "lite-casino 単発 2（ルーレットマシン・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18888,
+    "components": [
+     {
+      "id": "nc79229",
+      "title": "ルーレットマシン",
+      "source": "nicommons",
+      "author": "kenapo",
+      "user_id": 10256092,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc79229",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-casino/v6-3.mp3",
+    "title": "lite-casino 単発 3（Arcade slot machine whee・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk1933",
+      "title": "Arcade slot machine wheel",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/slot-machine/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-cheer": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-cheer/v6-1.mp3",
+    "title": "lite-cheer 単発 1（Male voice cheer・0.8s）",
+    "seconds": 0.78,
+    "bytes": 10388,
+    "components": [
+     {
+      "id": "mk2010",
+      "title": "Male voice cheer",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/win/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-cheer/v6-2.mp3",
+    "title": "lite-cheer 単発 2（yay.wav・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "fs353923",
+      "title": "yay.wav",
+      "source": "freesound",
+      "author": "dr_skitz",
+      "user_id": null,
+      "license": "CC0",
+      "page": "https://freesound.org/people/dr_skitz/sounds/353923/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-cheer/v6-3.mp3",
+    "title": "lite-cheer 単発 3（歓声２　効果音・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "nc147300",
+      "title": "歓声２　効果音",
+      "source": "nicommons",
+      "author": "ヘラクレスン",
+      "user_id": 38963372,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc147300",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-wow": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-wow/v6-1.mp3",
+    "title": "lite-wow 単発 1（yay.mp3・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "fs162395",
+      "title": "yay.mp3",
+      "source": "freesound",
+      "author": "zut50",
+      "user_id": null,
+      "license": "CC0",
+      "page": "https://freesound.org/people/zut50/sounds/162395/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-wow/v6-2.mp3",
+    "title": "lite-wow 単発 2（Male voice cheer victory・0.8s）",
+    "seconds": 0.81,
+    "bytes": 10702,
+    "components": [
+     {
+      "id": "mk2011",
+      "title": "Male voice cheer victory",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/win/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-wow/v6-3.mp3",
+    "title": "lite-wow 単発 3（3 Men Cheering・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "fs274510",
+      "title": "3 Men Cheering",
+      "source": "freesound",
+      "author": "jbeetle",
+      "user_id": null,
+      "license": "CC0",
+      "page": "https://freesound.org/people/jbeetle/sounds/274510/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-magic": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-magic/v6-1.mp3",
+    "title": "lite-magic 単発 1（ワープ１・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18912,
+    "components": [
+     {
+      "id": "nc45841",
+      "title": "ワープ１",
+      "source": "nicommons",
+      "author": "無料効果音で遊ぼう！（小森平）",
+      "user_id": 4160907,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: HP・ブログ・YOUTUBEチャンネル・SNSなどをお持ちの方は効果音を使用した際、以下のページにリンクを貼っていただけるととても嬉しいです。 無料効果音で遊ぼう！ https://taira-komori.net/ Audacityの音付きエフェクト解説なんかもやってます。",
+      "page": "https://commons.nicovideo.jp/works/nc45841",
+      "notice": "効果音：小森平「無料効果音で遊ぼう！」https://taira-komori.net/",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-magic/v6-2.mp3",
+    "title": "lite-magic 単発 2（回復音・1.3s）",
+    "seconds": 1.26,
+    "bytes": 16073,
+    "components": [
+     {
+      "id": "nc45952",
+      "title": "回復音",
+      "source": "nicommons",
+      "author": "hiroyuki",
+      "user_id": 1406655,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc45952",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-magic/v6-3.mp3",
+    "title": "lite-magic 単発 3（Game magical potion drin・0.8s）",
+    "seconds": 0.82,
+    "bytes": 10702,
+    "components": [
+     {
+      "id": "mk2828",
+      "title": "Game magical potion drink",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/drink/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-elephant": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-elephant/v6-1.mp3",
+    "title": "lite-elephant 単発 1（ゾウの鳴き声・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18869,
+    "components": [
+     {
+      "id": "nc133211",
+      "title": "ゾウの鳴き声",
+      "source": "nicommons",
+      "author": "ゲスト",
+      "user_id": 56996627,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc133211",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-elephant/v6-2.mp3",
+    "title": "lite-elephant 単発 2（Mastodon trumpet・1.0s）",
+    "seconds": 1.0,
+    "bytes": 12896,
+    "components": [
+     {
+      "id": "fs854137",
+      "title": "Mastodon trumpet",
+      "source": "freesound",
+      "author": "vintprox",
+      "user_id": null,
+      "license": "CC0",
+      "page": "https://freesound.org/people/vintprox/sounds/854137/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-elephant/v6-3.mp3",
+    "title": "lite-elephant 単発 3（Elephant Trumpets Growls・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "fs527845",
+      "title": "Elephant Trumpets Growls.flac",
+      "source": "freesound",
+      "author": "D.jones",
+      "user_id": null,
+      "license": "CC0",
+      "page": "https://freesound.org/people/D.jones/sounds/527845/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-monkey": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-monkey/v6-1.mp3",
+    "title": "lite-monkey 単発 1（Cartoon baby monkey laug・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk102",
+      "title": "Cartoon baby monkey laugh",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/monkey/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-monkey/v6-2.mp3",
+    "title": "lite-monkey 単発 2（Cartoon monkey laugh・1.2s）",
+    "seconds": 1.23,
+    "bytes": 15404,
+    "components": [
+     {
+      "id": "mk100",
+      "title": "Cartoon monkey laugh",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/monkey/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-monkey/v6-3.mp3",
+    "title": "lite-monkey 単発 3（Little monkey screech・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk104",
+      "title": "Little monkey screech",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/monkey/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-horse": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-horse/v6-1.mp3",
+    "title": "lite-horse 単発 1（【効果音】馬の鳴き声・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18900,
+    "components": [
+     {
+      "id": "nc154229",
+      "title": "【効果音】馬の鳴き声",
+      "source": "nicommons",
+      "author": "imorin",
+      "user_id": 3153617,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc154229",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-horse/v6-2.mp3",
+    "title": "lite-horse 単発 2（Scared horse neighing・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk85",
+      "title": "Scared horse neighing",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/horse/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-horse/v6-3.mp3",
+    "title": "lite-horse 単発 3（Hard big horse snort・0.9s）",
+    "seconds": 0.9,
+    "bytes": 11642,
+    "components": [
+     {
+      "id": "mk80",
+      "title": "Hard big horse snort",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/horse/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-wolf": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-wolf/v6-1.mp3",
+    "title": "lite-wolf 単発 1（Cartoon wolf howling・0.6s）",
+    "seconds": 0.59,
+    "bytes": 7880,
+    "components": [
+     {
+      "id": "mk1774",
+      "title": "Cartoon wolf howling",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/wolf/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-wolf/v6-2.mp3",
+    "title": "lite-wolf 単発 2（15-WolfCrying.wav・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "fs429109",
+      "title": "15-WolfCrying.wav",
+      "source": "freesound",
+      "author": "cazadordoblekatana",
+      "user_id": null,
+      "license": "CC0",
+      "page": "https://freesound.org/people/cazadordoblekatana/sounds/429109/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-lion": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-lion/v6-1.mp3",
+    "title": "lite-lion 単発 1（Wild lion animal roar・1.1s）",
+    "seconds": 1.08,
+    "bytes": 13836,
+    "components": [
+     {
+      "id": "mk6",
+      "title": "Wild lion animal roar",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/cat/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-lion/v6-2.mp3",
+    "title": "lite-lion 単発 2（Big wild lion growl・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk95",
+      "title": "Big wild lion growl",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/cat/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-bear": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-bear/v6-1.mp3",
+    "title": "lite-bear 単発 1（growl6.wav・1.3s）",
+    "seconds": 1.31,
+    "bytes": 16657,
+    "components": [
+     {
+      "id": "fs77637",
+      "title": "growl6.wav",
+      "source": "freesound",
+      "author": "lendrick",
+      "user_id": null,
+      "license": "CC0",
+      "page": "https://freesound.org/people/lendrick/sounds/77637/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-bear/v6-2.mp3",
+    "title": "lite-bear 単発 2（Wild creature growl・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk1957",
+      "title": "Wild creature growl",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/roar/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-kids": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-kids/v6-1.mp3",
+    "title": "lite-kids 単発 1（Child laughing happily・0.8s）",
+    "seconds": 0.76,
+    "bytes": 10075,
+    "components": [
+     {
+      "id": "mk2263",
+      "title": "Child laughing happily",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/children/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-kids/v6-2.mp3",
+    "title": "lite-kids 単発 2（Kid giggle laugh・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk431",
+      "title": "Kid giggle laugh",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/children/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-kids/v6-3.mp3",
+    "title": "lite-kids 単発 3（babygiggle.mp3・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "fs458645",
+      "title": "babygiggle.mp3",
+      "source": "freesound",
+      "author": "jamesmbock",
+      "user_id": null,
+      "license": "CC0",
+      "page": "https://freesound.org/people/jamesmbock/sounds/458645/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-party": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-party/v6-1.mp3",
+    "title": "lite-party 単発 1（小破裂（クラッカー）・0.5s）",
+    "seconds": 0.48,
+    "bytes": 6653,
+    "components": [
+     {
+      "id": "nc99106",
+      "title": "小破裂（クラッカー）",
+      "source": "nicommons",
+      "author": "無料効果音で遊ぼう！（小森平）",
+      "user_id": 4160907,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: HP・ブログ・YOUTUBEチャンネル・SNSなどをお持ちの方は効果音を使用した際、以下のページにリンクを貼っていただけるととても嬉しいです。 無料効果音で遊ぼう！ https://taira-komori.net/ Audacityの音付きエフェクト解説なんかもやってます。",
+      "page": "https://commons.nicovideo.jp/works/nc99106",
+      "notice": "効果音：小森平「無料効果音で遊ぼう！」https://taira-komori.net/",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-party/v6-2.mp3",
+    "title": "lite-party 単発 2（【効果音】パフパフラッパ_1回パフッ・0.3s）",
+    "seconds": 0.29,
+    "bytes": 4119,
+    "components": [
+     {
+      "id": "nc138711",
+      "title": "【効果音】パフパフラッパ_1回パフッ",
+      "source": "nicommons",
+      "author": "もっぴーさうんど",
+      "user_id": 15088750,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: ご利用の際はコンテンツツリーへの登録をご協力お願いいたします。",
+      "page": "https://commons.nicovideo.jp/works/nc138711",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-party/v6-3.mp3",
+    "title": "lite-party 単発 3（Happy party horn sound・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk530",
+      "title": "Happy party horn sound",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/party/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-music": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-music/v6-1.mp3",
+    "title": "lite-music 単発 1（ハープの音、シャララン、変身、登場、魔法、キラキ・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18871,
+    "components": [
+     {
+      "id": "nc204083",
+      "title": "ハープの音、シャララン、変身、登場、魔法、キラキラ",
+      "source": "nicommons",
+      "author": "UO",
+      "user_id": 22541856,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc204083",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-music/v6-2.mp3",
+    "title": "lite-music 単発 2（【ジングル】リコーダーと木琴の可愛いジングル・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "nc194717",
+      "title": "【ジングル】リコーダーと木琴の可愛いジングル",
+      "source": "nicommons",
+      "author": "yonaka",
+      "user_id": 61810840,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc194717",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-music/v6-3.mp3",
+    "title": "lite-music 単発 3（Crystal chime・1.2s）",
+    "seconds": 1.18,
+    "bytes": 15090,
+    "components": [
+     {
+      "id": "mk3108",
+      "title": "Crystal chime",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/chimes/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-halloween": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-halloween/v6-1.mp3",
+    "title": "lite-halloween 単発 1（イーッヒッヒッヒな笑い・1.2s）",
+    "seconds": 1.23,
+    "bytes": 15404,
+    "components": [
+     {
+      "id": "nc207950",
+      "title": "イーッヒッヒッヒな笑い",
+      "source": "nicommons",
+      "author": "じんどっしゅ",
+      "user_id": 26550038,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc207950",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-halloween/v6-2.mp3",
+    "title": "lite-halloween 単発 2（Witch's Laugh.wav・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "fs348142",
+      "title": "Witch's Laugh.wav",
+      "source": "freesound",
+      "author": "NikoMyth",
+      "user_id": null,
+      "license": "CC0",
+      "page": "https://freesound.org/people/NikoMyth/sounds/348142/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-halloween/v6-3.mp3",
+    "title": "lite-halloween 単発 3（Ghost fire swoosh・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk1340",
+      "title": "Ghost fire swoosh",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/fire/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-rocket": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-rocket/v6-1.mp3",
+    "title": "lite-rocket 単発 1（発射1・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "nc46981",
+      "title": "発射1",
+      "source": "nicommons",
+      "author": "無料効果音で遊ぼう！（小森平）",
+      "user_id": 4160907,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: HP・ブログ・YOUTUBEチャンネル・SNSなどをお持ちの方は効果音を使用した際、以下のページにリンクを貼っていただけるととても嬉しいです。 無料効果音で遊ぼう！ https://taira-komori.net/ Audacityの音付きエフェクト解説なんかもやってます。",
+      "page": "https://commons.nicovideo.jp/works/nc46981",
+      "notice": "効果音：小森平「無料効果音で遊ぼう！」https://taira-komori.net/",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-rocket/v6-2.mp3",
+    "title": "lite-rocket 単発 2（Fast rocket whoosh・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk1714",
+      "title": "Fast rocket whoosh",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/rocket/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-rocket/v6-3.mp3",
+    "title": "lite-rocket 単発 3（Rocket Launch・1.1s）",
+    "seconds": 1.09,
+    "bytes": 13836,
+    "components": [
+     {
+      "id": "fs521377",
+      "title": "Rocket Launch",
+      "source": "freesound",
+      "author": "Jarusca",
+      "user_id": null,
+      "license": "CC0",
+      "page": "https://freesound.org/people/Jarusca/sounds/521377/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-explosion": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-explosion/v6-1.mp3",
+    "title": "lite-explosion 単発 1（ボン！小爆発・0.7s）",
+    "seconds": 0.72,
+    "bytes": 9448,
+    "components": [
+     {
+      "id": "nc46976",
+      "title": "ボン！小爆発",
+      "source": "nicommons",
+      "author": "無料効果音で遊ぼう！（小森平）",
+      "user_id": 4160907,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: HP・ブログ・YOUTUBEチャンネル・SNSなどをお持ちの方は効果音を使用した際、以下のページにリンクを貼っていただけるととても嬉しいです。 無料効果音で遊ぼう！ https://taira-komori.net/ Audacityの音付きエフェクト解説なんかもやってます。",
+      "page": "https://commons.nicovideo.jp/works/nc46976",
+      "notice": "効果音：小森平「無料効果音で遊ぼう！」https://taira-komori.net/",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-explosion/v6-2.mp3",
+    "title": "lite-explosion 単発 2（Small firework explosion・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk3104",
+      "title": "Small firework explosion",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/fireworks/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-explosion/v6-3.mp3",
+    "title": "lite-explosion 単発 3（電撃から爆発へ・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "nc20014",
+      "title": "電撃から爆発へ",
+      "source": "nicommons",
+      "author": "ハンムラビ法典",
+      "user_id": 8125388,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc20014",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-thunder": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-thunder/v6-1.mp3",
+    "title": "lite-thunder 単発 1（Lightning whip・0.8s）",
+    "seconds": 0.82,
+    "bytes": 10702,
+    "components": [
+     {
+      "id": "mk1508",
+      "title": "Lightning whip",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/lightning/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-thunder/v6-2.mp3",
+    "title": "lite-thunder 単発 2（稲妻（近距離）１・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "nc61912",
+      "title": "稲妻（近距離）１",
+      "source": "nicommons",
+      "author": "無料効果音で遊ぼう！（小森平）",
+      "user_id": 4160907,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: HP・ブログ・YOUTUBEチャンネル・SNSなどをお持ちの方は効果音を使用した際、以下のページにリンクを貼っていただけるととても嬉しいです。 無料効果音で遊ぼう！ https://taira-komori.net/ Audacityの音付きエフェクト解説なんかもやってます。",
+      "page": "https://commons.nicovideo.jp/works/nc61912",
+      "notice": "効果音：小森平「無料効果音で遊ぼう！」https://taira-komori.net/",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-thunder/v6-3.mp3",
+    "title": "lite-thunder 単発 3（Fast thunder whoosh・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk1293",
+      "title": "Fast thunder whoosh",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/thunder/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-fire": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-fire/v6-1.mp3",
+    "title": "lite-fire 単発 1（効果音　炎・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "nc158816",
+      "title": "効果音　炎",
+      "source": "nicommons",
+      "author": "牙突",
+      "user_id": 40777526,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc158816",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-fire/v6-2.mp3",
+    "title": "lite-fire 単発 2（Short fire whoosh・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "mk1345",
+      "title": "Short fire whoosh",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/fire/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-fire/v6-3.mp3",
+    "title": "lite-fire 単発 3（炎　効果音・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "nc147376",
+      "title": "炎　効果音",
+      "source": "nicommons",
+      "author": "ヘラクレスン",
+      "user_id": 38963372,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc147376",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-laser": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-laser/v6-1.mp3",
+    "title": "lite-laser 単発 1（太いビーム音・0.8s）",
+    "seconds": 0.75,
+    "bytes": 9761,
+    "components": [
+     {
+      "id": "nc66997",
+      "title": "太いビーム音",
+      "source": "nicommons",
+      "author": "piruco",
+      "user_id": 321072,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc66997",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-laser/v6-2.mp3",
+    "title": "lite-laser 単発 2（【効果音】ビーム音・0.6s）",
+    "seconds": 0.58,
+    "bytes": 7880,
+    "components": [
+     {
+      "id": "nc190938",
+      "title": "【効果音】ビーム音",
+      "source": "nicommons",
+      "author": "yonaka",
+      "user_id": 61810840,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc190938",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-laser/v6-3.mp3",
+    "title": "lite-laser 単発 3（レーザービーム・0.8s）",
+    "seconds": 0.84,
+    "bytes": 11015,
+    "components": [
+     {
+      "id": "nc46958",
+      "title": "レーザービーム",
+      "source": "nicommons",
+      "author": "無料効果音で遊ぼう！（小森平）",
+      "user_id": 4160907,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: HP・ブログ・YOUTUBEチャンネル・SNSなどをお持ちの方は効果音を使用した際、以下のページにリンクを貼っていただけるととても嬉しいです。 無料効果音で遊ぼう！ https://taira-komori.net/ Audacityの音付きエフェクト解説なんかもやってます。",
+      "page": "https://commons.nicovideo.jp/works/nc46958",
+      "notice": "効果音：小森平「無料効果音で遊ぼう！」https://taira-komori.net/",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-battle": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-battle/v6-1.mp3",
+    "title": "lite-battle 単発 1（ピキーン・0.7s）",
+    "seconds": 0.71,
+    "bytes": 9448,
+    "components": [
+     {
+      "id": "nc9824",
+      "title": "ピキーン",
+      "source": "nicommons",
+      "author": "beanjam",
+      "user_id": 4376819,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc9824",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-battle/v6-2.mp3",
+    "title": "lite-battle 単発 2（素振り１・0.3s）",
+    "seconds": 0.25,
+    "bytes": 3821,
+    "components": [
+     {
+      "id": "nc45628",
+      "title": "素振り１",
+      "source": "nicommons",
+      "author": "無料効果音で遊ぼう！（小森平）",
+      "user_id": 4160907,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: HP・ブログ・YOUTUBEチャンネル・SNSなどをお持ちの方は効果音を使用した際、以下のページにリンクを貼っていただけるととても嬉しいです。 無料効果音で遊ぼう！ https://taira-komori.net/ Audacityの音付きエフェクト解説なんかもやってます。",
+      "page": "https://commons.nicovideo.jp/works/nc45628",
+      "notice": "効果音：小森平「無料効果音で遊ぼう！」https://taira-komori.net/",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-battle/v6-3.mp3",
+    "title": "lite-battle 単発 3（パンチ、打撃音、つっこみを入れる・0.4s）",
+    "seconds": 0.42,
+    "bytes": 5743,
+    "components": [
+     {
+      "id": "nc127220",
+      "title": "パンチ、打撃音、つっこみを入れる",
+      "source": "nicommons",
+      "author": "Chisato Kimura",
+      "user_id": 52736201,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc127220",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-vehicle": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-vehicle/v6-1.mp3",
+    "title": "lite-vehicle 単発 1（クラクション１・0.3s）",
+    "seconds": 0.31,
+    "bytes": 4459,
+    "components": [
+     {
+      "id": "nc184676",
+      "title": "クラクション１",
+      "source": "nicommons",
+      "author": "無料効果音で遊ぼう！（小森平）",
+      "user_id": 4160907,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）・独自条件: HP・ブログ・YOUTUBEチャンネル・SNSなどをお持ちの方は効果音を使用した際、以下のページにリンクを貼っていただけるととても嬉しいです。 無料効果音で遊ぼう！ https://taira-komori.net/ Audacityの音付きエフェクト解説なんかもやってます。",
+      "page": "https://commons.nicovideo.jp/works/nc184676",
+      "notice": "効果音：小森平「無料効果音で遊ぼう！」https://taira-komori.net/",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-vehicle/v6-2.mp3",
+    "title": "lite-vehicle 単発 2（SLの汽笛・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18852,
+    "components": [
+     {
+      "id": "nc25723",
+      "title": "SLの汽笛",
+      "source": "nicommons",
+      "author": "W.Knight",
+      "user_id": 14288331,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc25723",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-vehicle/v6-3.mp3",
+    "title": "lite-vehicle 単発 3（Small car horn・0.5s）",
+    "seconds": 0.53,
+    "bytes": 7253,
+    "components": [
+     {
+      "id": "mk717",
+      "title": "Small car horn",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/horn/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-epic": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-epic/v6-1.mp3",
+    "title": "lite-epic 単発 1（大太鼓を「ドドーン……！」と2回叩く・1.5s）",
+    "seconds": 1.5,
+    "bytes": 18883,
+    "components": [
+     {
+      "id": "nc163959",
+      "title": "大太鼓を「ドドーン……！」と2回叩く",
+      "source": "nicommons",
+      "author": "Chisato Kimura",
+      "user_id": 52736201,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc163959",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-epic/v6-2.mp3",
+    "title": "lite-epic 単発 2（Quick zoom impact・0.7s）",
+    "seconds": 0.67,
+    "bytes": 8821,
+    "components": [
+     {
+      "id": "mk772",
+      "title": "Quick zoom impact",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/zoom/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-epic/v6-3.mp3",
+    "title": "lite-epic 単発 3（Weak hit impact・0.6s）",
+    "seconds": 0.59,
+    "bytes": 7880,
+    "components": [
+     {
+      "id": "mk2148",
+      "title": "Weak hit impact",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/hit/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-whoosh": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-whoosh/v6-1.mp3",
+    "title": "lite-whoosh 単発 1（フォッ / 素早い動きの効果音 / Moment・0.2s）",
+    "seconds": 0.19,
+    "bytes": 3200,
+    "components": [
+     {
+      "id": "nc376119",
+      "title": "フォッ / 素早い動きの効果音 / Moment_05",
+      "source": "nicommons",
+      "author": "Yumit St.",
+      "user_id": 28906284,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc376119",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-whoosh/v6-2.mp3",
+    "title": "lite-whoosh 単発 2（【効果音】場面転換２３・1.1s）",
+    "seconds": 1.1,
+    "bytes": 13836,
+    "components": [
+     {
+      "id": "nc180463",
+      "title": "【効果音】場面転換２３",
+      "source": "nicommons",
+      "author": "tces",
+      "user_id": 59521698,
+      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
+      "page": "https://commons.nicovideo.jp/works/nc180463",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-whoosh/v6-3.mp3",
+    "title": "lite-whoosh 単発 3（Whoosh・0.4s）",
+    "seconds": 0.43,
+    "bytes": 5999,
+    "components": [
+     {
+      "id": "fs60013",
+      "title": "Whoosh",
+      "source": "freesound",
+      "author": "qubodup",
+      "user_id": null,
+      "license": "CC0",
+      "page": "https://freesound.org/people/qubodup/sounds/60013/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   }
+  ],
+  "lite-notify": [
+   {
+    "id": "v6-1",
+    "file": "/se/lib/lite-notify/v6-1.mp3",
+    "title": "lite-notify 単発 1（Chime Notification・0.3s）",
+    "seconds": 0.32,
+    "bytes": 4746,
+    "components": [
+     {
+      "id": "fs380482",
+      "title": "Chime Notification",
+      "source": "freesound",
+      "author": "Jofae",
+      "user_id": null,
+      "license": "CC0",
+      "page": "https://freesound.org/people/Jofae/sounds/380482/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-2",
+    "file": "/se/lib/lite-notify/v6-2.mp3",
+    "title": "lite-notify 単発 2（Bubble pop up alert noti・0.4s）",
+    "seconds": 0.38,
+    "bytes": 5373,
+    "components": [
+     {
+      "id": "mk2357",
+      "title": "Bubble pop up alert notification",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/notification/",
+      "notice": "",
+      "at": 0.0
+     }
+    ]
+   },
+   {
+    "id": "v6-3",
+    "file": "/se/lib/lite-notify/v6-3.mp3",
+    "title": "lite-notify 単発 3（Dry pop up notification ・0.3s）",
+    "seconds": 0.3,
+    "bytes": 4432,
+    "components": [
+     {
+      "id": "mk2356",
+      "title": "Dry pop up notification alert",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/notification/",
       "notice": "",
       "at": 0.0
      }
