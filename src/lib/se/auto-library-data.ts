@@ -1,4 +1,4 @@
-// 自動生成: scratchpad/gen_auto_library_data_cc0.py（元: public/se/lib/manifest.json）。手で編集しない。
+// 自動生成: scripts/se/gen_auto_library_data_cc0.py（元: public/se/lib/manifest.json）。手で編集しない。
 // 生成 2026-09-29T20:36:52Z・音源はすべて CC0 1.0（Freesound の CC0 フィルタ / Kenney の効果音パック）。正式リリースの音源ルールは docs/live-cockpit/README.md S23
 export interface AutoLibraryFile {
   /** サイト相対 URL（public/se/lib/…） */

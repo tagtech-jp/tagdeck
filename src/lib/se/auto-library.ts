@@ -4,7 +4,7 @@
 //   - 音源は public/se/lib/<セット>/v7-1..5.mp3 に同梱。すべて CC0 1.0 の素材（Freesound の CC0 フィルタ / Kenney の効果音パック）だけで作る
 //     （2026-09-30 正式リリース・社長指示「著作権のあるものは弾いて別の音源に差し替えて」・S23。v6 まで使っていた Mixkit・魔王魂・
 //     ニコニ・コモンズの素材は、アプリでの再配布や利用範囲の条件を満たせないので使わない）。
-//     有料アイテム: scratchpad の build_se_cc0.py mix が ライザー → インパクト → テーマ音の連打 → 確定音 → ファンファーレ／歓声
+//     有料アイテム: scripts/se/build_se_cc0.py mix（素材は scripts/se/cc0_picks.py）が ライザー → インパクト → テーマ音の連打 → 確定音 → ファンファーレ／歓声
 //     ＋ コイン ＋ きらきら の順に ffmpeg で重ね（-14 LUFS・リミッター・mono 96k）、派手さ（LEVEL 1〜4）で 3〜15 秒にする。
 //     無料アイテム（tier-T0・lite-hit・lite-{テーマ}）は素材 1 つの単発音（1.5 秒まで・-19 LUFS）。テーマはアイテム名の最後の言葉（freeThemeFor）。
 //     各ファイルの素材と出典は public/se/lib/manifest.json の components、SE タブの出典一覧は AUTO_LIBRARY_CREDITS
