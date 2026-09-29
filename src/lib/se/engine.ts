@@ -47,6 +47,45 @@ export function getAudioContext(): AudioContext | null {
   return ctx;
 }
 
+/**
+ * 全体の音量倍率（2026-09-30 社長指示「音を全体的に3倍に上げてほしい」）。振幅 3 倍 = 約 +9.5dB。
+ * 素材ライブラリのミックスは -15 LUFS 前後で上限近くまで作ってあり、ファイル側では 3 倍にできないため再生側で増幅し、
+ * 上限を超える分はリミッター（DynamicsCompressor: -3dB から 20:1・アタック 2ms）で抑えて音割れを防ぐ。
+ * SE（自分で上げた音・素材ライブラリ・試聴・合成音）はすべてこの出口を通る。裏再生用の無音（keep-alive）は通さない
+ */
+export const MASTER_BOOST = 3;
+
+/** 出口ノード（増幅 → リミッター → スピーカー）。AudioContext を作り直したら作り直す */
+let outCtx: AudioContext | null = null;
+let outNode: AudioNode | null = null;
+
+/** 増幅とリミッターをつないだ出口を作る（純粋な配線だけ。テスト用に export） */
+export function createMasterOutput(c: Pick<AudioContext, "createGain" | "destination"> & { createDynamicsCompressor?: AudioContext["createDynamicsCompressor"] }, boost = MASTER_BOOST): AudioNode {
+  const gain = c.createGain();
+  gain.gain.value = boost;
+  if (typeof c.createDynamicsCompressor === "function") {
+    const limiter = c.createDynamicsCompressor();
+    limiter.threshold.value = -3;
+    limiter.knee.value = 0;
+    limiter.ratio.value = 20;
+    limiter.attack.value = 0.002;
+    limiter.release.value = 0.15;
+    gain.connect(limiter);
+    limiter.connect(c.destination);
+  } else {
+    gain.connect(c.destination);
+  }
+  return gain;
+}
+
+function masterOutput(c: AudioContext): AudioNode {
+  if (!outNode || outCtx !== c) {
+    outNode = createMasterOutput(c);
+    outCtx = c;
+  }
+  return outNode;
+}
+
 /** 表示用: 音声コンテキストの状態。"interrupted" は iOS Safari が割り込み時に返す独自値 */
 export type AudioState = "none" | "running" | "suspended" | "interrupted" | "closed";
 
@@ -152,7 +191,7 @@ export function synthTier(tier: SeTier, volume = 0.8): void {
   if (!c) return;
   const master = c.createGain();
   master.gain.value = Math.max(0, Math.min(1, volume));
-  master.connect(c.destination);
+  master.connect(masterOutput(c));
   const t = c.currentTime;
   switch (tier) {
     case "T0": // 無料: 短いポップ
@@ -245,7 +284,7 @@ export async function playUrl(url: string, volume = 0.8): Promise<{ ended: Promi
     src.buffer = buf;
     const g = c.createGain();
     g.gain.value = Math.max(0, Math.min(1, volume));
-    src.connect(g).connect(c.destination);
+    src.connect(g).connect(masterOutput(c));
     const ended = new Promise<void>((resolve) => {
       src.onended = () => resolve();
       // onended が来ない環境の保険（長さ + 少し）

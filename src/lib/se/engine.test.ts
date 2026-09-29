@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resumeWithTimeout } from "./engine";
+import { createMasterOutput, MASTER_BOOST, resumeWithTimeout } from "./engine";
 
 describe("resumeWithTimeout（無音後の復帰）", () => {
   it("running ならそのまま true", async () => {
@@ -21,5 +21,37 @@ describe("resumeWithTimeout（無音後の復帰）", () => {
   });
   it("closed は再開できないので false（呼び出し側で作り直す）", async () => {
     expect(await resumeWithTimeout({ state: "closed", resume: async () => undefined }, 100)).toBe(false);
+  });
+});
+
+describe("全体の音量（2026-09-30 社長指示「音を全体的に3倍に」）", () => {
+  type FakeNode = { name: string; to: FakeNode[]; connect: (n: FakeNode) => FakeNode };
+  const node = (name: string, extra: Record<string, unknown> = {}): FakeNode & Record<string, unknown> => {
+    const n: FakeNode & Record<string, unknown> = { name, to: [], connect: (m: FakeNode) => (n.to.push(m), m), ...extra };
+    return n;
+  };
+  const param = () => ({ value: 0 });
+
+  it("増幅 3 倍 → リミッター → スピーカー の順につなぐ", () => {
+    const destination = node("destination");
+    const c = {
+      destination,
+      createGain: () => node("gain", { gain: param() }),
+      createDynamicsCompressor: () => node("limiter", { threshold: param(), knee: param(), ratio: param(), attack: param(), release: param() }),
+    };
+    const out = createMasterOutput(c as never) as unknown as FakeNode & { gain: { value: number } };
+    expect(MASTER_BOOST).toBe(3);
+    expect(out.gain.value).toBe(3);
+    const limiter = out.to[0] as FakeNode & { threshold: { value: number }; ratio: { value: number } };
+    expect(limiter.name).toBe("limiter");
+    expect(limiter.threshold.value).toBe(-3);
+    expect(limiter.ratio.value).toBe(20);
+    expect(limiter.to[0]).toBe(destination);
+  });
+
+  it("リミッターが無い環境では増幅だけでスピーカーへ", () => {
+    const destination = node("destination");
+    const out = createMasterOutput({ destination, createGain: () => node("gain", { gain: param() }) } as never) as unknown as FakeNode;
+    expect(out.to[0]).toBe(destination);
   });
 });
