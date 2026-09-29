@@ -451,7 +451,7 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 | Kenney(kenney.nl) | 使う | パック同梱の License.txt が CC0 1.0 |
 
 - **変更**
-  - 自動ライブラリを CC0 だけで作り直した(v7: パチンコ風ミックス 56 セット 280 本・無料アイテムの単発音 49 セット 151 本)。組み立て方(ライザー → インパクト → テーマ音の連打 → 確定音 → ファンファーレ／歓声 ＋ コイン ＋ きらきら、3〜15 秒、-14 LUFS)と無料の単発音(1.5 秒まで・-19 LUFS)は v4〜v6 と同じ。素材は候補を見て 1 本ずつ選んだ表(scratchpad `cc0_picks.py`)から
+  - 自動ライブラリを CC0 だけで作り直した(v7: パチンコ風ミックス 56 セット 280 本・無料アイテムの単発音 49 セット 151 本)。組み立て方(ライザー → インパクト → テーマ音の連打 → 確定音 → ファンファーレ／歓声 ＋ コイン ＋ きらきら、3〜15 秒、-14 LUFS)と無料の単発音(1.5 秒まで・-19 LUFS)は v4〜v6 と同じ。素材は候補を見て 1 本ずつ選んだ表(`scripts/se/cc0_picks.py`)から
   - 公式既定: 同期元の行は「どんな音か」(ファイル名)で CC0 の同種の音 18 種(`public/se/defaults/cc0/`・出典は同じフォルダの `defaults.json`)に置き換えて配る(`src/lib/se/cleared-defaults.ts` の `toClearedDefaultRows` を `GET /api/se/mappings` が通す)。例: ドラムロール.mp3 → CC0 のドラムロール、スターのテーマ → 8 ビットのきらめきジングル。**同期元がアップロードした音そのもの(Storage の URL)は他の利用者に配らない**。置き換え先の無い音と価格帯(tier:*)の行も配らない(その場合は自動ライブラリの CC0 の音が鳴る)
   - 同梱スナップショット(`default-mappings.ts`)も同じアイテム 75 件を CC0 の音で持つ。汎用既定「きらきら輝く1」は CC0 のきらきらへ
   - SE タブの出典表示を CC0 の一覧(Freesound の音・Kenney のパック)に替えた
@@ -465,12 +465,16 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 
 ### 音源を足す・差し替えるときの手順(正式リリース後)
 
-1. 素材は **Freesound の CC0**(検索フィルタ `license:"Creative Commons 0"`)か **Kenney の CC0 パック**から選ぶ。タイトル・作者名にゲーム・アニメ・映画・企業名が入るもの、他人の音の再アップロードと思われるもの(別の作者名・別サイトの番号が入った名前)、叫び・銃声は使わない
-2. scratchpad の `cc0_candidates.py` で候補を出し、`cc0_picks.py` の表(`POOL_PICKS` / `THEME_PICKS` / `LITE_PICKS` / `DEFAULT_PICKS`)に id を書く
-3. `build_se_cc0.py`(`mix` / `single` / `defaults`)で作る。出典は `manifest.json`・`defaults.json` に自動で書かれる。環境変数 `OUT_DIR` にリポジトリの `public/se/lib`、`DEF_OUT` に `public/se/defaults/cc0` を指定
-4. `gen_auto_library_data_cc0.py` で `src/lib/se/auto-library-data.ts` を作り直す
-5. 新しい種類の音を公式既定として配りたいときは、`cleared-defaults.ts` の `CLEARED_SOUNDS` と `LABEL_RULES`(同期元のファイル名 → 音の種類)に 1 行ずつ足す
-6. `pnpm test`(`sound-license.test.ts` が通ること)→ PR
+道具はすべて `scripts/se/` にある(Python 3.11・ffmpeg / ffprobe が要る。リポジトリのフォルダで実行)。素材のキャッシュは `%TEMP%\tagdeck_se_cc0_cache`(環境変数 `TAGDECK_SE_CACHE` で変更)で、消えていても `cc0_catalog.json` から取り直す(Kenney のパックは kenney.nl のページから取り、同梱の License.txt が CC0 であることを確かめてから使う)。2026-09-30 に、空のキャッシュから公式既定 18 本を作り直してバイト単位で一致することを確認済み。
+
+1. 素材は **Freesound の CC0**(検索フィルタ `license:"Creative Commons 0"`)か **Kenney の CC0 パック**から選ぶ。タイトル・作者名にゲーム・アニメ・映画・企業名が入るもの、他人の音の再アップロードと思われるもの(別の作者名・別サイトの番号が入った名前)、叫び・銃声は使わない。「Remix」などは元の音のライセンスも確かめる
+2. `python scripts/se/cc0_candidates.py lite|theme|defaults [名前...]`(任意の検索は `q "検索語" 最大秒`)で候補を出し、`scripts/se/cc0_picks.py` の表(`POOL_PICKS` / `THEME_PICKS` / `LITE_PICKS` / `DEFAULT_PICKS`)に id を書く
+3. `python scripts/se/build_se_cc0.py catalog` で取得先の一覧 `scripts/se/cc0_catalog.json` を作り直す
+4. `python scripts/se/build_se_cc0.py mix|single|defaults [セット名...]` で作る(出力は `public/se/lib`・`public/se/defaults/cc0`。セット名を付けるとそのセットだけ作り直す)。出典は `manifest.json`・`defaults.json` に自動で書かれる
+5. `python scripts/se/check_cc0_library.py` で点検する(音量・真のピーク・長さ・途中の無音・素材の重複)。`manifest.json` / `defaults.json` に無い古い音源ファイルはリポジトリの外へ移す
+6. `python scripts/se/gen_auto_library_data_cc0.py` で `src/lib/se/auto-library-data.ts` を作り直す
+7. 新しい種類の音を公式既定として配りたいときは、`src/lib/se/cleared-defaults.ts` の `CLEARED_SOUNDS` と `LABEL_RULES`(同期元のファイル名 → 音の種類)に 1 行ずつ足す
+8. `pnpm test`(`sound-license.test.ts` が通ること)→ PR
 
 SE タブで利用者が自分でアップロードした音は、その利用者本人の画面でだけ鳴る(他の利用者には配らない)ので、この手順の対象外。
 

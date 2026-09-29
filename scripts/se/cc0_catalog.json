@@ -1,0 +1,3213 @@
+{
+ "note": "選曲表（cc0_picks.py）の素材の取得先。build_se_cc0.py catalog で作る。すべて CC0 1.0",
+ "items": {
+  "fs106392": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/106/106392_367313-hq.mp3",
+   "title": "carrotnom.wav",
+   "author": "j1987",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/j1987/sounds/106392/"
+  },
+  "fs107589": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/107/107589_1855536-hq.mp3",
+   "title": "unsheath_sword.wav",
+   "author": "Qat",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Qat/sounds/107589/"
+  },
+  "fs110011": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/110/110011_1537422-hq.mp3",
+   "title": "cat meow",
+   "author": "tuberatanka",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/tuberatanka/sounds/110011/"
+  },
+  "fs110134": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/110/110134_981397-hq.mp3",
+   "title": "Dog barking.wav",
+   "author": "Ryding",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Ryding/sounds/110134/"
+  },
+  "fs111331": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/111/111331_367313-hq.mp3",
+   "title": "flameclic.wav",
+   "author": "j1987",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/j1987/sounds/111331/"
+  },
+  "fs116779": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/116/116779_1550701-hq.mp3",
+   "title": "Ringing bell - happy.wav",
+   "author": "domrodrig",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/domrodrig/sounds/116779/"
+  },
+  "fs117616": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/117/117616_1160789-hq.mp3",
+   "title": "fireworks exploding 1.wav",
+   "author": "soundmary",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/soundmary/sounds/117616/"
+  },
+  "fs121990": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/121/121990_943560-hq.mp3",
+   "title": "coinBag.wav",
+   "author": "tomf_",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/tomf_/sounds/121990/"
+  },
+  "fs127552": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/127/127552_1777005-hq.mp3",
+   "title": "Jingle-Bell2.wav",
+   "author": "romulofs",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/romulofs/sounds/127552/"
+  },
+  "fs128473": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/128/128473_1351036-hq.mp3",
+   "title": "a monkey",
+   "author": "DarkoZL",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/DarkoZL/sounds/128473/"
+  },
+  "fs135885": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/135/135885_2448533-hq.mp3",
+   "title": "Gama laser.wav",
+   "author": ".Andre_Onate",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/.Andre_Onate/sounds/135885/"
+  },
+  "fs136765": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/136/136765_2482480-hq.mp3",
+   "title": "Explode001",
+   "author": "mitchelk",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/mitchelk/sounds/136765/"
+  },
+  "fs139972": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/139/139972_968325-hq.mp3",
+   "title": "Crowd.Yay.Applause.25ppl.Short.wav",
+   "author": "jessepash",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/jessepash/sounds/139972/"
+  },
+  "fs140711": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/140/140711_367313-hq.mp3",
+   "title": "Firecracker",
+   "author": "j1987",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/j1987/sounds/140711/"
+  },
+  "fs140717": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/140/140717_367313-hq.mp3",
+   "title": "Firework Cluster",
+   "author": "j1987",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/j1987/sounds/140717/"
+  },
+  "fs140727": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/140/140727_367313-hq.mp3",
+   "title": "tinymortar.wav",
+   "author": "j1987",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/j1987/sounds/140727/"
+  },
+  "fs162395": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/162/162395_2645723-hq.mp3",
+   "title": "yay.mp3",
+   "author": "zut50",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/zut50/sounds/162395/"
+  },
+  "fs162456": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/162/162456_311243-hq.mp3",
+   "title": "Dice.mp3",
+   "author": "Kastenfrosch",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Kastenfrosch/sounds/162456/"
+  },
+  "fs162458": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/162/162458_311243-hq.mp3",
+   "title": "Gewonnen2.mp3",
+   "author": "Kastenfrosch",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Kastenfrosch/sounds/162458/"
+  },
+  "fs162473": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/162/162473_311243-hq.mp3",
+   "title": "successful.mp3",
+   "author": "Kastenfrosch",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Kastenfrosch/sounds/162473/"
+  },
+  "fs163450": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/163/163450_2263027-hq.mp3",
+   "title": "Money Drop",
+   "author": "LeMudCrab",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/LeMudCrab/sounds/163450/"
+  },
+  "fs163452": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/163/163452_2263027-hq.mp3",
+   "title": "Money Pickup 2",
+   "author": "LeMudCrab",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/LeMudCrab/sounds/163452/"
+  },
+  "fs163459": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/163/163459_2965892-hq.mp3",
+   "title": "LBS_FX DOG Small Alert Bark001.wav",
+   "author": "LittleBigSounds",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/LittleBigSounds/sounds/163459/"
+  },
+  "fs164268": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/164/164268_2977885-hq.mp3",
+   "title": "Lone Coyote.aif",
+   "author": "Danjocross",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Danjocross/sounds/164268/"
+  },
+  "fs167242": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/167/167242_1540717-hq.mp3",
+   "title": "fireworkblast.wav",
+   "author": "nfrae",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/nfrae/sounds/167242/"
+  },
+  "fs169853": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/169/169853_3126007-hq.mp3",
+   "title": "Wind Chime (G-006) +.wav",
+   "author": "GnoteSoundz",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/GnoteSoundz/sounds/169853/"
+  },
+  "fs169855": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/169/169855_3126007-hq.mp3",
+   "title": "Wind Chime (G-003) +.wav",
+   "author": "GnoteSoundz",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/GnoteSoundz/sounds/169855/"
+  },
+  "fs169867": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/169/169867_2834921-hq.mp3",
+   "title": "swoosh",
+   "author": "Halgrimm",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Halgrimm/sounds/169867/"
+  },
+  "fs170243": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/170/170243_3147538-hq.mp3",
+   "title": "Car Horn.wav",
+   "author": "BeatsbyCasper",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/BeatsbyCasper/sounds/170243/"
+  },
+  "fs170583": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/170/170583_1146698-hq.mp3",
+   "title": "Party horn.wav",
+   "author": "audiosmedia",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/audiosmedia/sounds/170583/"
+  },
+  "fs171501": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/171/171501_1916456-hq.mp3",
+   "title": "Guitar in D",
+   "author": "wkinton",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/wkinton/sounds/171501/"
+  },
+  "fs17502": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/17/17502_60285-hq.mp3",
+   "title": "Coin dropping.wav",
+   "author": "Jace",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Jace/sounds/17502/"
+  },
+  "fs177208": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/177/177208_3269813-hq.mp3",
+   "title": "Dice Rolling - Dungeon and Dragons",
+   "author": "joanneneedsthesound",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/joanneneedsthesound/sounds/177208/"
+  },
+  "fs177242": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/177/177242_3277771-hq.mp3",
+   "title": "Cinematic Impact",
+   "author": "deleted_user_3277771",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/deleted_user_3277771/sounds/177242/"
+  },
+  "fs179303": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/179/179303_2354247-hq.mp3",
+   "title": "perfect_kiss.mp3",
+   "author": "gflower",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/gflower/sounds/179303/"
+  },
+  "fs182429": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/182/182429_71257-hq.mp3",
+   "title": "Explosion",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/182429/"
+  },
+  "fs182571": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/182/182571_71257-hq.mp3",
+   "title": "Short Crowd Cheer.flac",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/182571/"
+  },
+  "fs182572": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/182/182572_71257-hq.mp3",
+   "title": "Short Crowd Cheer 2.flac",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/182572/"
+  },
+  "fs182856": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/182/182856_71257-hq.mp3",
+   "title": "Soft Balloon Pop.flac",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/182856/"
+  },
+  "fs186748": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/186/186748_2591786-hq.mp3",
+   "title": "Splash-eau-goudron1.wav",
+   "author": "rombart",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/rombart/sounds/186748/"
+  },
+  "fs186956": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/186/186956_545448-hq.mp3",
+   "title": "woosh.wav",
+   "author": "ReadeOnly",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/ReadeOnly/sounds/186956/"
+  },
+  "fs188037": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/188/188037_3403708-hq.mp3",
+   "title": "Guitar Strumming",
+   "author": "AntumDeluge",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/AntumDeluge/sounds/188037/"
+  },
+  "fs191718": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/191/191718_185249-hq.mp3",
+   "title": "drumroll.wav",
+   "author": "adriann",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/adriann/sounds/191718/"
+  },
+  "fs195439": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/195/195439_3634316-hq.mp3",
+   "title": "strike 3 sec.wav",
+   "author": "Littlebrojay",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Littlebrojay/sounds/195439/"
+  },
+  "fs197763": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/197/197763_3680406-hq.mp3",
+   "title": "drum roll",
+   "author": "owowowwo",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/owowowwo/sounds/197763/"
+  },
+  "fs19778": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/19/19778_92421-hq.mp3",
+   "title": "coindrop1.wav",
+   "author": "jmaimarc",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/jmaimarc/sounds/19778/"
+  },
+  "fs202230": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/202/202230_3725006-hq.mp3",
+   "title": "Pop sound",
+   "author": "deraj",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/deraj/sounds/202230/"
+  },
+  "fs203342": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/203/203342_3798145-hq.mp3",
+   "title": "Howl of the night",
+   "author": "kiwisarecool",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/kiwisarecool/sounds/203342/"
+  },
+  "fs207322": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/207/207322_2368212-hq.mp3",
+   "title": "Short Explosion.wav",
+   "author": "animationIsaac",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/animationIsaac/sounds/207322/"
+  },
+  "fs209772": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/209/209772_2012390-hq.mp3",
+   "title": "Metal Boom",
+   "author": "Johnnyfarmer",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Johnnyfarmer/sounds/209772/"
+  },
+  "fs212143": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/212/212143_71257-hq.mp3",
+   "title": "SPLASH (by blaukreuz)",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/212143/"
+  },
+  "fs214455": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/214/214455_2992529-hq.mp3",
+   "title": "magic burst",
+   "author": "DAN2008",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/DAN2008/sounds/214455/"
+  },
+  "fs218354": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/218/218354_2806019-hq.mp3",
+   "title": "Movie Short Swell",
+   "author": "jordivburgel",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/jordivburgel/sounds/218354/"
+  },
+  "fs220184": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/220/220184_4100837-hq.mp3",
+   "title": "Win Spacey",
+   "author": "GameAudio",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/GameAudio/sounds/220184/"
+  },
+  "fs222517": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/222/222517_71257-hq.mp3",
+   "title": "Dramatic Hit",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/222517/"
+  },
+  "fs223851": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/223/223851_3298571-hq.mp3",
+   "title": "Witch Laugh",
+   "author": "mvVoiceActing",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/mvVoiceActing/sounds/223851/"
+  },
+  "fs231762": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/231/231762_1934467-hq.mp3",
+   "title": "FX_Dog Barking.wav",
+   "author": "davidmenke",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/davidmenke/sounds/231762/"
+  },
+  "fs233128": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/233/233128_4056007-hq.mp3",
+   "title": "Cow - Moo 3 - 96kHz.wav",
+   "author": "JarredGibb",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/JarredGibb/sounds/233128/"
+  },
+  "fs233158": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/233/233158_4056007-hq.mp3",
+   "title": "Pig - Snort 9 - 96kHz.wav",
+   "author": "JarredGibb",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/JarredGibb/sounds/233158/"
+  },
+  "fs233183": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/233/233183_4056007-hq.mp3",
+   "title": "Pig - Multiple Snorts 2 (2 pigs) - 96kHz.wav",
+   "author": "JarredGibb",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/JarredGibb/sounds/233183/"
+  },
+  "fs233254": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/233/233254_2531187-hq.mp3",
+   "title": "Single Bird Chirp 2",
+   "author": "alegemaate",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/alegemaate/sounds/233254/"
+  },
+  "fs233255": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/233/233255_2531187-hq.mp3",
+   "title": "Single Bird Chirp",
+   "author": "alegemaate",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/alegemaate/sounds/233255/"
+  },
+  "fs234555": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/234/234555_4238641-hq.mp3",
+   "title": "Swoosh Explosion",
+   "author": "Electroviolence",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Electroviolence/sounds/234555/"
+  },
+  "fs235911": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/235/235911_2391840-hq.mp3",
+   "title": "Notification Sound",
+   "author": "yfjesse",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/yfjesse/sounds/235911/"
+  },
+  "fs237980": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/237/237980_2971294-hq.mp3",
+   "title": "Very Big Whoosh",
+   "author": "Paul368",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Paul368/sounds/237980/"
+  },
+  "fs241809": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/241/241809_4404552-hq.mp3",
+   "title": "Magic SFX for Games ",
+   "author": "suntemple",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/suntemple/sounds/241809/"
+  },
+  "fs243400": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/243/243400_4146245-hq.mp3",
+   "title": "woosh.wav",
+   "author": "freakinbehemoth",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/freakinbehemoth/sounds/243400/"
+  },
+  "fs243701": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/243/243701_3752922-hq.mp3",
+   "title": "correct",
+   "author": "ertfelda",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/ertfelda/sounds/243701/"
+  },
+  "fs244926": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/244/244926_3983630-hq.mp3",
+   "title": "fire-whoosh.wav",
+   "author": "hnhnh",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/hnhnh/sounds/244926/"
+  },
+  "fs253177": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/253/253177_4404552-hq.mp3",
+   "title": "Retro \"Accomplished\" SFX",
+   "author": "suntemple",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/suntemple/sounds/253177/"
+  },
+  "fs254907": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/254/254907_1385065-hq.mp3",
+   "title": "beep beep car",
+   "author": "tsidilin",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/tsidilin/sounds/254907/"
+  },
+  "fs255111": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/255/255111_2472317-hq.mp3",
+   "title": "Cinematic_Boom_Rhapsodize.wav",
+   "author": "rhapsodize",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/rhapsodize/sounds/255111/"
+  },
+  "fs256128": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/256/256128_375016-hq.mp3",
+   "title": "TaDa!.aif",
+   "author": "jimhancock",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/jimhancock/sounds/256128/"
+  },
+  "fs256452": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/256/256452_4754386-hq.mp3",
+   "title": "Cat meow",
+   "author": "philsapphire",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/philsapphire/sounds/256452/"
+  },
+  "fs257474": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/257/257474_3883507-hq.mp3",
+   "title": "Kiss.wav",
+   "author": "mlsulli",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/mlsulli/sounds/257474/"
+  },
+  "fs258269": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/258/258269_4824549-hq.mp3",
+   "title": "Mouth pop",
+   "author": "jcallison",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/jcallison/sounds/258269/"
+  },
+  "fs259285": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/259/259285_3151690-hq.mp3",
+   "title": "Launch.wav",
+   "author": "Philip_Daniels",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Philip_Daniels/sounds/259285/"
+  },
+  "fs260554": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/260/260554_3968707-hq.mp3",
+   "title": "Basic Fire whoosh",
+   "author": "LookIMadeAThing",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/LookIMadeAThing/sounds/260554/"
+  },
+  "fs260555": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/260/260555_3968707-hq.mp3",
+   "title": "Basic Fire Whoosh 2",
+   "author": "LookIMadeAThing",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/LookIMadeAThing/sounds/260555/"
+  },
+  "fs260584": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/260/260584_3968707-hq.mp3",
+   "title": "Basic Fire whoosh 3",
+   "author": "LookIMadeAThing",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/LookIMadeAThing/sounds/260584/"
+  },
+  "fs26349": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/26/26349_56897-hq.mp3",
+   "title": "partypopper.flac",
+   "author": "Streety",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Streety/sounds/26349/"
+  },
+  "fs263809": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/263/263809_147613-hq.mp3",
+   "title": "Balloon Inflation",
+   "author": "d.n.audio.uk",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/d.n.audio.uk/sounds/263809/"
+  },
+  "fs264981": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/264/264981_3370213-hq.mp3",
+   "title": "SFX Magic",
+   "author": "renatalmar",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/renatalmar/sounds/264981/"
+  },
+  "fs265179": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/265/265179_1522435-hq.mp3",
+   "title": "Snare roll",
+   "author": "lucianodato",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/lucianodato/sounds/265179/"
+  },
+  "fs266100": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/266/266100_4997689-hq.mp3",
+   "title": "level up.wav",
+   "author": "Marregheriti",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Marregheriti/sounds/266100/"
+  },
+  "fs266359": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/266/266359_3749555-hq.mp3",
+   "title": "witch_laugh.flac",
+   "author": "ddarkerthanblackk",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/ddarkerthanblackk/sounds/266359/"
+  },
+  "fs267249": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/267/267249_5052946-hq.mp3",
+   "title": "BerlinGameScene.com Crowd Cheer 1",
+   "author": "BerlinGameScene",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/BerlinGameScene/sounds/267249/"
+  },
+  "fs269198": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/269/269198_4409114-hq.mp3",
+   "title": "game-win.mp3",
+   "author": "mickleness",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/mickleness/sounds/269198/"
+  },
+  "fs269571": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/269/269571_4564240-hq.mp3",
+   "title": "horse neigh shortened.wav",
+   "author": "shadoWisp",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/shadoWisp/sounds/269571/"
+  },
+  "fs271150": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/271/271150_3366749-hq.mp3",
+   "title": "titmouse call",
+   "author": "seth-m",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/seth-m/sounds/271150/"
+  },
+  "fs274510": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/274/274510_3029356-hq.mp3",
+   "title": "3 Men Cheering",
+   "author": "jbeetle",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/jbeetle/sounds/274510/"
+  },
+  "fs275154": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/275/275154_4745081-hq.mp3",
+   "title": "Moo.wav",
+   "author": "Bird_man",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Bird_man/sounds/275154/"
+  },
+  "fs275159": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/275/275159_4745081-hq.mp3",
+   "title": "Sword Clash.wav",
+   "author": "Bird_man",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Bird_man/sounds/275159/"
+  },
+  "fs277022": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/277/277022_1402315-hq.mp3",
+   "title": "Applause 1.WAV",
+   "author": "Sandermotions",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Sandermotions/sounds/277022/"
+  },
+  "fs277058": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/277/277058_4486188-hq.mp3",
+   "title": "Single Dog Bark",
+   "author": "kwahmah_02",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/kwahmah_02/sounds/277058/"
+  },
+  "fs277214": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/277/277214_5324223-hq.mp3",
+   "title": "8-Bit Powerup - Get Something BIG!",
+   "author": "TheDweebMan",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/TheDweebMan/sounds/277214/"
+  },
+  "fs315706": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/315/315706_4831592-hq.mp3",
+   "title": "AcousticGuitar-C-Chord.wav",
+   "author": "spitefuloctopus",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/spitefuloctopus/sounds/315706/"
+  },
+  "fs316926": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/316/316926_4972784-hq.mp3",
+   "title": "Bite potato chips",
+   "author": "sammy214",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/sammy214/sounds/316926/"
+  },
+  "fs318724": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/318/318724_3028938-hq.mp3",
+   "title": "19 drum roll.wav",
+   "author": "zuluonedrop",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/zuluonedrop/sounds/318724/"
+  },
+  "fs319418": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/319/319418_2809401-hq.mp3",
+   "title": "Small Water Spill",
+   "author": "Braleven",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Braleven/sounds/319418/"
+  },
+  "fs321163": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/321/321163_5481182-hq.mp3",
+   "title": "TOONY pops.wav",
+   "author": "mikala_oidua",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/mikala_oidua/sounds/321163/"
+  },
+  "fs32260": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/32/32260_43834-hq.mp3",
+   "title": "smallcrowd.wav",
+   "author": "moxobna",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/moxobna/sounds/32260/"
+  },
+  "fs32417": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/32/32417_276701-hq.mp3",
+   "title": "car_horn.wav",
+   "author": "KRAFTWERK2K1",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/KRAFTWERK2K1/sounds/32417/"
+  },
+  "fs325261": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/325/325261_2104797-hq.mp3",
+   "title": "Whoosh.wav",
+   "author": "deleted_user_2104797",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/deleted_user_2104797/sounds/325261/"
+  },
+  "fs325805": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/325/325805_3271346-hq.mp3",
+   "title": "collect.wav",
+   "author": "Wagna",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Wagna/sounds/325805/"
+  },
+  "fs326868": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/326/326868_4077311-hq.mp3",
+   "title": "Sword_Clash (7).wav",
+   "author": "JohnBuhr",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/JohnBuhr/sounds/326868/"
+  },
+  "fs333405": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/333/333405_5884138-hq.mp3",
+   "title": "Cheer 1 short.wav",
+   "author": "jayfrosting",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/jayfrosting/sounds/333405/"
+  },
+  "fs333916": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/333/333916_4930786-hq.mp3",
+   "title": "Cat Meowing",
+   "author": "lextrack",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/lextrack/sounds/333916/"
+  },
+  "fs334169": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/334/334169_5859881-hq.mp3",
+   "title": "Sword Clash",
+   "author": "loudernoises",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/loudernoises/sounds/334169/"
+  },
+  "fs335983": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/335/335983_5548913-hq.mp3",
+   "title": "firework_single.wav",
+   "author": "zihengc",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/zihengc/sounds/335983/"
+  },
+  "fs336571": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/336/336571_5923045-hq.mp3",
+   "title": "coins 05.wav",
+   "author": "Anthousai",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Anthousai/sounds/336571/"
+  },
+  "fs342202": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/342/342202_3908740-hq.mp3",
+   "title": "Dice Rolling Sound - WOOD SURFACE",
+   "author": "Christopherderp",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Christopherderp/sounds/342202/"
+  },
+  "fs345058": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/345/345058_5865517-hq.mp3",
+   "title": "Sound Effect Magic.mp3",
+   "author": "LittleRainySeasons",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/LittleRainySeasons/sounds/345058/"
+  },
+  "fs346117": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/346/346117_6051514-hq.mp3",
+   "title": "Coin count goes up",
+   "author": "lulyc",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/lulyc/sounds/346117/"
+  },
+  "fs348142": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/348/348142_6358944-hq.mp3",
+   "title": "Witch's Laugh.wav",
+   "author": "NikoMyth",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/NikoMyth/sounds/348142/"
+  },
+  "fs348284": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/348/348284_6368641-hq.mp3",
+   "title": "laugh like a witch",
+   "author": "marilenatip",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/marilenatip/sounds/348284/"
+  },
+  "fs349201": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/349/349201_1882758-hq.mp3",
+   "title": "Magic mallet.wav",
+   "author": "Hotlavaman",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Hotlavaman/sounds/349201/"
+  },
+  "fs349282": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/349/349282_2104797-hq.mp3",
+   "title": "Coin on coins_10.wav",
+   "author": "deleted_user_2104797",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/deleted_user_2104797/sounds/349282/"
+  },
+  "fs350421": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/350/350421_4557960-hq.mp3",
+   "title": "Rhinoceros Trumpet Joyful",
+   "author": "bevibeldesign",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/bevibeldesign/sounds/350421/"
+  },
+  "fs350873": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/350/350873_5450487-hq.mp3",
+   "title": "Coin_C_02",
+   "author": "cabled_mess",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/cabled_mess/sounds/350873/"
+  },
+  "fs350999": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/350/350999_5450487-hq.mp3",
+   "title": "Zap_C_02",
+   "author": "cabled_mess",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/cabled_mess/sounds/350999/"
+  },
+  "fs351408": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/351/351408_4067257-hq.mp3",
+   "title": "GLEAM-GLOW-SFX-CHIME.wav",
+   "author": "newagesoup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/newagesoup/sounds/351408/"
+  },
+  "fs351429": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/351/351429_2247456-hq.mp3",
+   "title": "Gun, Laser, Single Shot, Sci Fi",
+   "author": "Kinoton",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Kinoton/sounds/351429/"
+  },
+  "fs351879": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/351/351879_195590-hq.mp3",
+   "title": "Computer Chimes - Notification.aif",
+   "author": "marlonnnnnn",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/marlonnnnnn/sounds/351879/"
+  },
+  "fs352348": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/352/352348_3531538-hq.mp3",
+   "title": "Launch Sequence",
+   "author": "Xemptful",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Xemptful/sounds/352348/"
+  },
+  "fs353232": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/353/353232_5477651-hq.mp3",
+   "title": "Ship Bell Two Chimes",
+   "author": "Sojan",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Sojan/sounds/353232/"
+  },
+  "fs353605": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/353/353605_1289315-hq.mp3",
+   "title": "Muted Guitar Strum",
+   "author": "chiller345",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/chiller345/sounds/353605/"
+  },
+  "fs353708": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/353/353708_5487341-hq.mp3",
+   "title": "Sword Swings",
+   "author": "SamsterBirdies",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/SamsterBirdies/sounds/353708/"
+  },
+  "fs353923": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/353/353923_4161250-hq.mp3",
+   "title": "yay.wav",
+   "author": "dr_skitz",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/dr_skitz/sounds/353923/"
+  },
+  "fs353975": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/353/353975_1815993-hq.mp3",
+   "title": "rolling dice 1.wav",
+   "author": "nettimato",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/nettimato/sounds/353975/"
+  },
+  "fs360739": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/360/360739_6142149-hq.mp3",
+   "title": "Coin Sound 01",
+   "author": "LilMati",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/LilMati/sounds/360739/"
+  },
+  "fs360948": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/360/360948_2958634-hq.mp3",
+   "title": "Little bell",
+   "author": "marcusgar",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/marcusgar/sounds/360948/"
+  },
+  "fs361346": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/361/361346_5506271-hq.mp3",
+   "title": "slot machine payout.wav",
+   "author": "jack126guy",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/jack126guy/sounds/361346/"
+  },
+  "fs361427": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/361/361427_5337613-hq.mp3",
+   "title": "Wind_Chime_Monte_00.wav",
+   "author": "monte32",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/monte32/sounds/361427/"
+  },
+  "fs361564": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/361/361564_6638557-hq.mp3",
+   "title": "Ding Dong",
+   "author": "MatthewWong",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/MatthewWong/sounds/361564/"
+  },
+  "fs362652": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/362/362652_5966858-hq.mp3",
+   "title": "Cat meow",
+   "author": "TRNGLE",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/TRNGLE/sounds/362652/"
+  },
+  "fs364530": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/364/364530_3908740-hq.mp3",
+   "title": "Swords Clash - High Quality #2",
+   "author": "Christopherderp",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Christopherderp/sounds/364530/"
+  },
+  "fs367462": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/367/367462_2465261-hq.mp3",
+   "title": "MENEZ_Corentin_2016_2017_Slots machine.wav",
+   "author": "univ_lyon3",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/univ_lyon3/sounds/367462/"
+  },
+  "fs368651": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/368/368651_6512973-hq.mp3",
+   "title": "Game Powerup",
+   "author": "Jofae",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Jofae/sounds/368651/"
+  },
+  "fs369506": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/369/369506_270868-hq.mp3",
+   "title": "Sleigh bells hit",
+   "author": "Selector",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Selector/sounds/369506/"
+  },
+  "fs370743": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/370/370743_4869300-hq.mp3",
+   "title": "Winner! - Metal Bell Ringing Remix",
+   "author": "Podsburgh",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Podsburgh/sounds/370743/"
+  },
+  "fs371342": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/371/371342_5302340-hq.mp3",
+   "title": "D2_kidslaughing.mp3",
+   "author": "Iamgiorgio",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Iamgiorgio/sounds/371342/"
+  },
+  "fs372182": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/372/372182_5485470-hq.mp3",
+   "title": "pop.mp3",
+   "author": "supersound23",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/supersound23/sounds/372182/"
+  },
+  "fs375926": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/375/375926_3294528-hq.mp3",
+   "title": "Laser Zaps.wav",
+   "author": "Glitchedtones",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Glitchedtones/sounds/375926/"
+  },
+  "fs37596": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/37/37596_199517-hq.mp3",
+   "title": "Sword.wav",
+   "author": "hello_flowers",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/hello_flowers/sounds/37596/"
+  },
+  "fs376807": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/376/376807_5939647-hq.mp3",
+   "title": "Ding.wav",
+   "author": "chennes",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/chennes/sounds/376807/"
+  },
+  "fs380482": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/380/380482_6512973-hq.mp3",
+   "title": "Chime Notification",
+   "author": "Jofae",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Jofae/sounds/380482/"
+  },
+  "fs386766": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/386/386766_5768130-hq.mp3",
+   "title": "Dog_Barking.wav",
+   "author": "ken788",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/ken788/sounds/386766/"
+  },
+  "fs389590": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/389/389590_6512973-hq.mp3",
+   "title": "Swing Woosh",
+   "author": "Jofae",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Jofae/sounds/389590/"
+  },
+  "fs390520": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/390/390520_7125047-hq.mp3",
+   "title": "Zap.mp3",
+   "author": "Aeross",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Aeross/sounds/390520/"
+  },
+  "fs392624": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/392/392624_5440319-hq.mp3",
+   "title": "Champagne Cork",
+   "author": "KenRT",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/KenRT/sounds/392624/"
+  },
+  "fs393402": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/393/393402_36872-hq.mp3",
+   "title": "Group_Yay_Cheer.wav",
+   "author": "Stevedrums",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Stevedrums/sounds/393402/"
+  },
+  "fs396307": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/396/396307_3728489-hq.mp3",
+   "title": "Dog play.WAV",
+   "author": "cribbler",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/cribbler/sounds/396307/"
+  },
+  "fs397353": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/397/397353_4284968-hq.mp3",
+   "title": "Tada Fanfare G",
+   "author": "plasterbrain",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/plasterbrain/sounds/397353/"
+  },
+  "fs397354": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/397/397354_4284968-hq.mp3",
+   "title": "Tada Fanfare F",
+   "author": "plasterbrain",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/plasterbrain/sounds/397354/"
+  },
+  "fs397355": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/397/397355_4284968-hq.mp3",
+   "title": "Tada Fanfare A",
+   "author": "plasterbrain",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/plasterbrain/sounds/397355/"
+  },
+  "fs398032": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/398/398032_7586736-hq.mp3",
+   "title": "Splash",
+   "author": "swordofkings128",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/swordofkings128/sounds/398032/"
+  },
+  "fs398496": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/398/398496_5923045-hq.mp3",
+   "title": "wind chimes - single 04.wav",
+   "author": "Anthousai",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Anthousai/sounds/398496/"
+  },
+  "fs399186": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/399/399186_1032573-hq.mp3",
+   "title": "wolf 2.wav",
+   "author": "genel",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/genel/sounds/399186/"
+  },
+  "fs400590": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/400/400590_3372256-hq.mp3",
+   "title": "Small crowd cheering",
+   "author": "misjoc",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/misjoc/sounds/400590/"
+  },
+  "fs401631": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/401/401631_3910612-hq.mp3",
+   "title": "Étoile.wav",
+   "author": "studiomandragore",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/studiomandragore/sounds/401631/"
+  },
+  "fs402067": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/402/402067_6142149-hq.mp3",
+   "title": "Retro, Coin 01.wav",
+   "author": "LilMati",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/LilMati/sounds/402067/"
+  },
+  "fs403063": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/403/403063_7811934-hq.mp3",
+   "title": "brief-bird-song.wav",
+   "author": "Kneeling",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Kneeling/sounds/403063/"
+  },
+  "fs404770": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/404/404770_140737-hq.mp3",
+   "title": "Retro video game sfx - Bonus",
+   "author": "OwlStorm",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/OwlStorm/sounds/404770/"
+  },
+  "fs410335": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/410/410335_7963426-hq.mp3",
+   "title": "Water drop / Splash",
+   "author": "bxyorna",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/bxyorna/sounds/410335/"
+  },
+  "fs410868": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/410/410868_3895722-hq.mp3",
+   "title": "crowd_cheering_and_clapping.wav",
+   "author": "NobodyYouKnowOf",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/NobodyYouKnowOf/sounds/410868/"
+  },
+  "fs411462": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/411/411462_6090639-hq.mp3",
+   "title": "Bubble Pop",
+   "author": "TheBuilder15",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/TheBuilder15/sounds/411462/"
+  },
+  "fs412017": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/412/412017_3652520-hq.mp3",
+   "title": "cat meow short",
+   "author": "skymary",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/skymary/sounds/412017/"
+  },
+  "fs412558": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/412/412558_6031117-hq.mp3",
+   "title": "Combust.wav",
+   "author": "GrimGrum",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/GrimGrum/sounds/412558/"
+  },
+  "fs413234": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/413/413234_1431924-hq.mp3",
+   "title": "jingled bells shrt.wav",
+   "author": "tec_studio",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/tec_studio/sounds/413234/"
+  },
+  "fs414208": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/414/414208_6938106-hq.mp3",
+   "title": "Airhorn",
+   "author": "jacksonacademyashmore",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/jacksonacademyashmore/sounds/414208/"
+  },
+  "fs415125": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/415/415125_7047665-hq.mp3",
+   "title": "Balloon Pop.wav",
+   "author": "Laumark",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Laumark/sounds/415125/"
+  },
+  "fs415447": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/415/415447_2112203-hq.mp3",
+   "title": "Harp Wild Run Down short.wav",
+   "author": "luckylittleraven",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/luckylittleraven/sounds/415447/"
+  },
+  "fs415477": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/415/415477_2112203-hq.mp3",
+   "title": "Harp Short 4.wav",
+   "author": "luckylittleraven",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/luckylittleraven/sounds/415477/"
+  },
+  "fs415504": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/415/415504_6894147-hq.mp3",
+   "title": "Tadaa.wav",
+   "author": "Exchanger",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Exchanger/sounds/415504/"
+  },
+  "fs416690": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/416/416690_6456158-hq.mp3",
+   "title": "Baby Language - Ha-Ha (Monkey).wav",
+   "author": "FunWithSound",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/FunWithSound/sounds/416690/"
+  },
+  "fs417823": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/417/417823_3403708-hq.mp3",
+   "title": "Monkey Imitation 3",
+   "author": "AntumDeluge",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/AntumDeluge/sounds/417823/"
+  },
+  "fs417826": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/417/417826_3403708-hq.mp3",
+   "title": "Witch Cackle",
+   "author": "AntumDeluge",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/AntumDeluge/sounds/417826/"
+  },
+  "fs419020": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/419/419020_2755230-hq.mp3",
+   "title": "kisses",
+   "author": "lantiphon",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/lantiphon/sounds/419020/"
+  },
+  "fs419493": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/419/419493_4284968-hq.mp3",
+   "title": "Bell Chime Alert",
+   "author": "plasterbrain",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/plasterbrain/sounds/419493/"
+  },
+  "fs419594": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/419/419594_7062176-hq.mp3",
+   "title": "Mystical Wind Chimes Transition FX",
+   "author": "djlprojects",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/djlprojects/sounds/419594/"
+  },
+  "fs420466": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/420/420466_8379536-hq.mp3",
+   "title": "Roar.m4a",
+   "author": "tahirahg1991",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/tahirahg1991/sounds/420466/"
+  },
+  "fs422079": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/422/422079_4844309-hq.mp3",
+   "title": "single firework.wav",
+   "author": "johnnyguitar01",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/johnnyguitar01/sounds/422079/"
+  },
+  "fs423930": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/423/423930_5948010-hq.mp3",
+   "title": "correct.wav",
+   "author": "Mudkip2016",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Mudkip2016/sounds/423930/"
+  },
+  "fs423990": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/423/423990_4023430-hq.mp3",
+   "title": "Car horn beep beep two beeps honk honk",
+   "author": "AmishRob",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/AmishRob/sounds/423990/"
+  },
+  "fs425209": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/425/425209_8520270-hq.mp3",
+   "title": "water_drop.wav",
+   "author": "velkstar",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/velkstar/sounds/425209/"
+  },
+  "fs427694": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/427/427694_7350267-hq.mp3",
+   "title": "13-Aullido Lobo.wav",
+   "author": "efsdcnveoi",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/efsdcnveoi/sounds/427694/"
+  },
+  "fs427718": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/427/427718_8295394-hq.mp3",
+   "title": "01. Risita niña.wav",
+   "author": "lemigoga",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/lemigoga/sounds/427718/"
+  },
+  "fs427803": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/427/427803_2866779-hq.mp3",
+   "title": "Cinematic Hit With Horns.wav",
+   "author": "DeVern",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/DeVern/sounds/427803/"
+  },
+  "fs428073": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/428/428073_4067257-hq.mp3",
+   "title": "Sub Drop Smooth.wav",
+   "author": "newagesoup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/newagesoup/sounds/428073/"
+  },
+  "fs429109": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/429/429109_7312716-hq.mp3",
+   "title": "15-WolfCrying.wav",
+   "author": "cazadordoblekatana",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/cazadordoblekatana/sounds/429109/"
+  },
+  "fs430815": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/430/430815_1875039-hq.mp3",
+   "title": "Kids laugh.wav",
+   "author": "Ben Keaton",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Ben Keaton/sounds/430815/"
+  },
+  "fs430977": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/430/430977_8698658-hq.mp3",
+   "title": "Big impact.wav",
+   "author": "AudioPapkin",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/AudioPapkin/sounds/430977/"
+  },
+  "fs433721": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/433/433721_4140743-hq.mp3",
+   "title": "Cheers!.wav",
+   "author": "dazza007",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/dazza007/sounds/433721/"
+  },
+  "fs434878": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/434/434878_3388578-hq.mp3",
+   "title": "Car Honking",
+   "author": "MicktheMicGuy",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/MicktheMicGuy/sounds/434878/"
+  },
+  "fs436541": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/436/436541_1196472-hq.mp3",
+   "title": "Cat Meow",
+   "author": "Mafon2",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Mafon2/sounds/436541/"
+  },
+  "fs436790": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/436/436790_3206727-hq.mp3",
+   "title": "Thunder Clap",
+   "author": "roboroo",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/roboroo/sounds/436790/"
+  },
+  "fs441342": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/441/441342_8698658-hq.mp3",
+   "title": "Stinger 3.wav",
+   "author": "AudioPapkin",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/AudioPapkin/sounds/441342/"
+  },
+  "fs442773": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/442/442773_71257-hq.mp3",
+   "title": "Big Water Splash",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/442773/"
+  },
+  "fs442774": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/442/442774_71257-hq.mp3",
+   "title": "Magic Spell",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/442774/"
+  },
+  "fs442905": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/442/442905_71257-hq.mp3",
+   "title": "Pig Sound",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/442905/"
+  },
+  "fs442906": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/442/442906_71257-hq.mp3",
+   "title": "Pig Oink",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/442906/"
+  },
+  "fs442907": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/442/442907_71257-hq.mp3",
+   "title": "Pig Grunt",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/442907/"
+  },
+  "fs442943": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/442/442943_71257-hq.mp3",
+   "title": "Level Up",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/442943/"
+  },
+  "fs444493": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/444/444493_9159316-hq.mp3",
+   "title": "Cartoon Smooch",
+   "author": "Breviceps",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Breviceps/sounds/444493/"
+  },
+  "fs444494": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/444/444494_9159316-hq.mp3",
+   "title": "Cartoon - Smoochy Squeak + Plop",
+   "author": "Breviceps",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Breviceps/sounds/444494/"
+  },
+  "fs445237": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/445/445237_1844073-hq.mp3",
+   "title": "Firework 2",
+   "author": "steffcaffrey",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/steffcaffrey/sounds/445237/"
+  },
+  "fs445958": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/445/445958_9159316-hq.mp3",
+   "title": "Cartoon - Bat / Mouse Squeak",
+   "author": "Breviceps",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Breviceps/sounds/445958/"
+  },
+  "fs448084": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/448/448084_9159316-hq.mp3",
+   "title": "Cute Kitten Meow",
+   "author": "Breviceps",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Breviceps/sounds/448084/"
+  },
+  "fs448513": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/448/448513_7667897-hq.mp3",
+   "title": "sleighbells1.flac",
+   "author": "Faranta",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Faranta/sounds/448513/"
+  },
+  "fs452379": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/452/452379_1844073-hq.mp3",
+   "title": "Small Bell #2",
+   "author": "steffcaffrey",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/steffcaffrey/sounds/452379/"
+  },
+  "fs453202": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/453/453202_487933-hq.mp3",
+   "title": "Sleigh_Bells (7-22-12 edit).mp3",
+   "author": "jsm1963",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/jsm1963/sounds/453202/"
+  },
+  "fs455547": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/455/455547_2247456-hq.mp3",
+   "title": "Firework Single Rocket #2",
+   "author": "Kinoton",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Kinoton/sounds/455547/"
+  },
+  "fs456965": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/456/456965_6456158-hq.mp3",
+   "title": "Short Success Sound Glockenspiel Treasure Video Game.mp3",
+   "author": "FunWithSound",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/FunWithSound/sounds/456965/"
+  },
+  "fs456966": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/456/456966_6456158-hq.mp3",
+   "title": "Success Fanfare Trumpets.mp3",
+   "author": "FunWithSound",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/FunWithSound/sounds/456966/"
+  },
+  "fs456967": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/456/456967_6456158-hq.mp3",
+   "title": "Success Resolution Video Game Sound Effect Strings.mp3",
+   "author": "FunWithSound",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/FunWithSound/sounds/456967/"
+  },
+  "fs458398": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/458/458398_9159316-hq.mp3",
+   "title": "Balloon Pop / Christmas cracker / Confetti Cannon",
+   "author": "Breviceps",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Breviceps/sounds/458398/"
+  },
+  "fs458645": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/458/458645_6996390-hq.mp3",
+   "title": "babygiggle.mp3",
+   "author": "jamesmbock",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/jamesmbock/sounds/458645/"
+  },
+  "fs462093": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/462/462093_6142149-hq.mp3",
+   "title": "Sparkling Star 03.wav",
+   "author": "LilMati",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/LilMati/sounds/462093/"
+  },
+  "fs462094": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/462/462094_6142149-hq.mp3",
+   "title": "Sparkling Star 02.wav",
+   "author": "LilMati",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/LilMati/sounds/462094/"
+  },
+  "fs462095": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/462/462095_6142149-hq.mp3",
+   "title": "Sparkling Star 01.wav",
+   "author": "LilMati",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/LilMati/sounds/462095/"
+  },
+  "fs462362": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/462/462362_9159316-hq.mp3",
+   "title": "Small applause",
+   "author": "Breviceps",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Breviceps/sounds/462362/"
+  },
+  "fs467762": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/467/467762_371166-hq.mp3",
+   "title": "lion.wav",
+   "author": "SGAK",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/SGAK/sounds/467762/"
+  },
+  "fs468443": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/468/468443_9159316-hq.mp3",
+   "title": "Squeaky Toy #1",
+   "author": "Breviceps",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Breviceps/sounds/468443/"
+  },
+  "fs472402": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/472/472402_9934646-hq.mp3",
+   "title": "22_Lobo_aullando.wav",
+   "author": "JoseAgudelo",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/JoseAgudelo/sounds/472402/"
+  },
+  "fs475094": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/475/475094_9608356-hq.mp3",
+   "title": "thunder3.ogg",
+   "author": "Josh74000MC",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Josh74000MC/sounds/475094/"
+  },
+  "fs475879": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/475/475879_10132460-hq.mp3",
+   "title": "ESE - WHOOSH - CALM - Fire Flame.wav",
+   "author": "EpicSoundEffects",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/EpicSoundEffects/sounds/475879/"
+  },
+  "fs479272": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/479/479272_1844073-hq.mp3",
+   "title": "New Cat Meow 1",
+   "author": "steffcaffrey",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/steffcaffrey/sounds/479272/"
+  },
+  "fs482663": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/482/482663_9961300-hq.mp3",
+   "title": "Roulette Wheel Spin Loop 1_1",
+   "author": "Joao_Janz",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Joao_Janz/sounds/482663/"
+  },
+  "fs483922": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/483/483922_9159316-hq.mp3",
+   "title": "Squeaky Toy #4",
+   "author": "Breviceps",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Breviceps/sounds/483922/"
+  },
+  "fs490831": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/490/490831_10350281-hq.mp3",
+   "title": "harp glissando",
+   "author": "PhonosUPF",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/PhonosUPF/sounds/490831/"
+  },
+  "fs495002": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/495/495002_6299573-hq.mp3",
+   "title": "\"Unlocked\" Video Game Sound",
+   "author": "EVRetro",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/EVRetro/sounds/495002/"
+  },
+  "fs501168": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/501/501168_4648939-hq.mp3",
+   "title": "Furin japanese wind chime.wav",
+   "author": "ayustat2001",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/ayustat2001/sounds/501168/"
+  },
+  "fs506914": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/506/506914_4129624-hq.mp3",
+   "title": "Dice_Roll.mp3",
+   "author": "schoman3",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/schoman3/sounds/506914/"
+  },
+  "fs506939": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/506/506939_717697-hq.mp3",
+   "title": "Magic spell (small positive)",
+   "author": "Nakhas",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Nakhas/sounds/506939/"
+  },
+  "fs507453": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/507/507453_4129624-hq.mp3",
+   "title": "Eat_Crunchy.mp3",
+   "author": "schoman3",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/schoman3/sounds/507453/"
+  },
+  "fs510490": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/510/510490_11157736-hq.mp3",
+   "title": "eleaudio.m4a",
+   "author": "bkyte",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/bkyte/sounds/510490/"
+  },
+  "fs511094": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/511/511094_8472935-hq.mp3",
+   "title": "Happy Bird Singing",
+   "author": "se2001",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/se2001/sounds/511094/"
+  },
+  "fs511484": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/511/511484_6890478-hq.mp3",
+   "title": "success_bell",
+   "author": "MLaudio",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/MLaudio/sounds/511484/"
+  },
+  "fs511872": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/511/511872_8698658-hq.mp3",
+   "title": "Riser Hit sfx 025.wav",
+   "author": "AudioPapkin",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/AudioPapkin/sounds/511872/"
+  },
+  "fs511874": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/511/511874_8698658-hq.mp3",
+   "title": "Riser Hit sfx 031.wav",
+   "author": "AudioPapkin",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/AudioPapkin/sounds/511874/"
+  },
+  "fs513557": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/513/513557_2898771-hq.mp3",
+   "title": "Cow moo #3",
+   "author": "spurioustransients",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/spurioustransients/sounds/513557/"
+  },
+  "fs513983": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/513/513983_10418401-hq.mp3",
+   "title": "Very Cute Cartoon Laughter",
+   "author": "NicknameLarry",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/NicknameLarry/sounds/513983/"
+  },
+  "fs519193": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/519/519193_11452660-hq.mp3",
+   "title": "Baby Chicks Chirp.boaay",
+   "author": "BOAAY",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/BOAAY/sounds/519193/"
+  },
+  "fs519598": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/519/519598_7143328-hq.mp3",
+   "title": "huf grizzly",
+   "author": "Nivatius",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Nivatius/sounds/519598/"
+  },
+  "fs521246": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/521/521246_8923841-hq.mp3",
+   "title": "Horse",
+   "author": "poodaddy69",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/poodaddy69/sounds/521246/"
+  },
+  "fs521377": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/521/521377_10847299-hq.mp3",
+   "title": "Rocket Launch",
+   "author": "Jarusca",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Jarusca/sounds/521377/"
+  },
+  "fs521639": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/521/521639_7724198-hq.mp3",
+   "title": "WinBrass.wav",
+   "author": "Fupicat",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Fupicat/sounds/521639/"
+  },
+  "fs521642": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/521/521642_7724198-hq.mp3",
+   "title": "WinHarpsichord.wav",
+   "author": "Fupicat",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Fupicat/sounds/521642/"
+  },
+  "fs521643": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/521/521643_7724198-hq.mp3",
+   "title": "WinGrandPiano.wav",
+   "author": "Fupicat",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Fupicat/sounds/521643/"
+  },
+  "fs521645": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/521/521645_7724198-hq.mp3",
+   "title": "WinFantasia.wav",
+   "author": "Fupicat",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Fupicat/sounds/521645/"
+  },
+  "fs523057": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/523/523057_11537497-hq.mp3",
+   "title": "ENERGY RISER 2",
+   "author": "magnuswaker",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/magnuswaker/sounds/523057/"
+  },
+  "fs523754": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/523/523754_6142149-hq.mp3",
+   "title": "New Skill 02.wav",
+   "author": "LilMati",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/LilMati/sounds/523754/"
+  },
+  "fs527650": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/527/527650_7724198-hq.mp3",
+   "title": "WinSquare.wav",
+   "author": "Fupicat",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Fupicat/sounds/527650/"
+  },
+  "fs527845": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/527/527845_11431915-hq.mp3",
+   "title": "Elephant Trumpets Growls.flac",
+   "author": "D.jones",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/D.jones/sounds/527845/"
+  },
+  "fs528958": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/528/528958_10334845-hq.mp3",
+   "title": "Level Up / Mission Complete",
+   "author": "Beetlemuse",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Beetlemuse/sounds/528958/"
+  },
+  "fs528962": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/528/528962_11720698-hq.mp3",
+   "title": "Crunch",
+   "author": "steenish",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/steenish/sounds/528962/"
+  },
+  "fs530355": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/530/530355_10106687-hq.mp3",
+   "title": "Fire.wav",
+   "author": "danielpodlovics",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/danielpodlovics/sounds/530355/"
+  },
+  "fs531245": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/531/531245_5632532-hq.mp3",
+   "title": "cartoon bite.WAV",
+   "author": "Mikes-MultiMedia",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Mikes-MultiMedia/sounds/531245/"
+  },
+  "fs536335": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/536/536335_8838719-hq.mp3",
+   "title": "Cartoon Kiss_cjohnstone.wav",
+   "author": "trijohnstone",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/trijohnstone/sounds/536335/"
+  },
+  "fs536746": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/536/536746_1415754-hq.mp3",
+   "title": "Pig.ogg",
+   "author": "egomassive",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/egomassive/sounds/536746/"
+  },
+  "fs537897": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/537/537897_11979494-hq.mp3",
+   "title": "Balloon Pop One.mp3",
+   "author": "belanhud",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/belanhud/sounds/537897/"
+  },
+  "fs538147": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/538/538147_7724198-hq.mp3",
+   "title": "Correct Bell",
+   "author": "Fupicat",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Fupicat/sounds/538147/"
+  },
+  "fs54012": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/54/54012_653520-hq.mp3",
+   "title": "Balloon pop.wav",
+   "author": "Mart1001",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Mart1001/sounds/54012/"
+  },
+  "fs541029": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/541/541029_8698658-hq.mp3",
+   "title": "Very low frequency impact.wav",
+   "author": "AudioPapkin",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/AudioPapkin/sounds/541029/"
+  },
+  "fs541359": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/541/541359_473017-hq.mp3",
+   "title": "Sleigh Bell Short 02.wav",
+   "author": "JoshuaPomeroy",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/JoshuaPomeroy/sounds/541359/"
+  },
+  "fs546479": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/546/546479_11588763-hq.mp3",
+   "title": "Cow Moo 2",
+   "author": "invertedturtle",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/invertedturtle/sounds/546479/"
+  },
+  "fs558204": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/558/558204_3921235-hq.mp3",
+   "title": "GAMEMisc_Dice Roll On Wood_Jaku5.wav",
+   "author": "jakubp.jp",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/jakubp.jp/sounds/558204/"
+  },
+  "fs558679": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/558/558679_6135165-hq.mp3",
+   "title": "Sci-Fi Charge Up.wav",
+   "author": "Hemplock",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Hemplock/sounds/558679/"
+  },
+  "fs559529": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/559/559529_10825267-hq.mp3",
+   "title": "Cinematic Boom",
+   "author": "Rizzard",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Rizzard/sounds/559529/"
+  },
+  "fs562292": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/562/562292_11785387-hq.mp3",
+   "title": "Heal - Rpg",
+   "author": "colorsCrimsonTears",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/colorsCrimsonTears/sounds/562292/"
+  },
+  "fs563845": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/563/563845_11121005-hq.mp3",
+   "title": "yay.mp3",
+   "author": "Disarmenemyships",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Disarmenemyships/sounds/563845/"
+  },
+  "fs565700": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/565/565700_1971023-hq.mp3",
+   "title": "Coin Bag Jangling Shake.wav",
+   "author": "ralph.whitehead",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/ralph.whitehead/sounds/565700/"
+  },
+  "fs566203": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/566/566203_11785387-hq.mp3",
+   "title": "Fanfare - Rpg",
+   "author": "colorsCrimsonTears",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/colorsCrimsonTears/sounds/566203/"
+  },
+  "fs567803": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/567/567803_907124-hq.mp3",
+   "title": "poujade_eva_2020_2021_RoarOfLion(son2).wav",
+   "author": "iut_Paris8",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/iut_Paris8/sounds/567803/"
+  },
+  "fs569289": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/569/569289_12798871-hq.mp3",
+   "title": "Guitar strum.wav",
+   "author": "EntoClash",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/EntoClash/sounds/569289/"
+  },
+  "fs571129": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/571/571129_3202600-hq.mp3",
+   "title": "80s Achievement Unlocked",
+   "author": "Jerimee",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Jerimee/sounds/571129/"
+  },
+  "fs578803": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/578/578803_10522382-hq.mp3",
+   "title": "Sparkle",
+   "author": "nomiqbomi",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/nomiqbomi/sounds/578803/"
+  },
+  "fs580310": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/580/580310_11785387-hq.mp3",
+   "title": "Fanfare 2 - Rpg",
+   "author": "colorsCrimsonTears",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/colorsCrimsonTears/sounds/580310/"
+  },
+  "fs583142": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/583/583142_3403708-hq.mp3",
+   "title": "Puppy Bark",
+   "author": "AntumDeluge",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/AntumDeluge/sounds/583142/"
+  },
+  "fs587173": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/587/587173_13123807-hq.mp3",
+   "title": "firework_rocket_ignition.ogg",
+   "author": "derplayer",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/derplayer/sounds/587173/"
+  },
+  "fs587189": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/587/587189_13123807-hq.mp3",
+   "title": "explosion_05.wav",
+   "author": "derplayer",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/derplayer/sounds/587189/"
+  },
+  "fs587193": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/587/587193_13123807-hq.mp3",
+   "title": "explosion_big_02.ogg",
+   "author": "derplayer",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/derplayer/sounds/587193/"
+  },
+  "fs587194": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/587/587194_13123807-hq.mp3",
+   "title": "explosion_big_01.ogg",
+   "author": "derplayer",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/derplayer/sounds/587194/"
+  },
+  "fs587196": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/587/587196_13123807-hq.mp3",
+   "title": "explosion_06",
+   "author": "derplayer",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/derplayer/sounds/587196/"
+  },
+  "fs588198": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/588/588198_9129912-hq.mp3",
+   "title": "Fireworks - Pop Pop Crackle",
+   "author": "el_boss",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/el_boss/sounds/588198/"
+  },
+  "fs588242": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/588/588242_11537497-hq.mp3",
+   "title": "Laser Charge Up",
+   "author": "magnuswaker",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/magnuswaker/sounds/588242/"
+  },
+  "fs588351": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/588/588351_13287395-hq.mp3",
+   "title": "spin_sound.wav",
+   "author": "takecoins",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/takecoins/sounds/588351/"
+  },
+  "fs592096": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/592/592096_702542-hq.mp3",
+   "title": "triumph tada horns 1 eo.wav",
+   "author": "Empiremonkey",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Empiremonkey/sounds/592096/"
+  },
+  "fs59245": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/59/59245_91975-hq.mp3",
+   "title": "z-moo01.wav",
+   "author": "Zozzy",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Zozzy/sounds/59245/"
+  },
+  "fs60013": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/60/60013_71257-hq.mp3",
+   "title": "Whoosh",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/60013/"
+  },
+  "fs60030": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/60/60030_71257-hq.mp3",
+   "title": "Swosh / Whoosh / Air Cut",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/60030/"
+  },
+  "fs607207": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/607/607207_7724198-hq.mp3",
+   "title": "Congrats",
+   "author": "Fupicat",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Fupicat/sounds/607207/"
+  },
+  "fs607209": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/607/607209_7724198-hq.mp3",
+   "title": "fweeng",
+   "author": "Fupicat",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Fupicat/sounds/607209/"
+  },
+  "fs607407": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/607/607407_11785387-hq.mp3",
+   "title": "Fanfare 3 - Rpg",
+   "author": "colorsCrimsonTears",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/colorsCrimsonTears/sounds/607407/"
+  },
+  "fs609335": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/609/609335_2770604-hq.mp3",
+   "title": "LevelUp.wav",
+   "author": "Kenneth_Cooney",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Kenneth_Cooney/sounds/609335/"
+  },
+  "fs611113": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/611/611113_1629501-hq.mp3",
+   "title": "bell ding 1.wav",
+   "author": "5ro4",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/5ro4/sounds/611113/"
+  },
+  "fs616088": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/616/616088_11433369-hq.mp3",
+   "title": "Child's laugh 1 - medyk3D.wav",
+   "author": "medyk3D",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/medyk3D/sounds/616088/"
+  },
+  "fs616696": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/616/616696_12364629-hq.mp3",
+   "title": "Chimes / Saved",
+   "author": "melokacool",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/melokacool/sounds/616696/"
+  },
+  "fs618961": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/618/618961_6135165-hq.mp3",
+   "title": "Cute Bounce Jump.wav",
+   "author": "Hemplock",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Hemplock/sounds/618961/"
+  },
+  "fs619838": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/619/619838_7614679-hq.mp3",
+   "title": "Achievement Happy Beeps Jingle",
+   "author": "CogFireStudios",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/CogFireStudios/sounds/619838/"
+  },
+  "fs619840": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/619/619840_7614679-hq.mp3",
+   "title": "Achievement Accomplish Jingle App UI",
+   "author": "CogFireStudios",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/CogFireStudios/sounds/619840/"
+  },
+  "fs622150": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/622/622150_11995365-hq.mp3",
+   "title": "Popping Cork",
+   "author": "milcahrawr",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/milcahrawr/sounds/622150/"
+  },
+  "fs625174": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/625/625174_13251199-hq.mp3",
+   "title": "[UI Sound] Approval - High Pitched Bell Synth",
+   "author": "GabFitzgerald",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/GabFitzgerald/sounds/625174/"
+  },
+  "fs629982": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/629/629982_12715066-hq.mp3",
+   "title": "Dice Rolling on Table",
+   "author": "Flem0527",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Flem0527/sounds/629982/"
+  },
+  "fs630018": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/630/630018_12715066-hq.mp3",
+   "title": "Singular Coin Dropping.wav",
+   "author": "Flem0527",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Flem0527/sounds/630018/"
+  },
+  "fs630377": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/630/630377_12591824-hq.mp3",
+   "title": "glass; clink; cheers .wav",
+   "author": "viwright2112",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/viwright2112/sounds/630377/"
+  },
+  "fs639429": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/639/639429_5685306-hq.mp3",
+   "title": "Crystal Twinkle",
+   "author": "LaurenPonder",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/LaurenPonder/sounds/639429/"
+  },
+  "fs644963": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/644/644963_8358230-hq.mp3",
+   "title": "Quiz Gameshow Correct Ping 14..mp3",
+   "author": "craigscottuk",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/craigscottuk/sounds/644963/"
+  },
+  "fs648610": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/648/648610_8698658-hq.mp3",
+   "title": "Cinematic Woosh SFX-008.wav",
+   "author": "AudioPapkin",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/AudioPapkin/sounds/648610/"
+  },
+  "fs648729": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/648/648729_8698658-hq.mp3",
+   "title": "Cinematic Woosh SFX-010.wav",
+   "author": "AudioPapkin",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/AudioPapkin/sounds/648729/"
+  },
+  "fs648730": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/648/648730_14219520-hq.mp3",
+   "title": "Bottles Clinking",
+   "author": "NYSpidey",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/NYSpidey/sounds/648730/"
+  },
+  "fs648732": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/648/648732_8698658-hq.mp3",
+   "title": "Cinematic Woosh SFX-011.wav",
+   "author": "AudioPapkin",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/AudioPapkin/sounds/648732/"
+  },
+  "fs649061": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/649/649061_8698658-hq.mp3",
+   "title": "Cinematic Woosh SFX-014.wav",
+   "author": "AudioPapkin",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/AudioPapkin/sounds/649061/"
+  },
+  "fs656643": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/656/656643_9616576-hq.mp3",
+   "title": "Game Reward",
+   "author": "IENBA",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/IENBA/sounds/656643/"
+  },
+  "fs65787": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/65/65787_601368-hq.mp3",
+   "title": "laserrocket.wav",
+   "author": "iwilldstroyu",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/iwilldstroyu/sounds/65787/"
+  },
+  "fs666296": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/666/666296_8154783-hq.mp3",
+   "title": "Phone chime.wav",
+   "author": "ChristopherJngs",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/ChristopherJngs/sounds/666296/"
+  },
+  "fs669918": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/669/669918_9129912-hq.mp3",
+   "title": "The Best Bubble Pop Sound For Game and UI",
+   "author": "el_boss",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/el_boss/sounds/669918/"
+  },
+  "fs671306": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/671/671306_13504080-hq.mp3",
+   "title": "Cinematic Hit Bass (title)",
+   "author": "xkeril",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/xkeril/sounds/671306/"
+  },
+  "fs671375": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/671/671375_4819210-hq.mp3",
+   "title": "FX Cinematic Impact.wav",
+   "author": "Johnnie_Holiday",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Johnnie_Holiday/sounds/671375/"
+  },
+  "fs673315": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/673/673315_14265036-hq.mp3",
+   "title": "Glass Clink.wav",
+   "author": "Dentrabert",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Dentrabert/sounds/673315/"
+  },
+  "fs674253": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/674/674253_12614600-hq.mp3",
+   "title": "monkey noises.mp3",
+   "author": "CrazyGreenFluff",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/CrazyGreenFluff/sounds/674253/"
+  },
+  "fs675443": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/675/675443_2524442-hq.mp3",
+   "title": "S01-09_Short lion roars.wav",
+   "author": "craigsmith",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/craigsmith/sounds/675443/"
+  },
+  "fs675749": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/675/675749_2524442-hq.mp3",
+   "title": "S33-09 Small rocket launch.wav",
+   "author": "craigsmith",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/craigsmith/sounds/675749/"
+  },
+  "fs677859": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/677/677859_9129912-hq.mp3",
+   "title": "Game Success Fanfare",
+   "author": "el_boss",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/el_boss/sounds/677859/"
+  },
+  "fs683101": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/683/683101_6253486-hq.mp3",
+   "title": "quick woosh",
+   "author": "florianreichelt",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/florianreichelt/sounds/683101/"
+  },
+  "fs683587": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/683/683587_12375565-hq.mp3",
+   "title": "Bubble Pop",
+   "author": "YehawSnail",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/YehawSnail/sounds/683587/"
+  },
+  "fs684527": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/684/684527_14372820-hq.mp3",
+   "title": "lion.wav",
+   "author": "shakezerz",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/shakezerz/sounds/684527/"
+  },
+  "fs686447": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/686/686447_14952926-hq.mp3",
+   "title": "Squeaky Toy Sound Effect",
+   "author": "donblaxter",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/donblaxter/sounds/686447/"
+  },
+  "fs693877": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/693/693877_14915641-hq.mp3",
+   "title": "thunder4.wav",
+   "author": "BeroundSound",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/BeroundSound/sounds/693877/"
+  },
+  "fs696776": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/696/696776_9391615-hq.mp3",
+   "title": "Deer_Bark_5_s",
+   "author": "ferventtorpor",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/ferventtorpor/sounds/696776/"
+  },
+  "fs700379": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/700/700379_13818935-hq.mp3",
+   "title": "Moo 2 - Moo Moo the Cow",
+   "author": "manofham",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/manofham/sounds/700379/"
+  },
+  "fs706118": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/706/706118_14591892-hq.mp3",
+   "title": "echopop.mp3",
+   "author": "RandomWizKid",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/RandomWizKid/sounds/706118/"
+  },
+  "fs706753": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/706/706753_13504080-hq.mp3",
+   "title": "Victory (short sting)",
+   "author": "xkeril",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/xkeril/sounds/706753/"
+  },
+  "fs709621": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/709/709621_7548495-hq.mp3",
+   "title": "Casino_RouletteSound_EndSpiner",
+   "author": "poenia",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/poenia/sounds/709621/"
+  },
+  "fs714572": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/714/714572_6142149-hq.mp3",
+   "title": "Super Cute Bird Tweets - Short Chirp SFX",
+   "author": "LilMati",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/LilMati/sounds/714572/"
+  },
+  "fs717771": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/717/717771_11611892-hq.mp3",
+   "title": "victory chime",
+   "author": "1bob",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/1bob/sounds/717771/"
+  },
+  "fs718593": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/718/718593_11865776-hq.mp3",
+   "title": "Crispy bite",
+   "author": "JoMungus",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/JoMungus/sounds/718593/"
+  },
+  "fs721822": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/721/721822_15666093-hq.mp3",
+   "title": "Glasses Clinking",
+   "author": "zharvill",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/zharvill/sounds/721822/"
+  },
+  "fs722772": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/722/722772_8331855-hq.mp3",
+   "title": "*squeak*",
+   "author": "Froey_",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Froey_/sounds/722772/"
+  },
+  "fs72464": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/72/72464_760571-hq.mp3",
+   "title": "elephant1.wav",
+   "author": "rockwehrmann",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/rockwehrmann/sounds/72464/"
+  },
+  "fs727961": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/727/727961_934979-hq.mp3",
+   "title": "Retro Roulette",
+   "author": "nomentero",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/nomentero/sounds/727961/"
+  },
+  "fs728102": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/728/728102_15231398-hq.mp3",
+   "title": "Synthetic Bear Growl 2",
+   "author": "Piddipop",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Piddipop/sounds/728102/"
+  },
+  "fs736849": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/736/736849_13504080-hq.mp3",
+   "title": "Bright sfx hit",
+   "author": "xkeril",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/xkeril/sounds/736849/"
+  },
+  "fs74515": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/74/74515_1129183-hq.mp3",
+   "title": "kissPop3.wav",
+   "author": "MagnificentMood",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/MagnificentMood/sounds/74515/"
+  },
+  "fs752709": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/752/752709_9250976-hq.mp3",
+   "title": "Voice_Crowd_Small_Expression_Applause_Cheer_Stereo",
+   "author": "Nox_Sound",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Nox_Sound/sounds/752709/"
+  },
+  "fs754399": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/754/754399_14366874-hq.mp3",
+   "title": "laugh_giggle_man_witch_cartoon",
+   "author": "3LMN_audio",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/3LMN_audio/sounds/754399/"
+  },
+  "fs759840": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/759/759840_14357801-hq.mp3",
+   "title": "ShiningRinging",
+   "author": "NoisyRedFox",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/NoisyRedFox/sounds/759840/"
+  },
+  "fs765327": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/765/765327_15688677-hq.mp3",
+   "title": "Thunder Strike",
+   "author": "ChloePieterse",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/ChloePieterse/sounds/765327/"
+  },
+  "fs77088": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/77/77088_1023453-hq.mp3",
+   "title": "Laser short 2.wav",
+   "author": "Defunct3",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Defunct3/sounds/77088/"
+  },
+  "fs770899": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/770/770899_14346530-hq.mp3",
+   "title": "Twinkling chime",
+   "author": "Spacekittycat",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Spacekittycat/sounds/770899/"
+  },
+  "fs771873": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/771/771873_11502930-hq.mp3",
+   "title": "Growl",
+   "author": "Cromell",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Cromell/sounds/771873/"
+  },
+  "fs77305": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/77/77305_1105584-hq.mp3",
+   "title": "buzz roll.wav",
+   "author": "bigjoedrummer",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/bigjoedrummer/sounds/77305/"
+  },
+  "fs77637": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/77/77637_237568-hq.mp3",
+   "title": "growl6.wav",
+   "author": "lendrick",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/lendrick/sounds/77637/"
+  },
+  "fs782969": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/782/782969_71257-hq.mp3",
+   "title": "Good Phone Notification Sound",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/782969/"
+  },
+  "fs79699": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/79/79699_1231187-hq.mp3",
+   "title": "coin slot.wav",
+   "author": "labailey",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/labailey/sounds/79699/"
+  },
+  "fs811935": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/811/811935_14366407-hq.mp3",
+   "title": "Fantasy Laser Cannon",
+   "author": "JustWatson64",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/JustWatson64/sounds/811935/"
+  },
+  "fs812467": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/812/812467_71257-hq.mp3",
+   "title": "Angelic Fanfare 1",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/812467/"
+  },
+  "fs812468": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/812/812468_71257-hq.mp3",
+   "title": "Angelic Fanfare 2",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/812468/"
+  },
+  "fs812469": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/812/812469_71257-hq.mp3",
+   "title": "Angelic Fanfare 3",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/812469/"
+  },
+  "fs816237": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/816/816237_71257-hq.mp3",
+   "title": "Crunch",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/816237/"
+  },
+  "fs818930": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/818/818930_2879187-hq.mp3",
+   "title": "Open or Uncork Champagne Bottle 1",
+   "author": "Centraca",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Centraca/sounds/818930/"
+  },
+  "fs82121": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/82/82121_303507-hq.mp3",
+   "title": "Balloon-Burst-07.wav",
+   "author": "Gniffelbaf",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Gniffelbaf/sounds/82121/"
+  },
+  "fs826753": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/826/826753_3339822-hq.mp3",
+   "title": "Renill de cavall / Horse Neigh",
+   "author": "Salsero_classic",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Salsero_classic/sounds/826753/"
+  },
+  "fs83237": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/83/83237_952161-hq.mp3",
+   "title": "Pop.wav",
+   "author": "mlestn1",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/mlestn1/sounds/83237/"
+  },
+  "fs839951": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/839/839951_18195602-hq.mp3",
+   "title": "slot machine payout-small_gleep",
+   "author": "KerDwyn",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/KerDwyn/sounds/839951/"
+  },
+  "fs842513": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/842/842513_14031674-hq.mp3",
+   "title": "Triple_Ping_Notification_Sound_Mobile_Optimized",
+   "author": "PiesHelpfulOven",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/PiesHelpfulOven/sounds/842513/"
+  },
+  "fs844831": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/844/844831_12440152-hq.mp3",
+   "title": "Victory Jingle",
+   "author": "JoanStar",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/JoanStar/sounds/844831/"
+  },
+  "fs848423": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/848/848423_71257-hq.mp3",
+   "title": "Cheers and Yays",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/848423/"
+  },
+  "fs85403": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/85/85403_545448-hq.mp3",
+   "title": "CanaryArtie-3.wav",
+   "author": "ReadeOnly",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/ReadeOnly/sounds/85403/"
+  },
+  "fs85404": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/85/85404_545448-hq.mp3",
+   "title": "CanaryArtie-4.wav",
+   "author": "ReadeOnly",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/ReadeOnly/sounds/85404/"
+  },
+  "fs854137": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/854/854137_3428684-hq.mp3",
+   "title": "Mastodon trumpet",
+   "author": "vintprox",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/vintprox/sounds/854137/"
+  },
+  "fs859482": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/859/859482_18689440-hq.mp3",
+   "title": "Cinematic Riser #3 subtle",
+   "author": "BeaconStudio",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/BeaconStudio/sounds/859482/"
+  },
+  "fs861824": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/861/861824_71257-hq.mp3",
+   "title": "Squeaky Toy 6",
+   "author": "qubodup",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/qubodup/sounds/861824/"
+  },
+  "fs870651": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/870/870651_18412227-hq.mp3",
+   "title": "Group Ooh 2",
+   "author": "CHallSmith",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/CHallSmith/sounds/870651/"
+  },
+  "fs870653": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/870/870653_18412227-hq.mp3",
+   "title": "Group Wow 1",
+   "author": "CHallSmith",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/CHallSmith/sounds/870653/"
+  },
+  "fs871030": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/871/871030_15176424-hq.mp3",
+   "title": "Lightning 8bit style",
+   "author": "Robo9418",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Robo9418/sounds/871030/"
+  },
+  "fs9032": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/9/9032_22734-hq.mp3",
+   "title": "Dog bark2.wav",
+   "author": "MisterTood",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/MisterTood/sounds/9032/"
+  },
+  "fs94185": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/94/94185_1272599-hq.mp3",
+   "title": "Explosion.wav",
+   "author": "Nbs Dark",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/Nbs Dark/sounds/94185/"
+  },
+  "fs94868": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/94/94868_155902-hq.mp3",
+   "title": "small horn.wav",
+   "author": "tm1000",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/tm1000/sounds/94868/"
+  },
+  "fs9508": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/9/9508_26137-hq.mp3",
+   "title": "SPLASH.wav",
+   "author": "petenice",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/petenice/sounds/9508/"
+  },
+  "fs97373": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/97/97373_1604772-hq.mp3",
+   "title": "coin.wav",
+   "author": "TheDJoe93",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/TheDJoe93/sounds/97373/"
+  },
+  "fs97980": {
+   "source": "freesound",
+   "url": "https://cdn.freesound.org/previews/97/97980_1490788-hq.mp3",
+   "title": "Winner Bell Game Show.aif",
+   "author": "oldedgar",
+   "license": "CC0 1.0",
+   "page": "https://freesound.org/people/oldedgar/sounds/97980/"
+  },
+  "kn-casino-audio-card-shuffle": {
+   "source": "kenney",
+   "pack": "casino-audio",
+   "file": "Audio/card-shuffle.ogg",
+   "title": "casino-audio/card-shuffle",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/casino-audio"
+  },
+  "kn-casino-audio-chips-collide-1": {
+   "source": "kenney",
+   "pack": "casino-audio",
+   "file": "Audio/chips-collide-1.ogg",
+   "title": "casino-audio/chips-collide-1",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/casino-audio"
+  },
+  "kn-casino-audio-chips-stack-3": {
+   "source": "kenney",
+   "pack": "casino-audio",
+   "file": "Audio/chips-stack-3.ogg",
+   "title": "casino-audio/chips-stack-3",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/casino-audio"
+  },
+  "kn-digital-audio-laser1": {
+   "source": "kenney",
+   "pack": "digital-audio",
+   "file": "Audio/laser1.ogg",
+   "title": "digital-audio/laser1",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/digital-audio"
+  },
+  "kn-digital-audio-powerUp3": {
+   "source": "kenney",
+   "pack": "digital-audio",
+   "file": "Audio/powerUp3.ogg",
+   "title": "digital-audio/powerUp3",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/digital-audio"
+  },
+  "kn-digital-audio-threeTone1": {
+   "source": "kenney",
+   "pack": "digital-audio",
+   "file": "Audio/threeTone1.ogg",
+   "title": "digital-audio/threeTone1",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/digital-audio"
+  },
+  "kn-impact-sounds-impactMetal_heavy_001": {
+   "source": "kenney",
+   "pack": "impact-sounds",
+   "file": "Audio/impactMetal_heavy_001.ogg",
+   "title": "impact-sounds/impactMetal_heavy_001",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/impact-sounds"
+  },
+  "kn-interface-sounds-bong_001": {
+   "source": "kenney",
+   "pack": "interface-sounds",
+   "file": "Audio/bong_001.ogg",
+   "title": "interface-sounds/bong_001",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/interface-sounds"
+  },
+  "kn-interface-sounds-drop_002": {
+   "source": "kenney",
+   "pack": "interface-sounds",
+   "file": "Audio/drop_002.ogg",
+   "title": "interface-sounds/drop_002",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/interface-sounds"
+  },
+  "kn-music-jingles-jingles_NES00": {
+   "source": "kenney",
+   "pack": "music-jingles",
+   "file": "Audio/8-Bit jingles/jingles_NES00.ogg",
+   "title": "music-jingles/jingles_NES00",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/music-jingles"
+  },
+  "kn-music-jingles-jingles_PIZZI00": {
+   "source": "kenney",
+   "pack": "music-jingles",
+   "file": "Audio/Pizzicato jingles/jingles_PIZZI00.ogg",
+   "title": "music-jingles/jingles_PIZZI00",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/music-jingles"
+  },
+  "kn-music-jingles-jingles_PIZZI01": {
+   "source": "kenney",
+   "pack": "music-jingles",
+   "file": "Audio/Pizzicato jingles/jingles_PIZZI01.ogg",
+   "title": "music-jingles/jingles_PIZZI01",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/music-jingles"
+  },
+  "kn-music-jingles-jingles_SAX07": {
+   "source": "kenney",
+   "pack": "music-jingles",
+   "file": "Audio/Sax jingles/jingles_SAX07.ogg",
+   "title": "music-jingles/jingles_SAX07",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/music-jingles"
+  },
+  "kn-music-jingles-jingles_STEEL00": {
+   "source": "kenney",
+   "pack": "music-jingles",
+   "file": "Audio/Steel jingles/jingles_STEEL00.ogg",
+   "title": "music-jingles/jingles_STEEL00",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/music-jingles"
+  },
+  "kn-rpg-audio-handleCoins": {
+   "source": "kenney",
+   "pack": "rpg-audio",
+   "file": "Audio/handleCoins.ogg",
+   "title": "rpg-audio/handleCoins",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/rpg-audio"
+  },
+  "kn-rpg-audio-handleCoins2": {
+   "source": "kenney",
+   "pack": "rpg-audio",
+   "file": "Audio/handleCoins2.ogg",
+   "title": "rpg-audio/handleCoins2",
+   "author": "Kenney",
+   "license": "CC0 1.0",
+   "page": "https://kenney.nl/assets/rpg-audio"
+  }
+ }
+}

@@ -7,7 +7,7 @@
 //   - 同期元の行は「どんな音か」（ファイル名）で CC0 の同種の音に置き換えて配る（例: ドラムロール.mp3 → CC0 のドラムロール）
 //   - 置き換え先が決まらない音と、価格帯（tier:*）の行は配らない（その場合は自動ライブラリ＝CC0 の音が鳴る）
 //   - 社長自身の割り当て（自分の行）は変えない（自分の画面では自分の行が優先される）
-// 新しい種類の音を公式既定にしたいとき: CC0 の音を public/se/defaults/cc0/ に足し（scratchpad の build_se_cc0.py defaults）、
+// 新しい種類の音を公式既定にしたいとき: CC0 の音を public/se/defaults/cc0/ に足し（scripts/se/cc0_picks.py の DEFAULT_PICKS → scripts/se/build_se_cc0.py defaults）、
 //   CLEARED_SOUNDS と LABEL_RULES に 1 行ずつ足す。手順は docs/live-cockpit/README.md S23。
 
 export const CLEARED_SOUNDS = {
