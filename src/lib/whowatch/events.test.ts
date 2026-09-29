@@ -33,6 +33,17 @@ const STRUCT_OPTIONS: RankingStruct = {
   ],
 };
 
+// 2026-09-29 実応答の縮約フィクスチャ（オオカミさんがやってくる！・selectboxes 型・期間の options 無し）
+const STRUCT_SELECTBOXES: RankingStruct = {
+  name: "オオカミさんがやってくる！",
+  selectboxes: [
+    { key: "across", value: "総取りランキング", tabs: [{ key: "goods", value: "グッズ", chips: [{ key: "free", value: "フリー" }, { key: "goldplus", value: "ゴールド+" }], border: [{ rank: 1 }, { rank: 10 }] }, { key: "deco", value: "デコレーション", chips: [{ key: "free", value: "フリー" }] }] },
+    { key: "teambattle", value: "チーム対抗ランキング", border: [{ rank: 2 }] },
+    { key: "overall", value: "総合ランキング", tabs: [{ key: "whowatchchan", value: "赤ずきん<br>ふわっちちゃん", chips: [] }, { key: "kumasan", value: "オオカミ<br>くまさん" }] },
+    { key: "side", value: "赤ずきんちゃん気をつけて！レース", border: [{ rank: 200 }] },
+  ],
+};
+
 const STRUCT_TABS: RankingStruct = {
   tabs: [{ key: "gold", value: "ゴールド", chips: [{ key: "a", value: "A" }, { key: "b", value: "B" }] }],
 };
@@ -72,6 +83,24 @@ describe("ranking type 構築", () => {
     expect(choices[0].border.map((b) => b.rank)).toEqual([5, 10]);
     // tab に border が無ければ selectbox の border を引き継ぐ
     expect(choices[1].border.map((b) => b.rank)).toEqual([1, 2, 3]);
+  });
+
+  it("selectboxes 型（オオカミさんがやってくる！）: prefix_selectbox[_tab[_chip]]。<br> は空白にする", () => {
+    const choices = flattenRankingChoices("wolfcoming", STRUCT_SELECTBOXES);
+    expect(choices.map((c) => c.rankingType)).toEqual([
+      "wolfcoming_across_goods_free",
+      "wolfcoming_across_goods_goldplus",
+      "wolfcoming_across_deco_free",
+      "wolfcoming_teambattle",
+      "wolfcoming_overall_whowatchchan",
+      "wolfcoming_overall_kumasan",
+      "wolfcoming_side",
+    ]);
+    expect(choices[0].label).toBe("総取りランキング › グッズ › フリー");
+    expect(choices[0].border.map((b) => b.rank)).toEqual([1, 10]);
+    expect(choices[3]).toMatchObject({ label: "チーム対抗ランキング", parts: ["teambattle"], border: [{ rank: 2 }] });
+    expect(choices[4].label).toBe("総合ランキング › 赤ずきん ふわっちちゃん");
+    expect(choices[6].parts).toEqual(["side"]);
   });
 
   it("tabs 型: prefix_tab_chip", () => {

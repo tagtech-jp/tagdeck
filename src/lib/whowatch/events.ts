@@ -82,10 +82,18 @@ export interface RankingOption {
   value?: string;
   selectboxes?: RankingSelectbox[];
 }
-/** /resources/json/rankings/{prefix} の応答。options 型か tabs 型のどちらか */
+/**
+ * /resources/json/rankings/{prefix} の応答。3 つの形がある:
+ *   options 型    : options[] → selectboxes[] → (tabs[] → chips[])（例: オータムグッズ・前半/後半の期間あり）
+ *   selectboxes 型: selectboxes[] → (tabs[] → chips[])（例: 2026_09_wolfcoming「オオカミさんがやってくる！」。期間の options が無い）
+ *   tabs 型       : tabs[] → chips[]
+ * 2026-09-29: selectboxes 型に未対応で「区分がありません」と出ていた（社長報告）。実測の rankingType は
+ *   wolfcoming_across_goods_free / wolfcoming_teambattle / wolfcoming_overall_whowatchchan / wolfcoming_side
+ */
 export interface RankingStruct {
   name?: string;
   options?: RankingOption[];
+  selectboxes?: RankingSelectbox[];
   tabs?: RankingTab[];
   [k: string]: unknown;
 }
@@ -211,6 +219,8 @@ export function flattenRankingChoices(prefix: string, struct: RankingStruct | nu
   const out: RankingChoice[] = [];
   if (!struct) return out;
 
+  // 表示名に <br> 等のタグが入ることがある（例: "赤ずきん<br>ふわっちちゃん"）
+  const clean = (v: string | undefined, fallback: string) => (v ?? fallback).replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
   const pushLeaf = (parts: string[], labels: string[], border: RankingBorder[] | undefined) => {
     out.push({
       rankingType: buildRankingType(prefix, parts),
@@ -223,27 +233,28 @@ export function flattenRankingChoices(prefix: string, struct: RankingStruct | nu
   const walkTabs = (tabs: RankingTab[] | undefined, parts: string[], labels: string[], inheritedBorder?: RankingBorder[]) => {
     for (const tab of tabs ?? []) {
       const tParts = [...parts, tab.key];
-      const tLabels = [...labels, tab.value ?? tab.key];
+      const tLabels = [...labels, clean(tab.value, tab.key)];
       const border = tab.border ?? inheritedBorder;
       if (tab.chips && tab.chips.length > 0) {
-        for (const chip of tab.chips) pushLeaf([...tParts, chip.key], [...tLabels, chip.value ?? chip.key], border);
+        for (const chip of tab.chips) pushLeaf([...tParts, chip.key], [...tLabels, clean(chip.value, chip.key)], border);
       } else {
         pushLeaf(tParts, tLabels, border);
       }
     }
   };
+  const walkSelectboxes = (selectboxes: RankingSelectbox[] | undefined, parts: string[], labels: string[]) => {
+    for (const sb of selectboxes ?? []) {
+      const sParts = [...parts, sb.key];
+      const sLabels = [...labels, clean(sb.value, sb.key)];
+      if (sb.tabs && sb.tabs.length > 0) walkTabs(sb.tabs, sParts, sLabels, sb.border);
+      else pushLeaf(sParts, sLabels, sb.border);
+    }
+  };
 
   if (Array.isArray(struct.options) && struct.options.length > 0) {
-    for (const opt of struct.options) {
-      const oParts = [opt.key];
-      const oLabels = [opt.value ?? opt.key];
-      for (const sb of opt.selectboxes ?? []) {
-        const sParts = [...oParts, sb.key];
-        const sLabels = [...oLabels, sb.value ?? sb.key];
-        if (sb.tabs && sb.tabs.length > 0) walkTabs(sb.tabs, sParts, sLabels, sb.border);
-        else pushLeaf(sParts, sLabels, sb.border);
-      }
-    }
+    for (const opt of struct.options) walkSelectboxes(opt.selectboxes, [opt.key], [clean(opt.value, opt.key)]);
+  } else if (Array.isArray(struct.selectboxes) && struct.selectboxes.length > 0) {
+    walkSelectboxes(struct.selectboxes, [], []);
   } else if (Array.isArray(struct.tabs)) {
     walkTabs(struct.tabs, [], []);
   }
