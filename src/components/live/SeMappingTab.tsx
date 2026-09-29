@@ -36,6 +36,8 @@ interface ItemRow {
   itemId: number;
   itemName: string;
   priceJpy: number | null;
+  /** 価格の元の注記（パックにしか入っていないアイテムは「パック換算: …」・2026-09-30） */
+  priceNote?: string | null;
   onSale: boolean;
   /** アイテムの代表画像（/playitems の image_url から 1 枚。無ければ null） */
   imageUrl?: string | null;
@@ -627,6 +629,7 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-bold leading-tight text-foreground">{it.itemName}</p>
                                 <p className="mt-0.5 text-sm font-bold text-ember-pulse">{it.priceJpy !== null ? `¥${it.priceJpy.toLocaleString()}〜` : (it.groups?.length ?? 0) > 0 ? "無料（イベント配布）" : "無料 / 価格なし"}</p>
+                                {it.priceNote && <p className="text-[11px] text-muted-foreground">{it.priceNote}</p>}
                                 <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px]">
                                   <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{tier}</span>
                                   <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{ITEM_KIND_LABELS[kind]}</span>

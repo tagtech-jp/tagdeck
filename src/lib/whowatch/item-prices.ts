@@ -10,11 +10,14 @@
 //   min_unit_price_jpy = 全商品のうち最も安い 1 個あたり（まとめ買いの割引後）。表示・参考用
 //   products           = 商品ごとの {productId, price, quantity, state}（SE タブで価格表を出せるように）
 // 対象は state=OPEN の商品。OPEN が無ければ全商品から求め、on_sale=false にする
+// パックにしか入っていないアイテム（銀の風船 等・2026-09-30）は pack-prices.ts が「割引前のパック価格 ÷ 個数」で求め、
+// products に pack（パック名・割引前の価格・全個数）付きの 1 件を入れて同じテーブルに書く
 
 import { sql } from "drizzle-orm";
 import type { createDbClient } from "@/lib/db/client";
 import { whowatchItemPrices } from "@/lib/db/schema";
 import type { RawCategory } from "./item-groups-sync";
+import type { PackPricedItem } from "./pack-prices";
 
 type Db = ReturnType<typeof createDbClient>;
 
@@ -32,6 +35,8 @@ export interface PriceProduct {
   price: number;
   quantity: number;
   state: string;
+  /** パック限定アイテムの単価の元（2026-09-30）。price はパックの Web 価格、quantity はパックに入っているこのアイテムの個数 */
+  pack?: { itemId: number; name: string; listPrice: number; pieces: number };
 }
 
 export interface UnitPrice {
@@ -91,12 +96,35 @@ export interface SyncItemPricesResult {
   rows: number;
   inserted: number;
   updated: number;
+  /** うちパックの価格から求めた行（パック限定アイテム） */
+  fromPacks?: number;
 }
 
-/** 単価行を upsert する（100 行前後）。応答から消えたアイテムの行は残す（過去ギフトの金額表示に使うため） */
-export async function syncItemPrices(db: Db, categories: readonly RawCategory[]): Promise<SyncItemPricesResult> {
-  const rows = flattenPrices(categories, new Date());
-  if (rows.length === 0) return { rows: 0, inserted: 0, updated: 0 };
+/** パック限定アイテムの単価行（純関数）。単品の価格がある行は上書きしない */
+export function packPriceRows(packItems: readonly PackPricedItem[], existing: ReadonlySet<number>, now: Date): ItemPriceRow[] {
+  return packItems
+    .filter((p) => !existing.has(p.itemId))
+    .map((p) => ({
+      itemId: p.itemId,
+      itemName: p.itemName,
+      unitPriceJpy: p.unitPriceJpy,
+      minUnitPriceJpy: p.minUnitPriceJpy,
+      onSale: p.onSale,
+      products: [{ productId: p.pack.productId, price: p.pack.price, quantity: p.pack.quantity, state: p.onSale ? "OPEN" : "CLOSED", pack: { itemId: p.pack.itemId, name: p.pack.name, listPrice: p.pack.listPrice, pieces: p.pack.pieces } }],
+      syncedAt: now,
+    }));
+}
+
+/**
+ * 単価行を upsert する（100 行前後）。応答から消えたアイテムの行は残す（過去ギフトの金額表示に使うため）。
+ * packItems（pack-prices.ts の resolvePackItems）があればパック限定アイテムの行も書く
+ */
+export async function syncItemPrices(db: Db, categories: readonly RawCategory[], packItems: readonly PackPricedItem[] = []): Promise<SyncItemPricesResult> {
+  const now = new Date();
+  const single = flattenPrices(categories, now);
+  const fromPacks = packPriceRows(packItems, new Set(single.map((r) => r.itemId)), now);
+  const rows = [...single, ...fromPacks];
+  if (rows.length === 0) return { rows: 0, inserted: 0, updated: 0, fromPacks: 0 };
   const res = await db
     .insert(whowatchItemPrices)
     .values(rows)
@@ -113,7 +141,7 @@ export async function syncItemPrices(db: Db, categories: readonly RawCategory[])
     })
     .returning({ isInsert: sql<boolean>`(xmax = 0)` });
   const inserted = res.filter((r) => r.isInsert).length;
-  return { rows: rows.length, inserted, updated: res.length - inserted };
+  return { rows: rows.length, inserted, updated: res.length - inserted, fromPacks: fromPacks.length };
 }
 
 /**

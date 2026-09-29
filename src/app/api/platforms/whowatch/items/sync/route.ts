@@ -5,6 +5,7 @@ import { fetchPaymentCategories, syncItemGroups, type SyncItemGroupsResult } fro
 import { syncItemPrices, type SyncItemPricesResult } from "@/lib/whowatch/item-prices";
 import { syncFreeEventItems, type SyncFreeEventItemsResult } from "@/lib/whowatch/free-event-items";
 import { syncItemDecorations, type SyncItemDecorationsResult } from "@/lib/whowatch/item-decorations";
+import { resolvePackItems, type PackPricedItem, type ResolvedPackItems } from "@/lib/whowatch/pack-prices";
 import { verifySyncKey } from "@/lib/whowatch/sync-auth";
 import { sendNotifyGw } from "@/lib/notify-gw";
 import { findSyncRoute } from "@/lib/sync-routes";
@@ -49,6 +50,10 @@ export async function POST(request: Request) {
     let freeItems: SyncFreeEventItemsResult | { error: string } | { skipped: string } = { skipped: "初回バッチ以外（cursor あり）のため実行していない" };
     // まとめ投げの段階しきい値（whowatch_item_decorations・0022・2026-09-28）。/lives/{id}/playitems3 から。0022 未適用なら error に出る
     let decorations: SyncItemDecorationsResult | { error: string } | { skipped: string } = { skipped: "初回バッチ以外（cursor あり）のため実行していない" };
+    // パックにしか入っていないアイテムの単価（2026-09-30・pack-prices.ts）。カテゴリ・単価の同期の前に 1 回だけ解決する
+    let packs: { packs: number; items: Array<{ itemId: number; itemName: string; unitPriceJpy: number; pack: string }>; unresolved: ResolvedPackItems["unresolved"] } | { error: string } | { skipped: string } = {
+      skipped: "初回バッチ以外（cursor あり）のため実行していない",
+    };
     if (!cursor) {
       try {
         decorations = await syncItemDecorations(db);
@@ -58,9 +63,19 @@ export async function POST(request: Request) {
         console.error("[items/sync] まとめ投げ段階しきい値同期に失敗（パターン同期は続行）", decorations.error);
       }
       let categories: Awaited<ReturnType<typeof fetchPaymentCategories>> | null = null;
+      let packItems: PackPricedItem[] = [];
       try {
         categories = await fetchPaymentCategories();
-        groups = await syncItemGroups(db, categories);
+        try {
+          const resolved = await resolvePackItems(db, categories);
+          packItems = resolved.items;
+          packs = { packs: resolved.packs, items: resolved.items.map((p) => ({ itemId: p.itemId, itemName: p.itemName, unitPriceJpy: p.unitPriceJpy, pack: p.pack.name })), unresolved: resolved.unresolved };
+          console.log("[items/sync] パック限定アイテム", packs);
+        } catch (e) {
+          packs = { error: describeDbError(e) };
+          console.error("[items/sync] パック限定アイテムの解決に失敗（パックの中身は今回は付けない）", packs.error);
+        }
+        groups = await syncItemGroups(db, categories, packItems);
         console.log("[items/sync] カテゴリ同期", groups);
       } catch (e) {
         groups = { error: e instanceof Error ? e.message : String(e) };
@@ -68,7 +83,7 @@ export async function POST(request: Request) {
       }
       if (categories) {
         try {
-          prices = await syncItemPrices(db, categories);
+          prices = await syncItemPrices(db, categories, packItems);
           console.log("[items/sync] 単価同期", prices);
         } catch (e) {
           prices = { error: describeDbError(e) };
@@ -99,7 +114,7 @@ export async function POST(request: Request) {
     }
 
     // result に ok / inserted / updated / failed / next_cursor が含まれる
-    return NextResponse.json({ ...result, groups, prices, freeItems, decorations, at: new Date().toISOString() });
+    return NextResponse.json({ ...result, groups, prices, packs, freeItems, decorations, at: new Date().toISOString() });
   } catch (err) {
     const message = describeDbError(err);
     console.error("[items/sync] failed", message);

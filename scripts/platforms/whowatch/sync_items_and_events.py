@@ -26,13 +26,21 @@ item_point_mapping の列の意味（2026-09-28 社長決定・単価の定義�
                              画像 URL のフォルダ events/YYYY/MM_key/ がイベントの event_key（YYYY_MM_key）に一致するもの
                              （src/lib/whowatch/free-event-items.ts の eventKeyFromImageUrl と同じ規則）。
                              過去イベントの無料アイテム・販売終了アイテムは価格不明なので行を作らない（0 を推測で書かない）
+
+パックにしか入っていないアイテム（2026-09-30 社長指示「パックにしか入っていないアイテムも単価を計算して組み込んで」）:
+  payments3 のパック（商品説明に「・アイテム名 x N個」の行がある商品）の中身のうち、単品で売っていないもの（銀の風船・銀の神 等）は
+  price_jpy = 割引前のパック価格（Web の価格 + ラベル「N円お得！」の N）÷ 個数（単品の中身があれば、その定価の合計を引いた残り ÷ 限定の個数）。
+  product_id はパックの商品、state はパックの商品の state、description は「パック換算: …」。src/lib/whowatch/pack-prices.ts と同じ計算。
+  例: 銀の通常アイテムパック Web ¥1,900・「アプリより100円お得！」→ ¥2,000 ÷ 40 個 = ¥50（イベントのスコア 25 点 = 価格 ÷ 2 と一致）
 """
 import argparse
+import html as _html
 import json
 import os
 import re
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -44,6 +52,11 @@ TIMEOUT = 30
 
 # 画像 URL のイベントフォルダ: https://img.whowatch.tv/events/2026/09_wolfcoming/item_free.png → 2026_09_wolfcoming
 EVENT_FOLDER_RE = re.compile(r"/events/(\d{4})/(\d{2}_[A-Za-z0-9_-]+)/")
+# パックの中身の行（NFKC 後）: 「・銀の風船 x 10個」「・月見ハンバーガーx３個」
+PACK_LINE_RE = re.compile(r"^・\s*(.+?)\s*[x×✕]\s*(\d+)\s*個")
+# ラベルの割引額: 「250円お得！」「1,750円お得！」「アプリより100円お得！」
+PACK_DISCOUNT_RE = re.compile(r"([\d,]+)\s*円\s*お得")
+PACK_DESCRIPTION_PREFIX = "パック換算: "
 
 
 def _headers(device_id: str) -> dict:
@@ -118,12 +131,178 @@ def event_key_from_image_url(url) -> str | None:
     return f"{m.group(1)}_{m.group(2)}" if m else None
 
 
-def build_item_rows(categories: list, master_items: list, active_event_keys: set, now: str) -> list:
+def normalize_name(s) -> str:
+    """アイテム名の比較用（NFKC・空白をまとめる）。「銀のいいね！」と「銀のいいね!」、全角数字をそろえる"""
+    return re.sub(r"[ \t\u3000]+", " ", unicodedata.normalize("NFKC", s or "")).strip()
+
+
+def parse_pack_contents(text) -> list:
+    """商品説明（HTML・<br> 区切り）から「・アイテム名 x N個」の行を拾う。おまけの注記は拾わない。同じ名前は合計。
+
+    返り値: [{"name": 正規化した名前, "quantity": N}]（src/lib/whowatch/pack-prices.ts の parsePackContents と同じ規則）
+    """
+    if not isinstance(text, str) or not text:
+        return []
+    plain = _html.unescape(re.sub(r"<[^>]+>", "", re.sub(r"<br\s*/?>", "\n", text, flags=re.I)))
+    out = {}
+    for line in plain.split("\n"):
+        m = PACK_LINE_RE.match(normalize_name(line))
+        if not m:
+            continue
+        name, qty = normalize_name(m.group(1)), int(m.group(2))
+        if name and qty > 0:
+            out[name] = out.get(name, 0) + qty
+    return [{"name": n, "quantity": q} for n, q in out.items()]
+
+
+def pack_list_price(price, label) -> float:
+    """割引前のパック価格。ラベル「250円お得！」「アプリより100円お得！」の金額を足し戻す（金額の無い「お得！」はそのまま）"""
+    m = PACK_DISCOUNT_RE.search(unicodedata.normalize("NFKC", label or ""))
+    off = int(m.group(1).replace(",", "")) if m else 0
+    return price + (off if off > 0 else 0)
+
+
+def collect_pack_products(categories: list) -> list:
+    """payments3 からパック（商品説明に中身の行がある商品）を集める。同じパックは 1 つにまとめ、載っているカテゴリを全部持つ"""
+    by_id = {}
+    for c in categories or []:
+        group = c.get("group").strip() if isinstance(c.get("group"), str) else ""
+        for pi in c.get("play_item") or []:
+            pid = pi.get("id")
+            if not isinstance(pid, int):
+                continue
+            if pid in by_id:
+                if group and group not in by_id[pid]["group_keys"]:
+                    by_id[pid]["group_keys"].append(group)
+                continue
+            cands = []
+            for p in pi.get("play_item_payment_product") or []:
+                if not isinstance(p, dict) or not ((p.get("price") or 0) > 0):
+                    continue
+                contents = parse_pack_contents((p.get("decoration") or {}).get("description") or pi.get("product_description"))
+                if contents:
+                    cands.append((p, contents))
+            if not cands:
+                continue
+            open_ = [x for x in cands if (x[0].get("state") or "OPEN") == "OPEN"] or cands
+            p, contents = sorted(open_, key=lambda x: (_qty(x[0]), x[0]["price"]))[0]
+            q = _qty(p)
+            by_id[pid] = {
+                "pack_item_id": pid,
+                "pack_name": pi.get("name") or "",
+                "group_keys": [group] if group else [],
+                "product_id": p.get("product_id") or str(p.get("id") or ""),
+                "price": p["price"] / q,
+                "list_price": pack_list_price(p["price"], (p.get("decoration") or {}).get("label")) / q,
+                "state": p.get("state") or "OPEN",
+                "image_url": p.get("image_url") or pi.get("image_url"),
+                "contents": contents,
+            }
+    return list(by_id.values())
+
+
+def _single_unit_prices(categories: list, pack_ids: set) -> tuple:
+    """単品で売っているアイテムの定価（正規化した名前 → 円）と、その item_id の集合"""
+    known, priced_ids = {}, set()
+    for c in categories or []:
+        for pi in c.get("play_item") or []:
+            iid = pi.get("id")
+            if iid is None or iid in pack_ids:
+                continue
+            unit = unit_price_from_products(pi.get("play_item_payment_product") or [])
+            if unit:
+                known[normalize_name(pi.get("name"))] = unit["price_jpy"]
+                priced_ids.add(iid)
+    return known, priced_ids
+
+
+def has_pack_only_contents(categories: list) -> bool:
+    """単品で売っていない中身を持つパックがあるか（マスタを取りに行くかの判断）"""
+    packs = collect_pack_products(categories)
+    if not packs:
+        return False
+    known, _ = _single_unit_prices(categories, {p["pack_item_id"] for p in packs})
+    return any(c["name"] not in known for p in packs for c in p["contents"])
+
+
+def pack_item_rows(categories: list, master_items: list, now: str) -> tuple:
+    """パックにしか入っていないアイテムの item_point_mapping 行を作る（純関数）。返り値: (rows, unresolved)
+
+    単価 = 割引前のパック価格 ÷ 個数（中身が全部パック限定のとき）。単品の中身があれば、その定価の合計を引いた残り ÷ 限定の個数
+    （残りが 0 以下なら 割引前の価格 ÷ 全個数）。複数のパックに入っていれば 1 個あたりの高い方（割引の少ない方）。
+    中身の名前はマスタ（/playitems）で引く。同名が複数あるときはパックと同じイベントフォルダのもの
+    """
+    packs = collect_pack_products(categories)
+    if not packs:
+        return [], []
+    known, priced_ids = _single_unit_prices(categories, {p["pack_item_id"] for p in packs})
+    refs = {}
+    for it in master_items or []:
+        iid = it.get("id")
+        if not isinstance(iid, int) or iid in priced_ids:
+            continue
+        imgs = [p.get("image_url") for p in it.get("play_item_pattern") or [] if isinstance(p, dict)]
+        img = next((u for u in imgs if event_key_from_image_url(u)), imgs[0] if imgs else None)
+        refs.setdefault(normalize_name(it.get("name")), []).append({"item_id": iid, "item_name": it.get("name") or "", "image_url": img})
+    best, unresolved = {}, []
+    for pack in packs:
+        pieces = sum(c["quantity"] for c in pack["contents"])
+        if pieces <= 0 or pack["list_price"] <= 0:
+            continue
+        known_total = sum(known[c["name"]] * c["quantity"] for c in pack["contents"] if c["name"] in known)
+        unknown_qty = sum(c["quantity"] for c in pack["contents"] if c["name"] not in known)
+        if unknown_qty == 0:
+            continue
+        remainder = pack["list_price"] - known_total
+        if known_total > 0 and remainder > 0:
+            unit = remainder / unknown_qty
+        elif known_total > 0:
+            unit = pack["list_price"] / pieces
+        else:
+            unit = pack["list_price"] / unknown_qty
+        min_unit = unit * pack["price"] / pack["list_price"]
+        pack_folder = event_key_from_image_url(pack["image_url"])
+        for c in pack["contents"]:
+            if c["name"] in known:
+                continue
+            cands = refs.get(c["name"], [])
+            if not cands:
+                unresolved.append({"pack_name": pack["pack_name"], "name": c["name"], "reason": "マスタに同じ名前のアイテムが無い"})
+                continue
+            same = [r for r in cands if pack_folder and event_key_from_image_url(r["image_url"]) == pack_folder]
+            for r in same or cands:
+                cur = best.get(r["item_id"])
+                if cur is None or unit > cur["unit"] or (unit == cur["unit"] and pack["price"] < cur["pack"]["price"]):
+                    best[r["item_id"]] = {"unit": unit, "min_unit": min_unit, "ref": r, "pack": pack, "pieces": pieces}
+    rows = []
+    for iid in sorted(best):
+        b = best[iid]
+        pack = b["pack"]
+        price = int(b["unit"] + 0.5)  # TS 側 (Math.round) と同じ「.5 は切り上げ」
+        rows.append({
+            "platform": "whowatch",
+            "item_id": str(iid),
+            "item_name": b["ref"]["item_name"],
+            "base_point": price,
+            "product_id": pack["product_id"],
+            "price_jpy": price,
+            "whowatch_id": iid,
+            "description": f"{PACK_DESCRIPTION_PREFIX}{pack['pack_name']} 割引前 ¥{int(pack['list_price'] + 0.5):,} ÷ {b['pieces']} 個（Web ¥{int(pack['price'] + 0.5):,}・1 個 ¥{int(b['min_unit'] + 0.5)}）",
+            "has_animation": False,
+            "state": pack["state"],
+            "last_fetched_at": now,
+        })
+    return rows, unresolved
+
+
+def build_item_rows(categories: list, master_items: list, active_event_keys: set, now: str, unresolved=None) -> list:
     """payments3（買えるアイテム）と /playitems（マスタ）から item_point_mapping の行を作る（純関数）。
 
     - payments3 にあるアイテム: 定価単価。商品が無ければ従来どおり 0（product_id ""・state OPEN）
+    - パックにしか入っていないアイテム（銀の風船 等）: パックの価格から求めた定価単価（pack_item_rows）
     - マスタにだけあるアイテムのうち、画像フォルダが pre/open イベントに一致するもの: 無料配布（price 0・state FREE）
     - それ以外は行を作らない
+    unresolved にリストを渡すと、マスタで名前が見つからなかったパックの中身を追記する
     """
     items, seen = [], set()
     for category in categories or []:
@@ -149,6 +328,15 @@ def build_item_rows(categories: list, master_items: list, active_event_keys: set
                 "state": unit["state"] if unit else "OPEN",
                 "last_fetched_at": now,
             })
+    # パックにしか入っていないアイテム（無料配布の判定より先に。パック限定は買えるので FREE にしない）
+    pack_rows, pack_unresolved = pack_item_rows(categories, master_items, now)
+    if unresolved is not None:
+        unresolved.extend(pack_unresolved)
+    for r in pack_rows:
+        if r["whowatch_id"] in seen:
+            continue
+        seen.add(r["whowatch_id"])
+        items.append(r)
     for it in master_items or []:
         item_id = it.get("id")
         if item_id is None or item_id in seen:
@@ -197,14 +385,19 @@ def fetch_items(device_id: str, active_event_keys=None) -> list:
     """payments3（買えるアイテム）＋ /playitems（マスタ）から行を作る。マスタの取得失敗は payments3 だけで続ける"""
     data = fetch_json(f"{BASE_URL}/playitems/payments3", device_id)
     master = []
-    if active_event_keys:
+    # マスタは無料配布アイテムの補完と、パックにしか入っていないアイテムの item_id を引くのに使う
+    if active_event_keys or has_pack_only_contents(data if isinstance(data, list) else []):
         try:
             m = fetch_json(f"{BASE_URL}/playitems", device_id)
             master = m if isinstance(m, list) else []
-        except Exception as e:  # マスタは無料配布アイテムの補完用。取れなくても有料アイテムの同期は止めない
-            print(f"WARN: /playitems の取得に失敗（無料配布アイテムは今回追加しない）: {e}", file=sys.stderr)
+        except Exception as e:  # 取れなくても有料アイテムの同期は止めない
+            print(f"WARN: /playitems の取得に失敗（無料配布・パック限定アイテムは今回追加しない）: {e}", file=sys.stderr)
     now = datetime.now(timezone.utc).isoformat()
-    return build_item_rows(data, master, set(active_event_keys or ()), now)
+    unresolved = []
+    rows = build_item_rows(data, master, set(active_event_keys or ()), now, unresolved)
+    if unresolved and master:
+        print(f"WARN: パックの中身がマスタで見つからない: {json.dumps(unresolved, ensure_ascii=False)}", file=sys.stderr)
+    return rows
 
 
 def fetch_events(device_id: str) -> list:
@@ -350,11 +543,11 @@ def main(argv=None) -> None:
         sys.exit(1)
 
     if args.dry_run:
-        payload = {"items": items, "events": events, "free": sum(1 for r in items if r["state"] == "FREE")}
+        payload = {"items": items, "events": events, "free": sum(1 for r in items if r["state"] == "FREE"), "from_packs": sum(1 for r in items if str(r.get("description") or "").startswith(PACK_DESCRIPTION_PREFIX))}
         if args.out:
             with open(args.out, "w", encoding="utf-8") as f:
                 json.dump(payload, f, ensure_ascii=False, indent=1)
-        print(json.dumps({"dry_run": True, "items": len(items), "free": payload["free"], "events": len(events), "out": args.out or None}, ensure_ascii=False))
+        print(json.dumps({"dry_run": True, "items": len(items), "free": payload["free"], "from_packs": payload["from_packs"], "events": len(events), "out": args.out or None}, ensure_ascii=False))
         return
 
     # 差分報告（失敗しても同期は止めない）
@@ -388,6 +581,7 @@ def main(argv=None) -> None:
     result = {
         "items_synced": items_n,
         "items_free": sum(1 for r in items if r["state"] == "FREE"),
+        "items_from_packs": sum(1 for r in items if str(r.get("description") or "").startswith(PACK_DESCRIPTION_PREFIX)),
         "items_added": len(diff["added"]),
         "prices_changed": len(diff["changed"]),
         "events_synced": events_n,

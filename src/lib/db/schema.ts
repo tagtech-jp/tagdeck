@@ -256,8 +256,9 @@ export const whowatchItemPrices = pgTable("whowatch_item_prices", {
   unitPriceJpy: integer("unit_price_jpy").notNull(),
   minUnitPriceJpy: integer("min_unit_price_jpy").notNull(),
   onSale: boolean("on_sale").default(true).notNull(),
+  // pack: パック限定アイテムの単価の元（2026-09-30・pack-prices.ts）。列の追加は無い（jsonb の中身だけ）
   products: jsonb("products")
-    .$type<Array<{ productId: string; price: number; quantity: number; state: string }>>()
+    .$type<Array<{ productId: string; price: number; quantity: number; state: string; pack?: { itemId: number; name: string; listPrice: number; pieces: number } }>>()
     .default(sql`'[]'::jsonb`)
     .notNull(),
   syncedAt: timestamp("synced_at", { withTimezone: true }).defaultNow().notNull(),
