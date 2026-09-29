@@ -429,6 +429,15 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - 表示(2026-09-26 追記): SE タブの「価格ありのみ」(既定 ON)がカテゴリ内の無料アイテムまで隠していたため「反映されていない」ように見えた。イベントのカテゴリに属する無料アイテムは ON でも表示し、価格欄は「無料(イベント配布)」と出す。「価格ありのみ」が隠すのは分類なしの無料アイテムだけ
 - 社長作業: (1) `drizzle/0021_free_event_items_manual.sql` を適用 (2) Actions「Whowatch item patterns sync (manual)」を 1 回実行(応答 `freeItems.rows`)
 
+## S16: ランキング区分が取れないイベント(selectboxes 型の構造 JSON)への対応(実装済み・2026-09-29)
+
+社長報告「オオカミさんがやってくる！(2026_09_wolfcoming)でイベント作成フォームに『ランキング区分がありません』と出る。ふわっちの画面には総取り・チーム対抗・総合・各キャラ・レースの区分がある」への対応(オートモードで自走)。
+
+- 原因: `/resources/json/rankings/{prefix}` の構造 JSON に **3 つ目の形** があった。従来は `options[] → selectboxes[] → tabs[] → chips[]`(期間 options あり)と `tabs[] → chips[]` だけを平坦化していたが、このイベントは **トップレベルが `selectboxes[]`**(期間の options 無し)で、`flattenRankingChoices` が 0 件を返していた。構造 JSON 自体は同期済み(200)だったので DB の再同期は不要
+- 実測(`/rankings/{type}?limit=3&detail=true` で確認): `wolfcoming_across_goods_free`(総取り › グッズ › フリー)、`wolfcoming_teambattle`(chips も tabs も無い selectbox)、`wolfcoming_overall_whowatchchan`(tab のみ・chips 空)、`wolfcoming_side`(レース・border に rankingPoint 付き)。存在しない type は空配列が返る(404 にならない)
+- 対応: `src/lib/whowatch/events.ts` `RankingStruct.selectboxes` を追加し、`flattenRankingChoices` を `walkSelectboxes` に共通化(options 型・selectboxes 型の両方から呼ぶ)。表示名の `<br>` 等のタグは空白にする(「赤ずきん<br>ふわっちちゃん」)。テスト 1 件追加(実応答の縮約フィクスチャ・7 区分)
+- 期間(periods)は options 型だけが対象なので、このイベントは全体期間のまま(従来どおり手動)
+
 ## S15: 自動ライブラリ・まとめ投げ段階の音・1 キー最大 5 本のランダム再生(実装済み・2026-09-29)
 
 社長指示(2026-09-29)「まとめ投げの COOL/GREAT/FANTASTIC/MIRACLE をそれぞれ個別のアイテムに割り振る」「まだ音源が入っていないアイテムに、様々なサイトから拾った似合う SE を自動で。元の音源はクオリティが低いので豪華な音を」「主要アイテムは 5 種類の SE をランダムで」「ニコニコモンズ・DOVA-SYNDROME・freebgm.jp・魔王魂・Jamendo・Freesound なども活用」への対応。「今後はオートモードで自走して完走」の指示により承認待ちなしで実装。
