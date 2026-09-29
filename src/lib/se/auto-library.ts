@@ -5,7 +5,12 @@
 //     最大 15 秒・複数音源を MIX」）: scratchpad の build_se_mix.py が Mixkit / Freesound CC0 / 魔王魂 の素材を
 //     ライザー → インパクト → テーマ音の連打 → ファンファーレ／ジャックポット／歓声 ＋ コインシャワー ＋ きらきら の順に
 //     ffmpeg で重ね（loudnorm -14 LUFS・mono 96k）、セットの派手さ（LEVEL 1〜4）で 3〜15 秒にする。
-//     各ファイルの素材と出典は public/se/lib/manifest.json の components
+//     各ファイルの素材と出典は public/se/lib/manifest.json の components。
+//     v4（2026-09-30 社長指示「ニコニ・コモンズも活用」）: build_se_mix4.py がニコニ・コモンズの素材（利用範囲がインターネット上・
+//     配信での収益化 OK・親作品登録不要・権利や内容を 1 件ずつ確認したもの）をテーマ音の主役・確定音（キュイン）・フィーバー・
+//     ファンファーレ・歓声などに加え、素材ごとに音量をそろえて v4-1..5.mp3 を作る。使った素材の一覧は AUTO_LIBRARY_NICOMMONS_CREDITS。
+//     無料アイテム（2026-09-30 社長指示「無料が派手すぎる」）は build_se_lite.py の控えめな音: tier-T0（テーマなし）・lite-hit（当たり）・
+//     lite-{テーマ}（素材 1 つ・1.2〜2.2 秒・-18〜-16 LUFS）
 //   - アイテム名（とカテゴリ key）のキーワードからテーマを決める（themeForItem）。1 テーマ最大 5 本からランダムに 1 本
 //     （直前と同じ音は避ける）
 //   - まとめ投げの段階（COOL/GREAT/FANTASTIC/MIRACLE）・当たり・価格帯の既定にもセットがある
@@ -179,6 +184,8 @@ export interface AutoTarget {
   tier: SeTier;
   isHit: boolean;
   bulkGrade?: BulkGrade | null;
+  /** 無料アイテム（単価 0・不明）。控えめな音（lite-*）にする（2026-09-30 社長指示「無料が派手すぎる」） */
+  free?: boolean;
 }
 
 export interface AutoChoice {
@@ -193,11 +200,66 @@ export function bulkSetName(grade: BulkGrade): string {
   return "bulk-FANTASTIC";
 }
 
+/** 無料アイテムでもそのまま使う落ち着いたテーマ（素材 1 つで鳴らしても控えめなもの） */
+const CALM_THEMES: ReadonlySet<string> = new Set(["pop", "cute", "sparkle", "heart", "balloon", "coin", "bell", "notify", "flower", "music", "food", "drink", "dice", "party", "bird", "cat", "dog", "pig", "cow", "horse", "elephant", "monkey", "sea", "christmas", "kids", "magic"]);
+/** 落ち着いたテーマのうち汎用のもの（派手なテーマの代わりを名前から探すときは使わない） */
+const GENERIC_CALM_THEMES: ReadonlySet<string> = new Set(["flower", "party", "sparkle", "pop", "notify"]);
+/** 派手なテーマ → 無料アイテムで代わりに使う落ち着いたテーマ（2026-09-30 社長指示「イベントの無料アイテムが派手すぎる」） */
+const FREE_THEME_MAP: Readonly<Record<string, string>> = {
+  jackpot: "coin", casino: "sparkle", fanfare: "sparkle", trophy: "sparkle", win: "sparkle", epic: "sparkle", fireworks: "sparkle",
+  cheer: "pop", wow: "pop", explosion: "pop", thunder: "pop", fire: "pop", laser: "pop", battle: "pop", rocket: "pop", vehicle: "pop", whoosh: "pop",
+  wolf: "cute", lion: "cute", bear: "cute", halloween: "cute",
+};
+
+/**
+ * 無料アイテムのテーマ。名前だけで決め（イベントのカテゴリからは決めない: バスケット → オオカミの遠吠え を避ける）、
+ * 最初に当たったテーマが落ち着いていればそれ。派手なら、名前に当たる具体的な物の落ち着いたテーマを探し（赤ずきんサイコロ →
+ * オオカミではなくサイコロ）、無ければ FREE_THEME_MAP で置き換える（石油王スロット → コイン、花火 → キラキラ）。名前で決まらなければ null
+ */
+export function freeThemeFor(itemName: string | null | undefined): string | null {
+  const name = (itemName ?? "").replace(STRIP_RE, "");
+  if (!name) return null;
+  let first: string | null = null;
+  for (const [theme, re] of NAME_RULES) {
+    if (!re.test(name)) continue;
+    if (first === null) {
+      if (CALM_THEMES.has(theme)) return theme;
+      first = theme;
+      continue;
+    }
+    // 派手なテーマが先に当たったときは、具体的な物の落ち着いたテーマ（サイコロ・コイン・動物など）だけを探す。
+    // 花・祭り・キラキラのような汎用テーマは部分一致しやすい（「花火」の「花」）ので探さない
+    if (CALM_THEMES.has(theme) && !GENERIC_CALM_THEMES.has(theme)) return theme;
+  }
+  return first ? (FREE_THEME_MAP[first] ?? "pop") : null;
+}
+
+/** 無料アイテムの音量（自動ライブラリの有料は 80）。控えめな音をさらに一段小さく（2026-09-30） */
+export const FREE_AUTO_VOLUME = 55;
+
+/**
+ * 無料アイテムの控えめな音のセット（2026-09-30 社長指示「無料が派手すぎる」「イベントの無料アイテムが派手すぎる」）。
+ * ミックスではなく素材 1 つ・1.2〜2.2 秒・小さめの音量。当たり → lite-hit / 名前のテーマ（freeThemeFor）→ lite-{テーマ}。
+ * どちらも無ければ null（カテゴリの既定 → 価格帯の既定 tier-T0 も控えめなポップ音）。groups は互換のため受け取るが使わない
+ */
+export function liteSetFor(itemName: string | null | undefined, _groups: readonly string[] | null | undefined, isHit: boolean): string | null {
+  if (isHit && hasLibrarySet("lite-hit")) return "lite-hit";
+  const theme = freeThemeFor(itemName);
+  return theme && hasLibrarySet(`lite-${theme}`) ? `lite-${theme}` : null;
+}
+
 /**
  * 「そのアイテムらしい音」を選ぶ（ユーザーの個別割り当てが無いときに使う）。
- * 段階付き → bulk-{段階} / 当たり → hit / テーマあり → テーマ。無ければ null（カテゴリ・価格帯の既定に落とす）
+ * 段階付き → bulk-{段階} / 当たり → hit / テーマあり → テーマ。無ければ null（カテゴリ・価格帯の既定に落とす）。
+ * 無料アイテムは段階・当たり・テーマのミックスを使わず、控えめな音（liteSetFor）にする
  */
 export function chooseAutoForItem(t: AutoTarget, rand: () => number = Math.random): AutoChoice | null {
+  if (t.free) {
+    const set = liteSetFor(t.itemName, t.groups, t.isHit);
+    if (!set) return null;
+    const f = pickVariant(set, libraryFiles(set), rand);
+    return f ? { set, theme: set === "lite-hit" ? null : set.slice(5), file: f } : null;
+  }
   if (t.bulkGrade) {
     const set = bulkSetName(t.bulkGrade);
     const f = pickVariant(set, libraryFiles(set), rand);

@@ -619,7 +619,9 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const playGift = useCallback(async (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[]; bulk_grade?: Gift["bulk_grade"]; item_name?: string | null }, forceTier?: SeTier, waitForEnd = false) => {
     const tier = forceTier ?? tierForGift({ priceYen: g.price_yen, count: g.count, isHit: g.is_hit });
     // 2026-09-29: 個別行（変種ランダム）→ 自動ライブラリ（段階・当たり・アイテム名のテーマ）→ 一括行 → 自動の価格帯既定 → 合成音（choose-sound.ts）
-    const choice = chooseSound(mappingsRef.current, { patternId: g.pattern_id, itemId: g.item_id, itemName: g.item_name ?? null, tier, isHit: g.is_hit, kind: g.kind, groups: g.groups, bulkGrade: g.bulk_grade ?? null });
+    // 無料（単価 0・不明）は控えめな音（2026-09-30 社長指示「無料が派手すぎる」）。当たり・まとめ投げでも無料なら控えめ
+    const free = !(g.price_yen !== null && g.price_yen > 0);
+    const choice = chooseSound(mappingsRef.current, { patternId: g.pattern_id, itemId: g.item_id, itemName: g.item_name ?? null, tier, isHit: g.is_hit, kind: g.kind, groups: g.groups, bulkGrade: g.bulk_grade ?? null, free });
     if (choice === "disabled") return; // 明示的に無効化
     const vol = (volumeRef.current / 100) * (choice.volume / 100);
     await playSeUntilEnd(tier, { url: choice.url, volume: vol }, waitForEnd);

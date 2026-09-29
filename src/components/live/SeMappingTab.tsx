@@ -8,8 +8,8 @@ import { tierForGift, TIER_LABELS, type SeTier } from "@/lib/se/tiers";
 import { expandablePatternRows } from "@/lib/se/pattern-rows";
 import { WEB_BONUS_GROUP, WEB_BONUS_LABEL, isWebBonusItem } from "@/lib/se/web-bonus";
 import { BULK_GRADE_LABELS, MAIN_BULK_GRADES, bulkItemKey, bulkKey, describeDecorations, type BulkDecoration, type BulkGrade } from "@/lib/se/bulk-grade";
-import { libraryFiles, pickVariant, THEME_LABELS, themeForItem } from "@/lib/se/auto-library";
-import { AUTO_LIBRARY_FILE_COUNT } from "@/lib/se/auto-library-data";
+import { libraryFiles, liteSetFor, pickVariant, THEME_LABELS, themeForItem } from "@/lib/se/auto-library";
+import { AUTO_LIBRARY_FILE_COUNT, AUTO_LIBRARY_NICOMMONS_CREDITS } from "@/lib/se/auto-library-data";
 import { variantKeys } from "@/lib/se/choose-sound";
 import { VolumeSlider } from "./VolumeSlider";
 import { useLiveConnection } from "./LiveConnectionProvider";
@@ -111,12 +111,8 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
   const [syncedAt, setSyncedAt] = useState<string | null>(null);
   // 自分の se_mappings。表示・試聴には公式の既定 SE（同梱）を合成した mappings を使う
   const [userRows, setUserRows] = useState<Mapping[]>([]);
-  /** 公式既定（同期元＝社長の現在の割り当て）。null なら同梱スナップショット */
+  /** 公式既定（同期元＝社長の現在の割り当て）。null なら同梱スナップショット。表示なしで自動同期（2026-09-30） */
   const [liveDefaults, setLiveDefaults] = useState<Mapping[] | null>(null);
-  const [defaultsSource, setDefaultsSource] = useState<"sync" | "bundled">("bundled");
-  /** 公式既定を最後に読み込んだ時刻（同期状況の表示用） */
-  const [defaultsLoadedAt, setDefaultsLoadedAt] = useState<Date | null>(null);
-  const [syncing, setSyncing] = useState(false);
   const mappings = useMemo<MergedMapping[]>(() => mergeWithDefaults(userRows, liveDefaults), [userRows, liveDefaults]);
   const [filter, setFilter] = useState("");
   const [onlyOnSale, setOnlyOnSale] = useState(true);
@@ -156,8 +152,6 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
       .then((d: { mappings?: Mapping[]; defaults?: Mapping[] | null; defaultsSource?: "sync" | "bundled" }) => {
         setUserRows(d.mappings ?? []);
         setLiveDefaults(d.defaults ?? null);
-        setDefaultsSource(d.defaultsSource ?? "bundled");
-        setDefaultsLoadedAt(new Date());
       })
       .catch(() => undefined);
   }, []);
@@ -169,10 +163,11 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
 
   /**
    * 公式の既定 SE（運営の現在の設定）を読み直し、この画面と再生側（LiveConnectionProvider）の両方に反映する。
-   * 2026-09-26 社長指示「社長が SE を入れるたびに他の人にも同期」: 開いたとき・5 分ごと・タブに戻ったとき・「今すぐ同期」で呼ぶ
+   * 2026-09-26 社長指示「社長が SE を入れるたびに他の人にも同期」: 開いたとき・5 分ごと・タブに戻ったときに呼ぶ。
+   * 2026-09-30 社長指示「自動同期は表記なしで自動的に」: 同期状況のカードと「今すぐ同期」ボタンは外し、裏で読み直すだけにした
+   * （再生側の LiveConnectionProvider も接続中は 5 分ごと・タブに戻ったときに読み直している）
    */
   const reloadAll = async () => {
-    setSyncing(true);
     try {
       const r = await fetch("/api/se/mappings", { cache: "no-store" });
       const d = r.ok
@@ -180,13 +175,10 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
         : { mappings: [], defaults: null };
       setUserRows(d.mappings ?? []);
       setLiveDefaults(d.defaults ?? null);
-      setDefaultsSource(d.defaultsSource ?? "bundled");
-      setDefaultsLoadedAt(new Date());
     } catch {
       // 取得できなければ今の表示のまま
     }
     await reloadMappings();
-    setSyncing(false);
   };
   const reloadAllRef = useRef(reloadAll);
   reloadAllRef.current = reloadAll;
@@ -381,30 +373,11 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
 
   return (
     <div className="space-y-4">
-      {/* 運営の SE 設定への自動同期（S2 のプリセットは 2026-09-26 に廃止） */}
-      <div className="rounded-xl border border-border bg-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h4 className="text-sm font-bold text-foreground">公式の既定 SE は運営の設定に自動同期</h4>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {defaultsSource === "sync"
-                ? `運営が SE を追加・変更すると、そのまま全員の既定になります（公式既定 ${liveDefaults?.length ?? 0} 件）。この画面を開いたとき・5 分ごと・タブに戻ったときに読み直します`
-                : "運営の設定を取得できていないため、同梱の既定音を使っています"}
-              {defaultsLoadedAt ? ` · 最終同期 ${defaultsLoadedAt.toLocaleTimeString("ja-JP")}` : ""}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">自分で音源を上げた項目はそちらが優先されます。「既定に戻す」を押すと公式既定に戻ります</p>
-          </div>
-          <button type="button" onClick={() => void reloadAll()} disabled={syncing} className="min-h-9 rounded-full border border-border bg-muted px-3 text-xs text-foreground disabled:opacity-50">
-            {syncing ? "同期中..." : "今すぐ同期"}
-          </button>
-        </div>
-      </div>
-
       {/* ティア既定音 */}
       <div className="rounded-xl border border-border bg-card p-4">
         <h4 className="mb-1 text-sm font-bold text-foreground">価格帯ごとの既定 SE（無料アイテムを含む）</h4>
         <p className="mb-1 text-xs text-muted-foreground">
-          アイテム個別・カテゴリの割り当てが無い時に使われます。既定は公式音源（{defaultsSource === "sync" ? "運営の現在の設定に同期" : "同梱"}。どこにも無い価格帯は「きらきら輝く1」）。音源を上げると差し替わり、「既定に戻す」で公式音源に戻ります
+          アイテム個別・カテゴリの割り当てが無い時に使われます。既定は素材ライブラリのパチンコ風ミックス（価格帯ごとに 5 本からランダム）。音源を上げると差し替わり、「既定に戻す」で既定に戻ります
         </p>
         <p className="mb-3 text-xs text-muted-foreground">
           <span className="font-bold text-foreground">無料アイテム</span>
@@ -467,17 +440,35 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
         <h4 className="mb-1 text-sm font-bold text-foreground">自動ライブラリ（パチンコ風ミックス・アイテムに似合う音を自動で・{AUTO_LIBRARY_FILE_COUNT} 本）</h4>
         <p className="mb-1 text-xs text-muted-foreground">
           個別に割り当てていないアイテムは、名前から決めたテーマ（花火・ねこ・コイン・乾杯・ハート…約 45 種）のミックス音を 5 本からランダムに鳴らします。
-          1 本は「ライザー → インパクト → テーマ音の連打 → ファンファーレ／ジャックポット／歓声 ＋ コインシャワー ＋ きらきら」を重ねたもので、
-          派手さに応じて 3〜15 秒（無料は短く、¥5,000〜・ミラクル・当たりは最長）。各アイテムのカードに「自動: テーマ名」と試聴ボタンが出ます。
+          1 本は「ライザー → インパクト → テーマ音の連打 → 確定音（キュイン）→ ファンファーレ／フィーバー／歓声 ＋ コインシャワー ＋ きらきら」を重ねたもので、
+          派手さに応じて 3〜15 秒（¥5,000〜・ミラクル・当たりは最長）。各アイテムのカードに「自動: テーマ名」と試聴ボタンが出ます。
+          無料アイテム（価格 0・不明）はミックスにせず、テーマの短い 1 音（ねこなら鳴き声だけ。テーマが無ければポップ音、当たりは短い正解音）を小さめに鳴らします。
           自分で音源を上げた行はこのライブラリより優先されます（「既定に戻す」で自動に戻る）
         </p>
-        <p className="mb-3 text-xs text-muted-foreground">
-          音源は商用可・帰属不要の素材（Mixkit Sound Effects Free License / Freesound の CC0）と 魔王魂（商用可・「効果音：魔王魂」表記）。各ファイルの出典は public/se/lib/manifest.json
+        <p className="mb-1 text-xs text-muted-foreground">
+          音源は商用可・帰属不要の素材（Mixkit Sound Effects Free License / Freesound の CC0）、効果音：魔王魂、ニコニ・コモンズの素材（利用範囲がインターネット上で、配信での収益化が OK のものだけ）。各ファイルの出典は public/se/lib/manifest.json
         </p>
+        {AUTO_LIBRARY_NICOMMONS_CREDITS.length > 0 && (
+          <details className="mb-3 text-xs text-muted-foreground">
+            <summary className="cursor-pointer select-none text-foreground">ニコニ・コモンズの使用素材（{AUTO_LIBRARY_NICOMMONS_CREDITS.length} 件）</summary>
+            <ul className="mt-2 max-h-64 space-y-1 overflow-y-auto pr-1">
+              {AUTO_LIBRARY_NICOMMONS_CREDITS.map((c) => (
+                <li key={c.id}>
+                  <a href={`https://commons.nicovideo.jp/works/${c.id}`} target="_blank" rel="noopener noreferrer" className="underline decoration-dotted underline-offset-2 hover:text-foreground">
+                    {c.id}
+                  </a>{" "}
+                  {c.title}
+                  {c.author ? `（${c.author}）` : ""}
+                  {c.notice ? ` ・ ${c.notice}` : ""}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
         <div className="flex flex-wrap gap-2">
-          {(["tier-T0", "tier-T1", "tier-T2", "tier-T3", "tier-T4", "hit", "bulk-COOL", "bulk-GREAT", "bulk-FANTASTIC", "bulk-MIRACLE"] as const).map((set) => (
+          {(["tier-T0", "lite-hit", "tier-T1", "tier-T2", "tier-T3", "tier-T4", "hit", "bulk-COOL", "bulk-GREAT", "bulk-FANTASTIC", "bulk-MIRACLE"] as const).map((set) => (
             <button key={set} type="button" onClick={() => void previewAuto(set)} className="min-h-9 rounded-full border border-border bg-muted px-3 text-xs text-foreground hover:border-foreground/30">
-              ▶ {set.startsWith("tier-") ? TIER_LABELS[set.slice(5) as SeTier] : set === "hit" ? "当たり" : `まとめ投げ ${BULK_GRADE_LABELS[set.slice(5) as BulkGrade]}`}（{libraryFiles(set).length} 本）
+              ▶ {set === "lite-hit" ? "無料の当たり（控えめ）" : set.startsWith("tier-") ? TIER_LABELS[set.slice(5) as SeTier] : set === "hit" ? "当たり" : `まとめ投げ ${BULK_GRADE_LABELS[set.slice(5) as BulkGrade]}`}（{libraryFiles(set).length} 本）
             </button>
           ))}
         </div>
@@ -659,15 +650,19 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
                               {(() => {
                                 const theme = themeForItem(it.itemName, it.groups);
                                 const own = byKey.get(`item:${it.itemId}`);
-                                const n = theme ? libraryFiles(theme).length : 0;
+                                // 無料アイテムは控えめな音（lite-{テーマ}・2026-09-30 社長指示「無料が派手すぎる」）
+                                const free = !(it.priceJpy !== null && it.priceJpy > 0);
+                                const set = free ? liteSetFor(it.itemName, it.groups, false) : theme;
+                                const shown = free ? (set ? set.slice(5) : null) : theme;
+                                const n = set ? libraryFiles(set).length : 0;
                                 return (
                                   <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                                    {theme && n > 0 ? (
+                                    {shown && set && n > 0 ? (
                                       <>
                                         <span>
-                                          自動: {THEME_LABELS[theme] ?? theme}（{n} 本ランダム）{own ? "・いまは上の割り当てが優先" : ""}
+                                          自動{free ? "（無料・控えめ）" : ""}: {THEME_LABELS[shown] ?? shown}（{n} 本ランダム）{own ? "・いまは上の割り当てが優先" : ""}
                                         </span>
-                                        <button type="button" onClick={() => void previewAuto(theme)} className="min-h-7 rounded-full border border-border bg-muted px-2 text-[11px] text-foreground hover:border-foreground/30">
+                                        <button type="button" onClick={() => void previewAuto(set)} className="min-h-7 rounded-full border border-border bg-muted px-2 text-[11px] text-foreground hover:border-foreground/30">
                                           ▶ 試聴
                                         </button>
                                       </>

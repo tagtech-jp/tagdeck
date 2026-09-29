@@ -3,14 +3,14 @@
 // 優先順（S15）:
 //   1. ユーザー／公式既定の個別行: bulk:item:{id}:{段階} → pattern:{id} → bulk:{段階} → item:{id}
 //      同じ key の変種（key#2〜key#5）があればランダムに 1 本（鳴らす ON かつ音源あり。全部 OFF なら「鳴らさない」）
-//   2. 自動ライブラリ（auto-library.ts）: 段階 → 当たり → アイテム名のテーマ
+//   2. 自動ライブラリ（auto-library.ts）: 段階 → 当たり → アイテム名のテーマ（無料アイテムは控えめな音 lite-hit / lite-{テーマ}）
 //   3. ユーザー／公式既定の一括行: cat:group:{key} → cat:kind:{種類} → tier:{T0..T4|hit}（変種ランダム）
 //   4. 自動ライブラリの価格帯の既定（tier-T0..T4 / hit）
 //   5. null（engine.ts の合成音）
 //
 // 「明示的に無効化」は従来どおり: その段階の key に行があって全部 OFF なら何も鳴らさない（下位に落とさない）
 
-import { chooseAutoForItem, chooseAutoForTier, THEME_LABELS } from "./auto-library";
+import { chooseAutoForItem, chooseAutoForTier, FREE_AUTO_VOLUME, THEME_LABELS } from "./auto-library";
 import type { BulkGrade } from "./bulk-grade";
 import type { ItemKind } from "./item-kind";
 import type { SeTier } from "./tiers";
@@ -34,6 +34,8 @@ export interface PlayTarget {
   kind?: ItemKind | null;
   groups?: readonly string[] | null;
   bulkGrade?: BulkGrade | null;
+  /** 無料アイテム（単価 0・不明）。自動ライブラリは控えめな音にする（2026-09-30） */
+  free?: boolean;
 }
 
 export interface SoundChoice {
@@ -110,8 +112,9 @@ export function chooseSound(mappings: readonly SoundRow[], t: PlayTarget, rand: 
   if (s1 === DISABLED) return "disabled";
   if (s1) return s1;
 
-  const auto = chooseAutoForItem({ itemName: t.itemName, groups: t.groups, tier: t.tier, isHit: t.isHit, bulkGrade: t.bulkGrade }, rand);
-  if (auto) return { url: auto.file.file, volume: 80, label: auto.file.title, key: auto.set, source: "auto", theme: auto.theme };
+  const auto = chooseAutoForItem({ itemName: t.itemName, groups: t.groups, tier: t.tier, isHit: t.isHit, bulkGrade: t.bulkGrade, free: t.free }, rand);
+  // 無料アイテムの控えめな音は音量も一段小さく（FREE_AUTO_VOLUME）
+  if (auto) return { url: auto.file.file, volume: t.free ? FREE_AUTO_VOLUME : 80, label: auto.file.title, key: auto.set, source: "auto", theme: auto.theme };
 
   const generic: string[] = [];
   for (const g of t.groups ?? []) generic.push(`cat:group:${g}`);
@@ -129,7 +132,7 @@ export function chooseSound(mappings: readonly SoundRow[], t: PlayTarget, rand: 
   if (own === null) return "disabled";
   if (own && own.url) return toChoice(own);
   const autoTier = chooseAutoForTier(t.tier, rand);
-  if (autoTier) return { url: autoTier.file.file, volume: own?.volume ?? 80, label: autoTier.file.title, key: autoTier.set, source: "auto", theme: null };
+  if (autoTier) return { url: autoTier.file.file, volume: own?.volume ?? (t.free ? FREE_AUTO_VOLUME : 80), label: autoTier.file.title, key: autoTier.set, source: "auto", theme: null };
   // ライブラリに価格帯セットが無い（通常は無い）ときだけ旧来の既定行
   const legacy = tryKeys(grouped, [tierKey], rand);
   if (legacy === DISABLED) return "disabled";
