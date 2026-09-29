@@ -72,9 +72,10 @@ describe("自動ライブラリのデータ", () => {
     expect(bulkSetName("TAMAYA")).toBe("bulk-FANTASTIC");
   });
 
-  it("coreLibraryUrls は価格帯・段階・当たりの全ファイル", () => {
+  it("coreLibraryUrls は価格帯・段階・当たりのセットから各 2 本（先読み用）", () => {
     const urls = coreLibraryUrls();
-    expect(urls.length).toBeGreaterThanOrEqual(30);
+    expect(urls.length).toBe(20);
     expect(new Set(urls).size).toBe(urls.length);
+    expect(coreLibraryUrls(5).length).toBeGreaterThanOrEqual(30);
   });
 });

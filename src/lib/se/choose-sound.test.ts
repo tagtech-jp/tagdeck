@@ -69,3 +69,25 @@ describe("chooseSound", () => {
     expect(seq(0.1)()).toBe(0.1);
   });
 });
+
+describe("chooseSound（価格帯の既定は素材ライブラリ・2026-09-29）", () => {
+  const t = { patternId: null, itemId: 1, itemName: "うろこ", tier: "T2" as const, isHit: false, groups: [], kind: null };
+  const def = (key: string): SoundRow => ({ key, url: "/se/defaults/old.mp3", enabled: true, volume: 80, label: "old", source: "default" });
+
+  it("公式既定の tier 行（旧音源）は使わず、素材ライブラリの価格帯セットを鳴らす", () => {
+    const c = chooseSound([def("tier:T2")], t, () => 0);
+    expect(c).not.toBe("disabled");
+    if (c !== "disabled") {
+      expect(c.source).toBe("auto");
+      expect(c.key).toBe("tier-T2");
+      expect(c.url).toMatch(/^\/se\/lib\/tier-T2\//);
+    }
+  });
+
+  it("自分で上げた tier 行はライブラリより優先。url null の自分の行は音量だけ反映してライブラリ", () => {
+    expect(chooseSound([def("tier:T2"), row("tier:T2")], t)).toMatchObject({ key: "tier:T2", source: "user" });
+    const c = chooseSound([def("tier:T2"), row("tier:T2", null, true, 30)], t);
+    if (c !== "disabled") expect(c).toMatchObject({ source: "auto", volume: 30 });
+    expect(chooseSound([row("tier:T2", null, false)], t)).toBe("disabled");
+  });
+});

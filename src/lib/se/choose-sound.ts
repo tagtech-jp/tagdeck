@@ -116,13 +116,24 @@ export function chooseSound(mappings: readonly SoundRow[], t: PlayTarget, rand: 
   const generic: string[] = [];
   for (const g of t.groups ?? []) generic.push(`cat:group:${g}`);
   if (t.kind) generic.push(`cat:kind:${t.kind}`);
-  generic.push(`tier:${t.tier}`);
   const s3 = tryKeys(grouped, generic, rand);
   if (s3 === DISABLED) return "disabled";
   if (s3) return s3;
 
+  // 価格帯（2026-09-29 社長指示「既定の SE も素材から」）: 自分で上げた tier 行だけを優先し、
+  // 公式既定（旧音源・きらきら汎用）の tier 行は素材ライブラリの価格帯セット（5 本ランダム）に置き換える。
+  // 音量・「鳴らす」だけ変えた自分の行（url null）は、その音量でライブラリを鳴らす
+  const tierKey = `tier:${t.tier}`;
+  const tierRows = grouped.get(tierKey)?.filter((r) => r.source !== "default");
+  const own = pickFromRows(tierRows, rand);
+  if (own === null) return "disabled";
+  if (own && own.url) return toChoice(own);
   const autoTier = chooseAutoForTier(t.tier, rand);
-  if (autoTier) return { url: autoTier.file.file, volume: 80, label: autoTier.file.title, key: autoTier.set, source: "auto", theme: null };
+  if (autoTier) return { url: autoTier.file.file, volume: own?.volume ?? 80, label: autoTier.file.title, key: autoTier.set, source: "auto", theme: null };
+  // ライブラリに価格帯セットが無い（通常は無い）ときだけ旧来の既定行
+  const legacy = tryKeys(grouped, [tierKey], rand);
+  if (legacy === DISABLED) return "disabled";
+  if (legacy) return legacy;
   return { url: null, volume: 80, label: null, key: null, source: "synth", theme: null };
 }
 

@@ -16,7 +16,7 @@ import { useLiveConnection } from "./LiveConnectionProvider";
 import { mergeWithDefaults, type MergedMapping } from "@/lib/se/merge-defaults";
 
 // S1: SE タブ。アイテムマスタ（/playitems × payments3 の価格）を一覧し、アイテム／パターンごとに SE を割り当てる。
-// 音源は Supabase Storage バケット "se"（mp3/ogg/wav・5MB 以下・パス {user_id}/…）。未設定は既定合成音。
+// 音源は Supabase Storage バケット "se"（mp3/ogg/wav・5MB 以下・パス {user_id}/…）。未設定は素材ライブラリ（auto-library.ts）。
 //
 // 決裁(2026-09-25) 案P: アイテム欄はふわっちのアイテムページと同じ「カテゴリごとのバナー見出し＋アイテム」の並び。
 //   - 見出しはバナー画像（payments3 に URL があれば）か、無ければ文字のカード。見出しの中でカテゴリ一括 SE を割り当てる
@@ -347,6 +347,15 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
   const preview = async (key: string, tier: SeTier, volumeOverride?: number) => {
     await unlockAudio();
     const m = byKey.get(key);
+    // 価格帯の既定（自分の音源なし）は素材ライブラリの価格帯セットを試聴する（2026-09-29）
+    if (key.startsWith("tier:") && (!m || m.source === "default" || !m.url)) {
+      const set = tier === "hit" ? "hit" : `tier-${tier}`;
+      const f = pickVariant(`preview:${set}`, libraryFiles(set));
+      if (f) {
+        await playSe(tier, { url: f.file, volume: (volumeOverride ?? m?.volume ?? 80) / 100 });
+        return;
+      }
+    }
     await playSe(tier, { url: m?.url ?? null, volume: (volumeOverride ?? m?.volume ?? 80) / 100 });
   };
 
@@ -455,10 +464,12 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
 
       {/* 自動ライブラリ（2026-09-29） */}
       <div className="rounded-xl border border-border bg-card p-4">
-        <h4 className="mb-1 text-sm font-bold text-foreground">自動ライブラリ（アイテムに似合う音を自動で・{AUTO_LIBRARY_FILE_COUNT} 本）</h4>
+        <h4 className="mb-1 text-sm font-bold text-foreground">自動ライブラリ（パチンコ風ミックス・アイテムに似合う音を自動で・{AUTO_LIBRARY_FILE_COUNT} 本）</h4>
         <p className="mb-1 text-xs text-muted-foreground">
-          個別に割り当てていないアイテムは、名前から決めたテーマ（花火・ねこ・コイン・乾杯・ハート…約 45 種）の音を最大 5 本からランダムに鳴らします。各アイテムのカードに「自動: テーマ名」と試聴ボタンが出ます。
-          まとめ投げの段階・当たり・価格帯の既定にもセットがあり、割り当てが無ければこれが鳴ります。自分で音源を上げた行はこのライブラリより優先されます（「既定に戻す」で自動に戻る）
+          個別に割り当てていないアイテムは、名前から決めたテーマ（花火・ねこ・コイン・乾杯・ハート…約 45 種）のミックス音を 5 本からランダムに鳴らします。
+          1 本は「ライザー → インパクト → テーマ音の連打 → ファンファーレ／ジャックポット／歓声 ＋ コインシャワー ＋ きらきら」を重ねたもので、
+          派手さに応じて 3〜15 秒（無料は短く、¥5,000〜・ミラクル・当たりは最長）。各アイテムのカードに「自動: テーマ名」と試聴ボタンが出ます。
+          自分で音源を上げた行はこのライブラリより優先されます（「既定に戻す」で自動に戻る）
         </p>
         <p className="mb-3 text-xs text-muted-foreground">
           音源は商用可・帰属不要の素材（Mixkit Sound Effects Free License / Freesound の CC0）と 魔王魂（商用可・「効果音：魔王魂」表記）。各ファイルの出典は public/se/lib/manifest.json
@@ -779,7 +790,13 @@ const MappingControls = memo(function MappingControls({ mkeys, tier, mapping: m,
         </button>
       )}
       <span className="truncate text-xs text-muted-foreground">
-        {m?.usesDefaultSound ? `既定 ♪ ${m.label ?? "公式音源"}` : m?.url ? `♪ ${m.label ?? "カスタム音源"}` : "既定（合成音）"}
+        {mkey.startsWith("tier:") && (!m || m.source === "default" || !m.url)
+          ? "既定 ♪ 素材ライブラリ（パチンコ風ミックス 5 本ランダム）"
+          : m?.usesDefaultSound
+            ? `既定 ♪ ${m.label ?? "公式音源"}`
+            : m?.url
+              ? `♪ ${m.label ?? "カスタム音源"}`
+              : "既定 ♪ 素材ライブラリ"}
       </span>
       {m?.url && !m.usesDefaultSound && (
         <>
