@@ -768,9 +768,9 @@ def main():
     if mode in ("all", "mix", "single"):
         fresh = {"style": "pachinko-mix v7（CC0 のみ: Freesound CC0 + Kenney）。ライザー→インパクト→テーマ連打→確定音→ファンファーレ/歓声/コイン/きらきら。最大 15 秒・mono 96k / 無料アイテムは単発音（1.5 秒まで・-19 LUFS）",
                  "sources": LICENSE_TEXT, "themes": {}}
-        manifest = json.load(open(path, encoding="utf-8")) if (only and os.path.exists(path)) else fresh
-        if not only:
-            manifest = fresh
+        # all は一覧を作り直す（選曲表から消えたセットも落ちる）。mix / single は今の一覧を読み、作ったセットだけ差し替える
+        # （mix だけ・single だけを実行しても、もう片方のセットが一覧から消えないように）
+        manifest = fresh if (mode == "all" or not os.path.exists(path)) else json.load(open(path, encoding="utf-8"))
         manifest["sources"] = LICENSE_TEXT
         manifest["style"] = fresh["style"]
         if mode in ("all", "mix"):
