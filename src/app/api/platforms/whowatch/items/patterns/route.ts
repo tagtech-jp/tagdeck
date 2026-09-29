@@ -51,10 +51,16 @@ export async function GET() {
       db.select({ itemId: itemPointMapping.itemId, priceJpy: itemPointMapping.priceJpy, state: itemPointMapping.state }).from(itemPointMapping).where(eq(itemPointMapping.platform, "whowatch")),
     ]);
     const priceById = new Map(prices.map((p) => [p.itemId, p]));
+    // パックにしか入っていないアイテム（2026-09-30）の価格の元。SE タブに「パック換算」と出す
+    const priceNoteById = new Map<number, string>();
     // 1 個あたりの単価（whowatch_item_prices・2026-09-26）で上書き。0020 未適用・未同期なら従来の price_jpy のまま
     try {
-      const unit = await db.select({ itemId: whowatchItemPrices.itemId, unitPriceJpy: whowatchItemPrices.unitPriceJpy, onSale: whowatchItemPrices.onSale }).from(whowatchItemPrices);
-      for (const u of unit) priceById.set(String(u.itemId), { itemId: String(u.itemId), priceJpy: u.unitPriceJpy, state: u.onSale ? "OPEN" : "CLOSED" });
+      const unit = await db.select({ itemId: whowatchItemPrices.itemId, unitPriceJpy: whowatchItemPrices.unitPriceJpy, onSale: whowatchItemPrices.onSale, products: whowatchItemPrices.products }).from(whowatchItemPrices);
+      for (const u of unit) {
+        priceById.set(String(u.itemId), { itemId: String(u.itemId), priceJpy: u.unitPriceJpy, state: u.onSale ? "OPEN" : "CLOSED" });
+        const pack = Array.isArray(u.products) ? u.products.find((p) => p?.pack)?.pack : undefined;
+        if (pack) priceNoteById.set(u.itemId, `パック換算: ${pack.name} ¥${Math.round(pack.listPrice).toLocaleString()} ÷ ${pack.pieces} 個`);
+      }
     } catch (e) {
       console.warn("[items/patterns] 単価テーブルが読めないため price_jpy を使う", e instanceof Error ? e.message : String(e));
     }
@@ -107,7 +113,7 @@ export async function GET() {
     }
     const groups = [...groupMap.values()].sort((a, b) => (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999) || a.groupTitle.localeCompare(b.groupTitle, "ja"));
 
-    const items = new Map<number, { itemId: number; itemName: string; priceJpy: number | null; onSale: boolean; imageUrl: string | null; groups: string[]; decorations: BulkDecoration[]; patterns: Array<{ patternId: number; patternName: string; isHit: boolean; hitGrade: string | null; isVariant: boolean; quantity: number | null; animationUrl: string | null; animationFullscreen: boolean }> }>();
+    const items = new Map<number, { itemId: number; itemName: string; priceJpy: number | null; priceNote: string | null; onSale: boolean; imageUrl: string | null; groups: string[]; decorations: BulkDecoration[]; patterns: Array<{ patternId: number; patternName: string; isHit: boolean; hitGrade: string | null; isVariant: boolean; quantity: number | null; animationUrl: string | null; animationFullscreen: boolean }> }>();
     // アイテムごとの代表画像を選ぶための一時保持（応答には載せない）
     const imageCandidates = new Map<number, Array<{ patternName: string; imageUrl: string | null; isHit: boolean }>>();
     for (const p of patterns) {
@@ -116,7 +122,7 @@ export async function GET() {
         const pr = priceById.get(String(p.itemId));
         // 2026-09-28: item_point_mapping にイベントの無料配布（state=FREE・price 0）も入るようになった。SE タブの表示（「無料（イベント配布）」）と
         // T0 判定は「価格なし＝null」のままにする（0 を ¥0〜 と表示しない）
-        it = { itemId: p.itemId, itemName: p.itemName, priceJpy: pr && pr.priceJpy > 0 && pr.state !== "FREE" ? pr.priceJpy : null, onSale: pr?.state === "OPEN", imageUrl: null, groups: groupsByItem.get(p.itemId) ?? [], decorations: decorationsByItem.get(p.itemId) ?? [], patterns: [] };
+        it = { itemId: p.itemId, itemName: p.itemName, priceJpy: pr && pr.priceJpy > 0 && pr.state !== "FREE" ? pr.priceJpy : null, priceNote: priceNoteById.get(p.itemId) ?? null, onSale: pr?.state === "OPEN", imageUrl: null, groups: groupsByItem.get(p.itemId) ?? [], decorations: decorationsByItem.get(p.itemId) ?? [], patterns: [] };
         items.set(p.itemId, it);
         imageCandidates.set(p.itemId, []);
       }

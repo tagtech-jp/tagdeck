@@ -11,6 +11,7 @@ import { notInArray, sql } from "drizzle-orm";
 import type { createDbClient } from "@/lib/db/client";
 import { whowatchItemGroups } from "@/lib/db/schema";
 import { resolveWhowatchDeviceId } from "../platforms/whowatch";
+import { packGroupRows, type PackPricedItem } from "./pack-prices";
 
 type Db = ReturnType<typeof createDbClient>;
 const BASE_URL = "https://api.whowatch.tv";
@@ -131,10 +132,13 @@ export interface SyncItemGroupsResult {
  * 行数は 100 件前後と小さいので、アイテムパターン同期のようなチャンク分割は不要。
  * 応答から消えたカテゴリの行は削除する（終了したセールが残り続けないように）。
  */
-export async function syncItemGroups(db: Db, preloaded?: RawCategory[]): Promise<SyncItemGroupsResult> {
+export async function syncItemGroups(db: Db, preloaded?: RawCategory[], packItems: readonly PackPricedItem[] = []): Promise<SyncItemGroupsResult> {
   // 単価同期（item-prices.ts）と同じ応答を使い回せるよう、取得済みのカテゴリを受け取れる
   const categories = preloaded ?? (await fetchPaymentCategories());
-  const rows = flattenGroups(categories, new Date());
+  const now = new Date();
+  const base = flattenGroups(categories, now);
+  // パックにしか入っていないアイテム（銀の風船 等・2026-09-30）はパックと同じカテゴリへ（有料の行として）
+  const rows = [...base, ...packGroupRows(base, packItems, now)];
   if (rows.length === 0) {
     // 応答が空のときに全削除すると事故になるので、掃除はしない
     return { categories: categories.length, rows: 0, inserted: 0, updated: 0, deleted: 0 };

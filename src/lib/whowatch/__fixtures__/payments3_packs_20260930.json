@@ -1,0 +1,932 @@
+[
+ {
+  "group": "wwidolbattle",
+  "title": "月末のアイドル",
+  "display_order": 8,
+  "play_item": [
+   {
+    "id": 10842,
+    "name": "トンでもない応援をするぶたさん",
+    "product_description": "様々なイベントでランキングアップ効果のあるアイテムです。<br>2倍/20倍の当たりが出た場合はアニメーションが表示され、ランキングポイントが増加します。<br>※Web限定で「オオカミさんがやってくる！」の「赤ずきんダッシュサイコロ」のおまけつき（有効期限：2026年9月30日）<br>※Web限定で「月末のアイドル」で使える「アイドルマイク」のおまけつき（有効期限：付与から40日間）",
+    "image_url": "",
+    "play_item_payment_product": [
+     {
+      "id": 5724,
+      "price": 160,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.ranking.ouen_pig.1.sale",
+      "decoration": {
+       "description": "様々なイベントでランキングアップ効果のあるアイテムです。<br>2倍/20倍の当たりが出た場合はアニメーションが表示され、ランキングポイントが増加します。<br>※Web限定で「オオカミさんがやってくる！」の「赤ずきんダッシュサイコロ」のおまけつき（有効期限：2026年9月30日）<br>※Web限定で「月末のアイドル」で使える「アイドルマイク」のおまけつき（有効期限：付与から40日間）",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/events/ouen_pig/item_ouen-pig.png"
+     },
+     {
+      "id": 5725,
+      "price": 800,
+      "quantity": 5,
+      "state": "OPEN",
+      "product_id": "web.ranking.ouen_pig.5.sale",
+      "decoration": {
+       "description": null,
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/events/ouen_pig/item_ouen-pig.png"
+     },
+     {
+      "id": 5726,
+      "price": 1580,
+      "quantity": 10,
+      "state": "OPEN",
+      "product_id": "web.ranking.ouen_pig.10.sale",
+      "decoration": {
+       "description": null,
+       "label": "お得 !"
+      },
+      "image_url": "https://img.whowatch.tv/events/ouen_pig/item_ouen-pig.png"
+     },
+     {
+      "id": 5727,
+      "price": 7800,
+      "quantity": 50,
+      "state": "OPEN",
+      "product_id": "web.ranking.ouen_pig.50.sale",
+      "decoration": {
+       "description": null,
+       "label": "お得 !"
+      },
+      "image_url": "https://img.whowatch.tv/events/ouen_pig/item_ouen-pig.png"
+     },
+     {
+      "id": 5728,
+      "price": 15500,
+      "quantity": 100,
+      "state": "OPEN",
+      "product_id": "web.ranking.ouen_pig.100.sale",
+      "decoration": {
+       "description": null,
+       "label": "お得 !"
+      },
+      "image_url": "https://img.whowatch.tv/events/ouen_pig/item_ouen-pig.png"
+     },
+     {
+      "id": 5729,
+      "price": 30000,
+      "quantity": 200,
+      "state": "OPEN",
+      "product_id": "web.ranking.ouen_pig.200.sale",
+      "decoration": {
+       "description": null,
+       "label": "お得 !"
+      },
+      "image_url": "https://img.whowatch.tv/events/ouen_pig/item_ouen-pig.png"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "group": "gingiragin_2026",
+  "title": "ギンギラギンアイテム",
+  "display_order": 10,
+  "play_item": [
+   {
+    "id": 13061,
+    "name": "ギンギラギン隕石",
+    "product_description": "使用すると、コメント欄でランダムに「ハート形」「星形」「丸形」の隕石が表示されます。<br>コメント欄でピカピカ光ります✨<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+    "image_url": "",
+    "play_item_payment_product": [
+     {
+      "id": 17788,
+      "price": 50,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.inseki.50",
+      "decoration": {
+       "description": "使用すると、コメント欄でランダムに「ハート形」「星形」「丸形」の隕石が表示されます。<br>コメント欄でピカピカ光ります✨<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_inseki_anim.webp"
+     },
+     {
+      "id": 17789,
+      "price": 250,
+      "quantity": 5,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.inseki.250",
+      "decoration": {
+       "description": null,
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_inseki_anim.webp"
+     },
+     {
+      "id": 17790,
+      "price": 500,
+      "quantity": 10,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.inseki.500",
+      "decoration": {
+       "description": null,
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_inseki_anim.webp"
+     },
+     {
+      "id": 17791,
+      "price": 2480,
+      "quantity": 50,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.inseki.2480",
+      "decoration": {
+       "description": null,
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_inseki_anim.webp"
+     }
+    ]
+   },
+   {
+    "id": 13062,
+    "name": "ギンギラギン流星群",
+    "product_description": "夜空にギンギラの星が降り注ぐ💫<br>アニメーション付きアイテムです。<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+    "play_item_payment_product": [
+     {
+      "id": 17800,
+      "price": 150,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.ryuseigun.150",
+      "decoration": {
+       "description": "夜空にギンギラの星が降り注ぐ💫<br>アニメーション付きアイテムです。<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_ryuseigun_anim.webp"
+     },
+     {
+      "id": 17801,
+      "price": 750,
+      "quantity": 5,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.ryuseigun.750",
+      "decoration": {
+       "description": null,
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_ryuseigun_anim.webp"
+     },
+     {
+      "id": 17802,
+      "price": 1500,
+      "quantity": 10,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.ryuseigun.1500",
+      "decoration": {
+       "description": null,
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_ryuseigun_anim.webp"
+     },
+     {
+      "id": 17803,
+      "price": 7350,
+      "quantity": 50,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.ryuseigun.7350",
+      "decoration": {
+       "description": null,
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_ryuseigun_anim.webp"
+     }
+    ]
+   },
+   {
+    "id": 13063,
+    "name": "ギンギラギンもりあげねこさん",
+    "product_description": "大人気もりあげねこさんがギンギラ仕様で登場🌟<br>アニメーション付きアイテムです。<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+    "play_item_payment_product": [
+     {
+      "id": 17812,
+      "price": 250,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.gingira-morineko.250",
+      "decoration": {
+       "description": "大人気もりあげねこさんがギンギラ仕様で登場🌟<br>アニメーション付きアイテムです。<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_gingira-morineko_anim.webp"
+     },
+     {
+      "id": 17813,
+      "price": 1000,
+      "quantity": 4,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.gingira-morineko.1000",
+      "decoration": {
+       "description": null,
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_gingira-morineko_anim.webp"
+     },
+     {
+      "id": 17814,
+      "price": 2480,
+      "quantity": 10,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.gingira-morineko.2480",
+      "decoration": {
+       "description": null,
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_gingira-morineko_anim.webp"
+     },
+     {
+      "id": 17815,
+      "price": 4900,
+      "quantity": 20,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.gingira-morineko.4900",
+      "decoration": {
+       "description": null,
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_gingira-morineko_anim.webp"
+     }
+    ]
+   },
+   {
+    "id": 13064,
+    "name": "ギンギラギンギャラクシーオーロラ",
+    "product_description": "ふわふわと揺れるオーロラのカーテン💫<br>全画面でのアニメーション付きアイテムです。<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+    "play_item_payment_product": [
+     {
+      "id": 17824,
+      "price": 1000,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.gingira-aurora.1000",
+      "decoration": {
+       "description": "ふわふわと揺れるオーロラのカーテン💫<br>全画面でのアニメーション付きアイテムです。<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_gingira-aurora_anim.webp"
+     },
+     {
+      "id": 17825,
+      "price": 4950,
+      "quantity": 5,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.gingira-aurora.4950",
+      "decoration": {
+       "description": null,
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_gingira-aurora_anim.webp"
+     },
+     {
+      "id": 17826,
+      "price": 9800,
+      "quantity": 10,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.gingira-aurora.9800",
+      "decoration": {
+       "description": null,
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_gingira-aurora_anim.webp"
+     },
+     {
+      "id": 17827,
+      "price": 19400,
+      "quantity": 20,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.gingira-aurora.19400",
+      "decoration": {
+       "description": null,
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_gingira-aurora_anim.webp"
+     }
+    ]
+   },
+   {
+    "id": 13065,
+    "name": "ギンギラギンもりあげねこさんのダンスパーティ",
+    "product_description": "ギンギラギンになったもりあげねこさん with 仲間たちのダンスパーティ開催💃🕺<br>舞台の上で踊り狂うねこさんたちに注目🐱✨<br>全画面でのアニメーション付きアイテムです。<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+    "play_item_payment_product": [
+     {
+      "id": 17834,
+      "price": 5000,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.gingira-danceparty.5000",
+      "decoration": {
+       "description": "ギンギラギンになったもりあげねこさん with 仲間たちのダンスパーティ開催💃🕺<br>舞台の上で踊り狂うねこさんたちに注目🐱✨<br>全画面でのアニメーション付きアイテムです。<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_gingira-danceparty_anim.webp"
+     },
+     {
+      "id": 17835,
+      "price": 14550,
+      "quantity": 3,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.gingira-danceparty.14550",
+      "decoration": {
+       "description": null,
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_gingira-danceparty_anim.webp"
+     },
+     {
+      "id": 17836,
+      "price": 24125,
+      "quantity": 5,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.gingira-danceparty.24125",
+      "decoration": {
+       "description": null,
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_gingira-danceparty_anim.webp"
+     },
+     {
+      "id": 17837,
+      "price": 47500,
+      "quantity": 10,
+      "state": "OPEN",
+      "product_id": "web.gingiragin_2026.gingira-danceparty.47500",
+      "decoration": {
+       "description": null,
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_gingira-danceparty_anim.webp"
+     }
+    ]
+   },
+   {
+    "id": 13077,
+    "name": "ギンギラギンアイテムパックミニ",
+    "product_description": "ギンギラギンアイテムを詰め合わせたお得なパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・ギンギラギン隕石 x 4個<br>・ギンギラギン流星群 x 3個<br>・ギンギラギンもりあげねこさん x 2個<br>・ギンギラギンギャラクシーオーロラ x 1個<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+    "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_pack-mini_store.png",
+    "play_item_payment_product": [
+     {
+      "id": 17862,
+      "price": 1900,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.gingiragin.limited_pack.1900",
+      "decoration": {
+       "description": "ギンギラギンアイテムを詰め合わせたお得なパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・ギンギラギン隕石 x 4個<br>・ギンギラギン流星群 x 3個<br>・ギンギラギンもりあげねこさん x 2個<br>・ギンギラギンギャラクシーオーロラ x 1個<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+       "label": "250円お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_pack-mini.png"
+     }
+    ]
+   },
+   {
+    "id": 13080,
+    "name": "ギンギラギンアイテムパックデラックス",
+    "product_description": "ギンギラギンアイテムを詰め合わせたお得なパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・ギンギラギン隕石 x 5個<br>・ギンギラギン流星群 x 5個<br>・ギンギラギンもりあげねこさん x 5個<br>・ギンギラギンギャラクシーオーロラ x 5個<br>・ギンギラギンもりあげねこさんのダンスパーティ x 1個<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+    "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_pack-deluxe_store.png",
+    "play_item_payment_product": [
+     {
+      "id": 17871,
+      "price": 10500,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.gingiragin.limited_pack.10500",
+      "decoration": {
+       "description": "ギンギラギンアイテムを詰め合わせたお得なパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・ギンギラギン隕石 x 5個<br>・ギンギラギン流星群 x 5個<br>・ギンギラギンもりあげねこさん x 5個<br>・ギンギラギンギャラクシーオーロラ x 5個<br>・ギンギラギンもりあげねこさんのダンスパーティ x 1個<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+       "label": "1,750円お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_pack-deluxe.png"
+     }
+    ]
+   },
+   {
+    "id": 13078,
+    "name": "銀の通常アイテムパック",
+    "product_description": "銀色になった通常アイテムを詰め合わせたアイテムパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・銀の風船 x 10個<br>・銀のいいね！ x 10個<br>・銀のKP x 10個<br>・銀のハート x 10個<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+    "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_pack-usual-silver_store.png",
+    "play_item_payment_product": [
+     {
+      "id": 17865,
+      "price": 1900,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.gingiragin.common_item_pack.1900",
+      "decoration": {
+       "description": "銀色になった通常アイテムを詰め合わせたアイテムパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・銀の風船 x 10個<br>・銀のいいね！ x 10個<br>・銀のKP x 10個<br>・銀のハート x 10個<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+       "label": "アプリより100円お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_pack-usual-silver.png"
+     }
+    ]
+   },
+   {
+    "id": 13079,
+    "name": "銀の文字アイテムパック",
+    "product_description": "銀色になったPOP文字アイテムを詰め合わせたアイテムパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・銀の神 x 5個<br>・銀のえ？ x 5個<br>・銀の草 x 5個<br>・銀のかわいい x 5個<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+    "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_pack-pop-silver_store.png",
+    "play_item_payment_product": [
+     {
+      "id": 17868,
+      "price": 2100,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.gingiragin.common_item_pack.2100",
+      "decoration": {
+       "description": "銀色になったPOP文字アイテムを詰め合わせたアイテムパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・銀の神 x 5個<br>・銀のえ？ x 5個<br>・銀の草 x 5個<br>・銀のかわいい x 5個<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+       "label": "アプリより100円お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_pack-pop-silver.png"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "group": "monthly_item_pack",
+  "title": "アイテムパック",
+  "display_order": 49,
+  "play_item": [
+   {
+    "id": 11553,
+    "name": "お気軽応援パック",
+    "product_description": "気軽に使えるアイテムを詰め合わせたお得なパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・風船 x 20個<br>・いいね！ x 20個<br>・KP x 20個<br>・ハート x 2個",
+    "image_url": "https://img.whowatch.tv/events/2024/11_monthly_pack/item_light-item-pack_store.png",
+    "play_item_payment_product": [
+     {
+      "id": 10194,
+      "price": 100,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.fbc98b0c-b3f4-4c10-972b-c56aa3c0560c",
+      "decoration": {
+       "description": "気軽に使えるアイテムを詰め合わせたお得なパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・風船 x 20個<br>・いいね！ x 20個<br>・KP x 20個<br>・ハート x 2個",
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2024/11_monthly_pack/item_light-item-pack.png"
+     }
+    ]
+   },
+   {
+    "id": 13077,
+    "name": "ギンギラギンアイテムパックミニ",
+    "product_description": "ギンギラギンアイテムを詰め合わせたお得なパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・ギンギラギン隕石 x 4個<br>・ギンギラギン流星群 x 3個<br>・ギンギラギンもりあげねこさん x 2個<br>・ギンギラギンギャラクシーオーロラ x 1個<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+    "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_pack-mini_store.png",
+    "play_item_payment_product": [
+     {
+      "id": 17862,
+      "price": 1900,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.gingiragin.limited_pack.1900",
+      "decoration": {
+       "description": "ギンギラギンアイテムを詰め合わせたお得なパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・ギンギラギン隕石 x 4個<br>・ギンギラギン流星群 x 3個<br>・ギンギラギンもりあげねこさん x 2個<br>・ギンギラギンギャラクシーオーロラ x 1個<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+       "label": "250円お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_pack-mini.png"
+     }
+    ]
+   },
+   {
+    "id": 13080,
+    "name": "ギンギラギンアイテムパックデラックス",
+    "product_description": "ギンギラギンアイテムを詰め合わせたお得なパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・ギンギラギン隕石 x 5個<br>・ギンギラギン流星群 x 5個<br>・ギンギラギンもりあげねこさん x 5個<br>・ギンギラギンギャラクシーオーロラ x 5個<br>・ギンギラギンもりあげねこさんのダンスパーティ x 1個<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+    "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_pack-deluxe_store.png",
+    "play_item_payment_product": [
+     {
+      "id": 17871,
+      "price": 10500,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.gingiragin.limited_pack.10500",
+      "decoration": {
+       "description": "ギンギラギンアイテムを詰め合わせたお得なパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・ギンギラギン隕石 x 5個<br>・ギンギラギン流星群 x 5個<br>・ギンギラギンもりあげねこさん x 5個<br>・ギンギラギンギャラクシーオーロラ x 5個<br>・ギンギラギンもりあげねこさんのダンスパーティ x 1個<br>※Web限定で「銀の貯金箱」のおまけ付き（有効期限：2026年10月31日）",
+       "label": "1,750円お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/09_gingiragin/item_pack-deluxe.png"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "group": "stage_up_pack#ouen-buta",
+  "title": "ステージアップアイテムパック",
+  "display_order": 50,
+  "play_item": [
+   {
+    "id": 12891,
+    "name": "トンでもない応援をするぶたさん ステージ1パック",
+    "product_description": "イベントを応援できるアイテムを詰め合わせたお得なパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・トンでもない応援をするぶたさん x 3個<br>※Web限定で「ふわっちくんメガホン」のおまけつき（有効期限：付与から30日間）",
+    "image_url": "https://img.whowatch.tv/events/2026/07_stageup_pack/item_pack-ouen-pig_stage1_store.png",
+    "play_item_payment_product": [
+     {
+      "id": 17050,
+      "price": 450,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.stageup.tondemo_buta_stage1_pack.450",
+      "decoration": {
+       "description": "イベントを応援できるアイテムを詰め合わせたお得なパックです！<br>購入すると下記のアイテムが付与されます。<br><br>・トンでもない応援をするぶたさん x 3個<br>※Web限定で「ふわっちくんメガホン」のおまけつき（有効期限：付与から30日間）",
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/events/2026/07_stageup_pack/item_pack-ouen-pig_stage1.png"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "group": "season_2026_autumn",
+  "title": "季節アイテム",
+  "display_order": 110,
+  "play_item": [
+   {
+    "id": 12939,
+    "name": "月見ハンバーガー",
+    "product_description": "【期間限定】小腹が空いた配信者さんにおひとつプレゼント♪",
+    "image_url": "",
+    "play_item_payment_product": [
+     {
+      "id": 17259,
+      "price": 80,
+      "quantity": 3,
+      "state": "OPEN",
+      "product_id": "web.12939.1",
+      "decoration": {
+       "description": "【期間限定】小腹が空いた配信者さんにおひとつプレゼント♪",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/playitems/season/2026/item_hamburger_autumn.png"
+     },
+     {
+      "id": 17260,
+      "price": 250,
+      "quantity": 10,
+      "state": "OPEN",
+      "product_id": "web.12939.2",
+      "decoration": {
+       "description": null,
+       "label": "お得 !"
+      },
+      "image_url": "https://img.whowatch.tv/playitems/season/2026/item_hamburger_autumn.png"
+     },
+     {
+      "id": 17261,
+      "price": 1050,
+      "quantity": 50,
+      "state": "OPEN",
+      "product_id": "web.12939.3",
+      "decoration": {
+       "description": null,
+       "label": "お得 !"
+      },
+      "image_url": "https://img.whowatch.tv/playitems/season/2026/item_hamburger_autumn.png"
+     }
+    ]
+   },
+   {
+    "id": 12940,
+    "name": "秋のさつまいもドリンク",
+    "product_description": "【期間限定】ほっと一息つきたい時におすすめのドリンクです！",
+    "image_url": "",
+    "play_item_payment_product": [
+     {
+      "id": 17264,
+      "price": 80,
+      "quantity": 3,
+      "state": "OPEN",
+      "product_id": "web.12940.1",
+      "decoration": {
+       "description": "【期間限定】ほっと一息つきたい時におすすめのドリンクです！",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/playitems/season/2026/item_drink_autumn.png"
+     },
+     {
+      "id": 17265,
+      "price": 250,
+      "quantity": 10,
+      "state": "OPEN",
+      "product_id": "web.12940.2",
+      "decoration": {
+       "description": null,
+       "label": "お得 !"
+      },
+      "image_url": "https://img.whowatch.tv/playitems/season/2026/item_drink_autumn.png"
+     },
+     {
+      "id": 17266,
+      "price": 1050,
+      "quantity": 50,
+      "state": "OPEN",
+      "product_id": "web.12940.3",
+      "decoration": {
+       "description": null,
+       "label": "お得 !"
+      },
+      "image_url": "https://img.whowatch.tv/playitems/season/2026/item_drink_autumn.png"
+     }
+    ]
+   },
+   {
+    "id": 12941,
+    "name": "秋のさつまいもドーナツ",
+    "product_description": "【期間限定】甘いもの好きの配信者さんにプレゼント♪",
+    "image_url": "",
+    "play_item_payment_product": [
+     {
+      "id": 17269,
+      "price": 50,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.12941.1",
+      "decoration": {
+       "description": "【期間限定】甘いもの好きの配信者さんにプレゼント♪",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/playitems/season/2026/item_dessert_autumn.png"
+     },
+     {
+      "id": 17270,
+      "price": 240,
+      "quantity": 5,
+      "state": "OPEN",
+      "product_id": "web.12941.2",
+      "decoration": {
+       "description": null,
+       "label": "お得 !"
+      },
+      "image_url": "https://img.whowatch.tv/playitems/season/2026/item_dessert_autumn.png"
+     },
+     {
+      "id": 17271,
+      "price": 1000,
+      "quantity": 25,
+      "state": "OPEN",
+      "product_id": "web.12941.3",
+      "decoration": {
+       "description": null,
+       "label": "お得 !"
+      },
+      "image_url": "https://img.whowatch.tv/playitems/season/2026/item_dessert_autumn.png"
+     }
+    ]
+   },
+   {
+    "id": 12942,
+    "name": "秋のさつまいもタルト",
+    "product_description": "【期間限定】さつまいもを使用したかわいいタルトケーキです！<br>使用するとアニメーションが表示されます。",
+    "image_url": "",
+    "play_item_payment_product": [
+     {
+      "id": 17274,
+      "price": 110,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.12942.1",
+      "decoration": {
+       "description": "【期間限定】さつまいもを使用したかわいいタルトケーキです！<br>使用するとアニメーションが表示されます。",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/playitems/season/2026/item_cake_autumn.png"
+     },
+     {
+      "id": 17275,
+      "price": 500,
+      "quantity": 5,
+      "state": "OPEN",
+      "product_id": "web.12942.2",
+      "decoration": {
+       "description": null,
+       "label": "お得 !"
+      },
+      "image_url": "https://img.whowatch.tv/playitems/season/2026/item_cake_autumn.png"
+     },
+     {
+      "id": 17276,
+      "price": 2100,
+      "quantity": 25,
+      "state": "OPEN",
+      "product_id": "web.12942.3",
+      "decoration": {
+       "description": null,
+       "label": "お得 !"
+      },
+      "image_url": "https://img.whowatch.tv/playitems/season/2026/item_cake_autumn.png"
+     }
+    ]
+   },
+   {
+    "id": 12943,
+    "name": "秋の季節アイテムパック",
+    "product_description": "【期間限定】秋の季節アイテムを詰め合わせたお得なパックです！<br>購入すると下記アイテムが付与されます。<br><br>・月見ハンバーガー x ３個<br>・秋のさつまいもドリンク x ３個<br>・秋のさつまいもドーナツ x 3個<br>・秋のさつまいもタルト x 2個",
+    "image_url": "https://img.whowatch.tv/playitems/season/2026/item_pack_store_autumn.png",
+    "play_item_payment_product": [
+     {
+      "id": 17279,
+      "price": 500,
+      "quantity": 1,
+      "state": "OPEN",
+      "product_id": "web.12943.1",
+      "decoration": {
+       "description": "【期間限定】秋の季節アイテムを詰め合わせたお得なパックです！<br>購入すると下記アイテムが付与されます。<br><br>・月見ハンバーガー x ３個<br>・秋のさつまいもドリンク x ３個<br>・秋のさつまいもドーナツ x 3個<br>・秋のさつまいもタルト x 2個",
+       "label": "30円お得！"
+      },
+      "image_url": "https://img.whowatch.tv/playitems/season/2026/item_pack_autumn.png"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "group": "web_premium",
+  "title": "通常アイテム",
+  "display_order": 120,
+  "play_item": [
+   {
+    "id": 1,
+    "name": "風船",
+    "product_description": "カラフルな風船です。何色がでるかはお楽しみ🎈",
+    "image_url": "",
+    "play_item_payment_product": [
+     {
+      "id": 5780,
+      "price": 50,
+      "quantity": 40,
+      "state": "OPEN",
+      "product_id": "web.balloon.40",
+      "decoration": {
+       "description": "カラフルな風船です。何色がでるかはお楽しみ🎈",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/play_items/renewal/item_balloon.png"
+     },
+     {
+      "id": 1004,
+      "price": 120,
+      "quantity": 100,
+      "state": "OPEN",
+      "product_id": "web.v1.balloon.100",
+      "decoration": {
+       "description": "カラフルな風船です。何色がでるかはお楽しみ🎈",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/play_items/renewal/item_balloon.png?v=1"
+     },
+     {
+      "id": 1005,
+      "price": 500,
+      "quantity": 500,
+      "state": "OPEN",
+      "product_id": "web.v1.balloon.500",
+      "decoration": {
+       "description": null,
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/play_items/renewal/item_balloon.png?v=1"
+     }
+    ]
+   },
+   {
+    "id": 255,
+    "name": "いいね！",
+    "product_description": "いいね！と思ったその時に👍",
+    "image_url": "",
+    "play_item_payment_product": [
+     {
+      "id": 5783,
+      "price": 50,
+      "quantity": 40,
+      "state": "OPEN",
+      "product_id": "web.iine.40",
+      "decoration": {
+       "description": "いいね！と思ったその時に👍",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/play_items/renewal/item_iine.png"
+     },
+     {
+      "id": 1040,
+      "price": 120,
+      "quantity": 100,
+      "state": "OPEN",
+      "product_id": "web.v1.iine.100",
+      "decoration": {
+       "description": "いいね！と思ったその時に👍",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/play_items/renewal/item_iine.png?v=1"
+     },
+     {
+      "id": 1041,
+      "price": 500,
+      "quantity": 500,
+      "state": "OPEN",
+      "product_id": "web.v1.iine.500",
+      "decoration": {
+       "description": null,
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/play_items/renewal/item_iine.png?v=1"
+     }
+    ]
+   },
+   {
+    "id": 256,
+    "name": "KP",
+    "product_description": "みんなで乾杯🍻",
+    "image_url": "",
+    "play_item_payment_product": [
+     {
+      "id": 5786,
+      "price": 50,
+      "quantity": 40,
+      "state": "OPEN",
+      "product_id": "web.kp.40",
+      "decoration": {
+       "description": "みんなで乾杯🍻",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/play_items/renewal/item_kp.png"
+     },
+     {
+      "id": 1044,
+      "price": 120,
+      "quantity": 100,
+      "state": "OPEN",
+      "product_id": "web.v1.kp.100",
+      "decoration": {
+       "description": "みんなで乾杯🍻",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/play_items/renewal/item_kp.png?v=1"
+     },
+     {
+      "id": 1045,
+      "price": 500,
+      "quantity": 500,
+      "state": "OPEN",
+      "product_id": "web.v1.kp.500",
+      "decoration": {
+       "description": null,
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/play_items/renewal/item_kp.png?v=1"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "name": "ハート",
+    "product_description": "可愛いハートです❤️",
+    "image_url": "",
+    "play_item_payment_product": [
+     {
+      "id": 5792,
+      "price": 80,
+      "quantity": 3,
+      "state": "OPEN",
+      "product_id": "web.heart.3",
+      "decoration": {
+       "description": "可愛いハートです❤️",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/play_items/renewal/item_heart.png"
+     },
+     {
+      "id": 1012,
+      "price": 250,
+      "quantity": 10,
+      "state": "OPEN",
+      "product_id": "web.v1.heart.10",
+      "decoration": {
+       "description": "可愛いハートです❤️",
+       "label": null
+      },
+      "image_url": "https://img.whowatch.tv/play_items/renewal/item_heart.png?v=1"
+     },
+     {
+      "id": 1013,
+      "price": 1050,
+      "quantity": 50,
+      "state": "OPEN",
+      "product_id": "web.v1.heart.50",
+      "decoration": {
+       "description": null,
+       "label": "お得！"
+      },
+      "image_url": "https://img.whowatch.tv/play_items/renewal/item_heart.png?v=1"
+     }
+    ]
+   }
+  ]
+ }
+]

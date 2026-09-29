@@ -418,3 +418,86 @@ class TestDryRun:
         data = json.loads(out.read_text(encoding="utf-8"))
         assert data["free"] == 1 and data["items"] == items
         assert json.loads(capsys.readouterr().out)["dry_run"] is True
+
+
+# ---------------------------------------------------------------------------
+# パックにしか入っていないアイテム（2026-09-30）
+# ---------------------------------------------------------------------------
+import os as _os
+
+_FIXTURE = _os.path.join(_os.path.dirname(__file__), "..", "..", "..", "src", "lib", "whowatch", "__fixtures__", "payments3_packs_20260930.json")
+
+
+def _pack_categories():
+    with open(_FIXTURE, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _silver_master():
+    img = lambda f: {"image_url": f"https://img.whowatch.tv/events/2026/09_gingiragin/{f}"}
+    names = [(13066, "銀の風船"), (13067, "銀のいいね！"), (13068, "銀のKP"), (13069, "銀のハート"),
+             (13070, "銀の神"), (13071, "銀のえ？"), (13072, "銀の草"), (13073, "銀のかわいい")]
+    master = [{"id": i, "name": n, "play_item_pattern": [img(f"item_{i}.webp")]} for i, n in names]
+    master.append({"id": 13060, "name": "銀の貯金箱", "play_item_pattern": [img("item_gin-chokinbako_anim.webp")]})
+    return master
+
+
+class TestPackContents:
+    def test_parses_lines_and_skips_bonus_note(self):
+        text = "購入すると下記のアイテムが付与されます。<br><br>・銀の風船 x 10個<br>・銀のいいね！ x 10個<br>※Web限定で「銀の貯金箱」のおまけ付き"
+        assert sut.parse_pack_contents(text) == [{"name": "銀の風船", "quantity": 10}, {"name": "銀のいいね!", "quantity": 10}]
+
+    def test_fullwidth_digits_and_duplicates(self):
+        assert sut.parse_pack_contents("・月見ハンバーガーx３個<br>・月見ハンバーガー x 1個") == [{"name": "月見ハンバーガー", "quantity": 4}]
+        assert sut.parse_pack_contents(None) == []
+
+    def test_list_price_adds_back_discount(self):
+        assert sut.pack_list_price(1900, "250円お得！") == 2150
+        assert sut.pack_list_price(10500, "1,750円お得！") == 12250
+        assert sut.pack_list_price(1900, "アプリより100円お得！") == 2000
+        assert sut.pack_list_price(100, "お得！") == 100
+
+
+class TestPackItemRows:
+    NOW = "2026-09-30T00:00:00+00:00"
+
+    def test_silver_items_get_list_unit_price(self):
+        rows, unresolved = sut.pack_item_rows(_pack_categories(), _silver_master(), self.NOW)
+        assert unresolved == []
+        got = {r["item_id"]: r["price_jpy"] for r in rows}
+        assert got == {"13066": 50, "13067": 50, "13068": 50, "13069": 50, "13070": 110, "13071": 110, "13072": 110, "13073": 110}
+        fusen = next(r for r in rows if r["item_id"] == "13066")
+        assert fusen["state"] == "OPEN"
+        assert fusen["product_id"].startswith("web.")
+        assert fusen["description"].startswith(sut.PACK_DESCRIPTION_PREFIX + "銀の通常アイテムパック 割引前 ¥2,000 ÷ 40 個")
+
+    def test_build_item_rows_prices_pack_items_instead_of_free(self):
+        rows = sut.build_item_rows(_pack_categories(), _silver_master(), {"2026_09_gingiragin"}, self.NOW)
+        by = {r["item_id"]: r for r in rows}
+        assert by["13066"]["price_jpy"] == 50 and by["13066"]["state"] == "OPEN"
+        assert by["13070"]["price_jpy"] == 110
+        # おまけ（銀の貯金箱）はパックの中身ではないので無料配布のまま
+        assert by["13060"]["state"] == "FREE" and by["13060"]["price_jpy"] == 0
+        # 単品で売っている中身は単品の定価のまま（隕石 ¥50）
+        assert by["13061"]["price_jpy"] == 50 and not str(by["13061"]["description"] or "").startswith(sut.PACK_DESCRIPTION_PREFIX)
+
+    def test_mixed_pack_uses_remainder(self):
+        cats = [{"group": "g", "play_item": [
+            {"id": 1, "name": "単品A", "play_item_payment_product": [{"price": 150, "quantity": 1, "product_id": "a"}]},
+            {"id": 9, "name": "テストパック", "play_item_payment_product": [{"price": 1000, "quantity": 1, "state": "OPEN", "product_id": "pk",
+                "decoration": {"description": "・単品A x 5個<br>・限定X x 5個", "label": "お得！"}}]},
+        ]}]
+        rows, _ = sut.pack_item_rows(cats, [{"id": 7, "name": "限定X", "play_item_pattern": []}], self.NOW)
+        assert [(r["item_id"], r["price_jpy"]) for r in rows] == [("7", 50)]
+
+    def test_fetch_items_fetches_master_for_pack_only_contents(self):
+        calls = []
+
+        def fake(url, device_id):
+            calls.append(url)
+            return _pack_categories() if url.endswith("/playitems/payments3") else _silver_master()
+
+        with patch.object(sut, "fetch_json", side_effect=fake):
+            rows = sut.fetch_items("dev-id")
+        assert calls == [f"{sut.BASE_URL}/playitems/payments3", f"{sut.BASE_URL}/playitems"]
+        assert {r["item_id"]: r["price_jpy"] for r in rows}["13071"] == 110
