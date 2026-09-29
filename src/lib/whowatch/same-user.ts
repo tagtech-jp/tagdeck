@@ -1,4 +1,4 @@
-import { normalizeWhowatchUserPath } from "./live-feed";
+import { normalizeWhowatchUserPath } from "./user-path";
 
 /**
  * 配信者ID欄に「自分のID」を入れた場合も自分の配信として扱うための判定。

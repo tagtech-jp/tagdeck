@@ -15,6 +15,7 @@ import { normalizeGift, type NormalizedGift as Gift, type PatternInfo, type Pick
 import type { ItemKind } from "@/lib/se/item-kind";
 import { BackgroundKeepAlive, detectBgAudioSupport, type BgAudioState, type BgAudioSupport } from "@/lib/se/background-keepalive";
 import { mergeWithDefaults } from "@/lib/se/merge-defaults";
+import { isOwnWhowatchTarget, resolveInitialTarget, TARGET_ID_STORAGE_KEY, TARGET_PIN_STORAGE_KEY, TARGET_SOURCE_STORAGE_KEY, type TargetSource } from "@/lib/live/target-id";
 import { parseDecorations } from "@/lib/se/bulk-grade";
 
 // ライブ接続の状態をアプリ全体で保持する Provider。
@@ -109,11 +110,12 @@ export type Status = "idle" | "checking" | "offline" | "notfound" | "polling" | 
 /** このバンドルのビルド識別子。Worker の値と食い違えば古い JS で動いている（Service Worker 対策） */
 export const CLIENT_BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "unknown";
 const AUTO_CONNECT_STORAGE_KEY = "tagdeck.live.autoConnect";
-/** 配信者ID欄の固定（2026-09-26）: 値があれば「固定中」。次に開いたときも同じ ID で始める */
-const TARGET_ID_STORAGE_KEY = "tagdeck.live.targetId";
-// 実験（2026-09-25）: スマホ用バックグラウンド再生（音楽プレイヤー扱い）と画面ロック防止のスイッチ
-const BG_AUDIO_STORAGE_KEY = "tagdeck.live.bgAudio";
-const BG_WAKELOCK_STORAGE_KEY = "tagdeck.live.bgWakeLock";
+// 配信者ID欄の固定は src/lib/live/target-id.ts（2026-09-30: 連携 ID を既定で固定）
+// スマホ用バックグラウンド再生（音楽プレイヤー扱い）と画面ロック防止のスイッチ。
+// 2026-09-30 社長指示「スマホの検証は成功したので既定で ON に固定」: 既定 ON。保存キーを v2 にして、
+// 検証中に OFF で保存された値（"0"）を引き継がない。自分でチェックを外したときだけ "0" を保存する
+const BG_AUDIO_STORAGE_KEY = "tagdeck.live.bgAudio.v2";
+const BG_WAKELOCK_STORAGE_KEY = "tagdeck.live.bgWakeLock.v2";
 const NO_BG_SUPPORT: BgAudioSupport = { audioElement: false, mediaSession: false, wakeLock: false, audioSession: false };
 
 /** 実験: スマホ用バックグラウンド再生の状態（画面表示用） */
@@ -160,9 +162,13 @@ interface LiveConnectionValue {
   setBgWakeLock: (v: boolean) => void;
   targetId: string;
   setTargetId: (v: string) => void;
-  /** 配信者ID欄を固定して次回も引き継ぐ */
+  /** 配信者ID欄を固定して次回も引き継ぐ（既定 ON） */
   targetIdPinned: boolean;
   setTargetIdPinned: (v: boolean) => void;
+  /** 設定（プラットフォーム連携）のふわっち ID。未設定・未取得は null */
+  linkedWhowatchId: string | null;
+  /** 欄の ID が自分（連携 ID）か。空欄も自分 */
+  targetIsOwn: boolean;
   viewingOther: string | null;
   /** 配信者ID欄に入力したが自分の配信だった（＝通常どおり記録される） */
   selfByTypedId: boolean;
@@ -226,22 +232,59 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const [pollingInterval, setPollingInterval] = useState<number>(10_000);
   const [lastPolledAt, setLastPolledAt] = useState<string | null>(null);
   const [mappings, setMappings] = useState<Mapping[]>([]);
-  const [targetId, setTargetId] = useState("");
-  const [targetIdPinned, setTargetIdPinnedState] = useState(false);
-  // 固定中の ID は保存し、次に開いたときに入力欄へ戻す（effect 内の同期 setState を避けるため microtask）
-  useEffect(() => {
-    queueMicrotask(() => {
-      try {
-        const saved = localStorage.getItem(TARGET_ID_STORAGE_KEY);
-        if (saved) {
-          setTargetId(saved);
-          setTargetIdPinnedState(true);
-        }
-      } catch {
-        // localStorage が使えなければ固定なし
-      }
-    });
+  const [targetId, setTargetIdState] = useState("");
+  // 既定は固定 ON（2026-09-30）。欄には設定のふわっち ID を入れる（src/lib/live/target-id.ts）
+  const [targetIdPinned, setTargetIdPinnedState] = useState(true);
+  const [linkedWhowatchId, setLinkedWhowatchId] = useState<string | null>(null);
+  const linkedIdRef = useRef<string | null>(null);
+  const targetSourceRef = useRef<TargetSource>("linked");
+  const pinChoiceRef = useRef<string | null>(null);
+  const savedTargetRef = useRef<string | null>(null);
+  const readTargetStorage = () => {
+    try {
+      savedTargetRef.current = localStorage.getItem(TARGET_ID_STORAGE_KEY);
+      pinChoiceRef.current = localStorage.getItem(TARGET_PIN_STORAGE_KEY);
+      const src = localStorage.getItem(TARGET_SOURCE_STORAGE_KEY);
+      return { savedId: savedTargetRef.current, pinChoice: pinChoiceRef.current, source: src };
+    } catch {
+      return { savedId: null, pinChoice: null, source: null };
+    }
+  };
+  const applyInitialTarget = useCallback((linkedId: string | null) => {
+    const r = resolveInitialTarget({ ...readTargetStorage(), linkedId });
+    targetSourceRef.current = r.source;
+    setTargetIdState(r.targetId);
+    setTargetIdPinnedState(r.pinned);
+    try {
+      localStorage.setItem(TARGET_SOURCE_STORAGE_KEY, r.source);
+      if (r.pinned) localStorage.setItem(TARGET_ID_STORAGE_KEY, r.targetId);
+    } catch {
+      // 保存できなくても動作には影響しない
+    }
   }, []);
+  // 保存値で先に復元し（effect 内の同期 setState を避けるため microtask）、連携 ID が取れたらもう一度決める
+  useEffect(() => {
+    queueMicrotask(() => applyInitialTarget(null));
+    let cancelled = false;
+    void (async () => {
+      try {
+        const r = await fetch("/api/platforms/whowatch/profile", { cache: "no-store" });
+        if (!r.ok) return;
+        const d = (await r.json()) as { whowatchUserId?: string | null };
+        const id = typeof d.whowatchUserId === "string" && d.whowatchUserId.trim() ? d.whowatchUserId.trim() : null;
+        if (cancelled || !id) return;
+        linkedIdRef.current = id;
+        setLinkedWhowatchId(id);
+        // まだ誰も欄を触っていない（連携 ID 由来か空欄）ときだけ入れ直す
+        if (targetSourceRef.current === "linked") applyInitialTarget(id);
+      } catch {
+        // 取れなければ空欄（＝サーバ側で設定の ID を使う）のまま
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [applyInitialTarget]);
   useEffect(() => {
     if (!targetIdPinned) return;
     try {
@@ -250,15 +293,27 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       // 保存できなくても動作には影響しない
     }
   }, [targetId, targetIdPinned]);
+  /** 入力欄から ID を変えた（以後は設定の ID に追従しない。空にしたら連携 ID に戻る） */
+  const setTargetId = useCallback((v: string) => {
+    targetSourceRef.current = v.trim() === "" ? "linked" : "typed";
+    try {
+      localStorage.setItem(TARGET_SOURCE_STORAGE_KEY, targetSourceRef.current);
+    } catch {
+      // 無視
+    }
+    setTargetIdState(v);
+  }, []);
   const setTargetIdPinned = useCallback((v: boolean) => {
     setTargetIdPinnedState(v);
     try {
+      localStorage.setItem(TARGET_PIN_STORAGE_KEY, v ? "1" : "0");
       if (v) localStorage.setItem(TARGET_ID_STORAGE_KEY, targetId);
       else localStorage.removeItem(TARGET_ID_STORAGE_KEY);
     } catch {
       // 無視
     }
   }, [targetId]);
+  const targetIsOwn = isOwnWhowatchTarget(targetId, linkedWhowatchId);
   const [viewingOther, setViewingOther] = useState<string | null>(null);
   // 配信者ID欄に入力したうえで自分の配信と判定された状態。空欄のときと区別できないと
   // 「他人扱いになって記録されていないのでは」という誤解を生む
@@ -284,29 +339,30 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
 
   // 実験（2026-09-25）: スマホ用バックグラウンド再生。<audio> の無音ループ + Media Session（+ Wake Lock）。
   // スイッチは localStorage に保存するが、再生の開始は自動再生制限のためユーザー操作（スイッチ ON・接続・音を有効にする）の中でだけ行う
-  const [bgEnabled, setBgEnabledState] = useState(false);
-  const [bgWakeLock, setBgWakeLockState] = useState(false);
+  const [bgEnabled, setBgEnabledState] = useState(true);
+  const [bgWakeLock, setBgWakeLockState] = useState(true);
   const [bgState, setBgState] = useState<BgAudioState>("off");
   const [bgError, setBgError] = useState<string | null>(null);
   const [bgSupport, setBgSupport] = useState<BgAudioSupport>(NO_BG_SUPPORT);
   const [hiddenPollCount, setHiddenPollCount] = useState(0);
   const [hiddenPollLastAt, setHiddenPollLastAt] = useState<string | null>(null);
   const bgRef = useRef<BackgroundKeepAlive | null>(null);
-  const bgEnabledRef = useRef(false);
-  const bgWakeLockRef = useRef(false);
+  const bgEnabledRef = useRef(true);
+  const bgWakeLockRef = useRef(true);
   useEffect(() => {
     // effect 内の同期 setState を避ける（react-hooks/set-state-in-effect）。サーバ描画と一致させるため初期値は「非対応」
     queueMicrotask(() => {
       setBgSupport(detectBgAudioSupport());
       try {
-        const en = localStorage.getItem(BG_AUDIO_STORAGE_KEY) === "1";
-        const wl = localStorage.getItem(BG_WAKELOCK_STORAGE_KEY) === "1";
+        // 既定 ON。自分でチェックを外した（"0"）ときだけ OFF
+        const en = localStorage.getItem(BG_AUDIO_STORAGE_KEY) !== "0";
+        const wl = localStorage.getItem(BG_WAKELOCK_STORAGE_KEY) !== "0";
         bgEnabledRef.current = en;
         bgWakeLockRef.current = wl;
         setBgEnabledState(en);
         setBgWakeLockState(wl);
       } catch {
-        // localStorage が使えなければ OFF
+        // localStorage が使えなければ既定（ON）のまま
       }
     });
   }, []);
@@ -317,16 +373,12 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
           setBgState(s);
           setBgError(err);
         },
-        // 再生カードの「一時停止」「停止」はユーザーの意思なのでスイッチごと OFF にする
+        // 再生カードの「一時停止」「停止」はこの画面を開いている間だけ OFF にする（既定 ON に固定のため保存しない。
+        // 次に開いたとき・チェックを入れ直したときは ON に戻る）
         onUserPause: () => {
           bgRef.current?.stop();
           bgEnabledRef.current = false;
           setBgEnabledState(false);
-          try {
-            localStorage.setItem(BG_AUDIO_STORAGE_KEY, "0");
-          } catch {
-            // 無視
-          }
         },
         metadata: {
           title: "TagDeck ライブ SE 待機中",
@@ -1066,8 +1118,9 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const checkWaitingRef = useRef<() => void>(() => {});
   const checkWaiting = useCallback(() => {
     if (autoConnectRef.current.phase !== "waiting") return;
-    // 他人の配信を一時的に見る指定があるときは自動接続の対象外（自分の配信開始を待つ機能のため）
-    if (targetId.trim()) {
+    // 他人の配信を見る指定があるときは自動接続の対象外（自分の配信開始を待つ機能のため）。
+    // 2026-09-30: 欄に既定で自分の ID（連携 ID）が入るようになったので、自分の ID なら待機を続ける
+    if (targetId.trim() && !isOwnWhowatchTarget(targetId, linkedIdRef.current)) {
       idleTimerRef.current = setTimeout(() => checkWaitingRef.current(), idlePollInterval(0));
       return;
     }
@@ -1194,6 +1247,8 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       setTargetId,
       targetIdPinned,
       setTargetIdPinned,
+      linkedWhowatchId,
+      targetIsOwn,
       viewingOther,
       selfByTypedId,
       masterWarning,
@@ -1220,7 +1275,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       setDebug,
       debug,
     }),
-    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, audioState, audioRecoveredAt, pollingInterval, lastPolledAt, mappings, bgEnabled, bgWakeLock, bgState, bgError, bgSupport, hiddenPollCount, hiddenPollLastAt, setBgAudioEnabled, setBgWakeLock, reloadMappings, targetId, targetIdPinned, setTargetIdPinned, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsPollGiftsSinceConnect, wsInfo, wsTopic, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
+    [status, liveId, title, message, gifts, rawLog, autoPlay, volume, audioReady, enableAudio, audioState, audioRecoveredAt, pollingInterval, lastPolledAt, mappings, bgEnabled, bgWakeLock, bgState, bgError, bgSupport, hiddenPollCount, hiddenPollLastAt, setBgAudioEnabled, setBgWakeLock, reloadMappings, targetId, setTargetId, targetIdPinned, setTargetIdPinned, linkedWhowatchId, targetIsOwn, viewingOther, selfByTypedId, masterWarning, master, masterFilledCount, masterPatternCount, masterRecovered, serverBuildId, lastGiftAt, pollLog, giftLog, wsState, wsGiftCount, wsPollGiftsSinceConnect, wsInfo, wsTopic, wsLog, autoConnect.phase, setAutoConnect, start, stop, playGift, pushTestGift, debug],
   );
 
   return <LiveConnectionContext.Provider value={value}>{children}</LiveConnectionContext.Provider>;

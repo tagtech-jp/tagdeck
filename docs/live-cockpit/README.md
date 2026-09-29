@@ -429,6 +429,17 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - 表示(2026-09-26 追記): SE タブの「価格ありのみ」(既定 ON)がカテゴリ内の無料アイテムまで隠していたため「反映されていない」ように見えた。イベントのカテゴリに属する無料アイテムは ON でも表示し、価格欄は「無料(イベント配布)」と出す。「価格ありのみ」が隠すのは分類なしの無料アイテムだけ
 - 社長作業: (1) `drizzle/0021_free_event_items_manual.sql` を適用 (2) Actions「Whowatch item patterns sync (manual)」を 1 回実行(応答 `freeItems.rows`)
 
+## S17: 連携 ID を既定で固定・スマホの裏再生を既定 ON(実装済み・2026-09-30)
+
+社長指示「プラットフォームの連携をした ID をすべてデフォルトで固定」「スマホの検証は成功しているので、固定でデフォルトで ON」への対応。
+
+- **配信者ID欄**(`src/lib/live/target-id.ts`・テスト 8 件): 既定で「このIDを固定」が ON、欄には設定(プラットフォーム連携)のふわっち ID が入る(`/api/platforms/whowatch/profile` から取得)。自分で打った ID を固定していればそちらを優先、固定のチェックを自分で外したときだけ次回も外したまま(`tagdeck.live.targetIdPin` = "0")。連携 ID から入った値は設定の ID を変えると追従する(`tagdeck.live.targetIdSource`)
+- 欄に自分の ID が入っていても「配信開始時に自動接続」は待機を続ける(従来は欄に何か入っていると他人扱いで待機しなかった)。判定は `isOwnWhowatchTarget`(w: / t: の候補の重なり・大文字小文字は区別)。記録するかどうかは従来どおりサーバ(`/api/platforms/whowatch/live` の isOther)が決める
+- ID の正規化 `normalizeWhowatchUserPath` をサーバ専用の `live-feed.ts` から純関数の `src/lib/whowatch/user-path.ts` へ移した(ブラウザからも使うため。live-feed.ts は再エクスポート)
+- 画面: 自分の ID のとき「自分のID」バッジ、他人の ID のとき「自分のID（xxx）に戻す」ボタン、未連携なら連携の案内
+- Kick / ニコ生はライブ画面に ID 欄が無く、設定の ID をそのまま使う(もともと固定)
+- **スマホでも裏で鳴らす**: 「(実験)」を外し、「音楽プレイヤー扱いにする」「画面を消さない」を既定 ON。保存キーを `tagdeck.live.bgAudio.v2` / `bgWakeLock.v2` に変え、検証中に OFF で保存された値を引き継がない。自分でチェックを外したときだけ OFF を保存。再生カードの「一時停止」はその画面を開いている間だけ OFF(保存しない)。再生の開始は従来どおり「接続」「音を有効にする」などのユーザー操作の中(自動再生制限)
+
 ## S16: ランキング区分が取れないイベント(selectboxes 型の構造 JSON)への対応(実装済み・2026-09-29)
 
 社長報告「オオカミさんがやってくる！(2026_09_wolfcoming)でイベント作成フォームに『ランキング区分がありません』と出る。ふわっちの画面には総取り・チーム対抗・総合・各キャラ・レースの区分がある」への対応(オートモードで自走)。
