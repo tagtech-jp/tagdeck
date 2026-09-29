@@ -92,6 +92,8 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
     lastPolledAt,
     targetId,
     setTargetId,
+    linkedWhowatchId,
+    targetIsOwn,
     targetIdPinned,
     setTargetIdPinned,
     viewingOther,
@@ -203,9 +205,10 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
         <div className="mt-3 space-y-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <label htmlFor="live-target-id" className="text-xs font-medium text-foreground">
-              配信者ID（空欄なら設定の自分のID）
+              配信者ID（既定は設定で連携した自分のID）
+              {linkedWhowatchId && targetIsOwn && <span className="ml-1 rounded-full bg-status-success/10 px-2 py-0.5 text-[11px] text-status-success">自分のID</span>}
             </label>
-            <label className="flex items-center gap-1.5 text-xs text-foreground" title="ON にすると、この ID を次に開いたときも入力済みにします">
+            <label className="flex items-center gap-1.5 text-xs text-foreground" title="既定で ON。この ID を次に開いたときも入力済みにします">
               <input type="checkbox" checked={targetIdPinned} onChange={(e) => setTargetIdPinned(e.target.checked)} className="size-4" />
               このIDを固定（次回も引き継ぐ）
             </label>
@@ -221,8 +224,16 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
             className="min-h-11 w-full rounded-sm border border-border bg-muted px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring disabled:opacity-50"
           />
           <p className="text-xs text-muted-foreground">他の配信者を入力して接続した場合は表示のみで、ギフトは記録しません（設定のふわっちIDは変わりません）。</p>
-          {targetIdPinned && targetId.trim() !== "" && (
+          {targetIdPinned && targetId.trim() !== "" && !targetIsOwn && (
             <p className="text-xs text-status-warning">固定中: 次回もこの ID で始まります。自分以外の ID を固定している間は「配信開始時に自動接続」は待機しません（自分の配信を待つ機能のため）。</p>
+          )}
+          {linkedWhowatchId && !targetIsOwn && status !== "polling" && (
+            <button type="button" onClick={() => setTargetId(linkedWhowatchId)} className="min-h-9 rounded-full border border-border bg-muted px-3 text-xs text-foreground hover:border-foreground/30">
+              自分のID（{linkedWhowatchId}）に戻す
+            </button>
+          )}
+          {!linkedWhowatchId && (
+            <p className="text-xs text-muted-foreground">設定 → プラットフォームでふわっちIDを連携すると、ここに自分のIDが固定で入ります。</p>
           )}
           <p className="text-xs text-muted-foreground">接続したまま他のページへ移動しても SE は鳴り続けます（停止を押すまで）。ただしブラウザのタブを閉じると止まります。</p>
         </div>
@@ -258,15 +269,15 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
         </div>
       </div>
 
-      {/* 実験（2026-09-25）: スマホ用バックグラウンド再生（音楽プレイヤー扱い） */}
+      {/* スマホ用バックグラウンド再生（音楽プレイヤー扱い）。2026-09-30 実機検証済みのため既定 ON */}
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="flex flex-wrap items-center gap-2">
-          <h4 className="text-sm font-bold text-foreground">スマホでも裏で鳴らす（実験）</h4>
+          <h4 className="text-sm font-bold text-foreground">スマホでも裏で鳴らす</h4>
           <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${BG_STATE_BADGE[bgAudio.state].className}`}>{BG_STATE_BADGE[bgAudio.state].label}</span>
           {bgAudio.enabled && bgAudio.wakeLock && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">画面ロック防止 ON</span>}
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
-          無音に近い音をループ再生して OS に「音楽プレイヤー」と思わせ、通知バーに再生カードを出します。Android は他のアプリに切り替えても画面を消しても取得と SE が続く見込み。iPhone は画面ロック後の継続を実機で確認します
+          既定で ON（実機で確認済み）。「接続」を押すと、無音に近い音をループ再生して OS に「音楽プレイヤー」と思わせ、通知バーに再生カードを出します。他のアプリに切り替えても画面を消しても取得と SE が続きます。止めたいときだけチェックを外してください（外した設定は次回も保持）
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-4 text-xs">
           <label className="flex items-center gap-2 text-foreground">
@@ -287,13 +298,13 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
           {bgAudio.hiddenPollLastAt ? `（最終 ${new Date(bgAudio.hiddenPollLastAt).toLocaleTimeString("ja-JP")}）` : ""}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          試し方: ①「接続」→ ② 上のスイッチ ON（再生カードが出る）→ ③ ホームに戻る / 画面を消す → ④ 2〜3 分後に戻り、この回数が増えていれば裏でも動いています。ギフトを投げてもらえば SE の実鳴りも確認できます
+          再生カードの「一時停止」を押すと、この画面を開いている間だけ止まります（次に開いたときは ON に戻ります）
         </p>
       </div>
 
       {/* テストボタン: 各ティア・当たり・コンボ（ダミー再生） */}
       <div className="rounded-xl border border-border bg-card p-4">
-        <p className="mb-2 text-xs text-muted-foreground">テスト再生（既定 SE は Web Audio 合成。SE タブで割り当てた音源があればそれを再生）</p>
+        <p className="mb-2 text-xs text-muted-foreground">テスト再生（既定 SE は素材ライブラリのパチンコ風ミックス。SE タブで割り当てた音源があればそれを再生）</p>
         <div className="flex flex-wrap gap-2">
           {TEST_GIFTS.map((t) => (
             <button
