@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AUTO_LIBRARY, AUTO_LIBRARY_FILE_COUNT, AUTO_LIBRARY_NICOMMONS_CREDITS } from "./auto-library-data";
+import { AUTO_LIBRARY, AUTO_LIBRARY_CREDITS, AUTO_LIBRARY_FILE_COUNT } from "./auto-library-data";
 import { bulkSetName, chooseAutoForItem, chooseAutoForTier, coreLibraryUrls, freeThemeFor, hasLibrarySet, liteSetFor, pickVariant, THEME_LABELS, themeForItem } from "./auto-library";
 
 describe("themeForItem（アイテム名 → テーマ）", () => {
@@ -65,14 +65,14 @@ describe("自動ライブラリのデータ", () => {
     }
   });
 
-  it("ニコニ・コモンズのクレジットは素材番号・タイトル・作者名があり、重複しない", () => {
-    expect(AUTO_LIBRARY_NICOMMONS_CREDITS.length).toBeGreaterThan(0);
-    for (const c of AUTO_LIBRARY_NICOMMONS_CREDITS) {
-      expect(c.id).toMatch(/^nc\d+$/);
+  it("出典一覧は CC0 の素材（Freesound の音・Kenney のパック）だけで、ID・タイトル・ページがあり重複しない（S23）", () => {
+    expect(AUTO_LIBRARY_CREDITS.length).toBeGreaterThan(0);
+    for (const c of AUTO_LIBRARY_CREDITS) {
+      expect(c.id).toMatch(/^(fs\d+|kn-[a-z0-9-]+)$/);
       expect(c.title.length, c.id).toBeGreaterThan(0);
-      expect(c.author.length, c.id).toBeGreaterThan(0);
+      expect(c.page, c.id).toMatch(/^https:\/\/(freesound\.org\/people\/[^/]+\/sounds\/\d+\/|kenney\.nl\/assets\/[a-z0-9-]+)$/);
     }
-    expect(new Set(AUTO_LIBRARY_NICOMMONS_CREDITS.map((c) => c.id)).size).toBe(AUTO_LIBRARY_NICOMMONS_CREDITS.length);
+    expect(new Set(AUTO_LIBRARY_CREDITS.map((c) => c.id)).size).toBe(AUTO_LIBRARY_CREDITS.length);
   });
 
   it("pickVariant は同じセットで直前と同じ音を避け、1 本しか無ければそれを返す", () => {

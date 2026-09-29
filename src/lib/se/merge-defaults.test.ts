@@ -60,23 +60,27 @@ describe("mergeWithDefaults", () => {
   });
 });
 
-describe("DEFAULT_SE_MAPPINGS / GENERIC_DEFAULT_SOUND（同梱データ）", () => {
-  it("key は書式どおりで重複なし、url は同梱パス、volume は 0〜100", () => {
+describe("DEFAULT_SE_MAPPINGS / GENERIC_DEFAULT_SOUND（同梱データ・S23 で CC0 に差し替え）", () => {
+  it("key は書式どおりで重複なし、url は同梱の CC0 の音（/se/defaults/cc0/）、volume は 0〜100", () => {
     const keys = DEFAULT_SE_MAPPINGS.map((d) => d.key);
     expect(new Set(keys).size).toBe(keys.length);
     for (const d of [...DEFAULT_SE_MAPPINGS, { key: "tier:T2", ...GENERIC_DEFAULT_SOUND }]) {
       expect(d.key).toMatch(SE_KEY_RE);
-      expect(d.url).toMatch(/^\/se\/defaults\/[A-Za-z0-9_.-]+\.(mp3|ogg|wav)$/);
+      expect(d.url).toMatch(/^\/se\/defaults\/cc0\/[a-z_]+\.mp3$/);
+      expect(d.label).toMatch(/（CC0）$/);
       expect(d.volume).toBeGreaterThanOrEqual(0);
       expect(d.volume).toBeLessThanOrEqual(100);
     }
   });
-  it("同期元（社長のアカウント）と同じ全件を含む（2026-09-26 社長指示: 除外なし。価格帯 T0〜T4 すべてに音源あり）", () => {
-    for (const key of ["tier:T0", "tier:T1", "tier:T2", "tier:T3", "tier:T4", "item:13064", "item:12857", "item:14"]) {
-      expect(DEFAULT_SE_MAPPINGS.find((d) => d.key === key), key).toBeDefined();
-    }
-    // 廃止キー tier:combo は key 書式外なので含めない
-    expect(DEFAULT_SE_MAPPINGS.find((d) => d.key === "tier:combo")).toBeUndefined();
-    expect(DEFAULT_SE_MAPPINGS.length).toBeGreaterThanOrEqual(37);
+  it("2026-09-30 時点の同期元のアイテム割り当て 75 件を、同種の CC0 の音で含む（価格帯は自動ライブラリなので含まない）", () => {
+    expect(DEFAULT_SE_MAPPINGS).toHaveLength(75);
+    expect(DEFAULT_SE_MAPPINGS.every((d) => d.key.startsWith("item:"))).toBe(true);
+    const byKey = new Map(DEFAULT_SE_MAPPINGS.map((d) => [d.key, d.url]));
+    expect(byKey.get("item:14")).toBe("/se/defaults/cc0/drumroll.mp3"); // メガホン
+    expect(byKey.get("item:10773")).toBe("/se/defaults/cc0/elephant.mp3"); // イベント応援するゾウ！
+    expect(byKey.get("item:13064")).toBe("/se/defaults/cc0/star_jingle.mp3"); // 旧: スターのテーマ（ゲーム音楽）
+    expect(byKey.get("item:13061")).toBe("/se/defaults/cc0/slot_clunk.mp3"); // 旧: パチスロの効果音
+    expect(byKey.get("item:13101")).toBe("/se/defaults/cc0/jackpot_alert.mp3"); // 突入ボーナス
+    for (const key of ["tier:T0", "tier:T1", "tier:T2", "tier:T3", "tier:T4", "tier:combo"]) expect(byKey.has(key), key).toBe(false);
   });
 });

@@ -6,6 +6,7 @@ import { createDbClient } from "@/lib/db/client";
 import { seMappings } from "@/lib/db/schema";
 import { ensureUserRow } from "@/lib/db/ensure-user";
 import { BULK_KEY_RE_SOURCE } from "@/lib/se/bulk-grade";
+import { toClearedDefaultRows } from "@/lib/se/cleared-defaults";
 
 // cat:kind = 種類の一括割り当て / cat:group = イベント別（第 2 弾）
 // bulk: = まとめ投げの段階（全アイテム共通 / アイテム別・2026-09-28）。末尾 #2〜#5 は同じ key の変種（最大 5 本をランダム再生・2026-09-29）
@@ -14,7 +15,8 @@ const KEY_RE = new RegExp(`^(pattern:\\d{1,10}|item:\\d{1,10}|cat:kind:(normal|h
 /**
  * GET /api/se/mappings → 自分の SE 割り当て一覧（S1）+ 公式既定（S4: 同期元ユーザーの現在の割り当て）
  * defaults: 環境変数 SE_DEFAULT_SOURCE_USER_ID（wrangler.jsonc の vars）で指定したユーザーの se_mappings のうち、
- *   音源あり・鳴らす ON の行。同期元がアップロードし直せば次の読込から全ユーザーの既定が変わる。
+ *   音源あり・鳴らす ON の行を、同梱の CC0 の同種の音に置き換えたもの（2026-09-30 正式リリース・S23: cleared-defaults.ts）。
+ *   同期元がアップロードした音そのもの（Storage の URL）は他の利用者に配らない。置き換え先が無い行・価格帯の行も配らない。
  *   未設定・0 件なら null（クライアントは同梱スナップショットに落ちる）
  */
 export async function GET() {
@@ -28,7 +30,7 @@ export async function GET() {
     sourceId ? db.select().from(seMappings).where(eq(seMappings.userId, sourceId)) : Promise.resolve([]),
   ]);
   const toRow = (r: typeof seMappings.$inferSelect) => ({ key: r.key, url: r.url, volume: r.volume, enabled: r.enabled, label: r.label, updatedAt: r.updatedAt.toISOString() });
-  const defaults = sourceRows.filter((r) => r.enabled && r.url).map(toRow);
+  const defaults = toClearedDefaultRows(sourceRows.filter((r) => r.enabled && r.url).map(toRow));
   const res = NextResponse.json({ mappings: rows.map(toRow), defaults: defaults.length > 0 ? defaults : null, defaultsSource: sourceId ? "sync" : "bundled" });
   res.headers.set("Cache-Control", "private, no-store");
   return res;
