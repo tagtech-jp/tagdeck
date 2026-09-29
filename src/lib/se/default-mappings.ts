@@ -1,9 +1,13 @@
-// 公式の既定 SE（2026-09-25・社長の SE 設定を製品の既定に昇格）。
-// ファイルは public/se/defaults/ に同梱（Supabase Storage の個人アップロードに依存しない）。
+// 公式の既定 SE の同梱スナップショット（同期元が読めないときの予備・2026-09-30 正式リリースで CC0 に差し替え・S23）。
+// ファイルは public/se/defaults/cc0/ に同梱（出典とライセンスは同じフォルダの defaults.json）。
 // ユーザーが同じ key に音源を上げればそちらが優先。音量・鳴らすだけ変えた場合は音源はこの既定のまま。
-// 2026-09-26 社長指示「すべて社長のアカウントと同じように既定の SE に同期」: 同期元の全件（廃止キー tier:combo を除く 37 件）を同梱。
-//   以前は第三者の著作物と思われる音源（任天堂コイン音など）を除外していたが、社長判断で全件同期に変更。
-// 生成元: scratchpad/build_defaults_full.py（手で直す場合は key の重複に注意）
+//
+// 経緯: 2026-09-25〜26 は社長の割り当てを音源ごと同梱していた（任天堂・パチスロ由来の音や、再配布を禁じる素材サイトの音を含む）。
+//   2026-09-30 社長指示「正式にリリースする手順にしたいので、著作権のあるものは弾いて別の音源に差し替えてほしい」で、
+//   同じ割り当て（2026-09-30 時点の同期元 81 件のうちアイテム 75 件）を、同種の CC0 の音に置き換えた（cleared-defaults.ts）。
+//   価格帯（tier:*）は自動ライブラリ（CC0）が鳴るので同梱しない。
+
+import { CLEARED_SOUNDS, clearedSoundLabel, clearedSoundUrl, type ClearedSoundId } from "./cleared-defaults";
 
 export interface DefaultSeMapping {
   key: string;
@@ -15,48 +19,50 @@ export interface DefaultSeMapping {
 }
 
 /**
- * 汎用の既定音（2026-09-25 社長指定「きらきら輝く1」）。
- * 価格帯（tier:T0〜T4・hit）のうち、同期元にも同梱スナップショットにも無いものはこれで鳴る（Web Audio 合成音は最後の保険）
+ * 汎用の既定音。価格帯（tier:T0〜T4・hit）は再生・試聴とも自動ライブラリの価格帯セットが鳴るので、
+ * これは自動ライブラリが無いときだけの予備（2026-09-30 に「きらきら輝く1」から CC0 のきらきらへ）
  */
-export const GENERIC_DEFAULT_SOUND = { url: "/se/defaults/kirakira.mp3", volume: 80, label: "きらきら輝く1.mp3" } as const;
+export const GENERIC_DEFAULT_SOUND = { url: clearedSoundUrl("chime"), volume: CLEARED_SOUNDS.chime.volume, label: clearedSoundLabel("chime") } as const;
 export const GENERIC_DEFAULT_TIERS = ["tier:T0", "tier:T1", "tier:T2", "tier:T3", "tier:T4", "tier:hit"] as const;
 
-export const DEFAULT_SE_MAPPINGS: readonly DefaultSeMapping[] = [
-  { key: "tier:T4", url: "/se/defaults/pokyun_alert.mp3", volume: 80, label: "ポキューン！先バレ風激熱通知音.mp3" },
-  { key: "item:13063", url: "/se/defaults/pokyun_alert.mp3", volume: 80, label: "ポキューン！先バレ風激熱通知音.mp3" },
-  { key: "item:13062", url: "/se/defaults/pokyun_alert.mp3", volume: 80, label: "ポキューン！先バレ風激熱通知音.mp3" },
-  { key: "item:10773", url: "/se/defaults/elephant.mp3", volume: 100, label: "ゾウの鳴き声1.mp3" },
-  { key: "item:13065", url: "/se/defaults/harakiridrive.mp3", volume: 25, label: "harakiridrive.mp3" },
-  { key: "item:13061", url: "/se/defaults/ziyagura_gako.mp3", volume: 80, label: "ziyagura-gako.mp3" },
-  { key: "item:12132", url: "/se/defaults/shakin.mp3", volume: 100, label: "シャキーン2.mp3" },
-  { key: "item:11146", url: "/se/defaults/dog_bark.mp3", volume: 100, label: "狂犬が連続で吠える.mp3" },
-  { key: "item:10769", url: "/se/defaults/drumroll.mp3", volume: 80, label: "ドラムロール.mp3" },
-  { key: "item:1", url: "/se/defaults/air_horn.mp3", volume: 80, label: "エアーホーン.mp3" },
-  { key: "item:10842", url: "/se/defaults/buta.mp3", volume: 100, label: "buta.mp3" },
-  { key: "item:12131", url: "/se/defaults/sea_lion.mp3", volume: 80, label: "カリフォルニアアシカ1.mp3" },
-  { key: "item:134", url: "/se/defaults/fireworks.mp3", volume: 80, label: "打ち上げ花火1.mp3" },
-  { key: "item:5", url: "/se/defaults/fireworks.mp3", volume: 80, label: "打ち上げ花火1.mp3" },
-  { key: "item:61", url: "/se/defaults/fireworks.mp3", volume: 80, label: "打ち上げ花火1.mp3" },
-  { key: "item:13088", url: "/se/defaults/cat_nya.mp3", volume: 100, label: "ani_ge_cat_nya03.mp3" },
-  { key: "tier:T0", url: "/se/defaults/quiz_correct.mp3", volume: 100, label: "クイズ正解1.mp3" },
-  { key: "tier:T1", url: "/se/defaults/ata_a14.mp3", volume: 80, label: "ata_a14.mp3" },
-  { key: "tier:T2", url: "/se/defaults/coin.wav", volume: 80, label: "nc106374__【任天堂】コインの音【スーパーマリオ】.wav" },
-  { key: "tier:T3", url: "/se/defaults/register.mp3", volume: 80, label: "レジスターで精算.mp3" },
-  { key: "item:14", url: "/se/defaults/drumroll.mp3", volume: 80, label: "ドラムロール.mp3" },
-  { key: "item:13064", url: "/se/defaults/star_theme.mp3", volume: 50, label: "super-mario-bros-nes-music-star-theme-cut-mp3.mp3" },
-  { key: "item:11526", url: "/se/defaults/drumroll.mp3", volume: 80, label: "ドラムロール.mp3" },
-  { key: "item:11716", url: "/se/defaults/drumroll.mp3", volume: 80, label: "ドラムロール.mp3" },
-  { key: "item:12731", url: "/se/defaults/drumroll.mp3", volume: 80, label: "ドラムロール.mp3" },
-  { key: "item:10863", url: "/se/defaults/drumroll.mp3", volume: 80, label: "ドラムロール.mp3" },
-  { key: "item:11250", url: "/se/defaults/drumroll.mp3", volume: 80, label: "ドラムロール.mp3" },
-  { key: "item:11960", url: "/se/defaults/drumroll.mp3", volume: 80, label: "ドラムロール.mp3" },
-  { key: "item:12857", url: "/se/defaults/mouse_squeak.mp3", volume: 80, label: "ネズミの鳴き声1回.mp3" },
-  { key: "item:13083", url: "/se/defaults/uguisu.mp3", volume: 80, label: "ウグイスのさえずり1.mp3" },
-  { key: "item:13085", url: "/se/defaults/hiyodori.mp3", volume: 80, label: "ヒヨドリの鳴き声2.mp3" },
-  { key: "item:13087", url: "/se/defaults/hiyodori.mp3", volume: 80, label: "ヒヨドリの鳴き声2.mp3" },
-  { key: "item:12871", url: "/se/defaults/drumroll.mp3", volume: 80, label: "ドラムロール.mp3" },
-  { key: "item:13046", url: "/se/defaults/drumroll.mp3", volume: 80, label: "ドラムロール.mp3" },
-  { key: "item:13095", url: "/se/defaults/drumroll.mp3", volume: 80, label: "ドラムロール.mp3" },
-  { key: "item:10837", url: "/se/defaults/drumroll.mp3", volume: 80, label: "ドラムロール.mp3" },
-  { key: "item:11038", url: "/se/defaults/drumroll.mp3", volume: 80, label: "ドラムロール.mp3" },
-];
+/** 同期元（2026-09-30 時点）のアイテム割り当て → 置き換え先の CC0 の音 */
+const SNAPSHOT: Readonly<Partial<Record<ClearedSoundId, readonly number[]>>> = {
+  // ポキューン！先バレ風激熱通知音 → 激熱の告知音（ギンギラギン流星群・もりあげねこさん・突入ボーナス）
+  jackpot_alert: [13062, 13063, 13101],
+  // ゾウの鳴き声1（イベント応援するゾウ！ 各月）
+  elephant: [10773, 11048, 11136, 11313, 11465, 11645, 11861, 12028, 12206, 12415, 12596, 12800, 13032],
+  // harakiridrive → ダンスのジングル（ギンギラギンもりあげねこさんのダンスパーティ）
+  dance_jingle: [13065],
+  // ziyagura-gako → 金属音（ギンギラギン隕石）
+  slot_clunk: [13061],
+  // シャキーン2（もぐりながら応援するもぐらさん）
+  sparkle_shing: [12132],
+  // 狂犬が連続で吠える（ワンチャン33倍の応援をするワンちゃんさん 各月）
+  dog_bark: [11146, 11315, 11467, 11647, 11863, 12030, 12208, 12417, 12598, 12802, 13034],
+  // x3_vol5 → ぶたの鳴き声（トンでもない応援をするぶたさん 各月）
+  pig_oink: [10842, 11049, 11137, 11314, 11466, 11646, 11862, 12029, 12207, 12416, 12597, 12801, 13033],
+  // エアーホーン（風船）
+  air_horn: [1],
+  // 打ち上げ花火1（花火・大花火ほか）
+  fireworks: [5, 61, 134],
+  // ani_ge_cat_nya03（オータムコレクション）
+  cat_meow: [13088],
+  // ドラムロール（メガホン各種）
+  drumroll: [14, 10769, 10837, 10863, 11038, 11250, 11526, 11716, 11891, 11960, 12731, 12871, 13046, 13095],
+  // スターのテーマ → きらめきのジングル（ギンギラギンギャラクシーオーロラ）
+  star_jingle: [13064],
+  // ネズミの鳴き声1回（チューと半端な応援をするネズミさん・金のネズミさん）
+  mouse_squeak: [11243, 12857],
+  // ウグイスのさえずり1（どんぐり）
+  bird_song: [13083],
+  // ヒヨドリの鳴き声2（どんぐり帽子）
+  bird_chirp: [13085, 13087],
+  // 「出でよ、我がしもべよ！」 → 召喚の魔法（おばあさんたぬっち）
+  summon_magic: [13100],
+  // シカ（たしかな応援をするシカさん 各月）
+  deer_call: [12131, 12209, 12418, 12599, 12803, 13035],
+};
+
+export const DEFAULT_SE_MAPPINGS: readonly DefaultSeMapping[] = (Object.entries(SNAPSHOT) as Array<[ClearedSoundId, readonly number[]]>).flatMap(([id, items]) =>
+  items.map((itemId) => ({ key: `item:${itemId}`, url: clearedSoundUrl(id), volume: CLEARED_SOUNDS[id].volume, label: clearedSoundLabel(id) })),
+);

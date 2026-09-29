@@ -9,7 +9,7 @@ import { expandablePatternRows } from "@/lib/se/pattern-rows";
 import { WEB_BONUS_GROUP, WEB_BONUS_LABEL, isWebBonusItem } from "@/lib/se/web-bonus";
 import { BULK_GRADE_LABELS, MAIN_BULK_GRADES, bulkItemKey, bulkKey, describeDecorations, type BulkDecoration, type BulkGrade } from "@/lib/se/bulk-grade";
 import { libraryFiles, liteSetFor, pickVariant, THEME_LABELS, themeForItem } from "@/lib/se/auto-library";
-import { AUTO_LIBRARY_FILE_COUNT, AUTO_LIBRARY_NICOMMONS_CREDITS } from "@/lib/se/auto-library-data";
+import { AUTO_LIBRARY_CREDITS, AUTO_LIBRARY_FILE_COUNT } from "@/lib/se/auto-library-data";
 import { variantKeys } from "@/lib/se/choose-sound";
 import { VolumeSlider } from "./VolumeSlider";
 import { useLiveConnection } from "./LiveConnectionProvider";
@@ -448,20 +448,20 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
           自分で音源を上げた行はこのライブラリより優先されます（「既定に戻す」で自動に戻る）
         </p>
         <p className="mb-1 text-xs text-muted-foreground">
-          音源は商用可・帰属不要の素材（Mixkit Sound Effects Free License / Freesound の CC0）、効果音：魔王魂、ニコニ・コモンズの素材（利用範囲がインターネット上で、配信での収益化が OK のものだけ）。各ファイルの出典は public/se/lib/manifest.json
+          音源はすべて CC0（著作権を放棄した素材・商用可・帰属不要）です。Freesound の CC0 の音と Kenney（kenney.nl）の効果音パックだけを使い、ゲーム・アニメ・企業名などが付いた音は除いています。
+          公式既定（アイテムごとの既定の音）も同じ CC0 の音です。各ファイルの出典は public/se/lib/manifest.json と public/se/defaults/cc0/defaults.json
         </p>
-        {AUTO_LIBRARY_NICOMMONS_CREDITS.length > 0 && (
+        {AUTO_LIBRARY_CREDITS.length > 0 && (
           <details className="mb-3 text-xs text-muted-foreground">
-            <summary className="cursor-pointer select-none text-foreground">ニコニ・コモンズの使用素材（{AUTO_LIBRARY_NICOMMONS_CREDITS.length} 件）</summary>
+            <summary className="cursor-pointer select-none text-foreground">使用素材の出典（{AUTO_LIBRARY_CREDITS.length} 件・すべて CC0）</summary>
             <ul className="mt-2 max-h-64 space-y-1 overflow-y-auto pr-1">
-              {AUTO_LIBRARY_NICOMMONS_CREDITS.map((c) => (
+              {AUTO_LIBRARY_CREDITS.map((c) => (
                 <li key={c.id}>
-                  <a href={`https://commons.nicovideo.jp/works/${c.id}`} target="_blank" rel="noopener noreferrer" className="underline decoration-dotted underline-offset-2 hover:text-foreground">
+                  <a href={c.page} target="_blank" rel="noopener noreferrer" className="underline decoration-dotted underline-offset-2 hover:text-foreground">
                     {c.id}
                   </a>{" "}
                   {c.title}
                   {c.author ? `（${c.author}）` : ""}
-                  {c.notice ? ` ・ ${c.notice}` : ""}
                 </li>
               ))}
             </ul>

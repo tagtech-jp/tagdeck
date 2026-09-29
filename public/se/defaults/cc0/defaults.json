@@ -1,0 +1,303 @@
+{
+ "sounds": {
+  "drumroll": {
+   "file": "/se/defaults/cc0/drumroll.mp3",
+   "seconds": 4.0,
+   "bytes": 48945,
+   "components": [
+    {
+     "id": "fs191718",
+     "title": "drumroll.wav",
+     "source": "freesound",
+     "author": "adriann",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/adriann/sounds/191718/",
+     "at": 0.0
+    }
+   ]
+  },
+  "elephant": {
+   "file": "/se/defaults/cc0/elephant.mp3",
+   "seconds": 2.0,
+   "bytes": 24808,
+   "components": [
+    {
+     "id": "fs527845",
+     "title": "Elephant Trumpets Growls.flac",
+     "source": "freesound",
+     "author": "D.jones",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/D.jones/sounds/527845/",
+     "at": 0.0
+    }
+   ]
+  },
+  "dog_bark": {
+   "file": "/se/defaults/cc0/dog_bark.mp3",
+   "seconds": 1.56,
+   "bytes": 19479,
+   "components": [
+    {
+     "id": "fs386766",
+     "title": "Dog_Barking.wav",
+     "source": "freesound",
+     "author": "ken788",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/ken788/sounds/386766/",
+     "at": 0.0
+    }
+   ]
+  },
+  "pig_oink": {
+   "file": "/se/defaults/cc0/pig_oink.mp3",
+   "seconds": 0.74,
+   "bytes": 9761,
+   "components": [
+    {
+     "id": "fs442906",
+     "title": "Pig Oink",
+     "source": "freesound",
+     "author": "qubodup",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/qubodup/sounds/442906/",
+     "at": 0.0
+    }
+   ]
+  },
+  "fireworks": {
+   "file": "/se/defaults/cc0/fireworks.mp3",
+   "seconds": 4.0,
+   "bytes": 48945,
+   "components": [
+    {
+     "id": "fs335983",
+     "title": "firework_single.wav",
+     "source": "freesound",
+     "author": "zihengc",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/zihengc/sounds/335983/",
+     "at": 0.0
+    }
+   ]
+  },
+  "air_horn": {
+   "file": "/se/defaults/cc0/air_horn.mp3",
+   "seconds": 1.61,
+   "bytes": 20106,
+   "components": [
+    {
+     "id": "fs414208",
+     "title": "Airhorn",
+     "source": "freesound",
+     "author": "jacksonacademyashmore",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/jacksonacademyashmore/sounds/414208/",
+     "at": 0.0
+    }
+   ]
+  },
+  "cat_meow": {
+   "file": "/se/defaults/cc0/cat_meow.mp3",
+   "seconds": 1.54,
+   "bytes": 19479,
+   "components": [
+    {
+     "id": "fs110011",
+     "title": "cat meow",
+     "source": "freesound",
+     "author": "tuberatanka",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/tuberatanka/sounds/110011/",
+     "at": 0.0
+    }
+   ]
+  },
+  "mouse_squeak": {
+   "file": "/se/defaults/cc0/mouse_squeak.mp3",
+   "seconds": 0.42,
+   "bytes": 5686,
+   "components": [
+    {
+     "id": "fs445958",
+     "title": "Cartoon - Bat / Mouse Squeak",
+     "source": "freesound",
+     "author": "Breviceps",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/Breviceps/sounds/445958/",
+     "at": 0.0
+    }
+   ]
+  },
+  "bird_song": {
+   "file": "/se/defaults/cc0/bird_song.mp3",
+   "seconds": 3.5,
+   "bytes": 42675,
+   "components": [
+    {
+     "id": "fs403063",
+     "title": "brief-bird-song.wav",
+     "source": "freesound",
+     "author": "Kneeling",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/Kneeling/sounds/403063/",
+     "at": 0.0
+    }
+   ]
+  },
+  "bird_chirp": {
+   "file": "/se/defaults/cc0/bird_chirp.mp3",
+   "seconds": 0.9,
+   "bytes": 11642,
+   "components": [
+    {
+     "id": "fs714572",
+     "title": "Super Cute Bird Tweets - Short Chirp SFX",
+     "source": "freesound",
+     "author": "LilMati",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/LilMati/sounds/714572/",
+     "at": 0.0
+    }
+   ]
+  },
+  "sparkle_shing": {
+   "file": "/se/defaults/cc0/sparkle_shing.mp3",
+   "seconds": 0.74,
+   "bytes": 9761,
+   "components": [
+    {
+     "id": "fs107589",
+     "title": "unsheath_sword.wav",
+     "source": "freesound",
+     "author": "Qat",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/Qat/sounds/107589/",
+     "at": 0.0
+    }
+   ]
+  },
+  "jackpot_alert": {
+   "file": "/se/defaults/cc0/jackpot_alert.mp3",
+   "seconds": 1.87,
+   "bytes": 23240,
+   "components": [
+    {
+     "id": "fs277214",
+     "title": "8-Bit Powerup - Get Something BIG!",
+     "source": "freesound",
+     "author": "TheDweebMan",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/TheDweebMan/sounds/277214/",
+     "at": 0.0
+    },
+    {
+     "id": "fs456965",
+     "title": "Short Success Sound Glockenspiel Treasure Video Game.mp3",
+     "source": "freesound",
+     "author": "FunWithSound",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/FunWithSound/sounds/456965/",
+     "at": 0.5
+    }
+   ]
+  },
+  "slot_clunk": {
+   "file": "/se/defaults/cc0/slot_clunk.mp3",
+   "seconds": 0.36,
+   "bytes": 5059,
+   "components": [
+    {
+     "id": "kn-impact-sounds-impactMetal_heavy_001",
+     "title": "impact-sounds/impactMetal_heavy_001",
+     "source": "kenney",
+     "author": "Kenney",
+     "license": "CC0 1.0",
+     "page": "https://kenney.nl/assets/impact-sounds",
+     "at": 0.0
+    }
+   ]
+  },
+  "dance_jingle": {
+   "file": "/se/defaults/cc0/dance_jingle.mp3",
+   "seconds": 1.74,
+   "bytes": 21673,
+   "components": [
+    {
+     "id": "kn-music-jingles-jingles_SAX07",
+     "title": "music-jingles/jingles_SAX07",
+     "source": "kenney",
+     "author": "Kenney",
+     "license": "CC0 1.0",
+     "page": "https://kenney.nl/assets/music-jingles",
+     "at": 0.0
+    }
+   ]
+  },
+  "star_jingle": {
+   "file": "/se/defaults/cc0/star_jingle.mp3",
+   "seconds": 1.76,
+   "bytes": 21986,
+   "components": [
+    {
+     "id": "kn-music-jingles-jingles_NES00",
+     "title": "music-jingles/jingles_NES00",
+     "source": "kenney",
+     "author": "Kenney",
+     "license": "CC0 1.0",
+     "page": "https://kenney.nl/assets/music-jingles",
+     "at": 0.0
+    }
+   ]
+  },
+  "summon_magic": {
+   "file": "/se/defaults/cc0/summon_magic.mp3",
+   "seconds": 1.16,
+   "bytes": 14777,
+   "components": [
+    {
+     "id": "fs264981",
+     "title": "SFX Magic",
+     "source": "freesound",
+     "author": "renatalmar",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/renatalmar/sounds/264981/",
+     "at": 0.0
+    }
+   ]
+  },
+  "deer_call": {
+   "file": "/se/defaults/cc0/deer_call.mp3",
+   "seconds": 0.82,
+   "bytes": 10702,
+   "components": [
+    {
+     "id": "fs696776",
+     "title": "Deer_Bark_5_s",
+     "source": "freesound",
+     "author": "ferventtorpor",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/ferventtorpor/sounds/696776/",
+     "at": 0.0
+    }
+   ]
+  },
+  "chime": {
+   "file": "/se/defaults/cc0/chime.mp3",
+   "seconds": 2.28,
+   "bytes": 28256,
+   "components": [
+    {
+     "id": "fs462095",
+     "title": "Sparkling Star 01.wav",
+     "source": "freesound",
+     "author": "LilMati",
+     "license": "CC0 1.0",
+     "page": "https://freesound.org/people/LilMati/sounds/462095/",
+     "at": 0.0
+    }
+   ]
+  }
+ },
+ "generated_at": "2026-09-29T20:20:53Z",
+ "license": "すべて CC0 1.0（Freesound の CC0 フィルタ / Kenney）。社長の割り当ての「どんな音か」に合わせて選んだ同種の音（src/lib/se/cleared-defaults.ts）"
+}
