@@ -9,8 +9,8 @@
 //     v4（2026-09-30 社長指示「ニコニ・コモンズも活用」）: build_se_mix4.py がニコニ・コモンズの素材（利用範囲がインターネット上・
 //     配信での収益化 OK・親作品登録不要・権利や内容を 1 件ずつ確認したもの）をテーマ音の主役・確定音（キュイン）・フィーバー・
 //     ファンファーレ・歓声などに加え、素材ごとに音量をそろえて v4-1..5.mp3 を作る。使った素材の一覧は AUTO_LIBRARY_NICOMMONS_CREDITS。
-//     無料アイテム（2026-09-30 社長指示「無料が派手すぎる」）は build_se_lite.py の控えめな音: tier-T0（テーマなし）・lite-hit（当たり）・
-//     lite-{テーマ}（素材 1 つ・1.2〜2.2 秒・-18〜-16 LUFS）
+//     無料アイテム（2026-09-30 社長指示「無料が派手すぎる」「全てチェックして差し替えて」）は build_se_calm.py の控えめな音:
+//     tier-T0（テーマなし）・lite-hit（当たり）・lite-{落ち着いたテーマ}（素材を 1 本ずつ選んだ単発音・1.0〜1.2 秒・-22 LUFS）
 //   - アイテム名（とカテゴリ key）のキーワードからテーマを決める（themeForItem）。1 テーマ最大 5 本からランダムに 1 本
 //     （直前と同じ音は避ける）
 //   - まとめ投げの段階（COOL/GREAT/FANTASTIC/MIRACLE）・当たり・価格帯の既定にもセットがある
@@ -200,15 +200,20 @@ export function bulkSetName(grade: BulkGrade): string {
   return "bulk-FANTASTIC";
 }
 
-/** 無料アイテムでもそのまま使う落ち着いたテーマ（素材 1 つで鳴らしても控えめなもの） */
-const CALM_THEMES: ReadonlySet<string> = new Set(["pop", "cute", "sparkle", "heart", "balloon", "coin", "bell", "notify", "flower", "music", "food", "drink", "dice", "party", "bird", "cat", "dog", "pig", "cow", "horse", "elephant", "monkey", "sea", "christmas", "kids", "magic"]);
+/**
+ * 無料アイテムでもそのまま使う落ち着いたテーマ。控えめな音（lite-{テーマ}）はこのテーマだけ作る（scratchpad build_se_calm.py・
+ * 素材を 1 本ずつ選んだ単発の短い音・1.0〜1.2 秒・-22 LUFS）。2026-09-30 社長指示「無料がまだ派手な音があるので全てチェックして差し替えて」で
+ * ゾウ・さる・うま（叫び・いななき）、子ども（笑い声）、パーティー（クラッカー）、音楽（リフ・ジングル）、魔法（雷の攻撃音）を外した
+ */
+const CALM_THEMES: ReadonlySet<string> = new Set(["pop", "cute", "sparkle", "heart", "balloon", "coin", "bell", "flower", "food", "drink", "dice", "cat", "dog", "pig", "cow", "bird", "christmas", "sea"]);
 /** 落ち着いたテーマのうち汎用のもの（派手なテーマの代わりを名前から探すときは使わない） */
-const GENERIC_CALM_THEMES: ReadonlySet<string> = new Set(["flower", "party", "sparkle", "pop", "notify"]);
-/** 派手なテーマ → 無料アイテムで代わりに使う落ち着いたテーマ（2026-09-30 社長指示「イベントの無料アイテムが派手すぎる」） */
+const GENERIC_CALM_THEMES: ReadonlySet<string> = new Set(["flower", "sparkle", "pop"]);
+/** 派手なテーマ → 無料アイテムで代わりに使う落ち着いたテーマ（2026-09-30 社長指示「イベントの無料アイテムが派手すぎる」ほか） */
 const FREE_THEME_MAP: Readonly<Record<string, string>> = {
   jackpot: "coin", casino: "sparkle", fanfare: "sparkle", trophy: "sparkle", win: "sparkle", epic: "sparkle", fireworks: "sparkle",
-  cheer: "pop", wow: "pop", explosion: "pop", thunder: "pop", fire: "pop", laser: "pop", battle: "pop", rocket: "pop", vehicle: "pop", whoosh: "pop",
-  wolf: "cute", lion: "cute", bear: "cute", halloween: "cute",
+  party: "sparkle", music: "sparkle", magic: "sparkle",
+  cheer: "pop", wow: "pop", explosion: "pop", thunder: "pop", fire: "pop", laser: "pop", battle: "pop", rocket: "pop", vehicle: "pop", whoosh: "pop", notify: "pop",
+  wolf: "cute", lion: "cute", bear: "cute", halloween: "cute", elephant: "cute", monkey: "cute", horse: "cute", kids: "cute",
 };
 
 /**
