@@ -200,13 +200,51 @@ export function bulkSetName(grade: BulkGrade): string {
   return "bulk-FANTASTIC";
 }
 
+/** 無料アイテムでもそのまま使う落ち着いたテーマ（素材 1 つで鳴らしても控えめなもの） */
+const CALM_THEMES: ReadonlySet<string> = new Set(["pop", "cute", "sparkle", "heart", "balloon", "coin", "bell", "notify", "flower", "music", "food", "drink", "dice", "party", "bird", "cat", "dog", "pig", "cow", "horse", "elephant", "monkey", "sea", "christmas", "kids", "magic"]);
+/** 落ち着いたテーマのうち汎用のもの（派手なテーマの代わりを名前から探すときは使わない） */
+const GENERIC_CALM_THEMES: ReadonlySet<string> = new Set(["flower", "party", "sparkle", "pop", "notify"]);
+/** 派手なテーマ → 無料アイテムで代わりに使う落ち着いたテーマ（2026-09-30 社長指示「イベントの無料アイテムが派手すぎる」） */
+const FREE_THEME_MAP: Readonly<Record<string, string>> = {
+  jackpot: "coin", casino: "sparkle", fanfare: "sparkle", trophy: "sparkle", win: "sparkle", epic: "sparkle", fireworks: "sparkle",
+  cheer: "pop", wow: "pop", explosion: "pop", thunder: "pop", fire: "pop", laser: "pop", battle: "pop", rocket: "pop", vehicle: "pop", whoosh: "pop",
+  wolf: "cute", lion: "cute", bear: "cute", halloween: "cute",
+};
+
 /**
- * 無料アイテムの控えめな音のセット（2026-09-30 社長指示「無料が派手すぎる」）。ミックスではなく素材 1 つ・1.2〜2.2 秒・小さめの音量。
- * 当たり → lite-hit / テーマあり → lite-{テーマ}。どちらも無ければ null（カテゴリの既定 → 価格帯の既定 tier-T0 も控えめな音）
+ * 無料アイテムのテーマ。名前だけで決め（イベントのカテゴリからは決めない: バスケット → オオカミの遠吠え を避ける）、
+ * 最初に当たったテーマが落ち着いていればそれ。派手なら、名前に当たる具体的な物の落ち着いたテーマを探し（赤ずきんサイコロ →
+ * オオカミではなくサイコロ）、無ければ FREE_THEME_MAP で置き換える（石油王スロット → コイン、花火 → キラキラ）。名前で決まらなければ null
  */
-export function liteSetFor(itemName: string | null | undefined, groups: readonly string[] | null | undefined, isHit: boolean): string | null {
+export function freeThemeFor(itemName: string | null | undefined): string | null {
+  const name = (itemName ?? "").replace(STRIP_RE, "");
+  if (!name) return null;
+  let first: string | null = null;
+  for (const [theme, re] of NAME_RULES) {
+    if (!re.test(name)) continue;
+    if (first === null) {
+      if (CALM_THEMES.has(theme)) return theme;
+      first = theme;
+      continue;
+    }
+    // 派手なテーマが先に当たったときは、具体的な物の落ち着いたテーマ（サイコロ・コイン・動物など）だけを探す。
+    // 花・祭り・キラキラのような汎用テーマは部分一致しやすい（「花火」の「花」）ので探さない
+    if (CALM_THEMES.has(theme) && !GENERIC_CALM_THEMES.has(theme)) return theme;
+  }
+  return first ? (FREE_THEME_MAP[first] ?? "pop") : null;
+}
+
+/** 無料アイテムの音量（自動ライブラリの有料は 80）。控えめな音をさらに一段小さく（2026-09-30） */
+export const FREE_AUTO_VOLUME = 55;
+
+/**
+ * 無料アイテムの控えめな音のセット（2026-09-30 社長指示「無料が派手すぎる」「イベントの無料アイテムが派手すぎる」）。
+ * ミックスではなく素材 1 つ・1.2〜2.2 秒・小さめの音量。当たり → lite-hit / 名前のテーマ（freeThemeFor）→ lite-{テーマ}。
+ * どちらも無ければ null（カテゴリの既定 → 価格帯の既定 tier-T0 も控えめなポップ音）。groups は互換のため受け取るが使わない
+ */
+export function liteSetFor(itemName: string | null | undefined, _groups: readonly string[] | null | undefined, isHit: boolean): string | null {
   if (isHit && hasLibrarySet("lite-hit")) return "lite-hit";
-  const theme = themeForItem(itemName, groups);
+  const theme = freeThemeFor(itemName);
   return theme && hasLibrarySet(`lite-${theme}`) ? `lite-${theme}` : null;
 }
 

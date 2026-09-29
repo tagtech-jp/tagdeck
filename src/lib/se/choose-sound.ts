@@ -10,7 +10,7 @@
 //
 // 「明示的に無効化」は従来どおり: その段階の key に行があって全部 OFF なら何も鳴らさない（下位に落とさない）
 
-import { chooseAutoForItem, chooseAutoForTier, THEME_LABELS } from "./auto-library";
+import { chooseAutoForItem, chooseAutoForTier, FREE_AUTO_VOLUME, THEME_LABELS } from "./auto-library";
 import type { BulkGrade } from "./bulk-grade";
 import type { ItemKind } from "./item-kind";
 import type { SeTier } from "./tiers";
@@ -113,7 +113,8 @@ export function chooseSound(mappings: readonly SoundRow[], t: PlayTarget, rand: 
   if (s1) return s1;
 
   const auto = chooseAutoForItem({ itemName: t.itemName, groups: t.groups, tier: t.tier, isHit: t.isHit, bulkGrade: t.bulkGrade, free: t.free }, rand);
-  if (auto) return { url: auto.file.file, volume: 80, label: auto.file.title, key: auto.set, source: "auto", theme: auto.theme };
+  // 無料アイテムの控えめな音は音量も一段小さく（FREE_AUTO_VOLUME）
+  if (auto) return { url: auto.file.file, volume: t.free ? FREE_AUTO_VOLUME : 80, label: auto.file.title, key: auto.set, source: "auto", theme: auto.theme };
 
   const generic: string[] = [];
   for (const g of t.groups ?? []) generic.push(`cat:group:${g}`);
@@ -131,7 +132,7 @@ export function chooseSound(mappings: readonly SoundRow[], t: PlayTarget, rand: 
   if (own === null) return "disabled";
   if (own && own.url) return toChoice(own);
   const autoTier = chooseAutoForTier(t.tier, rand);
-  if (autoTier) return { url: autoTier.file.file, volume: own?.volume ?? 80, label: autoTier.file.title, key: autoTier.set, source: "auto", theme: null };
+  if (autoTier) return { url: autoTier.file.file, volume: own?.volume ?? (t.free ? FREE_AUTO_VOLUME : 80), label: autoTier.file.title, key: autoTier.set, source: "auto", theme: null };
   // ライブラリに価格帯セットが無い（通常は無い）ときだけ旧来の既定行
   const legacy = tryKeys(grouped, [tierKey], rand);
   if (legacy === DISABLED) return "disabled";

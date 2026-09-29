@@ -653,13 +653,14 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
                                 // 無料アイテムは控えめな音（lite-{テーマ}・2026-09-30 社長指示「無料が派手すぎる」）
                                 const free = !(it.priceJpy !== null && it.priceJpy > 0);
                                 const set = free ? liteSetFor(it.itemName, it.groups, false) : theme;
+                                const shown = free ? (set ? set.slice(5) : null) : theme;
                                 const n = set ? libraryFiles(set).length : 0;
                                 return (
                                   <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                                    {theme && set && n > 0 ? (
+                                    {shown && set && n > 0 ? (
                                       <>
                                         <span>
-                                          自動{free ? "（無料・控えめ）" : ""}: {THEME_LABELS[theme] ?? theme}（{n} 本ランダム）{own ? "・いまは上の割り当てが優先" : ""}
+                                          自動{free ? "（無料・控えめ）" : ""}: {THEME_LABELS[shown] ?? shown}（{n} 本ランダム）{own ? "・いまは上の割り当てが優先" : ""}
                                         </span>
                                         <button type="button" onClick={() => void previewAuto(set)} className="min-h-7 rounded-full border border-border bg-muted px-2 text-[11px] text-foreground hover:border-foreground/30">
                                           ▶ 試聴

@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-09-29T12:47:03Z",
- "style": "pachinko-mix v4（ライザー→インパクト→テーマ連打（ニコニ・コモンズが主役）→確定音→ファンファーレ/フィーバー/歓声/コイン/きらきら。最大 15 秒・mono 96k） / 無料アイテムは控えめ（tier-T0・lite-hit・lite-<テーマ>: 素材 1 つ・1.2〜2.2 秒・-18〜-16 LUFS） / 無料アイテムは控えめ（tier-T0・lite-hit・lite-<テーマ>: 素材 1 つ・1.2〜2.2 秒・-18〜-16 LUFS） / 無料アイテムは控えめ（tier-T0・lite-hit・lite-<テーマ>: 素材 1 つ・1.2〜2.2 秒・-18〜-16 LUFS）",
+ "generated_at": "2026-09-29T13:09:02Z",
+ "style": "pachinko-mix v4（ライザー→インパクト→テーマ連打（ニコニ・コモンズが主役）→確定音→ファンファーレ/フィーバー/歓声/コイン/きらきら。最大 15 秒・mono 96k） / 無料アイテムは控えめ（tier-T0・lite-hit・lite-<テーマ>: 素材 1 つ・1.2〜2.2 秒・-18〜-16 LUFS） / 無料アイテムは控えめ（tier-T0・lite-hit・lite-<テーマ>: 素材 1 つ・1.2〜2.2 秒・-18〜-16 LUFS） / 無料アイテムは控えめ（tier-T0・lite-hit・lite-<テーマ>: 素材 1 つ・1.2〜2.2 秒・-18〜-16 LUFS） / 無料アイテムは控えめ（tier-T0・lite-hit・lite-<テーマ>: 素材 1 つ・1.2〜2.2 秒・-18〜-16 LUFS）",
  "sources": {
   "mixkit": "Mixkit Sound Effects Free License（商用可・帰属不要・音源単体の再配布は不可）https://mixkit.co/license/#sfxFree",
   "freesound": "Creative Commons 0（CC0・帰属不要）検索フィルタで絞り込み https://freesound.org/",
@@ -34250,18 +34250,18 @@
    {
     "id": "v4-3",
     "file": "/se/lib/lite-pop/v4-3.mp3",
-    "title": "lite-pop 控えめ 3（イヨー　掛け声　効果音・1.5s）",
-    "seconds": 1.5,
-    "bytes": 18852,
+    "title": "lite-pop 控えめ 3（Bubble pop up alert noti・0.4s）",
+    "seconds": 0.38,
+    "bytes": 5373,
     "components": [
      {
-      "id": "nc147272",
-      "title": "イヨー　掛け声　効果音",
-      "source": "nicommons",
-      "author": "ヘラクレスン",
-      "user_id": 38963372,
-      "license": "ニコニ・コモンズ（利用範囲: インターネット上・個人の配信/その他の収益化 OK・法人 OK）",
-      "page": "https://commons.nicovideo.jp/works/nc147272",
+      "id": "mk2357",
+      "title": "Bubble pop up alert notification",
+      "source": "mixkit",
+      "author": "Mixkit",
+      "user_id": null,
+      "license": "Mixkit Sound Effects Free License",
+      "page": "https://mixkit.co/free-sound-effects/pop/",
       "notice": "",
       "at": 0.0
      }

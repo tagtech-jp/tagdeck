@@ -1,5 +1,5 @@
 // 自動生成: scratchpad/gen_auto_library_data.py（元: public/se/lib/manifest.json）。手で編集しない。
-// 生成 2026-09-29T12:47:03Z・出典 mixkit: Mixkit Sound Effects Free License（商用可・帰属不要・音源単体の再配布は不可）https://mixkit.co/license/#sfxFree / freesound: Creative Commons 0（CC0・帰属不要）検索フィルタで絞り込み https://freesound.org/ / maou: 魔王魂 素材利用規約（商用可・改変可・可能な限り「効果音：魔王魂」の著作表記）https://maou.audio/rule/ / nicommons: ニコニ・コモンズ（素材ごとの利用条件に従う: 利用範囲がインターネット上/制限なし・個人の配信/その他の収益化 OK・親作品登録不要。作者と素材番号は credits.nicommons）https://commons.nicovideo.jp/
+// 生成 2026-09-29T13:09:02Z・出典 mixkit: Mixkit Sound Effects Free License（商用可・帰属不要・音源単体の再配布は不可）https://mixkit.co/license/#sfxFree / freesound: Creative Commons 0（CC0・帰属不要）検索フィルタで絞り込み https://freesound.org/ / maou: 魔王魂 素材利用規約（商用可・改変可・可能な限り「効果音：魔王魂」の著作表記）https://maou.audio/rule/ / nicommons: ニコニ・コモンズ（素材ごとの利用条件に従う: 利用範囲がインターネット上/制限なし・個人の配信/その他の収益化 OK・親作品登録不要。作者と素材番号は credits.nicommons）https://commons.nicovideo.jp/
 export interface AutoLibraryFile {
   /** サイト相対 URL（public/se/lib/…） */
   file: string;
@@ -608,7 +608,7 @@ export const AUTO_LIBRARY: Readonly<Record<string, readonly AutoLibraryFile[]>> 
   "lite-pop": [
     { file: "/se/lib/lite-pop/v4-1.mp3", title: "lite-pop 控えめ 1（【SE】決定音１・1.4s）", seconds: 1.42 },
     { file: "/se/lib/lite-pop/v4-2.mp3", title: "lite-pop 控えめ 2（【SE】決定音３・0.5s）", seconds: 0.55 },
-    { file: "/se/lib/lite-pop/v4-3.mp3", title: "lite-pop 控えめ 3（イヨー　掛け声　効果音・1.5s）", seconds: 1.5 },
+    { file: "/se/lib/lite-pop/v4-3.mp3", title: "lite-pop 控えめ 3（Bubble pop up alert noti・0.4s）", seconds: 0.38 },
   ],
   "lite-trophy": [
     { file: "/se/lib/lite-trophy/v4-1.mp3", title: "lite-trophy 控えめ 1（ファンファーレ　レトロ　ゲームクリア　達成　勝利・1.5s）", seconds: 1.5 },
