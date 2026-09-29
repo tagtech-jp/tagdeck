@@ -5,9 +5,12 @@ const withSerwist = withSerwistInit({
   swSrc: "src/sw.ts",
   swDest: "public/sw.js",
   disable: process.env.NODE_ENV !== "production",
-  // 音源（public/se/**・自動ライブラリ約 280 本 ≒ 15MB）は事前キャッシュに入れない（2026-09-29）。
-  // 鳴らす直前に取得し、runtimeCaching の static-audio-assets（CacheFirst）に載る
-  globPublicPatterns: ["**/*", "!se/**"],
+  // 音源（public/se/**・自動ライブラリ 285 本 ≒ 12MB ＋ 既定 2MB）は事前キャッシュに入れない（2026-09-29）。
+  // globPublicPatterns の "!" 否定は glob が解釈しないため効かない（本番 sw.js に 305 本入った実害）。
+  // manifestTransforms で /se/ 配下の項目を落とす。鳴らす直前に取得し、runtimeCaching の static-audio-assets（CacheFirst）に載る
+  manifestTransforms: [
+    async (entries) => ({ manifest: entries.filter((e) => !/\/se\/(lib|defaults)\//.test(String(e.url))), warnings: [] }),
+  ],
 });
 
 const nextConfig: NextConfig = {
