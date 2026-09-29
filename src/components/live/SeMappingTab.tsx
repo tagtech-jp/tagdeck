@@ -8,6 +8,9 @@ import { tierForGift, TIER_LABELS, type SeTier } from "@/lib/se/tiers";
 import { expandablePatternRows } from "@/lib/se/pattern-rows";
 import { WEB_BONUS_GROUP, WEB_BONUS_LABEL, isWebBonusItem } from "@/lib/se/web-bonus";
 import { BULK_GRADE_LABELS, MAIN_BULK_GRADES, bulkItemKey, bulkKey, describeDecorations, type BulkDecoration, type BulkGrade } from "@/lib/se/bulk-grade";
+import { libraryFiles, pickVariant, THEME_LABELS, themeForItem } from "@/lib/se/auto-library";
+import { AUTO_LIBRARY_FILE_COUNT } from "@/lib/se/auto-library-data";
+import { variantKeys } from "@/lib/se/choose-sound";
 import { VolumeSlider } from "./VolumeSlider";
 import { useLiveConnection } from "./LiveConnectionProvider";
 import { mergeWithDefaults, type MergedMapping } from "@/lib/se/merge-defaults";
@@ -347,11 +350,20 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
     await playSe(tier, { url: m?.url ?? null, volume: (volumeOverride ?? m?.volume ?? 80) / 100 });
   };
 
+  /** 自動ライブラリのセットを 1 本ランダムに試聴する（2026-09-29） */
+  const previewAuto = async (set: string) => {
+    await unlockAudio();
+    const f = pickVariant(`preview:${set}`, libraryFiles(set));
+    if (f) await playSe("T2", { url: f.file, volume: 0.8 });
+  };
+
   /** 行ごとの操作部品に渡す値（部品自体はモジュール直下の memo コンポーネント） */
   const ctl = (keys: string[]) => ({
     mapping: byKey.get(keys[0]),
-    busy: busyKey === keys[0],
-    message: msgKey === keys[0] ? msg : null,
+    // 同じ key の変種（key#2〜#5・自分の行）。ランダム再生の候補（2026-09-29）
+    variants: variantKeys(keys[0]).slice(1).map((k) => byKey.get(k)).filter((m): m is MergedMapping => m !== undefined && m.source === "user"),
+    busy: busyKey === keys[0] || variantKeys(keys[0]).includes(busyKey ?? ""),
+    message: msgKey === keys[0] || variantKeys(keys[0]).includes(msgKey ?? "") ? msg : null,
     onUpload: upload,
     onUpsert: upsert,
     onReset: reset,
@@ -437,6 +449,25 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
               </span>
               <MappingControls mkeys={[bulkKey(g)]} tier={BULK_PREVIEW_TIER[g]} {...ctl([bulkKey(g)])} />
             </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 自動ライブラリ（2026-09-29） */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h4 className="mb-1 text-sm font-bold text-foreground">自動ライブラリ（アイテムに似合う音を自動で・{AUTO_LIBRARY_FILE_COUNT} 本）</h4>
+        <p className="mb-1 text-xs text-muted-foreground">
+          個別に割り当てていないアイテムは、名前から決めたテーマ（花火・ねこ・コイン・乾杯・ハート…約 45 種）の音を最大 5 本からランダムに鳴らします。各アイテムのカードに「自動: テーマ名」と試聴ボタンが出ます。
+          まとめ投げの段階・当たり・価格帯の既定にもセットがあり、割り当てが無ければこれが鳴ります。自分で音源を上げた行はこのライブラリより優先されます（「既定に戻す」で自動に戻る）
+        </p>
+        <p className="mb-3 text-xs text-muted-foreground">
+          音源は商用可・帰属不要の素材（Mixkit Sound Effects Free License / Freesound の CC0）と 魔王魂（商用可・「効果音：魔王魂」表記）。各ファイルの出典は public/se/lib/manifest.json
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {(["tier-T0", "tier-T1", "tier-T2", "tier-T3", "tier-T4", "hit", "bulk-COOL", "bulk-GREAT", "bulk-FANTASTIC", "bulk-MIRACLE"] as const).map((set) => (
+            <button key={set} type="button" onClick={() => void previewAuto(set)} className="min-h-9 rounded-full border border-border bg-muted px-3 text-xs text-foreground hover:border-foreground/30">
+              ▶ {set.startsWith("tier-") ? TIER_LABELS[set.slice(5) as SeTier] : set === "hit" ? "当たり" : `まとめ投げ ${BULK_GRADE_LABELS[set.slice(5) as BulkGrade]}`}（{libraryFiles(set).length} 本）
+            </button>
           ))}
         </div>
       </div>
@@ -614,6 +645,27 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
                             </div>
                             <div className="mt-2 border-t border-border pt-2">
                               <MappingControls mkeys={[`item:${it.itemId}`]} tier={tier} {...ctl([`item:${it.itemId}`])} />
+                              {(() => {
+                                const theme = themeForItem(it.itemName, it.groups);
+                                const own = byKey.get(`item:${it.itemId}`);
+                                const n = theme ? libraryFiles(theme).length : 0;
+                                return (
+                                  <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                                    {theme && n > 0 ? (
+                                      <>
+                                        <span>
+                                          自動: {THEME_LABELS[theme] ?? theme}（{n} 本ランダム）{own ? "・いまは上の割り当てが優先" : ""}
+                                        </span>
+                                        <button type="button" onClick={() => void previewAuto(theme)} className="min-h-7 rounded-full border border-border bg-muted px-2 text-[11px] text-foreground hover:border-foreground/30">
+                                          ▶ 試聴
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <span>自動: テーマなし（カテゴリ・価格帯の既定が鳴る）</span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
                             {(it.decorations?.length ?? 0) > 0 && (
                               <div className="mt-2 border-t border-border pt-2 text-xs">
@@ -679,6 +731,8 @@ interface MappingControlsProps {
   mkeys: string[];
   tier: SeTier;
   mapping: MergedMapping | undefined;
+  /** 同じ key の変種（key#2〜#5）。あればランダムに 1 本鳴る（2026-09-29） */
+  variants?: MergedMapping[];
   busy: boolean;
   /** この行に対する直近のメッセージ（失敗・完了） */
   message: string | null;
@@ -693,8 +747,10 @@ interface MappingControlsProps {
  * コンポーネント内で定義せずここに置くのが重要（親の再描画で <input type="file"> が作り直されると、
  * 開いているファイル選択ダイアログの結果が捨てられる。2026-09-26）
  */
-const MappingControls = memo(function MappingControls({ mkeys, tier, mapping: m, busy, message, onUpload, onUpsert, onReset, onPreview }: MappingControlsProps) {
+const MappingControls = memo(function MappingControls({ mkeys, tier, mapping: m, variants = [], busy, message, onUpload, onUpsert, onReset, onPreview }: MappingControlsProps) {
   const mkey = mkeys[0];
+  // 次に使う変種スロット（#2〜#5 のうち空いている最小）。5 本そろっていれば null
+  const nextSlot = variantKeys(mkey).slice(1).find((k) => !variants.some((v) => v.key === k)) ?? null;
   return (
     <div className="flex flex-wrap items-center gap-2">
       <label className="min-h-9 cursor-pointer rounded-full border border-border bg-muted px-3 text-xs leading-9 text-foreground">
@@ -725,6 +781,37 @@ const MappingControls = memo(function MappingControls({ mkeys, tier, mapping: m,
       <span className="truncate text-xs text-muted-foreground">
         {m?.usesDefaultSound ? `既定 ♪ ${m.label ?? "公式音源"}` : m?.url ? `♪ ${m.label ?? "カスタム音源"}` : "既定（合成音）"}
       </span>
+      {m?.url && !m.usesDefaultSound && (
+        <>
+          {variants.map((v) => (
+            <span key={v.key} className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+              <button type="button" onClick={() => void onPreview(v.key, tier)} className="text-foreground" title="試聴">
+                ▶
+              </button>
+              <span className="max-w-40 truncate">{v.label ?? v.key}</span>
+              <button type="button" onClick={() => void onReset([v.key])} className="text-muted-foreground hover:text-destructive" title="この変種を外す">
+                ×
+              </button>
+            </span>
+          ))}
+          {nextSlot && (
+            <label className="min-h-7 cursor-pointer rounded-full border border-dashed border-border px-2 text-[11px] leading-7 text-muted-foreground hover:border-foreground/30" title="同じ key に別の音源を足すと、鳴るたびにランダムに 1 本選ばれます（最大 5 本）">
+              {busy ? "…" : `＋ 別の音を追加（${1 + variants.length}/5）`}
+              <input
+                type="file"
+                accept={ACCEPT}
+                className="hidden"
+                disabled={busy}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) void onUpload([nextSlot], f);
+                }}
+              />
+            </label>
+          )}
+        </>
+      )}
       {message && <p className="w-full text-xs text-status-warning">{message}</p>}
     </div>
   );

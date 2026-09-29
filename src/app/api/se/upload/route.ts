@@ -12,8 +12,8 @@ import { BULK_KEY_RE_SOURCE } from "@/lib/se/bulk-grade";
 // 2026-09-26: 5MB → 20MB（WAV は 30 秒で 5MB を超える）。m4a / aac も受け付ける（Web Audio の decodeAudioData が再生できる）。
 // バケット側の上限・MIME は drizzle/0019_se_bucket_limits_manual.sql で合わせる（未適用だと 5MB 超・m4a は Supabase 側で拒否される）
 const MAX_BYTES = 20 * 1024 * 1024;
-// bulk: = まとめ投げの段階（全アイテム共通 / アイテム別・2026-09-28）
-const KEY_RE = new RegExp(`^(pattern:\\d{1,10}|item:\\d{1,10}|cat:kind:(normal|hit|anim)|cat:group:[A-Za-z0-9_#-]{1,64}|tier:(T0|T1|T2|T3|T4|hit)|${BULK_KEY_RE_SOURCE})$`);
+// bulk: = まとめ投げの段階（全アイテム共通 / アイテム別・2026-09-28）。末尾 #2〜#5 は同じ key の変種（最大 5 本をランダム再生・2026-09-29）
+const KEY_RE = new RegExp(`^(pattern:\\d{1,10}|item:\\d{1,10}|cat:kind:(normal|hit|anim)|cat:group:[A-Za-z0-9_#-]{1,64}|tier:(T0|T1|T2|T3|T4|hit)|${BULK_KEY_RE_SOURCE})(?:#[2-5])?$`);
 const EXT_RE = /\.(mp3|ogg|wav|m4a|aac)$/i;
 const CONTENT_TYPES: Record<string, string> = { mp3: "audio/mpeg", ogg: "audio/ogg", wav: "audio/wav", m4a: "audio/mp4", aac: "audio/aac" };
 

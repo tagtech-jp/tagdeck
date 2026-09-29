@@ -5,6 +5,9 @@ const withSerwist = withSerwistInit({
   swSrc: "src/sw.ts",
   swDest: "public/sw.js",
   disable: process.env.NODE_ENV !== "production",
+  // 音源（public/se/**・自動ライブラリ約 280 本 ≒ 15MB）は事前キャッシュに入れない（2026-09-29）。
+  // 鳴らす直前に取得し、runtimeCaching の static-audio-assets（CacheFirst）に載る
+  globPublicPatterns: ["**/*", "!se/**"],
 });
 
 const nextConfig: NextConfig = {

@@ -45,6 +45,9 @@ const WS_BADGE: Record<WsState, { label: string; className: string }> = {
 };
 
 const TEST_GIFTS: Array<{ label: string; tier: SeTier; gift: Partial<Gift>; bulkGrade?: BulkGrade }> = [
+  // 自動ライブラリ（2026-09-29）: 名前のテーマで鳴る（個別割り当てが無いとき）
+  { label: "自動: 花火（テーマ）", tier: "T3", gift: { item_name: "花火", price_yen: 1000, count: 1 } },
+  { label: "自動: ねこ（テーマ）", tier: "T1", gift: { item_name: "もりあげねこさん", price_yen: 70, count: 1 } },
   { label: TIER_LABELS.T0, tier: "T0", gift: { item_name: "オータムリース", price_yen: 0, count: 1 } },
   { label: "〜¥499（チャイム・短）", tier: "T1", gift: { item_name: "ぶたさん", price_yen: 160, count: 1 } },
   { label: "¥500〜（チャイム）", tier: "T2", gift: { item_name: "ぶたさん ×4", price_yen: 160, count: 4 } },
@@ -298,7 +301,7 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
               type="button"
               onClick={async () => {
                 await enableAudio();
-                await playGift({ pattern_id: null, item_id: null, price_yen: t.gift.price_yen ?? 0, count: t.gift.count ?? 1, is_hit: Boolean(t.gift.is_hit), kind: null, groups: [], bulk_grade: t.bulkGrade ?? null }, t.tier);
+                await playGift({ pattern_id: null, item_id: null, item_name: t.gift.item_name ?? null, price_yen: t.gift.price_yen ?? 0, count: t.gift.count ?? 1, is_hit: Boolean(t.gift.is_hit), kind: null, groups: [], bulk_grade: t.bulkGrade ?? null }, t.tier);
                 pushTestGift({ comment_id: `test-${Date.now()}`, pattern_id: null, item_id: null, item_name: `[テスト] ${t.gift.item_name}`, pattern_name: null, count: t.gift.count ?? 1, item_count: t.gift.count ?? 1, bulk_grade: t.bulkGrade ?? null, is_hit: Boolean(t.gift.is_hit), hit_grade: null, kind: null, price_yen: t.gift.price_yen ?? 0, total_yen: (t.gift.price_yen ?? 0) * (t.gift.count ?? 1), groups: [], message: t.bulkGrade ? `まとめ投げ ${BULK_GRADE_LABELS[t.bulkGrade]}` : TIER_LABELS[t.tier], posted_at: new Date().toISOString(), user: { id: null, name: "テスト", user_path: null, anonymized: false } });
               }}
               className="min-h-11 rounded-full border border-border bg-muted px-3 text-xs text-foreground hover:border-foreground/30"

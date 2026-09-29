@@ -1,0 +1,3259 @@
+{
+ "generated_at": "2026-09-29T10:34:44Z",
+ "sources": {
+  "mixkit": "Mixkit Sound Effects Free License（商用可・帰属不要・音源単体の再配布は不可）https://mixkit.co/license/#sfxFree",
+  "freesound": "Creative Commons 0（CC0・帰属不要）検索フィルタで絞り込み https://freesound.org/",
+  "maou": "魔王魂 素材利用規約（商用可・改変可・可能な限り「効果音：魔王魂」の著作表記）https://maou.audio/rule/"
+ },
+ "themes": {
+  "fireworks": [
+   {
+    "id": "fs117616",
+    "file": "/se/lib/fireworks/fs117616.mp3",
+    "title": "fireworks exploding 1.wav",
+    "seconds": 5.49,
+    "source": "freesound",
+    "author": "soundmary",
+    "license": "CC0",
+    "page": "https://freesound.org/people/soundmary/sounds/117616/",
+    "bytes": 89068
+   },
+   {
+    "id": "fs88532",
+    "file": "/se/lib/fireworks/fs88532.mp3",
+    "title": "Woosh_northern87",
+    "seconds": 1.39,
+    "source": "freesound",
+    "author": "northern87",
+    "license": "CC0",
+    "page": "https://freesound.org/people/northern87/sounds/88532/",
+    "bytes": 23448
+   },
+   {
+    "id": "mk2993",
+    "file": "/se/lib/fireworks/mk2993.mp3",
+    "title": "Firework rockets exploding in the sky",
+    "seconds": 2.27,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/fireworks/",
+    "bytes": 37241
+   },
+   {
+    "id": "mk1689",
+    "file": "/se/lib/fireworks/mk1689.mp3",
+    "title": "Multiple fireworks explosions",
+    "seconds": 3.27,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/fireworks/",
+    "bytes": 53541
+   },
+   {
+    "id": "mk2994",
+    "file": "/se/lib/fireworks/mk2994.mp3",
+    "title": "Clear firework explosions",
+    "seconds": 2.28,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/fireworks/",
+    "bytes": 37659
+   }
+  ],
+  "fanfare": [
+   {
+    "id": "mk2285",
+    "file": "/se/lib/fanfare/mk2285.mp3",
+    "title": "Orchestra triumphant trumpets",
+    "seconds": 4.53,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/orchestra/",
+    "bytes": 73603
+   },
+   {
+    "id": "fs456966",
+    "file": "/se/lib/fanfare/fs456966.mp3",
+    "title": "Success Fanfare Trumpets.mp3",
+    "seconds": 4.44,
+    "source": "freesound",
+    "author": "FunWithSound",
+    "license": "CC0",
+    "page": "https://freesound.org/people/FunWithSound/sounds/456966/",
+    "bytes": 71932
+   },
+   {
+    "id": "fs397355",
+    "file": "/se/lib/fanfare/fs397355.mp3",
+    "title": "Tada Fanfare A",
+    "seconds": 1.72,
+    "source": "freesound",
+    "author": "plasterbrain",
+    "license": "CC0",
+    "page": "https://freesound.org/people/plasterbrain/sounds/397355/",
+    "bytes": 28464
+   },
+   {
+    "id": "fs256128",
+    "file": "/se/lib/fanfare/fs256128.mp3",
+    "title": "TaDa!.aif",
+    "seconds": 5.58,
+    "source": "freesound",
+    "author": "jimhancock",
+    "license": "CC0",
+    "page": "https://freesound.org/people/jimhancock/sounds/256128/",
+    "bytes": 90322
+   },
+   {
+    "id": "mk2292",
+    "file": "/se/lib/fanfare/mk2292.mp3",
+    "title": "Orchestra trumpets ending",
+    "seconds": 4.0,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/orchestra/",
+    "bytes": 65244
+   }
+  ],
+  "win": [
+   {
+    "id": "fs253177",
+    "file": "/se/lib/win/fs253177.mp3",
+    "title": "Retro \"Accomplished\" SFX",
+    "seconds": 0.34,
+    "source": "freesound",
+    "author": "suntemple",
+    "license": "CC0",
+    "page": "https://freesound.org/people/suntemple/sounds/253177/",
+    "bytes": 6730
+   },
+   {
+    "id": "fs162473",
+    "file": "/se/lib/win/fs162473.mp3",
+    "title": "successful.mp3",
+    "seconds": 3.16,
+    "source": "freesound",
+    "author": "Kastenfrosch",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Kastenfrosch/sounds/162473/",
+    "bytes": 51452
+   },
+   {
+    "id": "fs368651",
+    "file": "/se/lib/win/fs368651.mp3",
+    "title": "Game Powerup",
+    "seconds": 1.09,
+    "source": "freesound",
+    "author": "Jofae",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Jofae/sounds/368651/",
+    "bytes": 18433
+   },
+   {
+    "id": "mk600",
+    "file": "/se/lib/win/mk600.mp3",
+    "title": "Achievement bell",
+    "seconds": 2.4,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/win/",
+    "bytes": 39331
+   },
+   {
+    "id": "mk269",
+    "file": "/se/lib/win/mk269.mp3",
+    "title": "Quick win video game notification",
+    "seconds": 1.92,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/win/",
+    "bytes": 31807
+   }
+  ],
+  "jackpot": [
+   {
+    "id": "mk1999",
+    "file": "/se/lib/jackpot/mk1999.mp3",
+    "title": "Gold coin prize",
+    "seconds": 1.96,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/casino/",
+    "bytes": 32643
+   },
+   {
+    "id": "fs656643",
+    "file": "/se/lib/jackpot/fs656643.mp3",
+    "title": "Game Reward",
+    "seconds": 5.0,
+    "source": "freesound",
+    "author": "IENBA",
+    "license": "CC0",
+    "page": "https://freesound.org/people/IENBA/sounds/656643/",
+    "bytes": 81127
+   },
+   {
+    "id": "fs361346",
+    "file": "/se/lib/jackpot/fs361346.mp3",
+    "title": "slot machine payout.wav",
+    "seconds": 3.82,
+    "source": "freesound",
+    "author": "jack126guy",
+    "license": "CC0",
+    "page": "https://freesound.org/people/jack126guy/sounds/361346/",
+    "bytes": 62318
+   },
+   {
+    "id": "fs367462",
+    "file": "/se/lib/jackpot/fs367462.mp3",
+    "title": "MENEZ_Corentin_2016_2017_Slots machine.wav",
+    "seconds": 6.01,
+    "source": "freesound",
+    "author": "univ_lyon3",
+    "license": "CC0",
+    "page": "https://freesound.org/people/univ_lyon3/sounds/367462/",
+    "bytes": 97427
+   },
+   {
+    "id": "mk1993",
+    "file": "/se/lib/jackpot/mk1993.mp3",
+    "title": "Clinking coins",
+    "seconds": 1.02,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/casino/",
+    "bytes": 17597
+   }
+  ],
+  "coin": [
+   {
+    "id": "fs17502",
+    "file": "/se/lib/coin/fs17502.mp3",
+    "title": "Coin dropping.wav",
+    "seconds": 2.03,
+    "source": "freesound",
+    "author": "Jace",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Jace/sounds/17502/",
+    "bytes": 33479
+   },
+   {
+    "id": "mk1993",
+    "file": "/se/lib/coin/mk1993.mp3",
+    "title": "Clinking coins",
+    "seconds": 1.02,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/coin/",
+    "bytes": 17597
+   },
+   {
+    "id": "mk1999",
+    "file": "/se/lib/coin/mk1999.mp3",
+    "title": "Gold coin prize",
+    "seconds": 1.96,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/coin/",
+    "bytes": 32643
+   },
+   {
+    "id": "fs324760",
+    "file": "/se/lib/coin/fs324760.mp3",
+    "title": "coin drop on concrete",
+    "seconds": 1.53,
+    "source": "freesound",
+    "author": "PetervH",
+    "license": "CC0",
+    "page": "https://freesound.org/people/PetervH/sounds/324760/",
+    "bytes": 25538
+   },
+   {
+    "id": "fs121990",
+    "file": "/se/lib/coin/fs121990.mp3",
+    "title": "coinBag.wav",
+    "seconds": 0.51,
+    "source": "freesound",
+    "author": "tomf_",
+    "license": "CC0",
+    "page": "https://freesound.org/people/tomf_/sounds/121990/",
+    "bytes": 9238
+   }
+  ],
+  "cheer": [
+   {
+    "id": "mk515",
+    "file": "/se/lib/cheer/mk515.mp3",
+    "title": "Girls crowd cheer, scream, and applause",
+    "seconds": 6.06,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/applause/",
+    "bytes": 97845
+   },
+   {
+    "id": "fs277022",
+    "file": "/se/lib/cheer/fs277022.mp3",
+    "title": "Applause 1.WAV",
+    "seconds": 6.56,
+    "source": "freesound",
+    "author": "Sandermotions",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Sandermotions/sounds/277022/",
+    "bytes": 106204
+   },
+   {
+    "id": "fs139972",
+    "file": "/se/lib/cheer/fs139972.mp3",
+    "title": "Crowd.Yay.Applause.25ppl.Short.wav",
+    "seconds": 7.42,
+    "source": "freesound",
+    "author": "jessepash",
+    "license": "CC0",
+    "page": "https://freesound.org/people/jessepash/sounds/139972/",
+    "bytes": 119997
+   },
+   {
+    "id": "fs333404",
+    "file": "/se/lib/cheer/fs333404.mp3",
+    "title": "Cheer 2.wav",
+    "seconds": 4.08,
+    "source": "freesound",
+    "author": "jayfrosting",
+    "license": "CC0",
+    "page": "https://freesound.org/people/jayfrosting/sounds/333404/",
+    "bytes": 66498
+   },
+   {
+    "id": "mk476",
+    "file": "/se/lib/cheer/mk476.mp3",
+    "title": "Conference audience clapping strongly",
+    "seconds": 8.0,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/cheer/",
+    "bytes": 129192
+   }
+  ],
+  "sparkle": [
+   {
+    "id": "mk871",
+    "file": "/se/lib/sparkle/mk871.mp3",
+    "title": "Fairy magic sparkle",
+    "seconds": 1.15,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/sparkle/",
+    "bytes": 19687
+   },
+   {
+    "id": "mk866",
+    "file": "/se/lib/sparkle/mk866.mp3",
+    "title": "Fairy arcade sparkle",
+    "seconds": 1.5,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/sparkle/",
+    "bytes": 25120
+   },
+   {
+    "id": "mk869",
+    "file": "/se/lib/sparkle/mk869.mp3",
+    "title": "Fairy sparkle whoosh",
+    "seconds": 3.79,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/sparkle/",
+    "bytes": 61901
+   },
+   {
+    "id": "fs562292",
+    "file": "/se/lib/sparkle/fs562292.mp3",
+    "title": "Heal - Rpg",
+    "seconds": 1.23,
+    "source": "freesound",
+    "author": "colorsCrimsonTears",
+    "license": "CC0",
+    "page": "https://freesound.org/people/colorsCrimsonTears/sounds/562292/",
+    "bytes": 20941
+   },
+   {
+    "id": "fs639429",
+    "file": "/se/lib/sparkle/fs639429.mp3",
+    "title": "Crystal Twinkle",
+    "seconds": 3.85,
+    "source": "freesound",
+    "author": "LaurenPonder",
+    "license": "CC0",
+    "page": "https://freesound.org/people/LaurenPonder/sounds/639429/",
+    "bytes": 62736
+   }
+  ],
+  "magic": [
+   {
+    "id": "fs264981",
+    "file": "/se/lib/magic/fs264981.mp3",
+    "title": "SFX Magic",
+    "seconds": 1.95,
+    "source": "freesound",
+    "author": "renatalmar",
+    "license": "CC0",
+    "page": "https://freesound.org/people/renatalmar/sounds/264981/",
+    "bytes": 32225
+   },
+   {
+    "id": "fs349201",
+    "file": "/se/lib/magic/fs349201.mp3",
+    "title": "Magic mallet.wav",
+    "seconds": 4.67,
+    "source": "freesound",
+    "author": "Hotlavaman",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Hotlavaman/sounds/349201/",
+    "bytes": 75693
+   },
+   {
+    "id": "fs351408",
+    "file": "/se/lib/magic/fs351408.mp3",
+    "title": "GLEAM-GLOW-SFX-CHIME.wav",
+    "seconds": 3.99,
+    "source": "freesound",
+    "author": "newagesoup",
+    "license": "CC0",
+    "page": "https://freesound.org/people/newagesoup/sounds/351408/",
+    "bytes": 64826
+   },
+   {
+    "id": "mk3062",
+    "file": "/se/lib/magic/mk3062.mp3",
+    "title": "Magic wand sparkle",
+    "seconds": 2.5,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/magic/",
+    "bytes": 41003
+   },
+   {
+    "id": "mk2999",
+    "file": "/se/lib/magic/mk2999.mp3",
+    "title": "Magic bubbles spell",
+    "seconds": 1.67,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/magic/",
+    "bytes": 27628
+   }
+  ],
+  "heart": [
+   {
+    "id": "fs536335",
+    "file": "/se/lib/heart/fs536335.mp3",
+    "title": "Cartoon Kiss_cjohnstone.wav",
+    "seconds": 1.4,
+    "source": "freesound",
+    "author": "trijohnstone",
+    "license": "CC0",
+    "page": "https://freesound.org/people/trijohnstone/sounds/536335/",
+    "bytes": 23448
+   },
+   {
+    "id": "fs179303",
+    "file": "/se/lib/heart/fs179303.mp3",
+    "title": "perfect_kiss.mp3",
+    "seconds": 0.72,
+    "source": "freesound",
+    "author": "gflower",
+    "license": "CC0",
+    "page": "https://freesound.org/people/gflower/sounds/179303/",
+    "bytes": 12581
+   },
+   {
+    "id": "mk2192",
+    "file": "/se/lib/heart/mk2192.mp3",
+    "title": "Little cute kiss",
+    "seconds": 1.08,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/kiss/",
+    "bytes": 18433
+   },
+   {
+    "id": "fs430594",
+    "file": "/se/lib/heart/fs430594.mp3",
+    "title": "Kissing",
+    "seconds": 0.25,
+    "source": "freesound",
+    "author": "Juandamb",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Juandamb/sounds/430594/",
+    "bytes": 5058
+   },
+   {
+    "id": "mk2194",
+    "file": "/se/lib/heart/mk2194.mp3",
+    "title": "Cartoon friendly kiss",
+    "seconds": 1.03,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/kiss/",
+    "bytes": 17597
+   }
+  ],
+  "balloon": [
+   {
+    "id": "fs431532",
+    "file": "/se/lib/balloon/fs431532.mp3",
+    "title": "Popping",
+    "seconds": 0.45,
+    "source": "freesound",
+    "author": "supersound23",
+    "license": "CC0",
+    "page": "https://freesound.org/people/supersound23/sounds/431532/",
+    "bytes": 8402
+   },
+   {
+    "id": "mk3069",
+    "file": "/se/lib/balloon/mk3069.mp3",
+    "title": "Game balloon or bubble pop",
+    "seconds": 1.18,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/balloon/",
+    "bytes": 20105
+   },
+   {
+    "id": "fs188381",
+    "file": "/se/lib/balloon/fs188381.mp3",
+    "title": "3 Popping Pops",
+    "seconds": 2.95,
+    "source": "freesound",
+    "author": "wubitog",
+    "license": "CC0",
+    "page": "https://freesound.org/people/wubitog/sounds/188381/",
+    "bytes": 48108
+   },
+   {
+    "id": "fs82121",
+    "file": "/se/lib/balloon/fs82121.mp3",
+    "title": "Balloon-Burst-07.wav",
+    "seconds": 0.89,
+    "source": "freesound",
+    "author": "Gniffelbaf",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Gniffelbaf/sounds/82121/",
+    "bytes": 15507
+   },
+   {
+    "id": "mk3073",
+    "file": "/se/lib/balloon/mk3073.mp3",
+    "title": "Inflating a ballon",
+    "seconds": 3.82,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/balloon/",
+    "bytes": 62318
+   }
+  ],
+  "cat": [
+   {
+    "id": "fs110011",
+    "file": "/se/lib/cat/fs110011.mp3",
+    "title": "cat meow",
+    "seconds": 1.54,
+    "source": "freesound",
+    "author": "tuberatanka",
+    "license": "CC0",
+    "page": "https://freesound.org/people/tuberatanka/sounds/110011/",
+    "bytes": 25538
+   },
+   {
+    "id": "fs333916",
+    "file": "/se/lib/cat/fs333916.mp3",
+    "title": "Cat Meowing",
+    "seconds": 1.28,
+    "source": "freesound",
+    "author": "lextrack",
+    "license": "CC0",
+    "page": "https://freesound.org/people/lextrack/sounds/333916/",
+    "bytes": 21776
+   },
+   {
+    "id": "fs412017",
+    "file": "/se/lib/cat/fs412017.mp3",
+    "title": "cat meow short",
+    "seconds": 1.67,
+    "source": "freesound",
+    "author": "skymary",
+    "license": "CC0",
+    "page": "https://freesound.org/people/skymary/sounds/412017/",
+    "bytes": 27628
+   },
+   {
+    "id": "mk93",
+    "file": "/se/lib/cat/mk93.mp3",
+    "title": "Sweet kitty meow",
+    "seconds": 0.87,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/cat/",
+    "bytes": 15089
+   },
+   {
+    "id": "mk92",
+    "file": "/se/lib/cat/mk92.mp3",
+    "title": "Cartoon kitty begging meow",
+    "seconds": 2.5,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/cat/",
+    "bytes": 41003
+   }
+  ],
+  "dog": [
+   {
+    "id": "fs163459",
+    "file": "/se/lib/dog/fs163459.mp3",
+    "title": "LBS_FX DOG Small Alert Bark001.wav",
+    "seconds": 1.7,
+    "source": "freesound",
+    "author": "LittleBigSounds",
+    "license": "CC0",
+    "page": "https://freesound.org/people/LittleBigSounds/sounds/163459/",
+    "bytes": 28046
+   },
+   {
+    "id": "fs386766",
+    "file": "/se/lib/dog/fs386766.mp3",
+    "title": "Dog_Barking.wav",
+    "seconds": 2.59,
+    "source": "freesound",
+    "author": "ken788",
+    "license": "CC0",
+    "page": "https://freesound.org/people/ken788/sounds/386766/",
+    "bytes": 42674
+   },
+   {
+    "id": "mk1",
+    "file": "/se/lib/dog/mk1.mp3",
+    "title": "Dog barking twice",
+    "seconds": 1.62,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/dog/",
+    "bytes": 27210
+   },
+   {
+    "id": "mk51",
+    "file": "/se/lib/dog/mk51.mp3",
+    "title": "Annoyed big dog barking",
+    "seconds": 2.97,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/dog/",
+    "bytes": 48526
+   },
+   {
+    "id": "fs231762",
+    "file": "/se/lib/dog/fs231762.mp3",
+    "title": "FX_Dog Barking.wav",
+    "seconds": 1.56,
+    "source": "freesound",
+    "author": "davidmenke",
+    "license": "CC0",
+    "page": "https://freesound.org/people/davidmenke/sounds/231762/",
+    "bytes": 25956
+   }
+  ],
+  "pig": [
+   {
+    "id": "fs442906",
+    "file": "/se/lib/pig/fs442906.mp3",
+    "title": "Pig Oink",
+    "seconds": 0.74,
+    "source": "freesound",
+    "author": "qubodup",
+    "license": "CC0",
+    "page": "https://freesound.org/people/qubodup/sounds/442906/",
+    "bytes": 12999
+   },
+   {
+    "id": "fs233151",
+    "file": "/se/lib/pig/fs233151.mp3",
+    "title": "Pig - Scream 5 - 96kHz.wav",
+    "seconds": 1.94,
+    "source": "freesound",
+    "author": "JarredGibb",
+    "license": "CC0",
+    "page": "https://freesound.org/people/JarredGibb/sounds/233151/",
+    "bytes": 32225
+   },
+   {
+    "id": "fs233183",
+    "file": "/se/lib/pig/fs233183.mp3",
+    "title": "Pig - Multiple Snorts 2 (2 pigs) - 96kHz.wav",
+    "seconds": 1.57,
+    "source": "freesound",
+    "author": "JarredGibb",
+    "license": "CC0",
+    "page": "https://freesound.org/people/JarredGibb/sounds/233183/",
+    "bytes": 26374
+   },
+   {
+    "id": "fs442907",
+    "file": "/se/lib/pig/fs442907.mp3",
+    "title": "Pig Grunt",
+    "seconds": 0.37,
+    "source": "freesound",
+    "author": "qubodup",
+    "license": "CC0",
+    "page": "https://freesound.org/people/qubodup/sounds/442907/",
+    "bytes": 7148
+   },
+   {
+    "id": "fs233182",
+    "file": "/se/lib/pig/fs233182.mp3",
+    "title": "Pig - Multiple Snorts 3 (2 pigs) - 96kHz.wav",
+    "seconds": 1.44,
+    "source": "freesound",
+    "author": "JarredGibb",
+    "license": "CC0",
+    "page": "https://freesound.org/people/JarredGibb/sounds/233182/",
+    "bytes": 24284
+   }
+  ],
+  "elephant": [
+   {
+    "id": "fs527845",
+    "file": "/se/lib/elephant/fs527845.mp3",
+    "title": "Elephant Trumpets Growls.flac",
+    "seconds": 1.96,
+    "source": "freesound",
+    "author": "D.jones",
+    "license": "CC0",
+    "page": "https://freesound.org/people/D.jones/sounds/527845/",
+    "bytes": 32225
+   },
+   {
+    "id": "fs139052",
+    "file": "/se/lib/elephant/fs139052.mp3",
+    "title": "Elephant scream.wav",
+    "seconds": 1.5,
+    "source": "freesound",
+    "author": "Jasher70",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Jasher70/sounds/139052/",
+    "bytes": 25120
+   },
+   {
+    "id": "fs72464",
+    "file": "/se/lib/elephant/fs72464.mp3",
+    "title": "elephant1.wav",
+    "seconds": 3.41,
+    "source": "freesound",
+    "author": "rockwehrmann",
+    "license": "CC0",
+    "page": "https://freesound.org/people/rockwehrmann/sounds/72464/",
+    "bytes": 55631
+   },
+   {
+    "id": "fs510490",
+    "file": "/se/lib/elephant/fs510490.mp3",
+    "title": "eleaudio.m4a",
+    "seconds": 2.16,
+    "source": "freesound",
+    "author": "bkyte",
+    "license": "CC0",
+    "page": "https://freesound.org/people/bkyte/sounds/510490/",
+    "bytes": 35569
+   },
+   {
+    "id": "fs350421",
+    "file": "/se/lib/elephant/fs350421.mp3",
+    "title": "Rhinoceros Trumpet Joyful",
+    "seconds": 1.34,
+    "source": "freesound",
+    "author": "bevibeldesign",
+    "license": "CC0",
+    "page": "https://freesound.org/people/bevibeldesign/sounds/350421/",
+    "bytes": 22612
+   }
+  ],
+  "wolf": [
+   {
+    "id": "mk1774",
+    "file": "/se/lib/wolf/mk1774.mp3",
+    "title": "Cartoon wolf howling",
+    "seconds": 1.74,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/wolf/",
+    "bytes": 28882
+   },
+   {
+    "id": "mk1777",
+    "file": "/se/lib/wolf/mk1777.mp3",
+    "title": "Wolf creature howling roar",
+    "seconds": 4.95,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/wolf/",
+    "bytes": 80291
+   },
+   {
+    "id": "fs429109",
+    "file": "/se/lib/wolf/fs429109.mp3",
+    "title": "15-WolfCrying.wav",
+    "seconds": 3.28,
+    "source": "freesound",
+    "author": "cazadordoblekatana",
+    "license": "CC0",
+    "page": "https://freesound.org/people/cazadordoblekatana/sounds/429109/",
+    "bytes": 53541
+   },
+   {
+    "id": "fs203342",
+    "file": "/se/lib/wolf/fs203342.mp3",
+    "title": "Howl of the night",
+    "seconds": 3.87,
+    "source": "freesound",
+    "author": "kiwisarecool",
+    "license": "CC0",
+    "page": "https://freesound.org/people/kiwisarecool/sounds/203342/",
+    "bytes": 63154
+   },
+   {
+    "id": "fs420447",
+    "file": "/se/lib/wolf/fs420447.mp3",
+    "title": "Barking 4.wav",
+    "seconds": 0.58,
+    "source": "freesound",
+    "author": "Mrthenoronha",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Mrthenoronha/sounds/420447/",
+    "bytes": 10492
+   }
+  ],
+  "lion": [
+   {
+    "id": "mk6",
+    "file": "/se/lib/lion/mk6.mp3",
+    "title": "Wild lion animal roar",
+    "seconds": 1.28,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/lion/",
+    "bytes": 21358
+   },
+   {
+    "id": "fs467762",
+    "file": "/se/lib/lion/fs467762.mp3",
+    "title": "lion.wav",
+    "seconds": 1.38,
+    "source": "freesound",
+    "author": "SGAK",
+    "license": "CC0",
+    "page": "https://freesound.org/people/SGAK/sounds/467762/",
+    "bytes": 23030
+   },
+   {
+    "id": "fs567803",
+    "file": "/se/lib/lion/fs567803.mp3",
+    "title": "poujade_eva_2020_2021_RoarOfLion(son2).wav",
+    "seconds": 2.0,
+    "source": "freesound",
+    "author": "iut_Paris8",
+    "license": "CC0",
+    "page": "https://freesound.org/people/iut_Paris8/sounds/567803/",
+    "bytes": 33061
+   },
+   {
+    "id": "fs571288",
+    "file": "/se/lib/lion/fs571288.mp3",
+    "title": "tiger_roar.wav",
+    "seconds": 1.25,
+    "source": "freesound",
+    "author": "Vaporpup",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Vaporpup/sounds/571288/",
+    "bytes": 20941
+   },
+   {
+    "id": "mk95",
+    "file": "/se/lib/lion/mk95.mp3",
+    "title": "Big wild lion growl",
+    "seconds": 2.31,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/lion/",
+    "bytes": 38077
+   }
+  ],
+  "bird": [
+   {
+    "id": "fs43382",
+    "file": "/se/lib/bird/fs43382.mp3",
+    "title": "Rooster chicken calls_2.wav",
+    "seconds": 2.98,
+    "source": "freesound",
+    "author": "AGFX",
+    "license": "CC0",
+    "page": "https://freesound.org/people/AGFX/sounds/43382/",
+    "bytes": 48944
+   },
+   {
+    "id": "mk1772",
+    "file": "/se/lib/bird/mk1772.mp3",
+    "title": "Chickens clucking short",
+    "seconds": 2.04,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/chicken/",
+    "bytes": 33897
+   },
+   {
+    "id": "mk23",
+    "file": "/se/lib/bird/mk23.mp3",
+    "title": "Little bird calling chirp",
+    "seconds": 1.04,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/bird/",
+    "bytes": 17597
+   },
+   {
+    "id": "mk67",
+    "file": "/se/lib/bird/mk67.mp3",
+    "title": "Melodic songbird chirp",
+    "seconds": 1.76,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/bird/",
+    "bytes": 29300
+   },
+   {
+    "id": "fs435508",
+    "file": "/se/lib/bird/fs435508.mp3",
+    "title": "Rooster Crow 1",
+    "seconds": 2.01,
+    "source": "freesound",
+    "author": "BenjaminNelan",
+    "license": "CC0",
+    "page": "https://freesound.org/people/BenjaminNelan/sounds/435508/",
+    "bytes": 33479
+   }
+  ],
+  "horse": [
+   {
+    "id": "mk85",
+    "file": "/se/lib/horse/mk85.mp3",
+    "title": "Scared horse neighing",
+    "seconds": 2.34,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/horse/",
+    "bytes": 38495
+   },
+   {
+    "id": "mk76",
+    "file": "/se/lib/horse/mk76.mp3",
+    "title": "Intense horse stallion neigh",
+    "seconds": 2.32,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/horse/",
+    "bytes": 38077
+   },
+   {
+    "id": "mk1762",
+    "file": "/se/lib/horse/mk1762.mp3",
+    "title": "Stallion horse neigh",
+    "seconds": 2.9,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/horse/",
+    "bytes": 47690
+   },
+   {
+    "id": "fs269571",
+    "file": "/se/lib/horse/fs269571.mp3",
+    "title": "horse neigh shortened.wav",
+    "seconds": 1.35,
+    "source": "freesound",
+    "author": "shadoWisp",
+    "license": "CC0",
+    "page": "https://freesound.org/people/shadoWisp/sounds/269571/",
+    "bytes": 22612
+   },
+   {
+    "id": "fs521246",
+    "file": "/se/lib/horse/fs521246.mp3",
+    "title": "Horse",
+    "seconds": 1.94,
+    "source": "freesound",
+    "author": "poodaddy69",
+    "license": "CC0",
+    "page": "https://freesound.org/people/poodaddy69/sounds/521246/",
+    "bytes": 32225
+   }
+  ],
+  "cow": [
+   {
+    "id": "fs59245",
+    "file": "/se/lib/cow/fs59245.mp3",
+    "title": "z-moo01.wav",
+    "seconds": 1.72,
+    "source": "freesound",
+    "author": "Zozzy",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Zozzy/sounds/59245/",
+    "bytes": 28464
+   },
+   {
+    "id": "mk1751",
+    "file": "/se/lib/cow/mk1751.mp3",
+    "title": "Cow moo in the barn",
+    "seconds": 2.02,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/cow/",
+    "bytes": 33479
+   },
+   {
+    "id": "mk1744",
+    "file": "/se/lib/cow/mk1744.mp3",
+    "title": "Cow moo",
+    "seconds": 2.64,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/cow/",
+    "bytes": 43510
+   },
+   {
+    "id": "mk1749",
+    "file": "/se/lib/cow/mk1749.mp3",
+    "title": "Cow moo indoors",
+    "seconds": 3.28,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/cow/",
+    "bytes": 53541
+   },
+   {
+    "id": "fs275154",
+    "file": "/se/lib/cow/fs275154.mp3",
+    "title": "Moo.wav",
+    "seconds": 1.65,
+    "source": "freesound",
+    "author": "Bird_man",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Bird_man/sounds/275154/",
+    "bytes": 27628
+   }
+  ],
+  "monkey": [
+   {
+    "id": "fs325549",
+    "file": "/se/lib/monkey/fs325549.mp3",
+    "title": "Monkey screaming.wav",
+    "seconds": 2.99,
+    "source": "freesound",
+    "author": "Archeos",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Archeos/sounds/325549/",
+    "bytes": 48944
+   },
+   {
+    "id": "fs67361",
+    "file": "/se/lib/monkey/fs67361.mp3",
+    "title": "Affen schreit.mp3",
+    "seconds": 3.3,
+    "source": "freesound",
+    "author": "Bidone",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Bidone/sounds/67361/",
+    "bytes": 53959
+   },
+   {
+    "id": "fs504654",
+    "file": "/se/lib/monkey/fs504654.mp3",
+    "title": "Uh Oh.mp3",
+    "seconds": 1.9,
+    "source": "freesound",
+    "author": "Ant103010",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Ant103010/sounds/504654/",
+    "bytes": 31390
+   },
+   {
+    "id": "mk108",
+    "file": "/se/lib/monkey/mk108.mp3",
+    "title": "Cartoon monkey mocking and giggling",
+    "seconds": 2.01,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/monkey/",
+    "bytes": 33061
+   },
+   {
+    "id": "mk107",
+    "file": "/se/lib/monkey/mk107.mp3",
+    "title": "Cartoon monkey mocking laugh",
+    "seconds": 1.81,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/monkey/",
+    "bytes": 30136
+   }
+  ],
+  "bear": [
+   {
+    "id": "fs342204",
+    "file": "/se/lib/bear/fs342204.mp3",
+    "title": "Beast Snarling",
+    "seconds": 3.22,
+    "source": "freesound",
+    "author": "Christopherderp",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Christopherderp/sounds/342204/",
+    "bytes": 52705
+   },
+   {
+    "id": "fs77637",
+    "file": "/se/lib/bear/fs77637.mp3",
+    "title": "growl6.wav",
+    "seconds": 1.31,
+    "source": "freesound",
+    "author": "lendrick",
+    "license": "CC0",
+    "page": "https://freesound.org/people/lendrick/sounds/77637/",
+    "bytes": 22194
+   },
+   {
+    "id": "fs728102",
+    "file": "/se/lib/bear/fs728102.mp3",
+    "title": "Synthetic Bear Growl 2",
+    "seconds": 2.95,
+    "source": "freesound",
+    "author": "Piddipop",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Piddipop/sounds/728102/",
+    "bytes": 48108
+   },
+   {
+    "id": "fs771873",
+    "file": "/se/lib/bear/fs771873.mp3",
+    "title": "Growl",
+    "seconds": 3.68,
+    "source": "freesound",
+    "author": "Cromell",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Cromell/sounds/771873/",
+    "bytes": 59811
+   },
+   {
+    "id": "fs519598",
+    "file": "/se/lib/bear/fs519598.mp3",
+    "title": "huf grizzly",
+    "seconds": 0.36,
+    "source": "freesound",
+    "author": "Nivatius",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Nivatius/sounds/519598/",
+    "bytes": 6730
+   }
+  ],
+  "cute": [
+   {
+    "id": "fs396196",
+    "file": "/se/lib/cute/fs396196.mp3",
+    "title": "Cute Anime Jumps",
+    "seconds": 1.67,
+    "source": "freesound",
+    "author": "plasterbrain",
+    "license": "CC0",
+    "page": "https://freesound.org/people/plasterbrain/sounds/396196/",
+    "bytes": 27628
+   },
+   {
+    "id": "fs468443",
+    "file": "/se/lib/cute/fs468443.mp3",
+    "title": "Squeaky Toy #1",
+    "seconds": 0.45,
+    "source": "freesound",
+    "author": "Breviceps",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Breviceps/sounds/468443/",
+    "bytes": 8402
+   },
+   {
+    "id": "mk616",
+    "file": "/se/lib/cute/mk616.mp3",
+    "title": "Cartoon toy whistle",
+    "seconds": 1.15,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/cartoon/",
+    "bytes": 19687
+   },
+   {
+    "id": "mk2813",
+    "file": "/se/lib/cute/mk2813.mp3",
+    "title": "Funny squeaky toy hits",
+    "seconds": 1.08,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/toy/",
+    "bytes": 18433
+   },
+   {
+    "id": "mk2814",
+    "file": "/se/lib/cute/mk2814.mp3",
+    "title": "Funny squeaky toy",
+    "seconds": 1.49,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/toy/",
+    "bytes": 25120
+   }
+  ],
+  "drink": [
+   {
+    "id": "fs392624",
+    "file": "/se/lib/drink/fs392624.mp3",
+    "title": "Champagne Cork",
+    "seconds": 0.57,
+    "source": "freesound",
+    "author": "KenRT",
+    "license": "CC0",
+    "page": "https://freesound.org/people/KenRT/sounds/392624/",
+    "bytes": 10074
+   },
+   {
+    "id": "mk2836",
+    "file": "/se/lib/drink/mk2836.mp3",
+    "title": "Glasses clinking",
+    "seconds": 1.2,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/drink/",
+    "bytes": 20105
+   },
+   {
+    "id": "mk2936",
+    "file": "/se/lib/drink/mk2936.mp3",
+    "title": "Wine glass clink",
+    "seconds": 1.2,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/glass/",
+    "bytes": 20105
+   },
+   {
+    "id": "mk154",
+    "file": "/se/lib/drink/mk154.mp3",
+    "title": "A couple of glasses clink",
+    "seconds": 2.57,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/glass/",
+    "bytes": 42256
+   },
+   {
+    "id": "fs433721",
+    "file": "/se/lib/drink/fs433721.mp3",
+    "title": "Cheers!.wav",
+    "seconds": 1.39,
+    "source": "freesound",
+    "author": "dazza007",
+    "license": "CC0",
+    "page": "https://freesound.org/people/dazza007/sounds/433721/",
+    "bytes": 23448
+   }
+  ],
+  "food": [
+   {
+    "id": "fs106392",
+    "file": "/se/lib/food/fs106392.mp3",
+    "title": "carrotnom.wav",
+    "seconds": 0.58,
+    "source": "freesound",
+    "author": "j1987",
+    "license": "CC0",
+    "page": "https://freesound.org/people/j1987/sounds/106392/",
+    "bytes": 10492
+   },
+   {
+    "id": "fs275015",
+    "file": "/se/lib/food/fs275015.mp3",
+    "title": "Bite (Apple)",
+    "seconds": 0.83,
+    "source": "freesound",
+    "author": "wadaltmon",
+    "license": "CC0",
+    "page": "https://freesound.org/people/wadaltmon/sounds/275015/",
+    "bytes": 14253
+   },
+   {
+    "id": "fs339838",
+    "file": "/se/lib/food/fs339838.mp3",
+    "title": "mhm.mp3",
+    "seconds": 1.16,
+    "source": "freesound",
+    "author": "gnimpl",
+    "license": "CC0",
+    "page": "https://freesound.org/people/gnimpl/sounds/339838/",
+    "bytes": 19687
+   },
+   {
+    "id": "mk2244",
+    "file": "/se/lib/food/mk2244.mp3",
+    "title": "Chewing something crunchy",
+    "seconds": 0.92,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/food/",
+    "bytes": 15925
+   },
+   {
+    "id": "mk1791",
+    "file": "/se/lib/food/mk1791.mp3",
+    "title": "Cooking bell ding",
+    "seconds": 1.59,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/cooking/",
+    "bytes": 26374
+   }
+  ],
+  "party": [
+   {
+    "id": "fs458398",
+    "file": "/se/lib/party/fs458398.mp3",
+    "title": "Balloon Pop / Christmas cracker / Confetti Cannon",
+    "seconds": 0.35,
+    "source": "freesound",
+    "author": "Breviceps",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Breviceps/sounds/458398/",
+    "bytes": 6730
+   },
+   {
+    "id": "mk530",
+    "file": "/se/lib/party/mk530.mp3",
+    "title": "Happy party horn sound",
+    "seconds": 1.94,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/party/",
+    "bytes": 32225
+   },
+   {
+    "id": "mk526",
+    "file": "/se/lib/party/mk526.mp3",
+    "title": "Party trumpet horn isolated",
+    "seconds": 1.14,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/party/",
+    "bytes": 19269
+   },
+   {
+    "id": "fs506982",
+    "file": "/se/lib/party/fs506982.mp3",
+    "title": "Firecracker",
+    "seconds": 4.51,
+    "source": "freesound",
+    "author": "SamsterBirdies",
+    "license": "CC0",
+    "page": "https://freesound.org/people/SamsterBirdies/sounds/506982/",
+    "bytes": 73185
+   },
+   {
+    "id": "fs26349",
+    "file": "/se/lib/party/fs26349.mp3",
+    "title": "partypopper.flac",
+    "seconds": 0.61,
+    "source": "freesound",
+    "author": "Streety",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Streety/sounds/26349/",
+    "bytes": 10910
+   }
+  ],
+  "bell": [
+   {
+    "id": "fs243701",
+    "file": "/se/lib/bell/fs243701.mp3",
+    "title": "correct",
+    "seconds": 0.32,
+    "source": "freesound",
+    "author": "ertfelda",
+    "license": "CC0",
+    "page": "https://freesound.org/people/ertfelda/sounds/243701/",
+    "bytes": 6312
+   },
+   {
+    "id": "fs611113",
+    "file": "/se/lib/bell/fs611113.mp3",
+    "title": "bell ding 1.wav",
+    "seconds": 2.51,
+    "source": "freesound",
+    "author": "5ro4",
+    "license": "CC0",
+    "page": "https://freesound.org/people/5ro4/sounds/611113/",
+    "bytes": 41421
+   },
+   {
+    "id": "mk3109",
+    "file": "/se/lib/bell/mk3109.mp3",
+    "title": "Relaxing bell chime",
+    "seconds": 1.68,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/bell/",
+    "bytes": 28046
+   },
+   {
+    "id": "mk586",
+    "file": "/se/lib/bell/mk586.mp3",
+    "title": "Attention bell ding",
+    "seconds": 1.52,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/bell/",
+    "bytes": 25538
+   },
+   {
+    "id": "fs456161",
+    "file": "/se/lib/bell/fs456161.mp3",
+    "title": "Correct.wav",
+    "seconds": 1.41,
+    "source": "freesound",
+    "author": "bwg2020",
+    "license": "CC0",
+    "page": "https://freesound.org/people/bwg2020/sounds/456161/",
+    "bytes": 23448
+   }
+  ],
+  "christmas": [
+   {
+    "id": "fs369506",
+    "file": "/se/lib/christmas/fs369506.mp3",
+    "title": "Sleigh bells hit",
+    "seconds": 0.88,
+    "source": "freesound",
+    "author": "Selector",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Selector/sounds/369506/",
+    "bytes": 15089
+   },
+   {
+    "id": "fs452379",
+    "file": "/se/lib/christmas/fs452379.mp3",
+    "title": "Small Bell #2",
+    "seconds": 1.94,
+    "source": "freesound",
+    "author": "steffcaffrey",
+    "license": "CC0",
+    "page": "https://freesound.org/people/steffcaffrey/sounds/452379/",
+    "bytes": 32225
+   },
+   {
+    "id": "fs412534",
+    "file": "/se/lib/christmas/fs412534.mp3",
+    "title": "Air Media - Christmas Sound.wav",
+    "seconds": 5.36,
+    "source": "freesound",
+    "author": "airmedia",
+    "license": "CC0",
+    "page": "https://freesound.org/people/airmedia/sounds/412534/",
+    "bytes": 86978
+   },
+   {
+    "id": "mk584",
+    "file": "/se/lib/christmas/mk584.mp3",
+    "title": "Sleigh Bells",
+    "seconds": 4.25,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/sleigh-bells/",
+    "bytes": 69006
+   },
+   {
+    "id": "mk2988",
+    "file": "/se/lib/christmas/mk2988.mp3",
+    "title": "Christmas reveal tones",
+    "seconds": 3.02,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/christmas/",
+    "bytes": 49362
+   }
+  ],
+  "halloween": [
+   {
+    "id": "fs348142",
+    "file": "/se/lib/halloween/fs348142.mp3",
+    "title": "Witch's Laugh.wav",
+    "seconds": 3.34,
+    "source": "freesound",
+    "author": "NikoMyth",
+    "license": "CC0",
+    "page": "https://freesound.org/people/NikoMyth/sounds/348142/",
+    "bytes": 54377
+   },
+   {
+    "id": "fs223851",
+    "file": "/se/lib/halloween/fs223851.mp3",
+    "title": "Witch Laugh",
+    "seconds": 4.7,
+    "source": "freesound",
+    "author": "mvVoiceActing",
+    "license": "CC0",
+    "page": "https://freesound.org/people/mvVoiceActing/sounds/223851/",
+    "bytes": 76111
+   },
+   {
+    "id": "fs366168",
+    "file": "/se/lib/halloween/fs366168.mp3",
+    "title": "Intense Jumpscare",
+    "seconds": 4.08,
+    "source": "freesound",
+    "author": "Unaxete",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Unaxete/sounds/366168/",
+    "bytes": 66498
+   },
+   {
+    "id": "fs417826",
+    "file": "/se/lib/halloween/fs417826.mp3",
+    "title": "Witch Cackle",
+    "seconds": 1.11,
+    "source": "freesound",
+    "author": "AntumDeluge",
+    "license": "CC0",
+    "page": "https://freesound.org/people/AntumDeluge/sounds/417826/",
+    "bytes": 18851
+   },
+   {
+    "id": "fs646307",
+    "file": "/se/lib/halloween/fs646307.mp3",
+    "title": "Evil Laugh_1.wav",
+    "seconds": 3.31,
+    "source": "freesound",
+    "author": "NinjaSharkStudios",
+    "license": "CC0",
+    "page": "https://freesound.org/people/NinjaSharkStudios/sounds/646307/",
+    "bytes": 53959
+   }
+  ],
+  "sea": [
+   {
+    "id": "mk1198",
+    "file": "/se/lib/sea/mk1198.mp3",
+    "title": "Sea water splash",
+    "seconds": 1.74,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/splash/",
+    "bytes": 28882
+   },
+   {
+    "id": "fs9508",
+    "file": "/se/lib/sea/fs9508.mp3",
+    "title": "SPLASH.wav",
+    "seconds": 2.03,
+    "source": "freesound",
+    "author": "petenice",
+    "license": "CC0",
+    "page": "https://freesound.org/people/petenice/sounds/9508/",
+    "bytes": 33479
+   },
+   {
+    "id": "fs398032",
+    "file": "/se/lib/sea/fs398032.mp3",
+    "title": "Splash",
+    "seconds": 1.33,
+    "source": "freesound",
+    "author": "swordofkings128",
+    "license": "CC0",
+    "page": "https://freesound.org/people/swordofkings128/sounds/398032/",
+    "bytes": 22194
+   },
+   {
+    "id": "fs442773",
+    "file": "/se/lib/sea/fs442773.mp3",
+    "title": "Big Water Splash",
+    "seconds": 2.17,
+    "source": "freesound",
+    "author": "qubodup",
+    "license": "CC0",
+    "page": "https://freesound.org/people/qubodup/sounds/442773/",
+    "bytes": 35987
+   },
+   {
+    "id": "mk1311",
+    "file": "/se/lib/sea/mk1311.mp3",
+    "title": "Water splash",
+    "seconds": 1.43,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/splash/",
+    "bytes": 23866
+   }
+  ],
+  "rocket": [
+   {
+    "id": "mk1714",
+    "file": "/se/lib/rocket/mk1714.mp3",
+    "title": "Fast rocket whoosh",
+    "seconds": 4.46,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/rocket/",
+    "bytes": 72350
+   },
+   {
+    "id": "fs521377",
+    "file": "/se/lib/rocket/fs521377.mp3",
+    "title": "Rocket Launch",
+    "seconds": 1.41,
+    "source": "freesound",
+    "author": "Jarusca",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Jarusca/sounds/521377/",
+    "bytes": 23448
+   },
+   {
+    "id": "fs189327",
+    "file": "/se/lib/rocket/fs189327.mp3",
+    "title": "missile lock on sound",
+    "seconds": 4.96,
+    "source": "freesound",
+    "author": "Alxy",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Alxy/sounds/189327/",
+    "bytes": 80291
+   },
+   {
+    "id": "mk2825",
+    "file": "/se/lib/rocket/mk2825.mp3",
+    "title": "Sci-fi laser in space sound",
+    "seconds": 2.09,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/space-shooter/",
+    "bytes": 34733
+   },
+   {
+    "id": "mk3001",
+    "file": "/se/lib/rocket/mk3001.mp3",
+    "title": "Space shot whoosh",
+    "seconds": 1.81,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/space-shooter/",
+    "bytes": 30136
+   }
+  ],
+  "explosion": [
+   {
+    "id": "fs182429",
+    "file": "/se/lib/explosion/fs182429.mp3",
+    "title": "Explosion",
+    "seconds": 3.0,
+    "source": "freesound",
+    "author": "qubodup",
+    "license": "CC0",
+    "page": "https://freesound.org/people/qubodup/sounds/182429/",
+    "bytes": 48944
+   },
+   {
+    "id": "fs127845",
+    "file": "/se/lib/explosion/fs127845.mp3",
+    "title": "Tank fire Mixed.wav",
+    "seconds": 4.45,
+    "source": "freesound",
+    "author": "GaryQ",
+    "license": "CC0",
+    "page": "https://freesound.org/people/GaryQ/sounds/127845/",
+    "bytes": 72350
+   },
+   {
+    "id": "fs587193",
+    "file": "/se/lib/explosion/fs587193.mp3",
+    "title": "explosion_big_02.ogg",
+    "seconds": 3.16,
+    "source": "freesound",
+    "author": "derplayer",
+    "license": "CC0",
+    "page": "https://freesound.org/people/derplayer/sounds/587193/",
+    "bytes": 51452
+   },
+   {
+    "id": "mk2782",
+    "file": "/se/lib/explosion/mk2782.mp3",
+    "title": "Epic impact afar explosion",
+    "seconds": 4.53,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/explosion/",
+    "bytes": 73603
+   },
+   {
+    "id": "mk1687",
+    "file": "/se/lib/explosion/mk1687.mp3",
+    "title": "Dramatic metal explosion impact",
+    "seconds": 4.0,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/explosion/",
+    "bytes": 65244
+   }
+  ],
+  "casino": [
+   {
+    "id": "mk1933",
+    "file": "/se/lib/casino/mk1933.mp3",
+    "title": "Arcade slot machine wheel",
+    "seconds": 3.49,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/slot-machine/",
+    "bytes": 56885
+   },
+   {
+    "id": "fs209578",
+    "file": "/se/lib/casino/fs209578.mp3",
+    "title": "Cash Register Purchase",
+    "seconds": 2.71,
+    "source": "freesound",
+    "author": "Zott820",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Zott820/sounds/209578/",
+    "bytes": 44346
+   },
+   {
+    "id": "mk211",
+    "file": "/se/lib/casino/mk211.mp3",
+    "title": "Retro arcade casino notification",
+    "seconds": 4.12,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/casino/",
+    "bytes": 66916
+   },
+   {
+    "id": "mk1987",
+    "file": "/se/lib/casino/mk1987.mp3",
+    "title": "Casino Roulette ball",
+    "seconds": 3.38,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/casino/",
+    "bytes": 55213
+   },
+   {
+    "id": "fs361346",
+    "file": "/se/lib/casino/fs361346.mp3",
+    "title": "slot machine payout.wav",
+    "seconds": 3.82,
+    "source": "freesound",
+    "author": "jack126guy",
+    "license": "CC0",
+    "page": "https://freesound.org/people/jack126guy/sounds/361346/",
+    "bytes": 62318
+   }
+  ],
+  "music": [
+   {
+    "id": "mk2321",
+    "file": "/se/lib/music/mk2321.mp3",
+    "title": "Cool guitar riff",
+    "seconds": 1.53,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/guitar/",
+    "bytes": 25538
+   },
+   {
+    "id": "mk2319",
+    "file": "/se/lib/music/mk2319.mp3",
+    "title": "Happy guitar chords",
+    "seconds": 1.14,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/guitar/",
+    "bytes": 19269
+   },
+   {
+    "id": "mk2322",
+    "file": "/se/lib/music/mk2322.mp3",
+    "title": "Short guitar riff",
+    "seconds": 1.43,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/guitar/",
+    "bytes": 23866
+   },
+   {
+    "id": "fs541546",
+    "file": "/se/lib/music/fs541546.mp3",
+    "title": "Flashback Sound.wav",
+    "seconds": 5.4,
+    "source": "freesound",
+    "author": "sidequesting",
+    "license": "CC0",
+    "page": "https://freesound.org/people/sidequesting/sounds/541546/",
+    "bytes": 87396
+   },
+   {
+    "id": "fs167214",
+    "file": "/se/lib/music/fs167214.mp3",
+    "title": "guitar strike E.wav",
+    "seconds": 4.77,
+    "source": "freesound",
+    "author": "Snapper4298",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Snapper4298/sounds/167214/",
+    "bytes": 77365
+   }
+  ],
+  "battle": [
+   {
+    "id": "mk2762",
+    "file": "/se/lib/battle/mk2762.mp3",
+    "title": "Sword blade attack in medieval battle",
+    "seconds": 1.11,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/sword/",
+    "bytes": 18851
+   },
+   {
+    "id": "mk2763",
+    "file": "/se/lib/battle/mk2763.mp3",
+    "title": "Sword slashes in battle",
+    "seconds": 1.16,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/sword/",
+    "bytes": 19687
+   },
+   {
+    "id": "mk2764",
+    "file": "/se/lib/battle/mk2764.mp3",
+    "title": "Fast sword hit in medieval battle",
+    "seconds": 1.05,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/sword/",
+    "bytes": 18015
+   },
+   {
+    "id": "fs37596",
+    "file": "/se/lib/battle/fs37596.mp3",
+    "title": "Sword.wav",
+    "seconds": 0.93,
+    "source": "freesound",
+    "author": "hello_flowers",
+    "license": "CC0",
+    "page": "https://freesound.org/people/hello_flowers/sounds/37596/",
+    "bytes": 15925
+   },
+   {
+    "id": "fs263595",
+    "file": "/se/lib/battle/fs263595.mp3",
+    "title": "swoosh.wav",
+    "seconds": 1.83,
+    "source": "freesound",
+    "author": "PorkMuncher",
+    "license": "CC0",
+    "page": "https://freesound.org/people/PorkMuncher/sounds/263595/",
+    "bytes": 30554
+   }
+  ],
+  "vehicle": [
+   {
+    "id": "fs434878",
+    "file": "/se/lib/vehicle/fs434878.mp3",
+    "title": "Car Honking",
+    "seconds": 0.87,
+    "source": "freesound",
+    "author": "MicktheMicGuy",
+    "license": "CC0",
+    "page": "https://freesound.org/people/MicktheMicGuy/sounds/434878/",
+    "bytes": 15089
+   },
+   {
+    "id": "fs461679",
+    "file": "/se/lib/vehicle/fs461679.mp3",
+    "title": "05 Horn.wav",
+    "seconds": 3.03,
+    "source": "freesound",
+    "author": "15HPanska_Ruttner_Jan",
+    "license": "CC0",
+    "page": "https://freesound.org/people/15HPanska_Ruttner_Jan/sounds/461679/",
+    "bytes": 49780
+   },
+   {
+    "id": "fs170243",
+    "file": "/se/lib/vehicle/fs170243.mp3",
+    "title": "Car Horn.wav",
+    "seconds": 0.41,
+    "source": "freesound",
+    "author": "BeatsbyCasper",
+    "license": "CC0",
+    "page": "https://freesound.org/people/BeatsbyCasper/sounds/170243/",
+    "bytes": 7566
+   },
+   {
+    "id": "mk1565",
+    "file": "/se/lib/vehicle/mk1565.mp3",
+    "title": "Classic car horn",
+    "seconds": 0.51,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/horn/",
+    "bytes": 9238
+   },
+   {
+    "id": "mk719",
+    "file": "/se/lib/vehicle/mk719.mp3",
+    "title": "Car double horn",
+    "seconds": 0.86,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/horn/",
+    "bytes": 15089
+   }
+  ],
+  "flower": [
+   {
+    "id": "fs419594",
+    "file": "/se/lib/flower/fs419594.mp3",
+    "title": "Mystical Wind Chimes Transition FX",
+    "seconds": 4.81,
+    "source": "freesound",
+    "author": "djlprojects",
+    "license": "CC0",
+    "page": "https://freesound.org/people/djlprojects/sounds/419594/",
+    "bytes": 78201
+   },
+   {
+    "id": "fs169855",
+    "file": "/se/lib/flower/fs169855.mp3",
+    "title": "Wind Chime (G-003) +.wav",
+    "seconds": 3.37,
+    "source": "freesound",
+    "author": "GnoteSoundz",
+    "license": "CC0",
+    "page": "https://freesound.org/people/GnoteSoundz/sounds/169855/",
+    "bytes": 55213
+   },
+   {
+    "id": "fs66220",
+    "file": "/se/lib/flower/fs66220.mp3",
+    "title": "bamboo1.wav",
+    "seconds": 0.31,
+    "source": "freesound",
+    "author": "PercussionFiend",
+    "license": "CC0",
+    "page": "https://freesound.org/people/PercussionFiend/sounds/66220/",
+    "bytes": 5894
+   },
+   {
+    "id": "mk3109",
+    "file": "/se/lib/flower/mk3109.mp3",
+    "title": "Relaxing bell chime",
+    "seconds": 1.68,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/chimes/",
+    "bytes": 28046
+   },
+   {
+    "id": "mk3108",
+    "file": "/se/lib/flower/mk3108.mp3",
+    "title": "Crystal chime",
+    "seconds": 1.98,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/chimes/",
+    "bytes": 32643
+   }
+  ],
+  "pop": [
+   {
+    "id": "mk2357",
+    "file": "/se/lib/pop/mk2357.mp3",
+    "title": "Bubble pop up alert notification",
+    "seconds": 0.38,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/pop/",
+    "bytes": 7148
+   },
+   {
+    "id": "fs258193",
+    "file": "/se/lib/pop/fs258193.mp3",
+    "title": "beep beep",
+    "seconds": 0.36,
+    "source": "freesound",
+    "author": "Kodack",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Kodack/sounds/258193/",
+    "bytes": 6730
+   },
+   {
+    "id": "mk2364",
+    "file": "/se/lib/pop/mk2364.mp3",
+    "title": "Hard pop click",
+    "seconds": 1.17,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/pop/",
+    "bytes": 19687
+   },
+   {
+    "id": "mk2356",
+    "file": "/se/lib/pop/mk2356.mp3",
+    "title": "Dry pop up notification alert",
+    "seconds": 0.3,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/pop/",
+    "bytes": 5894
+   },
+   {
+    "id": "fs258269",
+    "file": "/se/lib/pop/fs258269.mp3",
+    "title": "Mouth pop",
+    "seconds": 0.32,
+    "source": "freesound",
+    "author": "jcallison",
+    "license": "CC0",
+    "page": "https://freesound.org/people/jcallison/sounds/258269/",
+    "bytes": 6312
+   }
+  ],
+  "trophy": [
+   {
+    "id": "fs456966",
+    "file": "/se/lib/trophy/fs456966.mp3",
+    "title": "Success Fanfare Trumpets.mp3",
+    "seconds": 4.44,
+    "source": "freesound",
+    "author": "FunWithSound",
+    "license": "CC0",
+    "page": "https://freesound.org/people/FunWithSound/sounds/456966/",
+    "bytes": 71932
+   },
+   {
+    "id": "fs415504",
+    "file": "/se/lib/trophy/fs415504.mp3",
+    "title": "Tadaa.wav",
+    "seconds": 4.64,
+    "source": "freesound",
+    "author": "Exchanger",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Exchanger/sounds/415504/",
+    "bytes": 75275
+   },
+   {
+    "id": "fs269198",
+    "file": "/se/lib/trophy/fs269198.mp3",
+    "title": "game-win.mp3",
+    "seconds": 2.5,
+    "source": "freesound",
+    "author": "mickleness",
+    "license": "CC0",
+    "page": "https://freesound.org/people/mickleness/sounds/269198/",
+    "bytes": 41003
+   },
+   {
+    "id": "mk269",
+    "file": "/se/lib/trophy/mk269.mp3",
+    "title": "Quick win video game notification",
+    "seconds": 1.92,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/win/",
+    "bytes": 31807
+   },
+   {
+    "id": "mk2019",
+    "file": "/se/lib/trophy/mk2019.mp3",
+    "title": "Ethereal fairy win sound",
+    "seconds": 2.44,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/win/",
+    "bytes": 40167
+   }
+  ],
+  "epic": [
+   {
+    "id": "fs177242",
+    "file": "/se/lib/epic/fs177242.mp3",
+    "title": "Cinematic Impact",
+    "seconds": 7.41,
+    "source": "freesound",
+    "author": "deleted_user_3277771",
+    "license": "CC0",
+    "page": "https://freesound.org/people/deleted_user_3277771/sounds/177242/",
+    "bytes": 119579
+   },
+   {
+    "id": "fs222517",
+    "file": "/se/lib/epic/fs222517.mp3",
+    "title": "Dramatic Hit",
+    "seconds": 7.04,
+    "source": "freesound",
+    "author": "qubodup",
+    "license": "CC0",
+    "page": "https://freesound.org/people/qubodup/sounds/222517/",
+    "bytes": 113727
+   },
+   {
+    "id": "fs427803",
+    "file": "/se/lib/epic/fs427803.mp3",
+    "title": "Cinematic Hit With Horns.wav",
+    "seconds": 4.37,
+    "source": "freesound",
+    "author": "DeVern",
+    "license": "CC0",
+    "page": "https://freesound.org/people/DeVern/sounds/427803/",
+    "bytes": 71096
+   },
+   {
+    "id": "mk1143",
+    "file": "/se/lib/epic/mk1143.mp3",
+    "title": "Cinematic whoosh deep impact",
+    "seconds": 3.92,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/cinematic/",
+    "bytes": 64269
+   },
+   {
+    "id": "mk2290",
+    "file": "/se/lib/epic/mk2290.mp3",
+    "title": "Epic orchestra transition",
+    "seconds": 7.12,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/orchestra/",
+    "bytes": 114981
+   }
+  ],
+  "notify": [
+   {
+    "id": "fs380482",
+    "file": "/se/lib/notify/fs380482.mp3",
+    "title": "Chime Notification",
+    "seconds": 0.32,
+    "source": "freesound",
+    "author": "Jofae",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Jofae/sounds/380482/",
+    "bytes": 6312
+   },
+   {
+    "id": "mk2357",
+    "file": "/se/lib/notify/mk2357.mp3",
+    "title": "Bubble pop up alert notification",
+    "seconds": 0.38,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/notification/",
+    "bytes": 7148
+   },
+   {
+    "id": "mk2356",
+    "file": "/se/lib/notify/mk2356.mp3",
+    "title": "Dry pop up notification alert",
+    "seconds": 0.3,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/notification/",
+    "bytes": 5894
+   },
+   {
+    "id": "mk2320",
+    "file": "/se/lib/notify/mk2320.mp3",
+    "title": "Guitar notification alert",
+    "seconds": 1.6,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/notification/",
+    "bytes": 26792
+   },
+   {
+    "id": "fs351879",
+    "file": "/se/lib/notify/fs351879.mp3",
+    "title": "Computer Chimes - Notification.aif",
+    "seconds": 1.37,
+    "source": "freesound",
+    "author": "marlonnnnnn",
+    "license": "CC0",
+    "page": "https://freesound.org/people/marlonnnnnn/sounds/351879/",
+    "bytes": 23030
+   }
+  ],
+  "wow": [
+   {
+    "id": "fs162395",
+    "file": "/se/lib/wow/fs162395.mp3",
+    "title": "yay.mp3",
+    "seconds": 1.83,
+    "source": "freesound",
+    "author": "zut50",
+    "license": "CC0",
+    "page": "https://freesound.org/people/zut50/sounds/162395/",
+    "bytes": 30554
+   },
+   {
+    "id": "fs353923",
+    "file": "/se/lib/wow/fs353923.mp3",
+    "title": "yay.wav",
+    "seconds": 3.49,
+    "source": "freesound",
+    "author": "dr_skitz",
+    "license": "CC0",
+    "page": "https://freesound.org/people/dr_skitz/sounds/353923/",
+    "bytes": 56885
+   },
+   {
+    "id": "fs274510",
+    "file": "/se/lib/wow/fs274510.mp3",
+    "title": "3 Men Cheering",
+    "seconds": 2.04,
+    "source": "freesound",
+    "author": "jbeetle",
+    "license": "CC0",
+    "page": "https://freesound.org/people/jbeetle/sounds/274510/",
+    "bytes": 33897
+   },
+   {
+    "id": "mk975",
+    "file": "/se/lib/wow/mk975.mp3",
+    "title": "Happy crowd cheer",
+    "seconds": 4.0,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/happy/",
+    "bytes": 65244
+   },
+   {
+    "id": "mk384",
+    "file": "/se/lib/wow/mk384.mp3",
+    "title": "Cartoon teen says thank you",
+    "seconds": 1.22,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/thank-you/",
+    "bytes": 20523
+   }
+  ],
+  "dice": [
+   {
+    "id": "fs177208",
+    "file": "/se/lib/dice/fs177208.mp3",
+    "title": "Dice Rolling - Dungeon and Dragons",
+    "seconds": 3.91,
+    "source": "freesound",
+    "author": "joanneneedsthesound",
+    "license": "CC0",
+    "page": "https://freesound.org/people/joanneneedsthesound/sounds/177208/",
+    "bytes": 63572
+   },
+   {
+    "id": "fs629982",
+    "file": "/se/lib/dice/fs629982.mp3",
+    "title": "Dice Rolling on Table",
+    "seconds": 1.04,
+    "source": "freesound",
+    "author": "Flem0527",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Flem0527/sounds/629982/",
+    "bytes": 17597
+   },
+   {
+    "id": "fs353975",
+    "file": "/se/lib/dice/fs353975.mp3",
+    "title": "rolling dice 1.wav",
+    "seconds": 0.95,
+    "source": "freesound",
+    "author": "nettimato",
+    "license": "CC0",
+    "page": "https://freesound.org/people/nettimato/sounds/353975/",
+    "bytes": 16343
+   },
+   {
+    "id": "fs398698",
+    "file": "/se/lib/dice/fs398698.mp3",
+    "title": "Slow Pebble Tumble.wav",
+    "seconds": 0.98,
+    "source": "freesound",
+    "author": "bbrocer",
+    "license": "CC0",
+    "page": "https://freesound.org/people/bbrocer/sounds/398698/",
+    "bytes": 16761
+   },
+   {
+    "id": "fs162456",
+    "file": "/se/lib/dice/fs162456.mp3",
+    "title": "Dice.mp3",
+    "seconds": 1.6,
+    "source": "freesound",
+    "author": "Kastenfrosch",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Kastenfrosch/sounds/162456/",
+    "bytes": 26792
+   }
+  ],
+  "kids": [
+   {
+    "id": "fs371342",
+    "file": "/se/lib/kids/fs371342.mp3",
+    "title": "D2_kidslaughing.mp3",
+    "seconds": 3.16,
+    "source": "freesound",
+    "author": "Iamgiorgio",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Iamgiorgio/sounds/371342/",
+    "bytes": 51452
+   },
+   {
+    "id": "fs458645",
+    "file": "/se/lib/kids/fs458645.mp3",
+    "title": "babygiggle.mp3",
+    "seconds": 1.81,
+    "source": "freesound",
+    "author": "jamesmbock",
+    "license": "CC0",
+    "page": "https://freesound.org/people/jamesmbock/sounds/458645/",
+    "bytes": 30136
+   },
+   {
+    "id": "mk2265",
+    "file": "/se/lib/kids/mk2265.mp3",
+    "title": "Happy child laughing",
+    "seconds": 2.29,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/children/",
+    "bytes": 37659
+   },
+   {
+    "id": "mk2263",
+    "file": "/se/lib/kids/mk2263.mp3",
+    "title": "Child laughing happily",
+    "seconds": 0.7,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/children/",
+    "bytes": 12163
+   },
+   {
+    "id": "mk431",
+    "file": "/se/lib/kids/mk431.mp3",
+    "title": "Kid giggle laugh",
+    "seconds": 2.28,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/children/",
+    "bytes": 37659
+   }
+  ],
+  "thunder": [
+   {
+    "id": "fs475094",
+    "file": "/se/lib/thunder/fs475094.mp3",
+    "title": "thunder3.ogg",
+    "seconds": 3.5,
+    "source": "freesound",
+    "author": "Josh74000MC",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Josh74000MC/sounds/475094/",
+    "bytes": 57303
+   },
+   {
+    "id": "fs195439",
+    "file": "/se/lib/thunder/fs195439.mp3",
+    "title": "strike 3 sec.wav",
+    "seconds": 3.68,
+    "source": "freesound",
+    "author": "Littlebrojay",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Littlebrojay/sounds/195439/",
+    "bytes": 59811
+   },
+   {
+    "id": "mk1293",
+    "file": "/se/lib/thunder/mk1293.mp3",
+    "title": "Fast thunder whoosh",
+    "seconds": 4.12,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/thunder/",
+    "bytes": 66916
+   },
+   {
+    "id": "mk1283",
+    "file": "/se/lib/thunder/mk1283.mp3",
+    "title": "Cinematic thunder",
+    "seconds": 4.92,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/thunder/",
+    "bytes": 79873
+   },
+   {
+    "id": "fs765327",
+    "file": "/se/lib/thunder/fs765327.mp3",
+    "title": "Thunder Strike",
+    "seconds": 5.62,
+    "source": "freesound",
+    "author": "ChloePieterse",
+    "license": "CC0",
+    "page": "https://freesound.org/people/ChloePieterse/sounds/765327/",
+    "bytes": 91158
+   }
+  ],
+  "fire": [
+   {
+    "id": "mk1345",
+    "file": "/se/lib/fire/mk1345.mp3",
+    "title": "Short fire whoosh",
+    "seconds": 3.09,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/fire/",
+    "bytes": 50616
+   },
+   {
+    "id": "mk1328",
+    "file": "/se/lib/fire/mk1328.mp3",
+    "title": "Fire swoosh burning",
+    "seconds": 3.01,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/fire/",
+    "bytes": 49362
+   },
+   {
+    "id": "mk1332",
+    "file": "/se/lib/fire/mk1332.mp3",
+    "title": "Big fire spell burning",
+    "seconds": 3.9,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/fire/",
+    "bytes": 63572
+   },
+   {
+    "id": "fs171255",
+    "file": "/se/lib/fire/fs171255.mp3",
+    "title": "Sliding Trailer Woosh",
+    "seconds": 1.63,
+    "source": "freesound",
+    "author": "qubodup",
+    "license": "CC0",
+    "page": "https://freesound.org/people/qubodup/sounds/171255/",
+    "bytes": 27210
+   },
+   {
+    "id": "fs260554",
+    "file": "/se/lib/fire/fs260554.mp3",
+    "title": "Basic Fire whoosh",
+    "seconds": 3.89,
+    "source": "freesound",
+    "author": "LookIMadeAThing",
+    "license": "CC0",
+    "page": "https://freesound.org/people/LookIMadeAThing/sounds/260554/",
+    "bytes": 63154
+   }
+  ],
+  "laser": [
+   {
+    "id": "fs160421",
+    "file": "/se/lib/laser/fs160421.mp3",
+    "title": "Electrical Shock (Zap).wav",
+    "seconds": 3.64,
+    "source": "freesound",
+    "author": "BigKahuna360",
+    "license": "CC0",
+    "page": "https://freesound.org/people/BigKahuna360/sounds/160421/",
+    "bytes": 59393
+   },
+   {
+    "id": "fs398274",
+    "file": "/se/lib/laser/fs398274.mp3",
+    "title": "Electricity",
+    "seconds": 3.28,
+    "source": "freesound",
+    "author": "FlashTrauma",
+    "license": "CC0",
+    "page": "https://freesound.org/people/FlashTrauma/sounds/398274/",
+    "bytes": 53541
+   },
+   {
+    "id": "fs341612",
+    "file": "/se/lib/laser/fs341612.mp3",
+    "title": "Electricity 4",
+    "seconds": 3.82,
+    "source": "freesound",
+    "author": "PureAudioNinja",
+    "license": "CC0",
+    "page": "https://freesound.org/people/PureAudioNinja/sounds/341612/",
+    "bytes": 62318
+   },
+   {
+    "id": "mk3201",
+    "file": "/se/lib/laser/mk3201.mp3",
+    "title": "Electric charge hum",
+    "seconds": 2.38,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/electricity/",
+    "bytes": 39331
+   },
+   {
+    "id": "mk1467",
+    "file": "/se/lib/laser/mk1467.mp3",
+    "title": "Cinematic laser swoosh",
+    "seconds": 1.23,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/laser/",
+    "bytes": 20941
+   }
+  ],
+  "whoosh": [
+   {
+    "id": "fs60013",
+    "file": "/se/lib/whoosh/fs60013.mp3",
+    "title": "Whoosh",
+    "seconds": 0.43,
+    "source": "freesound",
+    "author": "qubodup",
+    "license": "CC0",
+    "page": "https://freesound.org/people/qubodup/sounds/60013/",
+    "bytes": 7984
+   },
+   {
+    "id": "fs60030",
+    "file": "/se/lib/whoosh/fs60030.mp3",
+    "title": "Swosh / Whoosh / Air Cut",
+    "seconds": 0.44,
+    "source": "freesound",
+    "author": "qubodup",
+    "license": "CC0",
+    "page": "https://freesound.org/people/qubodup/sounds/60030/",
+    "bytes": 7984
+   },
+   {
+    "id": "fs169867",
+    "file": "/se/lib/whoosh/fs169867.mp3",
+    "title": "swoosh",
+    "seconds": 2.11,
+    "source": "freesound",
+    "author": "Halgrimm",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Halgrimm/sounds/169867/",
+    "bytes": 34733
+   },
+   {
+    "id": "mk1492",
+    "file": "/se/lib/whoosh/mk1492.mp3",
+    "title": "Cinematic whoosh fast transition",
+    "seconds": 1.28,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/whoosh/",
+    "bytes": 21776
+   },
+   {
+    "id": "mk1490",
+    "file": "/se/lib/whoosh/mk1490.mp3",
+    "title": "Fast whoosh transition",
+    "seconds": 1.6,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/whoosh/",
+    "bytes": 26792
+   }
+  ],
+  "bulk-COOL": [
+   {
+    "id": "fs253177",
+    "file": "/se/lib/bulk-COOL/fs253177.mp3",
+    "title": "Retro \"Accomplished\" SFX",
+    "seconds": 0.34,
+    "source": "freesound",
+    "author": "suntemple",
+    "license": "CC0",
+    "page": "https://freesound.org/people/suntemple/sounds/253177/",
+    "bytes": 6730
+   },
+   {
+    "id": "fs368651",
+    "file": "/se/lib/bulk-COOL/fs368651.mp3",
+    "title": "Game Powerup",
+    "seconds": 1.09,
+    "source": "freesound",
+    "author": "Jofae",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Jofae/sounds/368651/",
+    "bytes": 18433
+   },
+   {
+    "id": "fs442943",
+    "file": "/se/lib/bulk-COOL/fs442943.mp3",
+    "title": "Level Up",
+    "seconds": 1.67,
+    "source": "freesound",
+    "author": "qubodup",
+    "license": "CC0",
+    "page": "https://freesound.org/people/qubodup/sounds/442943/",
+    "bytes": 27628
+   },
+   {
+    "id": "mk600",
+    "file": "/se/lib/bulk-COOL/mk600.mp3",
+    "title": "Achievement bell",
+    "seconds": 2.4,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/win/",
+    "bytes": 39331
+   },
+   {
+    "id": "mk269",
+    "file": "/se/lib/bulk-COOL/mk269.mp3",
+    "title": "Quick win video game notification",
+    "seconds": 1.92,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/win/",
+    "bytes": 31807
+   }
+  ],
+  "bulk-GREAT": [
+   {
+    "id": "mk515",
+    "file": "/se/lib/bulk-GREAT/mk515.mp3",
+    "title": "Girls crowd cheer, scream, and applause",
+    "seconds": 6.0,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/applause/",
+    "bytes": 97009
+   },
+   {
+    "id": "fs333404",
+    "file": "/se/lib/bulk-GREAT/fs333404.mp3",
+    "title": "Cheer 2.wav",
+    "seconds": 4.08,
+    "source": "freesound",
+    "author": "jayfrosting",
+    "license": "CC0",
+    "page": "https://freesound.org/people/jayfrosting/sounds/333404/",
+    "bytes": 66498
+   },
+   {
+    "id": "fs415504",
+    "file": "/se/lib/bulk-GREAT/fs415504.mp3",
+    "title": "Tadaa.wav",
+    "seconds": 4.64,
+    "source": "freesound",
+    "author": "Exchanger",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Exchanger/sounds/415504/",
+    "bytes": 75275
+   },
+   {
+    "id": "fs463371",
+    "file": "/se/lib/bulk-GREAT/fs463371.mp3",
+    "title": "Aplauso com Gritos.wav",
+    "seconds": 5.45,
+    "source": "freesound",
+    "author": "rui9lima",
+    "license": "CC0",
+    "page": "https://freesound.org/people/rui9lima/sounds/463371/",
+    "bytes": 88232
+   },
+   {
+    "id": "mk509",
+    "file": "/se/lib/bulk-GREAT/mk509.mp3",
+    "title": "Football team applause",
+    "seconds": 4.65,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/applause/",
+    "bytes": 75275
+   }
+  ],
+  "bulk-FANTASTIC": [
+   {
+    "id": "mk2285",
+    "file": "/se/lib/bulk-FANTASTIC/mk2285.mp3",
+    "title": "Orchestra triumphant trumpets",
+    "seconds": 4.53,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/orchestra/",
+    "bytes": 73603
+   },
+   {
+    "id": "fs456966",
+    "file": "/se/lib/bulk-FANTASTIC/fs456966.mp3",
+    "title": "Success Fanfare Trumpets.mp3",
+    "seconds": 4.44,
+    "source": "freesound",
+    "author": "FunWithSound",
+    "license": "CC0",
+    "page": "https://freesound.org/people/FunWithSound/sounds/456966/",
+    "bytes": 71932
+   },
+   {
+    "id": "mk2292",
+    "file": "/se/lib/bulk-FANTASTIC/mk2292.mp3",
+    "title": "Orchestra trumpets ending",
+    "seconds": 4.0,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/orchestra/",
+    "bytes": 65244
+   },
+   {
+    "id": "fs415504",
+    "file": "/se/lib/bulk-FANTASTIC/fs415504.mp3",
+    "title": "Tadaa.wav",
+    "seconds": 4.64,
+    "source": "freesound",
+    "author": "Exchanger",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Exchanger/sounds/415504/",
+    "bytes": 75275
+   },
+   {
+    "id": "mk2293",
+    "file": "/se/lib/bulk-FANTASTIC/mk2293.mp3",
+    "title": "Trumpet fanfare",
+    "seconds": 8.0,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/orchestra/",
+    "bytes": 129192
+   }
+  ],
+  "bulk-MIRACLE": [
+   {
+    "id": "mk2285",
+    "file": "/se/lib/bulk-MIRACLE/mk2285.mp3",
+    "title": "Orchestra triumphant trumpets",
+    "seconds": 4.53,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/orchestra/",
+    "bytes": 73603
+   },
+   {
+    "id": "mk2290",
+    "file": "/se/lib/bulk-MIRACLE/mk2290.mp3",
+    "title": "Epic orchestra transition",
+    "seconds": 7.12,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/orchestra/",
+    "bytes": 114981
+   },
+   {
+    "id": "fs336725",
+    "file": "/se/lib/bulk-MIRACLE/fs336725.mp3",
+    "title": "Inception Horn Victory",
+    "seconds": 2.95,
+    "source": "freesound",
+    "author": "Kubatko",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Kubatko/sounds/336725/",
+    "bytes": 48108
+   },
+   {
+    "id": "mk2294",
+    "file": "/se/lib/bulk-MIRACLE/mk2294.mp3",
+    "title": "Drum bass hit",
+    "seconds": 1.53,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/orchestra/",
+    "bytes": 25538
+   },
+   {
+    "id": "fs812468",
+    "file": "/se/lib/bulk-MIRACLE/fs812468.mp3",
+    "title": "Angelic Fanfare 2",
+    "seconds": 6.27,
+    "source": "freesound",
+    "author": "qubodup",
+    "license": "CC0",
+    "page": "https://freesound.org/people/qubodup/sounds/812468/",
+    "bytes": 101607
+   }
+  ],
+  "tier-T0": [
+   {
+    "id": "fs202230",
+    "file": "/se/lib/tier-T0/fs202230.mp3",
+    "title": "Pop sound",
+    "seconds": 0.51,
+    "source": "freesound",
+    "author": "deraj",
+    "license": "CC0",
+    "page": "https://freesound.org/people/deraj/sounds/202230/",
+    "bytes": 9238
+   },
+   {
+    "id": "fs19284",
+    "file": "/se/lib/tier-T0/fs19284.mp3",
+    "title": "cartoon poppyup appearances -0001.aiff",
+    "seconds": 1.48,
+    "source": "freesound",
+    "author": "martian",
+    "license": "CC0",
+    "page": "https://freesound.org/people/martian/sounds/19284/",
+    "bytes": 24702
+   },
+   {
+    "id": "fs267952",
+    "file": "/se/lib/tier-T0/fs267952.mp3",
+    "title": "pop.wav",
+    "seconds": 1.72,
+    "source": "freesound",
+    "author": "anagar",
+    "license": "CC0",
+    "page": "https://freesound.org/people/anagar/sounds/267952/",
+    "bytes": 28464
+   },
+   {
+    "id": "mk2357",
+    "file": "/se/lib/tier-T0/mk2357.mp3",
+    "title": "Bubble pop up alert notification",
+    "seconds": 0.38,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/pop/",
+    "bytes": 7148
+   },
+   {
+    "id": "mk2358",
+    "file": "/se/lib/tier-T0/mk2358.mp3",
+    "title": "Long pop",
+    "seconds": 0.48,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/pop/",
+    "bytes": 8820
+   }
+  ],
+  "tier-T1": [
+   {
+    "id": "fs380482",
+    "file": "/se/lib/tier-T1/fs380482.mp3",
+    "title": "Chime Notification",
+    "seconds": 0.32,
+    "source": "freesound",
+    "author": "Jofae",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Jofae/sounds/380482/",
+    "bytes": 6312
+   },
+   {
+    "id": "fs361564",
+    "file": "/se/lib/tier-T1/fs361564.mp3",
+    "title": "Ding Dong",
+    "seconds": 2.8,
+    "source": "freesound",
+    "author": "MatthewWong",
+    "license": "CC0",
+    "page": "https://freesound.org/people/MatthewWong/sounds/361564/",
+    "bytes": 46018
+   },
+   {
+    "id": "fs116779",
+    "file": "/se/lib/tier-T1/fs116779.mp3",
+    "title": "Ringing bell - happy.wav",
+    "seconds": 2.64,
+    "source": "freesound",
+    "author": "domrodrig",
+    "license": "CC0",
+    "page": "https://freesound.org/people/domrodrig/sounds/116779/",
+    "bytes": 43092
+   },
+   {
+    "id": "mk933",
+    "file": "/se/lib/tier-T1/mk933.mp3",
+    "title": "Bell notification",
+    "seconds": 3.0,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/bell/",
+    "bytes": 48944
+   },
+   {
+    "id": "mk937",
+    "file": "/se/lib/tier-T1/mk937.mp3",
+    "title": "Happy bells notification",
+    "seconds": 3.0,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/bell/",
+    "bytes": 48944
+   }
+  ],
+  "tier-T2": [
+   {
+    "id": "mk1999",
+    "file": "/se/lib/tier-T2/mk1999.mp3",
+    "title": "Gold coin prize",
+    "seconds": 1.96,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/coin/",
+    "bytes": 32643
+   },
+   {
+    "id": "fs347174",
+    "file": "/se/lib/tier-T2/fs347174.mp3",
+    "title": "Coin Pickup Sound V 0.2",
+    "seconds": 0.51,
+    "source": "freesound",
+    "author": "Davidsraba",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Davidsraba/sounds/347174/",
+    "bytes": 9238
+   },
+   {
+    "id": "fs512216",
+    "file": "/se/lib/tier-T2/fs512216.mp3",
+    "title": "Coins",
+    "seconds": 0.44,
+    "source": "freesound",
+    "author": "Mateusz_Chenc",
+    "license": "CC0",
+    "page": "https://freesound.org/people/Mateusz_Chenc/sounds/512216/",
+    "bytes": 7984
+   },
+   {
+    "id": "fs121990",
+    "file": "/se/lib/tier-T2/fs121990.mp3",
+    "title": "coinBag.wav",
+    "seconds": 0.51,
+    "source": "freesound",
+    "author": "tomf_",
+    "license": "CC0",
+    "page": "https://freesound.org/people/tomf_/sounds/121990/",
+    "bytes": 9238
+   },
+   {
+    "id": "mk1993",
+    "file": "/se/lib/tier-T2/mk1993.mp3",
+    "title": "Clinking coins",
+    "seconds": 1.02,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/coin/",
+    "bytes": 17597
+   }
+  ],
+  "tier-T3": [
+   {
+    "id": "fs456966",
+    "file": "/se/lib/tier-T3/fs456966.mp3",
+    "title": "Success Fanfare Trumpets.mp3",
+    "seconds": 4.44,
+    "source": "freesound",
+    "author": "FunWithSound",
+    "license": "CC0",
+    "page": "https://freesound.org/people/FunWithSound/sounds/456966/",
+    "bytes": 71932
+   },
+   {
+    "id": "fs397355",
+    "file": "/se/lib/tier-T3/fs397355.mp3",
+    "title": "Tada Fanfare A",
+    "seconds": 1.72,
+    "source": "freesound",
+    "author": "plasterbrain",
+    "license": "CC0",
+    "page": "https://freesound.org/people/plasterbrain/sounds/397355/",
+    "bytes": 28464
+   },
+   {
+    "id": "fs397353",
+    "file": "/se/lib/tier-T3/fs397353.mp3",
+    "title": "Tada Fanfare G",
+    "seconds": 1.69,
+    "source": "freesound",
+    "author": "plasterbrain",
+    "license": "CC0",
+    "page": "https://freesound.org/people/plasterbrain/sounds/397353/",
+    "bytes": 28046
+   },
+   {
+    "id": "mk269",
+    "file": "/se/lib/tier-T3/mk269.mp3",
+    "title": "Quick win video game notification",
+    "seconds": 1.92,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/win/",
+    "bytes": 31807
+   },
+   {
+    "id": "mk270",
+    "file": "/se/lib/tier-T3/mk270.mp3",
+    "title": "Fantasy game success notification",
+    "seconds": 3.0,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/win/",
+    "bytes": 48944
+   }
+  ],
+  "tier-T4": [
+   {
+    "id": "mk2285",
+    "file": "/se/lib/tier-T4/mk2285.mp3",
+    "title": "Orchestra triumphant trumpets",
+    "seconds": 4.53,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/orchestra/",
+    "bytes": 73603
+   },
+   {
+    "id": "fs456966",
+    "file": "/se/lib/tier-T4/fs456966.mp3",
+    "title": "Success Fanfare Trumpets.mp3",
+    "seconds": 4.44,
+    "source": "freesound",
+    "author": "FunWithSound",
+    "license": "CC0",
+    "page": "https://freesound.org/people/FunWithSound/sounds/456966/",
+    "bytes": 71932
+   },
+   {
+    "id": "fs397355",
+    "file": "/se/lib/tier-T4/fs397355.mp3",
+    "title": "Tada Fanfare A",
+    "seconds": 1.72,
+    "source": "freesound",
+    "author": "plasterbrain",
+    "license": "CC0",
+    "page": "https://freesound.org/people/plasterbrain/sounds/397355/",
+    "bytes": 28464
+   },
+   {
+    "id": "fs256128",
+    "file": "/se/lib/tier-T4/fs256128.mp3",
+    "title": "TaDa!.aif",
+    "seconds": 5.58,
+    "source": "freesound",
+    "author": "jimhancock",
+    "license": "CC0",
+    "page": "https://freesound.org/people/jimhancock/sounds/256128/",
+    "bytes": 90322
+   },
+   {
+    "id": "mk2292",
+    "file": "/se/lib/tier-T4/mk2292.mp3",
+    "title": "Orchestra trumpets ending",
+    "seconds": 4.0,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/orchestra/",
+    "bytes": 65244
+   }
+  ],
+  "hit": [
+   {
+    "id": "fs243701",
+    "file": "/se/lib/hit/fs243701.mp3",
+    "title": "correct",
+    "seconds": 0.32,
+    "source": "freesound",
+    "author": "ertfelda",
+    "license": "CC0",
+    "page": "https://freesound.org/people/ertfelda/sounds/243701/",
+    "bytes": 6312
+   },
+   {
+    "id": "mk1931",
+    "file": "/se/lib/hit/mk1931.mp3",
+    "title": "Slot machine win alert",
+    "seconds": 3.49,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/casino/",
+    "bytes": 56885
+   },
+   {
+    "id": "fs656643",
+    "file": "/se/lib/hit/fs656643.mp3",
+    "title": "Game Reward",
+    "seconds": 5.0,
+    "source": "freesound",
+    "author": "IENBA",
+    "license": "CC0",
+    "page": "https://freesound.org/people/IENBA/sounds/656643/",
+    "bytes": 81127
+   },
+   {
+    "id": "mk1995",
+    "file": "/se/lib/hit/mk1995.mp3",
+    "title": "Slot machine win alarm",
+    "seconds": 6.0,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/casino/",
+    "bytes": 97009
+   },
+   {
+    "id": "mk1928",
+    "file": "/se/lib/hit/mk1928.mp3",
+    "title": "Slot machine win",
+    "seconds": 4.97,
+    "source": "mixkit",
+    "author": "Mixkit",
+    "license": "Mixkit Sound Effects Free License",
+    "page": "https://mixkit.co/free-sound-effects/casino/",
+    "bytes": 80709
+   }
+  ]
+ }
+}

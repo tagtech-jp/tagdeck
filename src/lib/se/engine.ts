@@ -15,6 +15,20 @@ export interface SePlayOptions {
 
 let ctx: AudioContext | null = null;
 const bufferCache = new Map<string, AudioBuffer>();
+/**
+ * デコード済みバッファの上限（2026-09-29）。自動ライブラリ（約 280 本）を全部持つと数百 MB になるため、
+ * 直近に使った順で残す（Map の挿入順を LRU として使う）。価格帯・段階・当たりの先読み分（約 50 本）は収まる
+ */
+export const BUFFER_CACHE_LIMIT = 96;
+function touchCache(url: string, buf: AudioBuffer): void {
+  bufferCache.delete(url);
+  bufferCache.set(url, buf);
+  while (bufferCache.size > BUFFER_CACHE_LIMIT) {
+    const oldest = bufferCache.keys().next().value;
+    if (oldest === undefined) break;
+    bufferCache.delete(oldest);
+  }
+}
 /** 取得・デコード中の Promise。同じ URL が同時に来ても 1 回にまとめる */
 const inflight = new Map<string, Promise<AudioBuffer | null>>();
 
@@ -178,7 +192,10 @@ const SYNTH_DURATION_S: Record<SeTier, number> = { T0: 0.15, T1: 0.45, T2: 0.85,
  */
 async function loadBuffer(c: AudioContext, url: string): Promise<AudioBuffer | null> {
   const cached = bufferCache.get(url);
-  if (cached) return cached;
+  if (cached) {
+    touchCache(url, cached);
+    return cached;
+  }
   const running = inflight.get(url);
   if (running) return running;
   const p = (async () => {
@@ -186,7 +203,7 @@ async function loadBuffer(c: AudioContext, url: string): Promise<AudioBuffer | n
       const res = await fetch(url);
       if (!res.ok) return null;
       const buf = await c.decodeAudioData(await res.arrayBuffer());
-      bufferCache.set(url, buf);
+      touchCache(url, buf);
       return buf;
     } catch {
       return null;
