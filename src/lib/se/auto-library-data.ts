@@ -1,5 +1,5 @@
 // 自動生成: scripts/se/gen_auto_library_data_cc0.py（元: public/se/lib/manifest.json）。手で編集しない。
-// 生成 2026-09-30T08:00:22Z・音源はすべて CC0 1.0（Freesound の CC0 フィルタ / Kenney の効果音パック）。正式リリースの音源ルールは docs/live-cockpit/README.md S23
+// 生成 2026-09-30T08:36:12Z・音源はすべて CC0 1.0（Freesound の CC0 フィルタ / Kenney の効果音パック）。正式リリースの音源ルールは docs/live-cockpit/README.md S23
 export interface AutoLibraryFile {
   /** サイト相対 URL（public/se/lib/…） */
   file: string;
@@ -867,22 +867,22 @@ export const AUTO_LIBRARY: Readonly<Record<string, readonly AutoLibraryFile[]>> 
   "ev-fireworks-COOL": [
     { file: "/se/lib/ev-fireworks-COOL/v8-1.mp3", title: "ev-fireworks-COOL ミックス 1（15 素材・12.0s）", seconds: 12.0 },
     { file: "/se/lib/ev-fireworks-COOL/v8-2.mp3", title: "ev-fireworks-COOL ミックス 2（16 素材・12.0s）", seconds: 12.0 },
-    { file: "/se/lib/ev-fireworks-COOL/v8-3.mp3", title: "ev-fireworks-COOL ミックス 3（13 素材・11.6s）", seconds: 11.6 },
+    { file: "/se/lib/ev-fireworks-COOL/v8-3.mp3", title: "ev-fireworks-COOL ミックス 3（15 素材・12.0s）", seconds: 12.0 },
   ],
   "ev-fireworks-GREAT": [
-    { file: "/se/lib/ev-fireworks-GREAT/v8-1.mp3", title: "ev-fireworks-GREAT ミックス 1（17 素材・14.0s）", seconds: 14.0 },
+    { file: "/se/lib/ev-fireworks-GREAT/v8-1.mp3", title: "ev-fireworks-GREAT ミックス 1（17 素材・13.7s）", seconds: 13.66 },
     { file: "/se/lib/ev-fireworks-GREAT/v8-2.mp3", title: "ev-fireworks-GREAT ミックス 2（16 素材・13.8s）", seconds: 13.82 },
     { file: "/se/lib/ev-fireworks-GREAT/v8-3.mp3", title: "ev-fireworks-GREAT ミックス 3（16 素材・14.0s）", seconds: 14.0 },
   ],
   "ev-fireworks-FANTASTIC": [
     { file: "/se/lib/ev-fireworks-FANTASTIC/v8-1.mp3", title: "ev-fireworks-FANTASTIC ミックス 1（20 素材・17.0s）", seconds: 17.0 },
     { file: "/se/lib/ev-fireworks-FANTASTIC/v8-2.mp3", title: "ev-fireworks-FANTASTIC ミックス 2（19 素材・17.0s）", seconds: 17.0 },
-    { file: "/se/lib/ev-fireworks-FANTASTIC/v8-3.mp3", title: "ev-fireworks-FANTASTIC ミックス 3（20 素材・17.0s）", seconds: 17.0 },
+    { file: "/se/lib/ev-fireworks-FANTASTIC/v8-3.mp3", title: "ev-fireworks-FANTASTIC ミックス 3（19 素材・17.0s）", seconds: 17.0 },
   ],
   "ev-fireworks-MIRACLE": [
-    { file: "/se/lib/ev-fireworks-MIRACLE/v8-1.mp3", title: "ev-fireworks-MIRACLE ミックス 1（23 素材・20.0s）", seconds: 20.0 },
-    { file: "/se/lib/ev-fireworks-MIRACLE/v8-2.mp3", title: "ev-fireworks-MIRACLE ミックス 2（22 素材・18.9s）", seconds: 18.88 },
-    { file: "/se/lib/ev-fireworks-MIRACLE/v8-3.mp3", title: "ev-fireworks-MIRACLE ミックス 3（23 素材・19.7s）", seconds: 19.71 },
+    { file: "/se/lib/ev-fireworks-MIRACLE/v8-1.mp3", title: "ev-fireworks-MIRACLE ミックス 1（23 素材・19.9s）", seconds: 19.86 },
+    { file: "/se/lib/ev-fireworks-MIRACLE/v8-2.mp3", title: "ev-fireworks-MIRACLE ミックス 2（22 素材・18.8s）", seconds: 18.8 },
+    { file: "/se/lib/ev-fireworks-MIRACLE/v8-3.mp3", title: "ev-fireworks-MIRACLE ミックス 3（23 素材・19.2s）", seconds: 19.23 },
   ],
 };
 

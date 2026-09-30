@@ -50,12 +50,12 @@
       "at": 2.23
      },
      {
-      "id": "fs167242",
-      "title": "fireworkblast.wav",
+      "id": "fs21410",
+      "title": "blow.aif",
       "source": "freesound",
-      "author": "nfrae",
+      "author": "Heigh-hoo",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/nfrae/sounds/167242/",
+      "page": "https://freesound.org/people/Heigh-hoo/sounds/21410/",
       "at": 3.66
      },
      {
@@ -68,58 +68,58 @@
       "at": 3.81
      },
      {
+      "id": "fs277022",
+      "title": "Applause 1.WAV",
+      "source": "freesound",
+      "author": "Sandermotions",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/Sandermotions/sounds/277022/",
+      "at": 4.16
+     },
+     {
+      "id": "fs202927",
+      "title": "Fireworks.wav",
+      "source": "freesound",
+      "author": "Adrian_Gomar",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/Adrian_Gomar/sounds/202927/",
+      "at": 5.3
+     },
+     {
+      "id": "fs422079",
+      "title": "single firework.wav",
+      "source": "freesound",
+      "author": "johnnyguitar01",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/johnnyguitar01/sounds/422079/",
+      "at": 6.1
+     },
+     {
+      "id": "fs750682",
+      "title": "Firework Crackle",
+      "source": "freesound",
+      "author": "LukaCafuka",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/LukaCafuka/sounds/750682/",
+      "at": 6.7
+     },
+     {
       "id": "fs242233",
       "title": "Whoo1.wav",
       "source": "freesound",
       "author": "ehohnke",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/ehohnke/sounds/242233/",
-      "at": 4.16
-     },
-     {
-      "id": "fs213241",
-      "title": "Fireworks",
-      "source": "freesound",
-      "author": "MrAuralization",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/MrAuralization/sounds/213241/",
-      "at": 5.3
-     },
-     {
-      "id": "fs21410",
-      "title": "blow.aif",
-      "source": "freesound",
-      "author": "Heigh-hoo",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Heigh-hoo/sounds/21410/",
-      "at": 6.1
-     },
-     {
-      "id": "fs140716",
-      "title": "Firecracker",
-      "source": "freesound",
-      "author": "j1987",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140716/",
-      "at": 6.7
-     },
-     {
-      "id": "fs333398",
-      "title": "Gasp 2 with wonder.wav",
-      "source": "freesound",
-      "author": "jayfrosting",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/jayfrosting/sounds/333398/",
       "at": 7.1
      },
      {
-      "id": "fs683323",
-      "title": "Magic Spell Fairy Dust",
+      "id": "fs639429",
+      "title": "Crystal Twinkle",
       "source": "freesound",
-      "author": "zazz.sound.design",
+      "author": "LaurenPonder",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/zazz.sound.design/sounds/683323/",
-      "at": 7.85
+      "page": "https://freesound.org/people/LaurenPonder/sounds/639429/",
+      "at": 7.05
      }
     ]
    },
@@ -167,49 +167,76 @@
       "at": 2.26
      },
      {
-      "id": "fs376660",
-      "title": "NYE Single Boom.wav",
-      "source": "freesound",
-      "author": "LOVEBURD",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LOVEBURD/sounds/376660/",
-      "at": 3.51
-     },
-     {
-      "id": "fs648212",
-      "title": "Ui sounds - Shimmering success",
-      "source": "freesound",
-      "author": "Philip_Berger",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Philip_Berger/sounds/648212/",
-      "at": 3.66
-     },
-     {
-      "id": "fs462362",
-      "title": "Small applause",
-      "source": "freesound",
-      "author": "Breviceps",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Breviceps/sounds/462362/",
-      "at": 4.01
-     },
-     {
-      "id": "fs121558",
-      "title": "whistleAndReport.aif",
-      "source": "freesound",
-      "author": "sbarncar",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/sbarncar/sounds/121558/",
-      "at": 4.5
-     },
-     {
       "id": "fs167242",
       "title": "fireworkblast.wav",
       "source": "freesound",
       "author": "nfrae",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/nfrae/sounds/167242/",
-      "at": 6.3
+      "at": 3.51
+     },
+     {
+      "id": "fs715067",
+      "title": "achievement-sparkle",
+      "source": "freesound",
+      "author": "SkySpeira",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/SkySpeira/sounds/715067/",
+      "at": 3.66
+     },
+     {
+      "id": "fs333412",
+      "title": "Gasp 1 with surprise.wav",
+      "source": "freesound",
+      "author": "jayfrosting",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/jayfrosting/sounds/333412/",
+      "at": 4.01
+     },
+     {
+      "id": "fs140723",
+      "title": "whistlingrocket_2.wav",
+      "source": "freesound",
+      "author": "j1987",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/j1987/sounds/140723/",
+      "at": 4.22
+     },
+     {
+      "id": "fs376660",
+      "title": "NYE Single Boom.wav",
+      "source": "freesound",
+      "author": "LOVEBURD",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/LOVEBURD/sounds/376660/",
+      "at": 5.65
+     },
+     {
+      "id": "fs140727",
+      "title": "tinymortar.wav",
+      "source": "freesound",
+      "author": "j1987",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/j1987/sounds/140727/",
+      "at": 5.95
+     },
+     {
+      "id": "fs569846",
+      "title": "Fireworks #1",
+      "source": "freesound",
+      "author": "danlucaz",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/danlucaz/sounds/569846/",
+      "at": 6.57
+     },
+     {
+      "id": "fs587194",
+      "title": "explosion_big_01.ogg",
+      "source": "freesound",
+      "author": "derplayer",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/derplayer/sounds/587194/",
+      "at": 7.37
      },
      {
       "id": "fs461085",
@@ -218,34 +245,7 @@
       "author": "15GKovacovaJulie",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/15GKovacovaJulie/sounds/461085/",
-      "at": 6.6
-     },
-     {
-      "id": "fs376659",
-      "title": "NYE Boom Firecrackers.wav",
-      "source": "freesound",
-      "author": "LOVEBURD",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LOVEBURD/sounds/376659/",
-      "at": 7.06
-     },
-     {
-      "id": "fs140717",
-      "title": "Firework Cluster",
-      "source": "freesound",
-      "author": "j1987",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140717/",
-      "at": 7.86
-     },
-     {
-      "id": "fs588198",
-      "title": "Fireworks - Pop Pop Crackle",
-      "source": "freesound",
-      "author": "el_boss",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/el_boss/sounds/588198/",
-      "at": 8.46
+      "at": 7.97
      },
      {
       "id": "fs277022",
@@ -254,7 +254,7 @@
       "author": "Sandermotions",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/Sandermotions/sounds/277022/",
-      "at": 8.86
+      "at": 8.37
      },
      {
       "id": "fs683323",
@@ -263,7 +263,7 @@
       "author": "zazz.sound.design",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/zazz.sound.design/sounds/683323/",
-      "at": 10.66
+      "at": 7.57
      }
     ]
    },
@@ -284,12 +284,12 @@
       "at": 0.0
      },
      {
-      "id": "fs455547",
-      "title": "Firework Single Rocket #2",
+      "id": "fs140717",
+      "title": "Firework Cluster",
       "source": "freesound",
-      "author": "Kinoton",
+      "author": "j1987",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Kinoton/sounds/455547/",
+      "page": "https://freesound.org/people/j1987/sounds/140717/",
       "at": 1.77
      },
      {
@@ -302,22 +302,22 @@
       "at": 2.07
      },
      {
-      "id": "fs140726",
-      "title": "tiny_rocket.wav",
+      "id": "fs336008",
+      "title": "Whistle and Explosion Single_Firework",
       "source": "freesound",
-      "author": "j1987",
+      "author": "Rudmer_Rotteveel",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140726/",
+      "page": "https://freesound.org/people/Rudmer_Rotteveel/sounds/336008/",
       "at": 2.91
      },
      {
-      "id": "fs117616",
-      "title": "fireworks exploding 1.wav",
+      "id": "fs587194",
+      "title": "explosion_big_01.ogg",
       "source": "freesound",
-      "author": "soundmary",
+      "author": "derplayer",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/soundmary/sounds/117616/",
-      "at": 4.58
+      "page": "https://freesound.org/people/derplayer/sounds/587194/",
+      "at": 4.34
      },
      {
       "id": "fs511485",
@@ -326,7 +326,7 @@
       "author": "MLaudio",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/MLaudio/sounds/511485/",
-      "at": 4.73
+      "at": 4.49
      },
      {
       "id": "fs462362",
@@ -335,7 +335,7 @@
       "author": "Breviceps",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/Breviceps/sounds/462362/",
-      "at": 5.08
+      "at": 4.84
      },
      {
       "id": "fs202927",
@@ -344,16 +344,16 @@
       "author": "Adrian_Gomar",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/Adrian_Gomar/sounds/202927/",
-      "at": 5.43
+      "at": 5.3
      },
      {
-      "id": "fs414515",
-      "title": "Big Firecracker",
+      "id": "fs588198",
+      "title": "Fireworks - Pop Pop Crackle",
       "source": "freesound",
-      "author": "Kinoton",
+      "author": "el_boss",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Kinoton/sounds/414515/",
-      "at": 6.23
+      "page": "https://freesound.org/people/el_boss/sounds/588198/",
+      "at": 6.1
      },
      {
       "id": "fs140727",
@@ -362,16 +362,16 @@
       "author": "j1987",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/j1987/sounds/140727/",
-      "at": 6.83
+      "at": 6.7
      },
      {
-      "id": "fs333398",
-      "title": "Gasp 2 with wonder.wav",
+      "id": "fs198320",
+      "title": "applauses.wav",
       "source": "freesound",
-      "author": "jayfrosting",
+      "author": "schafferdavid",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/jayfrosting/sounds/333398/",
-      "at": 7.23
+      "page": "https://freesound.org/people/schafferdavid/sounds/198320/",
+      "at": 7.1
      },
      {
       "id": "fs639429",
@@ -380,7 +380,7 @@
       "author": "LaurenPonder",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/LaurenPonder/sounds/639429/",
-      "at": 7.86
+      "at": 7.05
      },
      {
       "id": "fs140716",
@@ -410,12 +410,12 @@
       "at": 0.0
      },
      {
-      "id": "fs140717",
-      "title": "Firework Cluster",
+      "id": "fs167242",
+      "title": "fireworkblast.wav",
       "source": "freesound",
-      "author": "j1987",
+      "author": "nfrae",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140717/",
+      "page": "https://freesound.org/people/nfrae/sounds/167242/",
       "at": 1.67
      },
      {
@@ -437,67 +437,13 @@
       "at": 2.43
      },
      {
-      "id": "fs588198",
-      "title": "Fireworks - Pop Pop Crackle",
+      "id": "fs414515",
+      "title": "Big Firecracker",
       "source": "freesound",
-      "author": "el_boss",
+      "author": "Kinoton",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/el_boss/sounds/588198/",
+      "page": "https://freesound.org/people/Kinoton/sounds/414515/",
       "at": 4.23
-     },
-     {
-      "id": "fs715067",
-      "title": "achievement-sparkle",
-      "source": "freesound",
-      "author": "SkySpeira",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/SkySpeira/sounds/715067/",
-      "at": 4.38
-     },
-     {
-      "id": "fs333398",
-      "title": "Gasp 2 with wonder.wav",
-      "source": "freesound",
-      "author": "jayfrosting",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/jayfrosting/sounds/333398/",
-      "at": 4.73
-     },
-     {
-      "id": "fs376659",
-      "title": "NYE Boom Firecrackers.wav",
-      "source": "freesound",
-      "author": "LOVEBURD",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LOVEBURD/sounds/376659/",
-      "at": 5.3
-     },
-     {
-      "id": "fs21410",
-      "title": "blow.aif",
-      "source": "freesound",
-      "author": "Heigh-hoo",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Heigh-hoo/sounds/21410/",
-      "at": 6.1
-     },
-     {
-      "id": "fs461085",
-      "title": "1.5_sparkler.wav",
-      "source": "freesound",
-      "author": "15GKovacovaJulie",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/15GKovacovaJulie/sounds/461085/",
-      "at": 6.7
-     },
-     {
-      "id": "fs198320",
-      "title": "applauses.wav",
-      "source": "freesound",
-      "author": "schafferdavid",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/schafferdavid/sounds/198320/",
-      "at": 7.1
      },
      {
       "id": "fs511485",
@@ -506,7 +452,61 @@
       "author": "MLaudio",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/MLaudio/sounds/511485/",
-      "at": 11.56
+      "at": 4.38
+     },
+     {
+      "id": "fs242233",
+      "title": "Whoo1.wav",
+      "source": "freesound",
+      "author": "ehohnke",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/ehohnke/sounds/242233/",
+      "at": 4.73
+     },
+     {
+      "id": "fs569846",
+      "title": "Fireworks #1",
+      "source": "freesound",
+      "author": "danlucaz",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/danlucaz/sounds/569846/",
+      "at": 5.36
+     },
+     {
+      "id": "fs588198",
+      "title": "Fireworks - Pop Pop Crackle",
+      "source": "freesound",
+      "author": "el_boss",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/el_boss/sounds/588198/",
+      "at": 6.16
+     },
+     {
+      "id": "fs461085",
+      "title": "1.5_sparkler.wav",
+      "source": "freesound",
+      "author": "15GKovacovaJulie",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/15GKovacovaJulie/sounds/461085/",
+      "at": 6.76
+     },
+     {
+      "id": "fs333412",
+      "title": "Gasp 1 with surprise.wav",
+      "source": "freesound",
+      "author": "jayfrosting",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/jayfrosting/sounds/333412/",
+      "at": 7.16
+     },
+     {
+      "id": "fs639429",
+      "title": "Crystal Twinkle",
+      "source": "freesound",
+      "author": "LaurenPonder",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/LaurenPonder/sounds/639429/",
+      "at": 7.05
      }
     ]
    },
@@ -527,49 +527,49 @@
       "at": 0.0
      },
      {
-      "id": "fs167242",
-      "title": "fireworkblast.wav",
-      "source": "freesound",
-      "author": "nfrae",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/nfrae/sounds/167242/",
-      "at": 1.77
-     },
-     {
-      "id": "fs349830",
-      "title": "Fireworks22.wav",
-      "source": "freesound",
-      "author": "kingsrow",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/kingsrow/sounds/349830/",
-      "at": 2.07
-     },
-     {
-      "id": "fs336008",
-      "title": "Whistle and Explosion Single_Firework",
-      "source": "freesound",
-      "author": "Rudmer_Rotteveel",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Rudmer_Rotteveel/sounds/336008/",
-      "at": 2.87
-     },
-     {
       "id": "fs588198",
       "title": "Fireworks - Pop Pop Crackle",
       "source": "freesound",
       "author": "el_boss",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/el_boss/sounds/588198/",
-      "at": 4.3
+      "at": 1.77
      },
      {
-      "id": "fs683323",
-      "title": "Magic Spell Fairy Dust",
+      "id": "fs121557",
+      "title": "firecrackers.wav",
       "source": "freesound",
-      "author": "zazz.sound.design",
+      "author": "sbarncar",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/zazz.sound.design/sounds/683323/",
-      "at": 4.45
+      "page": "https://freesound.org/people/sbarncar/sounds/121557/",
+      "at": 2.07
+     },
+     {
+      "id": "fs88532",
+      "title": "Woosh_northern87",
+      "source": "freesound",
+      "author": "northern87",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/northern87/sounds/88532/",
+      "at": 2.73
+     },
+     {
+      "id": "fs445237",
+      "title": "Firework 2",
+      "source": "freesound",
+      "author": "steffcaffrey",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/steffcaffrey/sounds/445237/",
+      "at": 3.98
+     },
+     {
+      "id": "fs511485",
+      "title": "cartoon_wink_magic_sparkle.wav",
+      "source": "freesound",
+      "author": "MLaudio",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/MLaudio/sounds/511485/",
+      "at": 4.13
      },
      {
       "id": "fs333412",
@@ -578,24 +578,24 @@
       "author": "jayfrosting",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/jayfrosting/sounds/333412/",
-      "at": 4.8
+      "at": 4.48
      },
      {
-      "id": "fs213241",
-      "title": "Fireworks",
+      "id": "fs202927",
+      "title": "Fireworks.wav",
       "source": "freesound",
-      "author": "MrAuralization",
+      "author": "Adrian_Gomar",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/MrAuralization/sounds/213241/",
+      "page": "https://freesound.org/people/Adrian_Gomar/sounds/202927/",
       "at": 5.3
      },
      {
-      "id": "fs117616",
-      "title": "fireworks exploding 1.wav",
+      "id": "fs21410",
+      "title": "blow.aif",
       "source": "freesound",
-      "author": "soundmary",
+      "author": "Heigh-hoo",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/soundmary/sounds/117616/",
+      "page": "https://freesound.org/people/Heigh-hoo/sounds/21410/",
       "at": 6.1
      },
      {
@@ -608,30 +608,30 @@
       "at": 6.7
      },
      {
-      "id": "fs277022",
-      "title": "Applause 1.WAV",
+      "id": "fs198320",
+      "title": "applauses.wav",
       "source": "freesound",
-      "author": "Sandermotions",
+      "author": "schafferdavid",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Sandermotions/sounds/277022/",
+      "page": "https://freesound.org/people/schafferdavid/sounds/198320/",
       "at": 7.1
      },
      {
-      "id": "fs648212",
-      "title": "Ui sounds - Shimmering success",
+      "id": "fs715067",
+      "title": "achievement-sparkle",
       "source": "freesound",
-      "author": "Philip_Berger",
+      "author": "SkySpeira",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Philip_Berger/sounds/648212/",
-      "at": 10.23
+      "page": "https://freesound.org/people/SkySpeira/sounds/715067/",
+      "at": 8.14
      },
      {
-      "id": "fs140716",
-      "title": "Firecracker",
+      "id": "fs461085",
+      "title": "1.5_sparkler.wav",
       "source": "freesound",
-      "author": "j1987",
+      "author": "15GKovacovaJulie",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140716/",
+      "page": "https://freesound.org/people/15GKovacovaJulie/sounds/461085/",
       "at": 0.7
      }
     ]
@@ -50939,40 +50939,67 @@
       "at": 2.84
      },
      {
+      "id": "fs117616",
+      "title": "fireworks exploding 1.wav",
+      "source": "freesound",
+      "author": "soundmary",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/soundmary/sounds/117616/",
+      "at": 4.61
+     },
+     {
+      "id": "fs639429",
+      "title": "Crystal Twinkle",
+      "source": "freesound",
+      "author": "LaurenPonder",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/LaurenPonder/sounds/639429/",
+      "at": 4.76
+     },
+     {
+      "id": "fs242233",
+      "title": "Whoo1.wav",
+      "source": "freesound",
+      "author": "ehohnke",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/ehohnke/sounds/242233/",
+      "at": 5.11
+     },
+     {
+      "id": "fs88532",
+      "title": "Woosh_northern87",
+      "source": "freesound",
+      "author": "northern87",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/northern87/sounds/88532/",
+      "at": 5.49
+     },
+     {
       "id": "fs140717",
       "title": "Firework Cluster",
       "source": "freesound",
       "author": "j1987",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/j1987/sounds/140717/",
-      "at": 4.61
+      "at": 6.74
      },
      {
-      "id": "fs648212",
-      "title": "Ui sounds - Shimmering success",
+      "id": "fs588198",
+      "title": "Fireworks - Pop Pop Crackle",
       "source": "freesound",
-      "author": "Philip_Berger",
+      "author": "el_boss",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Philip_Berger/sounds/648212/",
-      "at": 4.76
+      "page": "https://freesound.org/people/el_boss/sounds/588198/",
+      "at": 7.04
      },
      {
-      "id": "fs333398",
-      "title": "Gasp 2 with wonder.wav",
+      "id": "fs213241",
+      "title": "Fireworks",
       "source": "freesound",
-      "author": "jayfrosting",
+      "author": "MrAuralization",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/jayfrosting/sounds/333398/",
-      "at": 5.11
-     },
-     {
-      "id": "fs121558",
-      "title": "whistleAndReport.aif",
-      "source": "freesound",
-      "author": "sbarncar",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/sbarncar/sounds/121558/",
-      "at": 5.4
+      "page": "https://freesound.org/people/MrAuralization/sounds/213241/",
+      "at": 7.73
      },
      {
       "id": "fs422079",
@@ -50981,61 +51008,34 @@
       "author": "johnnyguitar01",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/johnnyguitar01/sounds/422079/",
-      "at": 7.2
+      "at": 8.53
      },
      {
-      "id": "fs140727",
-      "title": "tinymortar.wav",
+      "id": "fs121557",
+      "title": "firecrackers.wav",
       "source": "freesound",
-      "author": "j1987",
+      "author": "sbarncar",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140727/",
-      "at": 7.5
+      "page": "https://freesound.org/people/sbarncar/sounds/121557/",
+      "at": 9.13
      },
      {
-      "id": "fs202927",
-      "title": "Fireworks.wav",
+      "id": "fs333398",
+      "title": "Gasp 2 with wonder.wav",
       "source": "freesound",
-      "author": "Adrian_Gomar",
+      "author": "jayfrosting",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Adrian_Gomar/sounds/202927/",
-      "at": 7.92
+      "page": "https://freesound.org/people/jayfrosting/sounds/333398/",
+      "at": 9.53
      },
      {
-      "id": "fs587194",
-      "title": "explosion_big_01.ogg",
+      "id": "fs683323",
+      "title": "Magic Spell Fairy Dust",
       "source": "freesound",
-      "author": "derplayer",
+      "author": "zazz.sound.design",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/derplayer/sounds/587194/",
-      "at": 8.72
-     },
-     {
-      "id": "fs140716",
-      "title": "Firecracker",
-      "source": "freesound",
-      "author": "j1987",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140716/",
-      "at": 9.32
-     },
-     {
-      "id": "fs462362",
-      "title": "Small applause",
-      "source": "freesound",
-      "author": "Breviceps",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Breviceps/sounds/462362/",
-      "at": 9.72
-     },
-     {
-      "id": "fs521873",
-      "title": "Glimmer.wav",
-      "source": "freesound",
-      "author": "opticaillusions",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/opticaillusions/sounds/521873/",
-      "at": 10.99
+      "page": "https://freesound.org/people/zazz.sound.design/sounds/683323/",
+      "at": 8.73
      }
     ]
    },
@@ -51083,21 +51083,21 @@
       "at": 2.43
      },
      {
-      "id": "fs167242",
-      "title": "fireworkblast.wav",
+      "id": "fs587194",
+      "title": "explosion_big_01.ogg",
       "source": "freesound",
-      "author": "nfrae",
+      "author": "derplayer",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/nfrae/sounds/167242/",
+      "page": "https://freesound.org/people/derplayer/sounds/587194/",
       "at": 3.78
      },
      {
-      "id": "fs521873",
-      "title": "Glimmer.wav",
+      "id": "fs683323",
+      "title": "Magic Spell Fairy Dust",
       "source": "freesound",
-      "author": "opticaillusions",
+      "author": "zazz.sound.design",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/opticaillusions/sounds/521873/",
+      "page": "https://freesound.org/people/zazz.sound.design/sounds/683323/",
       "at": 3.93
      },
      {
@@ -51110,22 +51110,22 @@
       "at": 4.28
      },
      {
-      "id": "fs88532",
-      "title": "Woosh_northern87",
+      "id": "fs121558",
+      "title": "whistleAndReport.aif",
       "source": "freesound",
-      "author": "northern87",
+      "author": "sbarncar",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/northern87/sounds/88532/",
-      "at": 4.62
+      "page": "https://freesound.org/people/sbarncar/sounds/121558/",
+      "at": 4.67
      },
      {
-      "id": "fs21410",
-      "title": "blow.aif",
+      "id": "fs117616",
+      "title": "fireworks exploding 1.wav",
       "source": "freesound",
-      "author": "Heigh-hoo",
+      "author": "soundmary",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Heigh-hoo/sounds/21410/",
-      "at": 5.87
+      "page": "https://freesound.org/people/soundmary/sounds/117616/",
+      "at": 6.47
      },
      {
       "id": "fs349830",
@@ -51134,7 +51134,7 @@
       "author": "kingsrow",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/kingsrow/sounds/349830/",
-      "at": 6.17
+      "at": 6.77
      },
      {
       "id": "fs213241",
@@ -51143,7 +51143,7 @@
       "author": "MrAuralization",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/MrAuralization/sounds/213241/",
-      "at": 6.96
+      "at": 7.56
      },
      {
       "id": "fs335983",
@@ -51152,7 +51152,34 @@
       "author": "zihengc",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/zihengc/sounds/335983/",
-      "at": 7.76
+      "at": 8.36
+     },
+     {
+      "id": "fs588198",
+      "title": "Fireworks - Pop Pop Crackle",
+      "source": "freesound",
+      "author": "el_boss",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/el_boss/sounds/588198/",
+      "at": 8.96
+     },
+     {
+      "id": "fs242233",
+      "title": "Whoo1.wav",
+      "source": "freesound",
+      "author": "ehohnke",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/ehohnke/sounds/242233/",
+      "at": 9.36
+     },
+     {
+      "id": "fs715067",
+      "title": "achievement-sparkle",
+      "source": "freesound",
+      "author": "SkySpeira",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/SkySpeira/sounds/715067/",
+      "at": 10.14
      },
      {
       "id": "fs461085",
@@ -51161,43 +51188,16 @@
       "author": "15GKovacovaJulie",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/15GKovacovaJulie/sounds/461085/",
-      "at": 8.36
-     },
-     {
-      "id": "fs198320",
-      "title": "applauses.wav",
-      "source": "freesound",
-      "author": "schafferdavid",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/schafferdavid/sounds/198320/",
-      "at": 8.76
-     },
-     {
-      "id": "fs639429",
-      "title": "Crystal Twinkle",
-      "source": "freesound",
-      "author": "LaurenPonder",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LaurenPonder/sounds/639429/",
-      "at": 11.51
-     },
-     {
-      "id": "fs121557",
-      "title": "firecrackers.wav",
-      "source": "freesound",
-      "author": "sbarncar",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/sbarncar/sounds/121557/",
-      "at": 0.77
+      "at": 0.75
      }
     ]
    },
    {
     "id": "v8-3",
     "file": "/se/lib/ev-fireworks-COOL/v8-3.mp3",
-    "title": "ev-fireworks-COOL ミックス 3（13 素材・11.6s）",
-    "seconds": 11.6,
-    "bytes": 140164,
+    "title": "ev-fireworks-COOL ミックス 3（15 素材・12.0s）",
+    "seconds": 12.0,
+    "bytes": 144866,
     "components": [
      {
       "id": "fs140726",
@@ -51209,12 +51209,12 @@
       "at": 0.0
      },
      {
-      "id": "fs455547",
-      "title": "Firework Single Rocket #2",
+      "id": "fs140717",
+      "title": "Firework Cluster",
       "source": "freesound",
-      "author": "Kinoton",
+      "author": "j1987",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Kinoton/sounds/455547/",
+      "page": "https://freesound.org/people/j1987/sounds/140717/",
       "at": 1.67
      },
      {
@@ -51227,76 +51227,22 @@
       "at": 1.97
      },
      {
-      "id": "fs140725",
-      "title": "whistlingrocket_3.wav",
+      "id": "fs336008",
+      "title": "Whistle and Explosion Single_Firework",
       "source": "freesound",
-      "author": "j1987",
+      "author": "Rudmer_Rotteveel",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140725/",
+      "page": "https://freesound.org/people/Rudmer_Rotteveel/sounds/336008/",
       "at": 2.95
      },
      {
-      "id": "fs587194",
-      "title": "explosion_big_01.ogg",
+      "id": "fs422079",
+      "title": "single firework.wav",
       "source": "freesound",
-      "author": "derplayer",
+      "author": "johnnyguitar01",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/derplayer/sounds/587194/",
-      "at": 4.73
-     },
-     {
-      "id": "fs715067",
-      "title": "achievement-sparkle",
-      "source": "freesound",
-      "author": "SkySpeira",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/SkySpeira/sounds/715067/",
-      "at": 4.88
-     },
-     {
-      "id": "fs462362",
-      "title": "Small applause",
-      "source": "freesound",
-      "author": "Breviceps",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Breviceps/sounds/462362/",
-      "at": 5.23
-     },
-     {
-      "id": "fs569846",
-      "title": "Fireworks #1",
-      "source": "freesound",
-      "author": "danlucaz",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/danlucaz/sounds/569846/",
-      "at": 6.6
-     },
-     {
-      "id": "fs117616",
-      "title": "fireworks exploding 1.wav",
-      "source": "freesound",
-      "author": "soundmary",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/soundmary/sounds/117616/",
-      "at": 7.4
-     },
-     {
-      "id": "fs349830",
-      "title": "Fireworks22.wav",
-      "source": "freesound",
-      "author": "kingsrow",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/kingsrow/sounds/349830/",
-      "at": 8.0
-     },
-     {
-      "id": "fs333398",
-      "title": "Gasp 2 with wonder.wav",
-      "source": "freesound",
-      "author": "jayfrosting",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/jayfrosting/sounds/333398/",
-      "at": 8.4
+      "page": "https://freesound.org/people/johnnyguitar01/sounds/422079/",
+      "at": 4.39
      },
      {
       "id": "fs683323",
@@ -51305,7 +51251,34 @@
       "author": "zazz.sound.design",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/zazz.sound.design/sounds/683323/",
-      "at": 8.6
+      "at": 4.54
+     },
+     {
+      "id": "fs333412",
+      "title": "Gasp 1 with surprise.wav",
+      "source": "freesound",
+      "author": "jayfrosting",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/jayfrosting/sounds/333412/",
+      "at": 4.89
+     },
+     {
+      "id": "fs140723",
+      "title": "whistlingrocket_2.wav",
+      "source": "freesound",
+      "author": "j1987",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/j1987/sounds/140723/",
+      "at": 5.43
+     },
+     {
+      "id": "fs117616",
+      "title": "fireworks exploding 1.wav",
+      "source": "freesound",
+      "author": "soundmary",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/soundmary/sounds/117616/",
+      "at": 6.87
      },
      {
       "id": "fs121557",
@@ -51314,7 +51287,52 @@
       "author": "sbarncar",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/sbarncar/sounds/121557/",
-      "at": 0.87
+      "at": 7.17
+     },
+     {
+      "id": "fs376659",
+      "title": "NYE Boom Firecrackers.wav",
+      "source": "freesound",
+      "author": "LOVEBURD",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/LOVEBURD/sounds/376659/",
+      "at": 7.98
+     },
+     {
+      "id": "fs167242",
+      "title": "fireworkblast.wav",
+      "source": "freesound",
+      "author": "nfrae",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/nfrae/sounds/167242/",
+      "at": 8.78
+     },
+     {
+      "id": "fs349830",
+      "title": "Fireworks22.wav",
+      "source": "freesound",
+      "author": "kingsrow",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/kingsrow/sounds/349830/",
+      "at": 9.38
+     },
+     {
+      "id": "fs277022",
+      "title": "Applause 1.WAV",
+      "source": "freesound",
+      "author": "Sandermotions",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/Sandermotions/sounds/277022/",
+      "at": 9.78
+     },
+     {
+      "id": "fs521873",
+      "title": "Glimmer.wav",
+      "source": "freesound",
+      "author": "opticaillusions",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/opticaillusions/sounds/521873/",
+      "at": 8.98
      }
     ]
    }
@@ -51323,9 +51341,9 @@
    {
     "id": "v8-1",
     "file": "/se/lib/ev-fireworks-GREAT/v8-1.mp3",
-    "title": "ev-fireworks-GREAT ミックス 1（17 素材・14.0s）",
-    "seconds": 14.0,
-    "bytes": 168690,
+    "title": "ev-fireworks-GREAT ミックス 1（17 素材・13.7s）",
+    "seconds": 13.66,
+    "bytes": 164615,
     "components": [
      {
       "id": "fs140725",
@@ -51364,103 +51382,13 @@
       "at": 2.5
      },
      {
-      "id": "fs587193",
-      "title": "explosion_big_02.ogg",
-      "source": "freesound",
-      "author": "derplayer",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/derplayer/sounds/587193/",
-      "at": 4.3
-     },
-     {
-      "id": "fs639429",
-      "title": "Crystal Twinkle",
-      "source": "freesound",
-      "author": "LaurenPonder",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LaurenPonder/sounds/639429/",
-      "at": 4.45
-     },
-     {
-      "id": "fs242233",
-      "title": "Whoo1.wav",
-      "source": "freesound",
-      "author": "ehohnke",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/ehohnke/sounds/242233/",
-      "at": 4.8
-     },
-     {
-      "id": "fs140726",
-      "title": "tiny_rocket.wav",
-      "source": "freesound",
-      "author": "j1987",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140726/",
-      "at": 5.13
-     },
-     {
-      "id": "fs445237",
-      "title": "Firework 2",
-      "source": "freesound",
-      "author": "steffcaffrey",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/steffcaffrey/sounds/445237/",
-      "at": 6.79
-     },
-     {
-      "id": "fs750682",
-      "title": "Firework Crackle",
-      "source": "freesound",
-      "author": "LukaCafuka",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LukaCafuka/sounds/750682/",
-      "at": 7.09
-     },
-     {
-      "id": "fs569846",
-      "title": "Fireworks #1",
-      "source": "freesound",
-      "author": "danlucaz",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/danlucaz/sounds/569846/",
-      "at": 7.9
-     },
-     {
-      "id": "fs21410",
-      "title": "blow.aif",
-      "source": "freesound",
-      "author": "Heigh-hoo",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Heigh-hoo/sounds/21410/",
-      "at": 8.7
-     },
-     {
-      "id": "fs140717",
-      "title": "Firework Cluster",
-      "source": "freesound",
-      "author": "j1987",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140717/",
-      "at": 10.0
-     },
-     {
       "id": "fs588198",
       "title": "Fireworks - Pop Pop Crackle",
       "source": "freesound",
       "author": "el_boss",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/el_boss/sounds/588198/",
-      "at": 9.3
-     },
-     {
-      "id": "fs277022",
-      "title": "Applause 1.WAV",
-      "source": "freesound",
-      "author": "Sandermotions",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Sandermotions/sounds/277022/",
-      "at": 9.7
+      "at": 4.3
      },
      {
       "id": "fs648212",
@@ -51469,7 +51397,70 @@
       "author": "Philip_Berger",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/Philip_Berger/sounds/648212/",
-      "at": 12.83
+      "at": 4.45
+     },
+     {
+      "id": "fs462362",
+      "title": "Small applause",
+      "source": "freesound",
+      "author": "Breviceps",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/Breviceps/sounds/462362/",
+      "at": 4.8
+     },
+     {
+      "id": "fs121558",
+      "title": "whistleAndReport.aif",
+      "source": "freesound",
+      "author": "sbarncar",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/sbarncar/sounds/121558/",
+      "at": 5.15
+     },
+     {
+      "id": "fs414515",
+      "title": "Big Firecracker",
+      "source": "freesound",
+      "author": "Kinoton",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/Kinoton/sounds/414515/",
+      "at": 6.95
+     },
+     {
+      "id": "fs461085",
+      "title": "1.5_sparkler.wav",
+      "source": "freesound",
+      "author": "15GKovacovaJulie",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/15GKovacovaJulie/sounds/461085/",
+      "at": 7.25
+     },
+     {
+      "id": "fs202927",
+      "title": "Fireworks.wav",
+      "source": "freesound",
+      "author": "Adrian_Gomar",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/Adrian_Gomar/sounds/202927/",
+      "at": 7.9
+     },
+     {
+      "id": "fs167242",
+      "title": "fireworkblast.wav",
+      "source": "freesound",
+      "author": "nfrae",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/nfrae/sounds/167242/",
+      "at": 8.7
+     },
+     {
+      "id": "fs587194",
+      "title": "explosion_big_01.ogg",
+      "source": "freesound",
+      "author": "derplayer",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/derplayer/sounds/587194/",
+      "at": 10.0
      },
      {
       "id": "fs140716",
@@ -51478,7 +51469,34 @@
       "author": "j1987",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/j1987/sounds/140716/",
-      "at": 0.61
+      "at": 9.3
+     },
+     {
+      "id": "fs333412",
+      "title": "Gasp 1 with surprise.wav",
+      "source": "freesound",
+      "author": "jayfrosting",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/jayfrosting/sounds/333412/",
+      "at": 9.7
+     },
+     {
+      "id": "fs683323",
+      "title": "Magic Spell Fairy Dust",
+      "source": "freesound",
+      "author": "zazz.sound.design",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/zazz.sound.design/sounds/683323/",
+      "at": 9.76
+     },
+     {
+      "id": "fs750682",
+      "title": "Firework Crackle",
+      "source": "freesound",
+      "author": "LukaCafuka",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/LukaCafuka/sounds/750682/",
+      "at": 0.62
      }
     ]
    },
@@ -51526,12 +51544,12 @@
       "at": 2.81
      },
      {
-      "id": "fs167242",
-      "title": "fireworkblast.wav",
+      "id": "fs587193",
+      "title": "explosion_big_02.ogg",
       "source": "freesound",
-      "author": "nfrae",
+      "author": "derplayer",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/nfrae/sounds/167242/",
+      "page": "https://freesound.org/people/derplayer/sounds/587193/",
       "at": 4.58
      },
      {
@@ -51562,12 +51580,12 @@
       "at": 5.6
      },
      {
-      "id": "fs414515",
-      "title": "Big Firecracker",
+      "id": "fs587194",
+      "title": "explosion_big_01.ogg",
       "source": "freesound",
-      "author": "Kinoton",
+      "author": "derplayer",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Kinoton/sounds/414515/",
+      "page": "https://freesound.org/people/derplayer/sounds/587194/",
       "at": 7.03
      },
      {
@@ -51607,12 +51625,12 @@
       "at": 10.32
      },
      {
-      "id": "fs140727",
-      "title": "tinymortar.wav",
+      "id": "fs750682",
+      "title": "Firework Crackle",
       "source": "freesound",
-      "author": "j1987",
+      "author": "LukaCafuka",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140727/",
+      "page": "https://freesound.org/people/LukaCafuka/sounds/750682/",
       "at": 9.62
      },
      {
@@ -51625,13 +51643,13 @@
       "at": 10.02
      },
      {
-      "id": "fs639429",
-      "title": "Crystal Twinkle",
+      "id": "fs683323",
+      "title": "Magic Spell Fairy Dust",
       "source": "freesound",
-      "author": "LaurenPonder",
+      "author": "zazz.sound.design",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LaurenPonder/sounds/639429/",
-      "at": 11.57
+      "page": "https://freesound.org/people/zazz.sound.design/sounds/683323/",
+      "at": 9.92
      }
     ]
    },
@@ -51652,12 +51670,12 @@
       "at": 0.0
      },
      {
-      "id": "fs455547",
-      "title": "Firework Single Rocket #2",
+      "id": "fs140717",
+      "title": "Firework Cluster",
       "source": "freesound",
-      "author": "Kinoton",
+      "author": "j1987",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Kinoton/sounds/455547/",
+      "page": "https://freesound.org/people/j1987/sounds/140717/",
       "at": 1.8
      },
      {
@@ -51679,21 +51697,21 @@
       "at": 2.74
      },
      {
-      "id": "fs21410",
-      "title": "blow.aif",
+      "id": "fs422079",
+      "title": "single firework.wav",
       "source": "freesound",
-      "author": "Heigh-hoo",
+      "author": "johnnyguitar01",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Heigh-hoo/sounds/21410/",
+      "page": "https://freesound.org/people/johnnyguitar01/sounds/422079/",
       "at": 4.18
      },
      {
-      "id": "fs683323",
-      "title": "Magic Spell Fairy Dust",
+      "id": "fs639429",
+      "title": "Crystal Twinkle",
       "source": "freesound",
-      "author": "zazz.sound.design",
+      "author": "LaurenPonder",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/zazz.sound.design/sounds/683323/",
+      "page": "https://freesound.org/people/LaurenPonder/sounds/639429/",
       "at": 4.33
      },
      {
@@ -51706,22 +51724,58 @@
       "at": 4.68
      },
      {
-      "id": "fs88532",
-      "title": "Woosh_northern87",
+      "id": "fs336008",
+      "title": "Whistle and Explosion Single_Firework",
       "source": "freesound",
-      "author": "northern87",
+      "author": "Rudmer_Rotteveel",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/northern87/sounds/88532/",
-      "at": 5.38
+      "page": "https://freesound.org/people/Rudmer_Rotteveel/sounds/336008/",
+      "at": 5.1
      },
      {
-      "id": "fs587193",
-      "title": "explosion_big_02.ogg",
+      "id": "fs414515",
+      "title": "Big Firecracker",
+      "source": "freesound",
+      "author": "Kinoton",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/Kinoton/sounds/414515/",
+      "at": 6.53
+     },
+     {
+      "id": "fs121557",
+      "title": "firecrackers.wav",
+      "source": "freesound",
+      "author": "sbarncar",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/sbarncar/sounds/121557/",
+      "at": 6.83
+     },
+     {
+      "id": "fs569846",
+      "title": "Fireworks #1",
+      "source": "freesound",
+      "author": "danlucaz",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/danlucaz/sounds/569846/",
+      "at": 7.9
+     },
+     {
+      "id": "fs117616",
+      "title": "fireworks exploding 1.wav",
+      "source": "freesound",
+      "author": "soundmary",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/soundmary/sounds/117616/",
+      "at": 8.7
+     },
+     {
+      "id": "fs587194",
+      "title": "explosion_big_01.ogg",
       "source": "freesound",
       "author": "derplayer",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/derplayer/sounds/587193/",
-      "at": 6.63
+      "page": "https://freesound.org/people/derplayer/sounds/587194/",
+      "at": 10.0
      },
      {
       "id": "fs140727",
@@ -51730,42 +51784,6 @@
       "author": "j1987",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/j1987/sounds/140727/",
-      "at": 6.93
-     },
-     {
-      "id": "fs376659",
-      "title": "NYE Boom Firecrackers.wav",
-      "source": "freesound",
-      "author": "LOVEBURD",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LOVEBURD/sounds/376659/",
-      "at": 7.9
-     },
-     {
-      "id": "fs422079",
-      "title": "single firework.wav",
-      "source": "freesound",
-      "author": "johnnyguitar01",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/johnnyguitar01/sounds/422079/",
-      "at": 8.7
-     },
-     {
-      "id": "fs167242",
-      "title": "fireworkblast.wav",
-      "source": "freesound",
-      "author": "nfrae",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/nfrae/sounds/167242/",
-      "at": 10.0
-     },
-     {
-      "id": "fs750682",
-      "title": "Firework Crackle",
-      "source": "freesound",
-      "author": "LukaCafuka",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LukaCafuka/sounds/750682/",
       "at": 9.3
      },
      {
@@ -51784,7 +51802,7 @@
       "author": "SkySpeira",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/SkySpeira/sounds/715067/",
-      "at": 13.54
+      "at": 12.14
      }
     ]
    }
@@ -51834,21 +51852,21 @@
       "at": 2.33
      },
      {
-      "id": "fs587194",
-      "title": "explosion_big_01.ogg",
+      "id": "fs117616",
+      "title": "fireworks exploding 1.wav",
       "source": "freesound",
-      "author": "derplayer",
+      "author": "soundmary",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/derplayer/sounds/587194/",
+      "page": "https://freesound.org/people/soundmary/sounds/117616/",
       "at": 3.76
      },
      {
-      "id": "fs648212",
-      "title": "Ui sounds - Shimmering success",
+      "id": "fs511485",
+      "title": "cartoon_wink_magic_sparkle.wav",
       "source": "freesound",
-      "author": "Philip_Berger",
+      "author": "MLaudio",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Philip_Berger/sounds/648212/",
+      "page": "https://freesound.org/people/MLaudio/sounds/511485/",
       "at": 3.91
      },
      {
@@ -51870,21 +51888,21 @@
       "at": 4.8
      },
      {
-      "id": "fs455547",
-      "title": "Firework Single Rocket #2",
+      "id": "fs588198",
+      "title": "Fireworks - Pop Pop Crackle",
       "source": "freesound",
-      "author": "Kinoton",
+      "author": "el_boss",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Kinoton/sounds/455547/",
+      "page": "https://freesound.org/people/el_boss/sounds/588198/",
       "at": 6.6
      },
      {
-      "id": "fs140727",
-      "title": "tinymortar.wav",
+      "id": "fs461085",
+      "title": "1.5_sparkler.wav",
       "source": "freesound",
-      "author": "j1987",
+      "author": "15GKovacovaJulie",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140727/",
+      "page": "https://freesound.org/people/15GKovacovaJulie/sounds/461085/",
       "at": 6.9
      },
      {
@@ -51894,25 +51912,25 @@
       "author": "sbarncar",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/sbarncar/sounds/121558/",
-      "at": 7.77
+      "at": 7.55
      },
      {
-      "id": "fs587193",
-      "title": "explosion_big_02.ogg",
+      "id": "fs140717",
+      "title": "Firework Cluster",
       "source": "freesound",
-      "author": "derplayer",
+      "author": "j1987",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/derplayer/sounds/587193/",
-      "at": 9.57
+      "page": "https://freesound.org/people/j1987/sounds/140717/",
+      "at": 9.35
      },
      {
-      "id": "fs521873",
-      "title": "Glimmer.wav",
+      "id": "fs648212",
+      "title": "Ui sounds - Shimmering success",
       "source": "freesound",
-      "author": "opticaillusions",
+      "author": "Philip_Berger",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/opticaillusions/sounds/521873/",
-      "at": 9.72
+      "page": "https://freesound.org/people/Philip_Berger/sounds/648212/",
+      "at": 9.5
      },
      {
       "id": "fs213241",
@@ -51921,34 +51939,34 @@
       "author": "MrAuralization",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/MrAuralization/sounds/213241/",
-      "at": 10.8
+      "at": 10.37
      },
      {
-      "id": "fs21410",
-      "title": "blow.aif",
+      "id": "fs167242",
+      "title": "fireworkblast.wav",
       "source": "freesound",
-      "author": "Heigh-hoo",
+      "author": "nfrae",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Heigh-hoo/sounds/21410/",
-      "at": 11.6
+      "page": "https://freesound.org/people/nfrae/sounds/167242/",
+      "at": 11.17
      },
      {
-      "id": "fs588198",
-      "title": "Fireworks - Pop Pop Crackle",
+      "id": "fs445237",
+      "title": "Firework 2",
       "source": "freesound",
-      "author": "el_boss",
+      "author": "steffcaffrey",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/el_boss/sounds/588198/",
-      "at": 12.9
+      "page": "https://freesound.org/people/steffcaffrey/sounds/445237/",
+      "at": 12.47
      },
      {
-      "id": "fs750682",
-      "title": "Firework Crackle",
+      "id": "fs121557",
+      "title": "firecrackers.wav",
       "source": "freesound",
-      "author": "LukaCafuka",
+      "author": "sbarncar",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LukaCafuka/sounds/750682/",
-      "at": 12.2
+      "page": "https://freesound.org/people/sbarncar/sounds/121557/",
+      "at": 11.77
      },
      {
       "id": "fs184833",
@@ -51957,24 +51975,24 @@
       "author": "Gauraa",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/Gauraa/sounds/184833/",
-      "at": 12.6
+      "at": 12.17
      },
      {
-      "id": "fs715067",
-      "title": "achievement-sparkle",
+      "id": "fs683323",
+      "title": "Magic Spell Fairy Dust",
       "source": "freesound",
-      "author": "SkySpeira",
+      "author": "zazz.sound.design",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/SkySpeira/sounds/715067/",
-      "at": 16.44
+      "page": "https://freesound.org/people/zazz.sound.design/sounds/683323/",
+      "at": 13.1
      },
      {
-      "id": "fs461085",
-      "title": "1.5_sparkler.wav",
+      "id": "fs750682",
+      "title": "Firework Crackle",
       "source": "freesound",
-      "author": "15GKovacovaJulie",
+      "author": "LukaCafuka",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/15GKovacovaJulie/sounds/461085/",
+      "page": "https://freesound.org/people/LukaCafuka/sounds/750682/",
       "at": 0.75
      }
     ]
@@ -52023,12 +52041,12 @@
       "at": 2.8
      },
      {
-      "id": "fs167242",
-      "title": "fireworkblast.wav",
+      "id": "fs140717",
+      "title": "Firework Cluster",
       "source": "freesound",
-      "author": "nfrae",
+      "author": "j1987",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/nfrae/sounds/167242/",
+      "page": "https://freesound.org/people/j1987/sounds/140717/",
       "at": 4.15
      },
      {
@@ -52050,40 +52068,22 @@
       "at": 4.65
      },
      {
-      "id": "fs121558",
-      "title": "whistleAndReport.aif",
-      "source": "freesound",
-      "author": "sbarncar",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/sbarncar/sounds/121558/",
-      "at": 5.23
-     },
-     {
-      "id": "fs587194",
-      "title": "explosion_big_01.ogg",
-      "source": "freesound",
-      "author": "derplayer",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/derplayer/sounds/587194/",
-      "at": 7.03
-     },
-     {
-      "id": "fs140716",
-      "title": "Firecracker",
+      "id": "fs140726",
+      "title": "tiny_rocket.wav",
       "source": "freesound",
       "author": "j1987",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140716/",
-      "at": 7.33
+      "page": "https://freesound.org/people/j1987/sounds/140726/",
+      "at": 4.97
      },
      {
-      "id": "fs140723",
-      "title": "whistlingrocket_2.wav",
+      "id": "fs21410",
+      "title": "blow.aif",
       "source": "freesound",
-      "author": "j1987",
+      "author": "Heigh-hoo",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140723/",
-      "at": 8.17
+      "page": "https://freesound.org/people/Heigh-hoo/sounds/21410/",
+      "at": 6.64
      },
      {
       "id": "fs588198",
@@ -52092,34 +52092,52 @@
       "author": "el_boss",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/el_boss/sounds/588198/",
-      "at": 9.61
+      "at": 6.94
      },
      {
-      "id": "fs683323",
-      "title": "Magic Spell Fairy Dust",
+      "id": "fs336008",
+      "title": "Whistle and Explosion Single_Firework",
       "source": "freesound",
-      "author": "zazz.sound.design",
+      "author": "Rudmer_Rotteveel",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/zazz.sound.design/sounds/683323/",
-      "at": 9.76
+      "page": "https://freesound.org/people/Rudmer_Rotteveel/sounds/336008/",
+      "at": 7.94
      },
      {
-      "id": "fs213241",
-      "title": "Fireworks",
+      "id": "fs117616",
+      "title": "fireworks exploding 1.wav",
       "source": "freesound",
-      "author": "MrAuralization",
+      "author": "soundmary",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/MrAuralization/sounds/213241/",
-      "at": 10.4
+      "page": "https://freesound.org/people/soundmary/sounds/117616/",
+      "at": 9.37
      },
      {
-      "id": "fs587193",
-      "title": "explosion_big_02.ogg",
+      "id": "fs639429",
+      "title": "Crystal Twinkle",
       "source": "freesound",
-      "author": "derplayer",
+      "author": "LaurenPonder",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/derplayer/sounds/587193/",
-      "at": 11.2
+      "page": "https://freesound.org/people/LaurenPonder/sounds/639429/",
+      "at": 9.52
+     },
+     {
+      "id": "fs376659",
+      "title": "NYE Boom Firecrackers.wav",
+      "source": "freesound",
+      "author": "LOVEBURD",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/LOVEBURD/sounds/376659/",
+      "at": 10.54
+     },
+     {
+      "id": "fs445237",
+      "title": "Firework 2",
+      "source": "freesound",
+      "author": "steffcaffrey",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/steffcaffrey/sounds/445237/",
+      "at": 11.34
      },
      {
       "id": "fs376660",
@@ -52128,41 +52146,41 @@
       "author": "LOVEBURD",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/LOVEBURD/sounds/376660/",
-      "at": 12.5
+      "at": 12.64
      },
      {
-      "id": "fs349830",
-      "title": "Fireworks22.wav",
+      "id": "fs461085",
+      "title": "1.5_sparkler.wav",
       "source": "freesound",
-      "author": "kingsrow",
+      "author": "15GKovacovaJulie",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/kingsrow/sounds/349830/",
-      "at": 11.8
+      "page": "https://freesound.org/people/15GKovacovaJulie/sounds/461085/",
+      "at": 11.94
      },
      {
-      "id": "fs221567",
-      "title": "cheering and clapping crowd 2",
+      "id": "fs274516",
+      "title": "Stadium Crowd",
       "source": "freesound",
-      "author": "AlaskaRobotics",
+      "author": "stomachache",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/AlaskaRobotics/sounds/221567/",
-      "at": 12.2
+      "page": "https://freesound.org/people/stomachache/sounds/274516/",
+      "at": 12.34
      },
      {
-      "id": "fs511485",
-      "title": "cartoon_wink_magic_sparkle.wav",
+      "id": "fs715067",
+      "title": "achievement-sparkle",
       "source": "freesound",
-      "author": "MLaudio",
+      "author": "SkySpeira",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/MLaudio/sounds/511485/",
-      "at": 16.66
+      "page": "https://freesound.org/people/SkySpeira/sounds/715067/",
+      "at": 15.14
      }
     ]
    },
    {
     "id": "v8-3",
     "file": "/se/lib/ev-fireworks-FANTASTIC/v8-3.mp3",
-    "title": "ev-fireworks-FANTASTIC ミックス 3（20 素材・17.0s）",
+    "title": "ev-fireworks-FANTASTIC ミックス 3（19 素材・17.0s）",
     "seconds": 17.0,
     "bytes": 204739,
     "components": [
@@ -52176,12 +52194,12 @@
       "at": 0.0
      },
      {
-      "id": "fs455547",
-      "title": "Firework Single Rocket #2",
+      "id": "fs140717",
+      "title": "Firework Cluster",
       "source": "freesound",
-      "author": "Kinoton",
+      "author": "j1987",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Kinoton/sounds/455547/",
+      "page": "https://freesound.org/people/j1987/sounds/140717/",
       "at": 1.8
      },
      {
@@ -52194,112 +52212,13 @@
       "at": 2.1
      },
      {
-      "id": "fs140726",
-      "title": "tiny_rocket.wav",
+      "id": "fs140723",
+      "title": "whistlingrocket_2.wav",
       "source": "freesound",
       "author": "j1987",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140726/",
+      "page": "https://freesound.org/people/j1987/sounds/140723/",
       "at": 2.82
-     },
-     {
-      "id": "fs422079",
-      "title": "single firework.wav",
-      "source": "freesound",
-      "author": "johnnyguitar01",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/johnnyguitar01/sounds/422079/",
-      "at": 4.49
-     },
-     {
-      "id": "fs715067",
-      "title": "achievement-sparkle",
-      "source": "freesound",
-      "author": "SkySpeira",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/SkySpeira/sounds/715067/",
-      "at": 4.64
-     },
-     {
-      "id": "fs242233",
-      "title": "Whoo1.wav",
-      "source": "freesound",
-      "author": "ehohnke",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/ehohnke/sounds/242233/",
-      "at": 4.99
-     },
-     {
-      "id": "fs140725",
-      "title": "whistlingrocket_3.wav",
-      "source": "freesound",
-      "author": "j1987",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140725/",
-      "at": 5.56
-     },
-     {
-      "id": "fs376660",
-      "title": "NYE Single Boom.wav",
-      "source": "freesound",
-      "author": "LOVEBURD",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LOVEBURD/sounds/376660/",
-      "at": 7.34
-     },
-     {
-      "id": "fs750682",
-      "title": "Firework Crackle",
-      "source": "freesound",
-      "author": "LukaCafuka",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LukaCafuka/sounds/750682/",
-      "at": 7.64
-     },
-     {
-      "id": "fs121558",
-      "title": "whistleAndReport.aif",
-      "source": "freesound",
-      "author": "sbarncar",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/sbarncar/sounds/121558/",
-      "at": 8.42
-     },
-     {
-      "id": "fs21410",
-      "title": "blow.aif",
-      "source": "freesound",
-      "author": "Heigh-hoo",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Heigh-hoo/sounds/21410/",
-      "at": 10.22
-     },
-     {
-      "id": "fs639429",
-      "title": "Crystal Twinkle",
-      "source": "freesound",
-      "author": "LaurenPonder",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LaurenPonder/sounds/639429/",
-      "at": 10.37
-     },
-     {
-      "id": "fs202927",
-      "title": "Fireworks.wav",
-      "source": "freesound",
-      "author": "Adrian_Gomar",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Adrian_Gomar/sounds/202927/",
-      "at": 11.18
-     },
-     {
-      "id": "fs587194",
-      "title": "explosion_big_01.ogg",
-      "source": "freesound",
-      "author": "derplayer",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/derplayer/sounds/587194/",
-      "at": 11.98
      },
      {
       "id": "fs445237",
@@ -52308,34 +52227,106 @@
       "author": "steffcaffrey",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/steffcaffrey/sounds/445237/",
-      "at": 13.28
+      "at": 4.26
      },
      {
-      "id": "fs140716",
-      "title": "Firecracker",
+      "id": "fs715067",
+      "title": "achievement-sparkle",
+      "source": "freesound",
+      "author": "SkySpeira",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/SkySpeira/sounds/715067/",
+      "at": 4.41
+     },
+     {
+      "id": "fs242233",
+      "title": "Whoo1.wav",
+      "source": "freesound",
+      "author": "ehohnke",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/ehohnke/sounds/242233/",
+      "at": 4.76
+     },
+     {
+      "id": "fs140726",
+      "title": "tiny_rocket.wav",
       "source": "freesound",
       "author": "j1987",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140716/",
-      "at": 12.58
+      "page": "https://freesound.org/people/j1987/sounds/140726/",
+      "at": 5.33
      },
      {
-      "id": "fs274516",
-      "title": "Stadium Crowd",
+      "id": "fs376660",
+      "title": "NYE Single Boom.wav",
       "source": "freesound",
-      "author": "stomachache",
+      "author": "LOVEBURD",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/stomachache/sounds/274516/",
-      "at": 12.98
+      "page": "https://freesound.org/people/LOVEBURD/sounds/376660/",
+      "at": 7.0
      },
      {
-      "id": "fs648212",
-      "title": "Ui sounds - Shimmering success",
+      "id": "fs750682",
+      "title": "Firework Crackle",
       "source": "freesound",
-      "author": "Philip_Berger",
+      "author": "LukaCafuka",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Philip_Berger/sounds/648212/",
-      "at": 16.11
+      "page": "https://freesound.org/people/LukaCafuka/sounds/750682/",
+      "at": 7.3
+     },
+     {
+      "id": "fs88532",
+      "title": "Woosh_northern87",
+      "source": "freesound",
+      "author": "northern87",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/northern87/sounds/88532/",
+      "at": 8.09
+     },
+     {
+      "id": "fs587193",
+      "title": "explosion_big_02.ogg",
+      "source": "freesound",
+      "author": "derplayer",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/derplayer/sounds/587193/",
+      "at": 9.33
+     },
+     {
+      "id": "fs639429",
+      "title": "Crystal Twinkle",
+      "source": "freesound",
+      "author": "LaurenPonder",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/LaurenPonder/sounds/639429/",
+      "at": 9.48
+     },
+     {
+      "id": "fs202927",
+      "title": "Fireworks.wav",
+      "source": "freesound",
+      "author": "Adrian_Gomar",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/Adrian_Gomar/sounds/202927/",
+      "at": 10.29
+     },
+     {
+      "id": "fs335983",
+      "title": "firework_single.wav",
+      "source": "freesound",
+      "author": "zihengc",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/zihengc/sounds/335983/",
+      "at": 11.09
+     },
+     {
+      "id": "fs587194",
+      "title": "explosion_big_01.ogg",
+      "source": "freesound",
+      "author": "derplayer",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/derplayer/sounds/587194/",
+      "at": 12.39
      },
      {
       "id": "fs349830",
@@ -52344,7 +52335,25 @@
       "author": "kingsrow",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/kingsrow/sounds/349830/",
-      "at": 8.84
+      "at": 11.69
+     },
+     {
+      "id": "fs274516",
+      "title": "Stadium Crowd",
+      "source": "freesound",
+      "author": "stomachache",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/stomachache/sounds/274516/",
+      "at": 12.09
+     },
+     {
+      "id": "fs683323",
+      "title": "Magic Spell Fairy Dust",
+      "source": "freesound",
+      "author": "zazz.sound.design",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/zazz.sound.design/sounds/683323/",
+      "at": 13.1
      }
     ]
    }
@@ -52353,9 +52362,9 @@
    {
     "id": "v8-1",
     "file": "/se/lib/ev-fireworks-MIRACLE/v8-1.mp3",
-    "title": "ev-fireworks-MIRACLE ミックス 1（23 素材・20.0s）",
-    "seconds": 20.0,
-    "bytes": 240788,
+    "title": "ev-fireworks-MIRACLE ミックス 1（23 素材・19.9s）",
+    "seconds": 19.86,
+    "bytes": 239221,
     "components": [
      {
       "id": "fs121558",
@@ -52394,12 +52403,12 @@
       "at": 2.9
      },
      {
-      "id": "fs140717",
-      "title": "Firework Cluster",
+      "id": "fs167242",
+      "title": "fireworkblast.wav",
       "source": "freesound",
-      "author": "j1987",
+      "author": "nfrae",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140717/",
+      "page": "https://freesound.org/people/nfrae/sounds/167242/",
       "at": 4.68
      },
      {
@@ -52430,130 +52439,13 @@
       "at": 5.38
      },
      {
-      "id": "fs167242",
-      "title": "fireworkblast.wav",
-      "source": "freesound",
-      "author": "nfrae",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/nfrae/sounds/167242/",
-      "at": 6.82
-     },
-     {
-      "id": "fs461085",
-      "title": "1.5_sparkler.wav",
-      "source": "freesound",
-      "author": "15GKovacovaJulie",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/15GKovacovaJulie/sounds/461085/",
-      "at": 7.12
-     },
-     {
-      "id": "fs140726",
-      "title": "tiny_rocket.wav",
-      "source": "freesound",
-      "author": "j1987",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140726/",
-      "at": 8.02
-     },
-     {
       "id": "fs414515",
       "title": "Big Firecracker",
       "source": "freesound",
       "author": "Kinoton",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/Kinoton/sounds/414515/",
-      "at": 9.68
-     },
-     {
-      "id": "fs521873",
-      "title": "Glimmer.wav",
-      "source": "freesound",
-      "author": "opticaillusions",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/opticaillusions/sounds/521873/",
-      "at": 9.83
-     },
-     {
-      "id": "fs587173",
-      "title": "firework_rocket_ignition.ogg",
-      "source": "freesound",
-      "author": "derplayer",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/derplayer/sounds/587173/",
-      "at": 10.74
-     },
-     {
-      "id": "fs445237",
-      "title": "Firework 2",
-      "source": "freesound",
-      "author": "steffcaffrey",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/steffcaffrey/sounds/445237/",
-      "at": 12.54
-     },
-     {
-      "id": "fs588198",
-      "title": "Fireworks - Pop Pop Crackle",
-      "source": "freesound",
-      "author": "el_boss",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/el_boss/sounds/588198/",
-      "at": 12.84
-     },
-     {
-      "id": "fs213241",
-      "title": "Fireworks",
-      "source": "freesound",
-      "author": "MrAuralization",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/MrAuralization/sounds/213241/",
-      "at": 13.82
-     },
-     {
-      "id": "fs587194",
-      "title": "explosion_big_01.ogg",
-      "source": "freesound",
-      "author": "derplayer",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/derplayer/sounds/587194/",
-      "at": 14.62
-     },
-     {
-      "id": "fs117616",
-      "title": "fireworks exploding 1.wav",
-      "source": "freesound",
-      "author": "soundmary",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/soundmary/sounds/117616/",
-      "at": 15.92
-     },
-     {
-      "id": "fs750682",
-      "title": "Firework Crackle",
-      "source": "freesound",
-      "author": "LukaCafuka",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LukaCafuka/sounds/750682/",
-      "at": 15.22
-     },
-     {
-      "id": "fs184833",
-      "title": "Crowd",
-      "source": "freesound",
-      "author": "Gauraa",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Gauraa/sounds/184833/",
-      "at": 15.62
-     },
-     {
-      "id": "fs511485",
-      "title": "cartoon_wink_magic_sparkle.wav",
-      "source": "freesound",
-      "author": "MLaudio",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/MLaudio/sounds/511485/",
-      "at": 20.28
+      "at": 6.82
      },
      {
       "id": "fs121557",
@@ -52562,6 +52454,123 @@
       "author": "sbarncar",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/sbarncar/sounds/121557/",
+      "at": 7.12
+     },
+     {
+      "id": "fs336008",
+      "title": "Whistle and Explosion Single_Firework",
+      "source": "freesound",
+      "author": "Rudmer_Rotteveel",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/Rudmer_Rotteveel/sounds/336008/",
+      "at": 7.98
+     },
+     {
+      "id": "fs587193",
+      "title": "explosion_big_02.ogg",
+      "source": "freesound",
+      "author": "derplayer",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/derplayer/sounds/587193/",
+      "at": 9.41
+     },
+     {
+      "id": "fs683323",
+      "title": "Magic Spell Fairy Dust",
+      "source": "freesound",
+      "author": "zazz.sound.design",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/zazz.sound.design/sounds/683323/",
+      "at": 9.56
+     },
+     {
+      "id": "fs88532",
+      "title": "Woosh_northern87",
+      "source": "freesound",
+      "author": "northern87",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/northern87/sounds/88532/",
+      "at": 10.4
+     },
+     {
+      "id": "fs140717",
+      "title": "Firework Cluster",
+      "source": "freesound",
+      "author": "j1987",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/j1987/sounds/140717/",
+      "at": 11.65
+     },
+     {
+      "id": "fs349830",
+      "title": "Fireworks22.wav",
+      "source": "freesound",
+      "author": "kingsrow",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/kingsrow/sounds/349830/",
+      "at": 11.95
+     },
+     {
+      "id": "fs376659",
+      "title": "NYE Boom Firecrackers.wav",
+      "source": "freesound",
+      "author": "LOVEBURD",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/LOVEBURD/sounds/376659/",
+      "at": 12.86
+     },
+     {
+      "id": "fs21410",
+      "title": "blow.aif",
+      "source": "freesound",
+      "author": "Heigh-hoo",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/Heigh-hoo/sounds/21410/",
+      "at": 13.66
+     },
+     {
+      "id": "fs587194",
+      "title": "explosion_big_01.ogg",
+      "source": "freesound",
+      "author": "derplayer",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/derplayer/sounds/587194/",
+      "at": 14.96
+     },
+     {
+      "id": "fs140716",
+      "title": "Firecracker",
+      "source": "freesound",
+      "author": "j1987",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/j1987/sounds/140716/",
+      "at": 14.26
+     },
+     {
+      "id": "fs184833",
+      "title": "Crowd",
+      "source": "freesound",
+      "author": "Gauraa",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/Gauraa/sounds/184833/",
+      "at": 14.66
+     },
+     {
+      "id": "fs521873",
+      "title": "Glimmer.wav",
+      "source": "freesound",
+      "author": "opticaillusions",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/opticaillusions/sounds/521873/",
+      "at": 16.1
+     },
+     {
+      "id": "fs750682",
+      "title": "Firework Crackle",
+      "source": "freesound",
+      "author": "LukaCafuka",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/LukaCafuka/sounds/750682/",
       "at": 0.36
      }
     ]
@@ -52569,9 +52578,9 @@
    {
     "id": "v8-2",
     "file": "/se/lib/ev-fireworks-MIRACLE/v8-2.mp3",
-    "title": "ev-fireworks-MIRACLE ミックス 2（22 素材・18.9s）",
-    "seconds": 18.88,
-    "bytes": 227309,
+    "title": "ev-fireworks-MIRACLE ミックス 2（22 素材・18.8s）",
+    "seconds": 18.8,
+    "bytes": 226368,
     "components": [
      {
       "id": "fs455547",
@@ -52610,12 +52619,12 @@
       "at": 2.2
      },
      {
-      "id": "fs376660",
-      "title": "NYE Single Boom.wav",
+      "id": "fs167242",
+      "title": "fireworkblast.wav",
       "source": "freesound",
-      "author": "LOVEBURD",
+      "author": "nfrae",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LOVEBURD/sounds/376660/",
+      "page": "https://freesound.org/people/nfrae/sounds/167242/",
       "at": 3.63
      },
      {
@@ -52646,12 +52655,12 @@
       "at": 4.49
      },
      {
-      "id": "fs587193",
-      "title": "explosion_big_02.ogg",
+      "id": "fs117616",
+      "title": "fireworks exploding 1.wav",
       "source": "freesound",
-      "author": "derplayer",
+      "author": "soundmary",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/derplayer/sounds/587193/",
+      "page": "https://freesound.org/people/soundmary/sounds/117616/",
       "at": 5.92
      },
      {
@@ -52673,112 +52682,112 @@
       "at": 6.63
      },
      {
-      "id": "fs587194",
-      "title": "explosion_big_01.ogg",
+      "id": "fs588198",
+      "title": "Fireworks - Pop Pop Crackle",
       "source": "freesound",
-      "author": "derplayer",
+      "author": "el_boss",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/derplayer/sounds/587194/",
+      "page": "https://freesound.org/people/el_boss/sounds/588198/",
       "at": 8.3
      },
      {
-      "id": "fs639429",
-      "title": "Crystal Twinkle",
+      "id": "fs683323",
+      "title": "Magic Spell Fairy Dust",
       "source": "freesound",
-      "author": "LaurenPonder",
+      "author": "zazz.sound.design",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LaurenPonder/sounds/639429/",
+      "page": "https://freesound.org/people/zazz.sound.design/sounds/683323/",
       "at": 8.45
      },
      {
-      "id": "fs121558",
-      "title": "whistleAndReport.aif",
+      "id": "fs88532",
+      "title": "Woosh_northern87",
       "source": "freesound",
-      "author": "sbarncar",
+      "author": "northern87",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/sbarncar/sounds/121558/",
-      "at": 9.35
+      "page": "https://freesound.org/people/northern87/sounds/88532/",
+      "at": 9.16
      },
      {
-      "id": "fs335983",
-      "title": "firework_single.wav",
-      "source": "freesound",
-      "author": "zihengc",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/zihengc/sounds/335983/",
-      "at": 11.15
-     },
-     {
-      "id": "fs750682",
-      "title": "Firework Crackle",
-      "source": "freesound",
-      "author": "LukaCafuka",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LukaCafuka/sounds/750682/",
-      "at": 11.45
-     },
-     {
-      "id": "fs376659",
-      "title": "NYE Boom Firecrackers.wav",
+      "id": "fs376660",
+      "title": "NYE Single Boom.wav",
       "source": "freesound",
       "author": "LOVEBURD",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LOVEBURD/sounds/376659/",
-      "at": 11.88
+      "page": "https://freesound.org/people/LOVEBURD/sounds/376660/",
+      "at": 10.41
      },
      {
-      "id": "fs21410",
-      "title": "blow.aif",
+      "id": "fs140727",
+      "title": "tinymortar.wav",
       "source": "freesound",
-      "author": "Heigh-hoo",
+      "author": "j1987",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Heigh-hoo/sounds/21410/",
-      "at": 12.68
+      "page": "https://freesound.org/people/j1987/sounds/140727/",
+      "at": 10.71
      },
      {
-      "id": "fs117616",
-      "title": "fireworks exploding 1.wav",
+      "id": "fs213241",
+      "title": "Fireworks",
       "source": "freesound",
-      "author": "soundmary",
+      "author": "MrAuralization",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/soundmary/sounds/117616/",
-      "at": 13.98
+      "page": "https://freesound.org/people/MrAuralization/sounds/213241/",
+      "at": 11.8
      },
      {
-      "id": "fs121557",
-      "title": "firecrackers.wav",
+      "id": "fs140717",
+      "title": "Firework Cluster",
       "source": "freesound",
-      "author": "sbarncar",
+      "author": "j1987",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/sbarncar/sounds/121557/",
-      "at": 13.28
+      "page": "https://freesound.org/people/j1987/sounds/140717/",
+      "at": 12.6
      },
      {
-      "id": "fs184833",
-      "title": "Crowd",
+      "id": "fs414515",
+      "title": "Big Firecracker",
       "source": "freesound",
-      "author": "Gauraa",
+      "author": "Kinoton",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Gauraa/sounds/184833/",
-      "at": 13.68
+      "page": "https://freesound.org/people/Kinoton/sounds/414515/",
+      "at": 13.9
      },
      {
-      "id": "fs648212",
-      "title": "Ui sounds - Shimmering success",
+      "id": "fs349830",
+      "title": "Fireworks22.wav",
       "source": "freesound",
-      "author": "Philip_Berger",
+      "author": "kingsrow",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Philip_Berger/sounds/648212/",
-      "at": 17.01
+      "page": "https://freesound.org/people/kingsrow/sounds/349830/",
+      "at": 13.2
+     },
+     {
+      "id": "fs274516",
+      "title": "Stadium Crowd",
+      "source": "freesound",
+      "author": "stomachache",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/stomachache/sounds/274516/",
+      "at": 13.6
+     },
+     {
+      "id": "fs715067",
+      "title": "achievement-sparkle",
+      "source": "freesound",
+      "author": "SkySpeira",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/SkySpeira/sounds/715067/",
+      "at": 16.94
      }
     ]
    },
    {
     "id": "v8-3",
     "file": "/se/lib/ev-fireworks-MIRACLE/v8-3.mp3",
-    "title": "ev-fireworks-MIRACLE ミックス 3（23 素材・19.7s）",
-    "seconds": 19.71,
-    "bytes": 237340,
+    "title": "ev-fireworks-MIRACLE ミックス 3（23 素材・19.2s）",
+    "seconds": 19.23,
+    "bytes": 231697,
     "components": [
      {
       "id": "fs455547",
@@ -52790,12 +52799,12 @@
       "at": 0.0
      },
      {
-      "id": "fs455547",
-      "title": "Firework Single Rocket #2",
+      "id": "fs140717",
+      "title": "Firework Cluster",
       "source": "freesound",
-      "author": "Kinoton",
+      "author": "j1987",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Kinoton/sounds/455547/",
+      "page": "https://freesound.org/people/j1987/sounds/140717/",
       "at": 1.35
      },
      {
@@ -52817,139 +52826,49 @@
       "at": 2.11
      },
      {
-      "id": "fs376660",
-      "title": "NYE Single Boom.wav",
-      "source": "freesound",
-      "author": "LOVEBURD",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/LOVEBURD/sounds/376660/",
-      "at": 3.55
-     },
-     {
-      "id": "fs648212",
-      "title": "Ui sounds - Shimmering success",
-      "source": "freesound",
-      "author": "Philip_Berger",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Philip_Berger/sounds/648212/",
-      "at": 3.7
-     },
-     {
-      "id": "fs198320",
-      "title": "applauses.wav",
-      "source": "freesound",
-      "author": "schafferdavid",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/schafferdavid/sounds/198320/",
-      "at": 4.05
-     },
-     {
-      "id": "fs587173",
-      "title": "firework_rocket_ignition.ogg",
-      "source": "freesound",
-      "author": "derplayer",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/derplayer/sounds/587173/",
-      "at": 4.55
-     },
-     {
       "id": "fs587193",
       "title": "explosion_big_02.ogg",
       "source": "freesound",
       "author": "derplayer",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/derplayer/sounds/587193/",
-      "at": 6.35
+      "at": 3.55
      },
      {
-      "id": "fs461085",
-      "title": "1.5_sparkler.wav",
+      "id": "fs683323",
+      "title": "Magic Spell Fairy Dust",
       "source": "freesound",
-      "author": "15GKovacovaJulie",
+      "author": "zazz.sound.design",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/15GKovacovaJulie/sounds/461085/",
-      "at": 6.65
+      "page": "https://freesound.org/people/zazz.sound.design/sounds/683323/",
+      "at": 3.7
      },
      {
-      "id": "fs140725",
-      "title": "whistlingrocket_3.wav",
+      "id": "fs333398",
+      "title": "Gasp 2 with wonder.wav",
       "source": "freesound",
-      "author": "j1987",
+      "author": "jayfrosting",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140725/",
-      "at": 7.46
+      "page": "https://freesound.org/people/jayfrosting/sounds/333398/",
+      "at": 4.05
      },
      {
-      "id": "fs140717",
-      "title": "Firework Cluster",
+      "id": "fs88532",
+      "title": "Woosh_northern87",
       "source": "freesound",
-      "author": "j1987",
+      "author": "northern87",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140717/",
-      "at": 9.23
+      "page": "https://freesound.org/people/northern87/sounds/88532/",
+      "at": 4.52
      },
      {
-      "id": "fs511485",
-      "title": "cartoon_wink_magic_sparkle.wav",
+      "id": "fs167242",
+      "title": "fireworkblast.wav",
       "source": "freesound",
-      "author": "MLaudio",
+      "author": "nfrae",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/MLaudio/sounds/511485/",
-      "at": 9.38
-     },
-     {
-      "id": "fs336008",
-      "title": "Whistle and Explosion Single_Firework",
-      "source": "freesound",
-      "author": "Rudmer_Rotteveel",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/Rudmer_Rotteveel/sounds/336008/",
-      "at": 10.13
-     },
-     {
-      "id": "fs422079",
-      "title": "single firework.wav",
-      "source": "freesound",
-      "author": "johnnyguitar01",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/johnnyguitar01/sounds/422079/",
-      "at": 11.56
-     },
-     {
-      "id": "fs140716",
-      "title": "Firecracker",
-      "source": "freesound",
-      "author": "j1987",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/j1987/sounds/140716/",
-      "at": 11.86
-     },
-     {
-      "id": "fs213241",
-      "title": "Fireworks",
-      "source": "freesound",
-      "author": "MrAuralization",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/MrAuralization/sounds/213241/",
-      "at": 12.71
-     },
-     {
-      "id": "fs117616",
-      "title": "fireworks exploding 1.wav",
-      "source": "freesound",
-      "author": "soundmary",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/soundmary/sounds/117616/",
-      "at": 13.51
-     },
-     {
-      "id": "fs587194",
-      "title": "explosion_big_01.ogg",
-      "source": "freesound",
-      "author": "derplayer",
-      "license": "CC0 1.0",
-      "page": "https://freesound.org/people/derplayer/sounds/587194/",
-      "at": 14.81
+      "page": "https://freesound.org/people/nfrae/sounds/167242/",
+      "at": 5.77
      },
      {
       "id": "fs750682",
@@ -52958,16 +52877,25 @@
       "author": "LukaCafuka",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/LukaCafuka/sounds/750682/",
-      "at": 14.11
+      "at": 6.07
      },
      {
-      "id": "fs274516",
-      "title": "Stadium Crowd",
+      "id": "fs140725",
+      "title": "whistlingrocket_3.wav",
       "source": "freesound",
-      "author": "stomachache",
+      "author": "j1987",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/stomachache/sounds/274516/",
-      "at": 14.51
+      "page": "https://freesound.org/people/j1987/sounds/140725/",
+      "at": 6.98
+     },
+     {
+      "id": "fs21410",
+      "title": "blow.aif",
+      "source": "freesound",
+      "author": "Heigh-hoo",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/Heigh-hoo/sounds/21410/",
+      "at": 8.76
      },
      {
       "id": "fs521873",
@@ -52976,16 +52904,97 @@
       "author": "opticaillusions",
       "license": "CC0 1.0",
       "page": "https://freesound.org/people/opticaillusions/sounds/521873/",
-      "at": 16.65
+      "at": 8.91
      },
      {
-      "id": "fs121557",
-      "title": "firecrackers.wav",
+      "id": "fs336008",
+      "title": "Whistle and Explosion Single_Firework",
       "source": "freesound",
-      "author": "sbarncar",
+      "author": "Rudmer_Rotteveel",
       "license": "CC0 1.0",
-      "page": "https://freesound.org/people/sbarncar/sounds/121557/",
-      "at": 2.85
+      "page": "https://freesound.org/people/Rudmer_Rotteveel/sounds/336008/",
+      "at": 9.86
+     },
+     {
+      "id": "fs414515",
+      "title": "Big Firecracker",
+      "source": "freesound",
+      "author": "Kinoton",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/Kinoton/sounds/414515/",
+      "at": 11.29
+     },
+     {
+      "id": "fs461085",
+      "title": "1.5_sparkler.wav",
+      "source": "freesound",
+      "author": "15GKovacovaJulie",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/15GKovacovaJulie/sounds/461085/",
+      "at": 11.59
+     },
+     {
+      "id": "fs202927",
+      "title": "Fireworks.wav",
+      "source": "freesound",
+      "author": "Adrian_Gomar",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/Adrian_Gomar/sounds/202927/",
+      "at": 12.23
+     },
+     {
+      "id": "fs117616",
+      "title": "fireworks exploding 1.wav",
+      "source": "freesound",
+      "author": "soundmary",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/soundmary/sounds/117616/",
+      "at": 13.03
+     },
+     {
+      "id": "fs335983",
+      "title": "firework_single.wav",
+      "source": "freesound",
+      "author": "zihengc",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/zihengc/sounds/335983/",
+      "at": 14.33
+     },
+     {
+      "id": "fs588198",
+      "title": "Fireworks - Pop Pop Crackle",
+      "source": "freesound",
+      "author": "el_boss",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/el_boss/sounds/588198/",
+      "at": 13.63
+     },
+     {
+      "id": "fs221567",
+      "title": "cheering and clapping crowd 2",
+      "source": "freesound",
+      "author": "AlaskaRobotics",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/AlaskaRobotics/sounds/221567/",
+      "at": 14.03
+     },
+     {
+      "id": "fs511485",
+      "title": "cartoon_wink_magic_sparkle.wav",
+      "source": "freesound",
+      "author": "MLaudio",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/MLaudio/sounds/511485/",
+      "at": 17.99
+     },
+     {
+      "id": "fs349830",
+      "title": "Fireworks22.wav",
+      "source": "freesound",
+      "author": "kingsrow",
+      "license": "CC0 1.0",
+      "page": "https://freesound.org/people/kingsrow/sounds/349830/",
+      "at": 7.68
      }
     ]
    }
@@ -55870,5 +55879,5 @@
    "https://kenney.nl/assets/rpg-audio"
   ]
  },
- "generated_at": "2026-09-30T08:00:22Z"
+ "generated_at": "2026-09-30T08:36:12Z"
 }

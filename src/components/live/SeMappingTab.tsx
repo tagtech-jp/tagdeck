@@ -8,7 +8,7 @@ import { tierForGift, TIER_LABELS, type SeTier } from "@/lib/se/tiers";
 import { expandablePatternRows } from "@/lib/se/pattern-rows";
 import { WEB_BONUS_GROUP, WEB_BONUS_LABEL, isWebBonusItem } from "@/lib/se/web-bonus";
 import { BULK_GRADE_LABELS, MAIN_BULK_GRADES, bulkItemKey, bulkKey, describeDecorations, type BulkDecoration, type BulkGrade } from "@/lib/se/bulk-grade";
-import { bulkSetFor, isPremiumPrice, libraryFiles, liteSetFor, pickVariant, THEME_LABELS, themeForItem, themeSetFor } from "@/lib/se/auto-library";
+import { bulkSetFor, isPremiumPrice, libraryFiles, liteSetFor, pickVariant, THEME_LABELS, themeForItem, themeSetFor, tierSetFor } from "@/lib/se/auto-library";
 import { isClearedSingleRow } from "@/lib/se/choose-sound";
 import { AUTO_LIBRARY_CREDITS, AUTO_LIBRARY_FILE_COUNT } from "@/lib/se/auto-library-data";
 import { variantKeys } from "@/lib/se/choose-sound";
@@ -339,9 +339,17 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
     }
   };
 
-  const preview = async (key: string, tier: SeTier, volumeOverride?: number) => {
+  const preview = async (key: string, tier: SeTier, volumeOverride?: number, auto?: AutoPreview) => {
     await unlockAudio();
     const m = byKey.get(key);
+    // この行が自動に任されるとき（音源なし、またはミックスに上げる条件の既定の単発音）は、ライブで鳴るセットを試聴する（S25 レビュー）
+    if (auto && autoApplies(m, auto)) {
+      const f = pickVariant(`preview:${auto.set}`, libraryFiles(auto.set));
+      if (f) {
+        await playSe(tier, { url: f.file, volume: (volumeOverride ?? m?.volume ?? 80) / 100 });
+        return;
+      }
+    }
     // 価格帯の既定（自分の音源なし）は素材ライブラリの価格帯セットを試聴する（2026-09-29）
     if (key.startsWith("tier:") && (!m || m.source === "default" || !m.url)) {
       const set = tier === "hit" ? "hit" : `tier-${tier}`;
@@ -444,7 +452,9 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
         <p className="mb-1 text-xs text-muted-foreground">
           個別に割り当てていないアイテムは、名前から決めたテーマ（花火・ねこ・コイン・乾杯・ハート…約 45 種）のミックス音を 5 本からランダムに鳴らします。
           1 本は「ライザー → インパクト → テーマ音の連打 → 確定音（キュイン）→ ファンファーレ／フィーバー／歓声 ＋ コインシャワー ＋ きらきら」を重ねたもので、
-          派手さに応じて 3〜15 秒（¥5,000〜・ミラクル・当たりは最長）。各アイテムのカードに「自動: テーマ名」と試聴ボタンが出ます。
+          派手さに応じて 3〜15 秒（¥5,000〜・ミラクル・当たりは最長）。単価 ¥160 以上は 5 秒以上の豪華版になり、公式既定の短い 1 音の代わりにこのミックスが鳴ります。
+          主要なイベントアイテム（応援の動物・たぬっち）と花火は、まとめ投げの段階ごとに専用の長いミックス（クール 約 9 秒 → ミラクル 約 20 秒）、花火は 1 発でも約 10 秒の花火ショーです。
+          各アイテムのカードに「自動: テーマ名」と試聴ボタンが出ます。
           無料アイテム（価格 0・不明）はミックスにせず、アイテム名の最後の言葉で決めたテーマの短い 1 音（サイコロならサイコロの音、花火なら小さな花火、ねこなら鳴き声。テーマが無ければポップ音、当たりは短い正解音）を少し小さめに鳴らします。
           自分で音源を上げた行はこのライブラリより優先されます（「既定に戻す」で自動に戻る）
         </p>
@@ -612,7 +622,17 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
                   <div key={`r:${r.groupKey}:${r.items[0]?.itemId ?? row.index}`} data-index={row.index} ref={rowVirtualizer.measureElement} style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${row.start}px)` }}>
                     <div className="mb-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                       {r.items.map((it) => {
-                        const tier = tierForGift({ priceYen: it.priceJpy, count: 1, isHit: false });
+                        // ¥160 以上は価格帯も 5 秒以上（T0・T1 → T2。LiveConnectionProvider の予備・tierSetFor と同じ）
+                        const giftTier = tierForGift({ priceYen: it.priceJpy, count: 1, isHit: false });
+                        const itemFree = !(it.priceJpy !== null && it.priceJpy > 0);
+                        const itemPremium = !itemFree && isPremiumPrice(it.priceJpy);
+                        const itemTheme = themeForItem(it.itemName, it.groups);
+                        const tier: SeTier = itemPremium && (giftTier === "T0" || giftTier === "T1") ? "T2" : giftTier;
+                        // アイテム行が自動に任されるときに鳴るセット（無料は控えめな単発音、有料はテーマのミックス、テーマなしは価格帯）
+                        const itemAutoSet = itemFree ? liteSetFor(it.itemName, it.groups, false) : itemTheme ? themeSetFor(itemTheme, itemPremium) : tierSetFor(giftTier, itemPremium);
+                        const itemAuto: AutoPreview | undefined = itemAutoSet
+                          ? { set: itemAutoSet, skipCleared: !itemFree && (itemPremium || itemTheme === "fireworks"), label: `自動ミックス（${itemTheme ? (THEME_LABELS[itemTheme] ?? itemTheme) : "価格帯"}${itemPremium ? "・豪華版" : ""}）` }
+                          : undefined;
                         const kind = itemKind(it.patterns);
                         // パターン単位の個別割り当ては「当たり」と「名前で見分けがつくパターン」だけ出す。
                         // 見た目も名前も同じパターンが並ぶだけのアイテム（実測: 水上花火は17パターン全て同一）は
@@ -650,30 +670,34 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
                               </div>
                             </div>
                             <div className="mt-2 border-t border-border pt-2">
-                              <MappingControls mkeys={[`item:${it.itemId}`]} tier={tier} {...ctl([`item:${it.itemId}`])} />
+                              <MappingControls mkeys={[`item:${it.itemId}`]} tier={tier} auto={itemAuto} {...ctl([`item:${it.itemId}`])} />
                               {(() => {
-                                const theme = themeForItem(it.itemName, it.groups);
-                                const own = byKey.get(`item:${it.itemId}`);
+                                const theme = itemTheme;
                                 // 無料アイテムは控えめな音（lite-{テーマ}・2026-09-30 社長指示「無料が派手すぎる」）
-                                const free = !(it.priceJpy !== null && it.priceJpy > 0);
+                                const free = itemFree;
                                 // 単価 ¥160 以上は 5 秒以上の豪華版（p-{テーマ}）。公式既定の単発音の行はミックスに置き換わる（S25）
-                                const premium = !free && isPremiumPrice(it.priceJpy);
+                                const premium = itemPremium;
                                 const set = free ? liteSetFor(it.itemName, it.groups, false) : theme ? themeSetFor(theme, premium) : null;
                                 const shown = free ? (set ? set.slice(5) : null) : theme;
                                 const n = set ? libraryFiles(set).length : 0;
-                                const ownWins = own && own.enabled && !((premium || theme === "fireworks") && !free && isClearedSingleRow(own));
+                                // 基本の行と変種（#2〜#5）をまとめて見る（choose-sound.ts と同じ: ON で音源があり、飛ばす対象でない行が 1 本でもあればそれが鳴る）
+                                const group = variantKeys(`item:${it.itemId}`).map((k) => byKey.get(k)).filter((m): m is MergedMapping => m !== undefined);
+                                const own = group.length > 0 ? group : null;
+                                const skipsCleared = !free && (premium || theme === "fireworks");
+                                const ownWins = group.some((m) => m.enabled && m.url && !(skipsCleared && isClearedSingleRow(m)));
+                                const allOff = group.length > 0 && group.every((m) => !m.enabled);
                                 return (
                                   <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                                     {shown && set && n > 0 ? (
                                       <>
                                         <span>
                                           自動{free ? "（無料・控えめ）" : premium ? "（¥160 以上・豪華版）" : ""}: {THEME_LABELS[shown] ?? shown}（{n} 本ランダム）
-                                          {own && !own.enabled
+                                          {allOff
                                             ? "・いまは上で「鳴らさない」"
                                             : ownWins
                                               ? "・いまは上の割り当てが優先"
                                               : own
-                                                ? "・上の既定の単発音の代わりにこのミックスが鳴る"
+                                                ? "・上の既定の代わりにこのミックスが鳴る"
                                                 : ""}
                                         </span>
                                         <button type="button" onClick={() => void previewAuto(set)} className="min-h-7 rounded-full border border-border bg-muted px-2 text-[11px] text-foreground hover:border-foreground/30">
@@ -701,7 +725,12 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
                                   const free = !(it.priceJpy !== null && it.priceJpy > 0);
                                   const theme = themeForItem(it.itemName, it.groups);
                                   if (free || !theme) return null;
-                                  const sets = MAIN_BULK_GRADES.map((g) => ({ g, set: bulkSetFor(g, theme) })).filter((x) => x.set.startsWith("ev-"));
+                                  // ボタンはこのアイテムにある段階だけ（変種の段階は FANTASTIC 相当）。同じセットは 1 つに
+                                  const sets: Array<{ g: BulkGrade; set: string }> = [];
+                                  for (const d of [...(it.decorations ?? [])].sort((a, b) => a.count - b.count)) {
+                                    const set = bulkSetFor(d.grade, theme);
+                                    if (set.startsWith("ev-") && !sets.some((x) => x.set === set)) sets.push({ g: d.grade, set });
+                                  }
                                   if (sets.length === 0) return null;
                                   return (
                                     <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
@@ -728,7 +757,15 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
                                             <span className="text-muted-foreground">このアイテムだけ。未設定なら上の「まとめ投げの段階ごとの SE」が鳴る</span>
                                             {isUser(k) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5">上書き中</span>}
                                           </div>
-                                          <MappingControls mkeys={[k]} tier={BULK_PREVIEW_TIER[d.grade]} {...ctl([k])} />
+                                          <MappingControls
+                                            mkeys={[k]}
+                                            tier={BULK_PREVIEW_TIER[d.grade]}
+                                            auto={(() => {
+                                              const set = itemFree ? liteSetFor(it.itemName, it.groups, false) : bulkSetFor(d.grade, itemTheme);
+                                              return set ? { set, skipCleared: !itemFree, label: set.startsWith("ev-") ? "段階の専用ミックス" : itemFree ? "控えめな単発音" : "段階のミックス" } : undefined;
+                                            })()}
+                                            {...ctl([k])}
+                                          />
                                         </div>
                                       );
                                     })}
@@ -777,7 +814,21 @@ interface MappingControlsProps {
   onUpload: (keys: string[], file: File) => void | Promise<void>;
   onUpsert: (keys: string[], patch: Partial<Mapping>) => Promise<void>;
   onReset: (keys: string[]) => Promise<void>;
-  onPreview: (key: string, tier: SeTier, volume?: number) => Promise<void>;
+  onPreview: (key: string, tier: SeTier, volume?: number, auto?: AutoPreview) => Promise<void>;
+  /** この行が自動に任されるときに鳴るセット（試聴と表示に使う。S25） */
+  auto?: AutoPreview;
+}
+
+/** 行が自動に任されるときに鳴るセット。skipCleared は「公式既定の単発音の行も飛ばす（¥160 以上・段階・花火）」 */
+interface AutoPreview {
+  set: string;
+  skipCleared: boolean;
+  label: string;
+}
+
+/** 行が自動に任されるか（音源が無い、または skipCleared で既定の単発音）。choose-sound.ts の飛ばし方と同じ */
+function autoApplies(m: MergedMapping | undefined, auto: AutoPreview): boolean {
+  return !m || !m.url || (auto.skipCleared && isClearedSingleRow(m));
 }
 
 /**
@@ -785,7 +836,7 @@ interface MappingControlsProps {
  * コンポーネント内で定義せずここに置くのが重要（親の再描画で <input type="file"> が作り直されると、
  * 開いているファイル選択ダイアログの結果が捨てられる。2026-09-26）
  */
-const MappingControls = memo(function MappingControls({ mkeys, tier, mapping: m, variants = [], busy, message, onUpload, onUpsert, onReset, onPreview }: MappingControlsProps) {
+const MappingControls = memo(function MappingControls({ mkeys, tier, mapping: m, variants = [], busy, message, onUpload, onUpsert, onReset, onPreview, auto }: MappingControlsProps) {
   const mkey = mkeys[0];
   // 次に使う変種スロット（#2〜#5 のうち空いている最小）。5 本そろっていれば null
   const nextSlot = variantKeys(mkey).slice(1).find((k) => !variants.some((v) => v.key === k)) ?? null;
@@ -806,7 +857,7 @@ const MappingControls = memo(function MappingControls({ mkeys, tier, mapping: m,
           }}
         />
       </label>
-      <VolumeSlider value={m?.volume ?? 80} onCommit={(v) => onUpsert(mkeys, { volume: v })} onPreview={(v) => void onPreview(mkey, tier, v)} />
+      <VolumeSlider value={m?.volume ?? 80} onCommit={(v) => onUpsert(mkeys, { volume: v })} onPreview={(v) => void onPreview(mkey, tier, v, auto)} />
       <label className="flex items-center gap-1 text-xs text-muted-foreground">
         <input type="checkbox" checked={m?.enabled ?? true} onChange={(e) => void onUpsert(mkeys, { enabled: e.target.checked })} className="size-4" />
         鳴らす
@@ -819,7 +870,9 @@ const MappingControls = memo(function MappingControls({ mkeys, tier, mapping: m,
       <span className="truncate text-xs text-muted-foreground">
         {mkey.startsWith("tier:") && (!m || m.source === "default" || !m.url)
           ? "既定 ♪ 素材ライブラリ（パチンコ風ミックス 5 本ランダム）"
-          : m?.usesDefaultSound
+          : auto && autoApplies(m, auto)
+            ? `既定 ♪ ${auto.label}`
+            : m?.usesDefaultSound
             ? `既定 ♪ ${m.label ?? "公式音源"}`
             : m?.url
               ? `♪ ${m.label ?? "カスタム音源"}`

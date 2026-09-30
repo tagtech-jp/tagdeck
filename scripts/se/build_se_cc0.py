@@ -603,7 +603,10 @@ def compose_fireworks(set_name, variant, mains, rng, target):
     def used():
         return {p[0]["id"] for p in parts}
 
-    bursts = mains + _pool("fw_burst")
+    # 破裂の役に打ち上げ（ヒュ〜）の音を混ぜない。テーマの主役にある打ち上げ込みの録音（fs455547 等）は外す（S25 レビュー）
+    launch_ids = {x["id"] for x in _pool("fw_launch")}
+    main_ids = {m_["id"] for m_ in mains}
+    bursts = [m_ for m_ in mains if m_["id"] not in launch_ids] + [b_ for b_ in _pool("fw_burst") if b_["id"] not in main_ids]
     finale_len = min(7.0, max(3.5, target * 0.35))
     finale_at = max(3.0, target - finale_len - 1.2)
     t, i, end = 0.0, 0, 0.0
@@ -612,7 +615,7 @@ def compose_fireworks(set_name, variant, mains, rng, target):
         lcut = min(plen(la), 2.0)
         add(la, t, lcut, 0.65)
         b_at = t + max(0.4, lcut - 0.2)
-        b = pick(rng, bursts, exclude=used())[0] if i else mains[variant % len(mains)]
+        b = pick(rng, bursts, exclude=used())[0] if i else bursts[variant % len(bursts)]
         bcut = min(plen(b), 3.2)
         add(b, b_at, bcut, 1.0)
         end = max(end, b_at + bcut)
@@ -660,11 +663,14 @@ def compose_fireworks(set_name, variant, mains, rng, target):
         end = max(end, fin_start + 1.8 + crcut)
     gl = _pool("fw_glitter") or _pool("sparkle")
     if gl:
+        # 締めのきらめきは尺（target）の中、最後の 0.8 秒のフェードより前に置く（尺の外に置くと切られて聞こえない。S25 レビュー）
         g = pick(rng, gl, exclude=used())[0]
         gcut = min(plen(g), 3.0)
-        at = max(fin_start + 2.0, end - gcut - 0.2)
+        cap = min(end, target)
+        at = max(fin_start + 1.0, cap - gcut - 0.9)
+        gcut = max(0.6, min(gcut, target - 0.85 - at))
         add(g, at, gcut, 0.45)
-        end = max(end, at + gcut)
+        end = max(end, min(target, at + gcut))
     fills = 0
     while end < max(0.85 * target, MIN_SEC) and fills < 8:
         pool = [bursts, _pool("fw_crackle"), _pool("fw_glitter") or _pool("sparkle")][fills % 3]

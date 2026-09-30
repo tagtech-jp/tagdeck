@@ -237,3 +237,40 @@ describe("chooseSound（ギンギラギンギャラクシーオーロラ・2026-
     expect(ids.filter((id) => id.includes("jingles_NES00"))).toEqual([]);
   });
 });
+
+describe("chooseSound（S25 レビューの修正）", () => {
+  const base = { patternId: null, itemId: 900, itemName: "うろこ", tier: "T1" as const, isHit: false, groups: ["wgp"], kind: "normal" as const, free: false, unitPriceYen: 300 };
+  const cleared = (key: string, id: string, source: "user" | "default" = "user", enabled = true, volume = 60): SoundRow => ({ key, url: `/se/defaults/cc0/${id}.mp3`, enabled, volume, label: id, source });
+
+  it("音量だけ変えた tier 行（合成済みの既定 = きらきらの単発音）は、¥160 以上なら T2 のミックスをその音量で", () => {
+    const c = chooseSound([cleared("tier:T1", "chime", "user", true, 55)], base, () => 0);
+    if (c === "disabled") throw new Error("disabled");
+    expect(c).toMatchObject({ key: "tier-T2", volume: 55, source: "auto" });
+  });
+
+  it("カテゴリの行が公式既定の単発音なら、¥160 以上のテーマなしアイテムは価格帯のミックス", () => {
+    const c = chooseSound([cleared("cat:group:wgp", "chime")], base, () => 0);
+    if (c === "disabled") throw new Error("disabled");
+    expect(c.key).toBe("tier-T2");
+  });
+
+  it("既定の単発音（ON）と OFF の変種 → 単発音を飛ばしても鳴らさないにならない", () => {
+    const pigRows = [cleared("item:10842", "pig_oink", "default"), { key: "item:10842#2", url: "https://x/pig2.mp3", enabled: false, volume: 80, label: "off", source: "user" as const }];
+    const c = chooseSound(pigRows, { ...base, itemId: 10842, itemName: "トンでもない応援をするぶたさん", groups: [], unitPriceYen: 160 }, () => 0);
+    if (c === "disabled") throw new Error("disabled");
+    expect(c.key).toBe("pig");
+    // 段階付きでも同じ（上位の key で飛ばしたあと、下位の key の OFF では止めない）
+    const b = chooseSound(pigRows, { ...base, itemId: 10842, itemName: "トンでもない応援をするぶたさん", groups: [], unitPriceYen: 160, bulkGrade: "COOL" }, () => 0);
+    if (b === "disabled") throw new Error("disabled");
+    expect(b.key).toBe("ev-pig-COOL");
+  });
+
+  it("音源の無い個別行（音量・鳴らすだけ）は合成音ではなく、その音量でライブラリ", () => {
+    const row: SoundRow = { key: "item:900", url: null, enabled: true, volume: 42, label: null, source: "user" };
+    const c = chooseSound([row], { ...base, itemName: "月見ハンバーガー", groups: [] }, () => 0);
+    if (c === "disabled") throw new Error("disabled");
+    expect(c).toMatchObject({ source: "auto", key: "p-food", volume: 42 });
+    // OFF の行はこれまでどおり鳴らさない
+    expect(chooseSound([{ ...row, enabled: false }], { ...base, itemName: "月見ハンバーガー", groups: [] })).toBe("disabled");
+  });
+});
