@@ -17,7 +17,7 @@ item_point_mapping の列の意味（2026-09-28 社長決定・単価の定義�
                無料配布アイテム（state=FREE）は 0
   base_point   price_jpy と同値（互換のため残す）
   product_id   定価の元になった商品の product_id。無料は ""
-  state        OPEN / CLOSED（定価の元になった商品の state）/ FREE（イベントの無料配布・購入不可）
+  state        OPEN / CLOSED（定価の元になった商品の state）/ FREE（イベントの無料配布・常設の無料アイテム・購入不可）
   whowatch_id  数値の item_id（WebSocket / ポーリングで届く play_item_id と同じ）
 
 取得元:
@@ -26,6 +26,7 @@ item_point_mapping の列の意味（2026-09-28 社長決定・単価の定義�
                              画像 URL のフォルダ events/YYYY/MM_key/ がイベントの event_key（YYYY_MM_key）に一致するもの
                              （src/lib/whowatch/free-event-items.ts の eventKeyFromImageUrl と同じ規則）。
                              過去イベントの無料アイテム・販売終了アイテムは価格不明なので行を作らない（0 を推測で書かない）
+                             例外として、常設の無料アイテム（FIXED_FREE_ITEM_IDS）はマスタにあって買えなければ同じ形の無料の行にする
 
 パックにしか入っていないアイテム（2026-09-30 社長指示「パックにしか入っていないアイテムも単価を計算して組み込んで」）:
   payments3 のパック（商品説明に「・アイテム名 x N個」の行がある商品）の中身のうち、単品で売っていないもの（銀の風船・銀の神 等）は
@@ -52,6 +53,12 @@ TIMEOUT = 30
 
 # 画像 URL のイベントフォルダ: https://img.whowatch.tv/events/2026/09_wolfcoming/item_free.png → 2026_09_wolfcoming
 EVENT_FOLDER_RE = re.compile(r"/events/(\d{4})/(\d{2}_[A-Za-z0-9_-]+)/")
+# 常設の無料アイテム（2026-09-30 社長指示「ふわっちくんメガホン（10863）を無料アイテムとして単価表に登録」）。
+# 画像が日付の無いフォルダ（events/whowatch_megaphone/）にあり、イベントの無料配布の判定（EVENT_FOLDER_RE）に当たらない品。
+# マスタにあって買えない（payments3・パックに無い）ときだけ、イベントの無料配布と同じ形の行（0 円・state FREE）を作る
+FIXED_FREE_ITEM_IDS = frozenset({
+    10863,  # ふわっちくんメガホン
+})
 # パックの中身の行（NFKC 後）: 「・銀の風船 x 10個」「・月見ハンバーガーx３個」
 PACK_LINE_RE = re.compile(r"^・\s*(.+?)\s*[x×✕]\s*(\d+)\s*個")
 # ラベルの割引額: 「250円お得！」「1,750円お得！」「アプリより100円お得！」
@@ -301,6 +308,7 @@ def build_item_rows(categories: list, master_items: list, active_event_keys: set
     - payments3 にあるアイテム: 定価単価。商品が無ければ従来どおり 0（product_id ""・state OPEN）
     - パックにしか入っていないアイテム（銀の風船 等）: パックの価格から求めた定価単価（pack_item_rows）
     - マスタにだけあるアイテムのうち、画像フォルダが pre/open イベントに一致するもの: 無料配布（price 0・state FREE）
+    - マスタにだけある常設の無料アイテム（FIXED_FREE_ITEM_IDS）: 同じ形の無料の行（イベントの有無に関係なく）
     - それ以外は行を作らない
     unresolved にリストを渡すと、マスタで名前が見つからなかったパックの中身を追記する
     """
@@ -344,7 +352,7 @@ def build_item_rows(categories: list, master_items: list, active_event_keys: set
         patterns = it.get("play_item_pattern") or []
         keys = {event_key_from_image_url(p.get("image_url")) for p in patterns if isinstance(p, dict)}
         keys.discard(None)
-        if not keys or not (keys & set(active_event_keys or ())):
+        if item_id not in FIXED_FREE_ITEM_IDS and (not keys or not (keys & set(active_event_keys or ()))):
             continue
         seen.add(item_id)
         items.append({
@@ -385,8 +393,8 @@ def fetch_items(device_id: str, active_event_keys=None) -> list:
     """payments3（買えるアイテム）＋ /playitems（マスタ）から行を作る。マスタの取得失敗は payments3 だけで続ける"""
     data = fetch_json(f"{BASE_URL}/playitems/payments3", device_id)
     master = []
-    # マスタは無料配布アイテムの補完と、パックにしか入っていないアイテムの item_id を引くのに使う
-    if active_event_keys or has_pack_only_contents(data if isinstance(data, list) else []):
+    # マスタは無料配布アイテム・常設の無料アイテムの補完と、パックにしか入っていないアイテムの item_id を引くのに使う
+    if active_event_keys or FIXED_FREE_ITEM_IDS or has_pack_only_contents(data if isinstance(data, list) else []):
         try:
             m = fetch_json(f"{BASE_URL}/playitems", device_id)
             master = m if isinstance(m, list) else []
