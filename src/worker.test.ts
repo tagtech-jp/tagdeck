@@ -82,3 +82,30 @@ describe("runRankingSync (scheduled)", () => {
     expect(syncMock).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("runRankingSync（区分が空のイベントを数える・2026-09-30）", () => {
+  beforeEach(() => {
+    lockExecuteMock.mockReset();
+    selectMock.mockReset();
+    syncMock.mockReset();
+  });
+
+  it("ranking_type が空のものは同期しない。ランキング型のふわっちイベントならログに件数と id を出す", async () => {
+    lockExecuteMock.mockResolvedValue([{ locked: true }]);
+    selectMock.mockResolvedValue([
+      { id: "sim-with-type", rankingType: "wolfcoming_all", platform: "whowatch", eventType: "ranking" },
+      { id: "74671ff8-wolf", rankingType: null, platform: "whowatch", eventType: "ranking" },
+      { id: "score-event", rankingType: null, platform: "whowatch", eventType: "score" },
+    ]);
+    syncMock.mockResolvedValue({ myEntry: null, snapshotId: null });
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await runRankingSync({});
+    expect(syncMock).toHaveBeenCalledTimes(1);
+    expect(syncMock.mock.calls[0][1]).toMatchObject({ id: "sim-with-type" });
+    expect(log).toHaveBeenCalledWith("[ranking-sync/scheduled] targets=1 ok=1 failed=0 no_ranking_type=1");
+    expect(warn.mock.calls.some((c) => String(c[0]).includes("74671ff8") && !String(c[0]).includes("score-ev"))).toBe(true);
+    log.mockRestore();
+    warn.mockRestore();
+  });
+});

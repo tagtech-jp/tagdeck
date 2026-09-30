@@ -5,7 +5,7 @@
 // wrangler deploy時のバンドル(esbuild)は実ファイルとして解決するため実行時は問題ない。
 // @ts-expect-error TS2307: .open-next/worker.js はビルド後にのみ存在する
 import handler from "../.open-next/worker.js";
-import { and, eq, gte, isNotNull, lte, sql } from "drizzle-orm";
+import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { createDbClient } from "@/lib/db/client";
 import { eventSimulators } from "@/lib/db/schema";
 import { syncSimulatorRanking } from "@/lib/whowatch/ranking-sync";
@@ -13,6 +13,9 @@ import { syncSimulatorRanking } from "@/lib/whowatch/ranking-sync";
 // pg_try_advisory_xact_lock 用の固定キー。E2 ランキング同期専用であることが分かればよいので
 // 値そのものに意味はない(他機能のロックキーと衝突しない値を適当に割り当てただけ)。
 const RANKING_SYNC_LOCK_KEY = 861025;
+
+/** 順位表を使うイベントタイプ（EventDashboard の isRankingType と同じ） */
+const RANKING_EVENT_TYPES: ReadonlySet<string> = new Set(["ranking", "nice", "viewer"]);
 
 /**
  * Cloudflare Cron Trigger(5分毎)から呼ばれる本体。
@@ -54,17 +57,20 @@ export async function runRankingSync(env: Record<string, unknown>) {
     }
 
     const now = new Date();
-    const targets = await tx
+    const inPeriod = await tx
       .select()
       .from(eventSimulators)
-      .where(
-        and(
-          eq(eventSimulators.status, "active"),
-          isNotNull(eventSimulators.rankingType),
-          lte(eventSimulators.startTime, now),
-          gte(eventSimulators.endTime, now),
-        ),
+      .where(and(eq(eventSimulators.status, "active"), lte(eventSimulators.startTime, now), gte(eventSimulators.endTime, now)));
+    // 同期の対象は ranking_type（ランキング区分）があるものだけ。区分が空のランキング型のふわっちイベントは
+    // 対象外になって書き込みが黙って止まる（2026-09-30 オオカミさんがやってくる！で実害: 区分の取得不具合 PR #50 の
+    // 6 分前に作ったため空のまま保存され、5 分同期が targets=0 のまま）。件数と id をログに出して気づけるようにする
+    const targets = inPeriod.filter((ev) => Boolean(ev.rankingType));
+    const noRankingType = inPeriod.filter((ev) => !ev.rankingType && ev.platform === "whowatch" && RANKING_EVENT_TYPES.has(ev.eventType));
+    if (noRankingType.length > 0) {
+      console.warn(
+        `[ranking-sync/scheduled] ranking_type が空のため対象外: ${noRankingType.map((ev) => ev.id.slice(0, 8)).join(",")}（イベントの「区分・期間を編集」で区分を選ぶと対象になる）`,
       );
+    }
 
     let ok = 0;
     let failed = 0;
@@ -77,7 +83,7 @@ export async function runRankingSync(env: Record<string, unknown>) {
         console.warn("[ranking-sync/scheduled] failed", ev.id, err);
       }
     }
-    console.log(`[ranking-sync/scheduled] targets=${targets.length} ok=${ok} failed=${failed}`);
+    console.log(`[ranking-sync/scheduled] targets=${targets.length} ok=${ok} failed=${failed} no_ranking_type=${noRankingType.length}`);
   });
 }
 
