@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
-import { eventHistory } from "@/lib/db/schema";
+import { eventHistory, eventSimulators } from "@/lib/db/schema";
+import { ownedSimulator } from "@/lib/events/simulator-scope";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 
@@ -29,7 +30,7 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  await params; // 認証スコープ確認に使用（クエリは user_id でスコープ済み）
+  const { id } = await params;
 
   const supabase = await createClient();
   const {
@@ -46,6 +47,16 @@ export async function GET(
 
   // 重要: Drizzle は postgres ロール (BYPASSRLS) のため user_id 条件は必須
   const db = createDbClient();
+
+  // 集計は event_history（user_id × eventType）だけで行うが、他の [id] ルートと揃えて
+  // 本人の・削除済みでないシミュレーターでなければ見つからない扱い（404）にする
+  const [ev] = await db
+    .select({ id: eventSimulators.id })
+    .from(eventSimulators)
+    .where(ownedSimulator(id, user.id))
+    .limit(1);
+  if (!ev) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const records = await db
     .select({
       fullPaceHistory: eventHistory.fullPaceHistory,
