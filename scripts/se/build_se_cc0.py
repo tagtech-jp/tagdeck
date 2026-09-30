@@ -48,7 +48,8 @@ for d in (FS_CACHE, RAW, TMPD, KENNEY):
     os.makedirs(d, exist_ok=True)
 OUT = os.environ.get("OUT_DIR") or os.path.join(REPO, "public", "se", "lib")
 DEF_OUT = os.environ.get("DEF_OUT") or os.path.join(REPO, "public", "se", "defaults", "cc0")
-PREFIX = "v7-"
+# 出力ファイル名の頭。作り直したセットは SE_PREFIX=v8- などで別名にする（ブラウザ・CDN に古い音が残らないように。S25）
+PREFIX = os.environ.get("SE_PREFIX", "v7-")
 HDR = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130 Safari/537.36", "Accept": "*/*", "Accept-Encoding": "gzip", "Accept-Language": "ja,en"}
 LICENSE_TEXT = {
     "freesound": "Creative Commons 0 (CC0 1.0)・Freesound の検索フィルタ license:\"Creative Commons 0\"",
@@ -410,6 +411,42 @@ TARGET = {1: 3.5, 2: 6.5, 3: 9.5, 4: 14.0}
 TARGET_OVERRIDE = {"tier-T0": 3.0, "tier-T1": 4.0, "tier-T2": 6.0, "tier-T3": 9.0, "tier-T4": 15.0, "hit": 10.0, "bulk-COOL": 6.0, "bulk-GREAT": 9.0, "bulk-FANTASTIC": 12.0, "bulk-MIRACLE": 15.0, "epic": 15.0, "trophy": 12.0}
 MAX_SEC = 15.0
 
+# ---------------------------------------------------------------------------
+# S25（2026-09-30 社長指示「160円以上のアイテムの SE をもっと 5 秒以上で組み合わせて豪華に」
+#   「主要なイベントアイテムはまとめ投げごとにさらに長い豪華な音に」「花火系ももっと花火らしい綺羅びやかな長い SE に」）
+# ---------------------------------------------------------------------------
+LEVEL.update({"tanuki": 2, "mole": 2, "deer": 2, "aurora": 3})
+# 主要なイベントアイテムのテーマは 1 発でも 7 秒・花火は 10 秒の花火ショー・まとめ投げの COOL も 5 秒以上
+TARGET_OVERRIDE.update({"tanuki": 7.0, "mole": 7.0, "deer": 7.0, "pig": 7.0, "elephant": 7.0, "dog": 7.0, "bulk-COOL": 6.5, "fireworks": 10.0, "aurora": 9.0})
+# 有料のミックスの下限（レベル 2 以上・豪華版・段階・価格帯 T2 以上）。社長指示の「5 秒以上」に余裕を持たせる
+MIN_SEC = 5.3
+# 5 秒未満になるテーマ（レベル 1）の豪華版 p-{テーマ}: 単価 ¥160 以上で使う（auto-library.ts themeSetFor）
+PREMIUM_BASE = ["balloon", "bird", "cute", "food", "pop", "notify", "kids", "whoosh"]
+for _t in PREMIUM_BASE:
+    LEVEL[f"p-{_t}"] = 2
+    TARGET_OVERRIDE[f"p-{_t}"] = 6.5
+# 主要なイベントアイテムと花火の、まとめ投げの段階ごとの専用ミックス ev-{テーマ}-{段階}（auto-library.ts EVENT_BULK_THEMES と同じ並び）
+EVENT_BULK_THEMES = ["tanuki", "pig", "elephant", "deer", "dog", "mole", "fireworks"]
+EV_TARGET = {"COOL": 9.0, "GREAT": 12.0, "FANTASTIC": 15.0, "MIRACLE": 20.0}
+EV_TARGET_FIREWORKS = {"COOL": 12.0, "GREAT": 14.0, "FANTASTIC": 17.0, "MIRACLE": 20.0}
+EV_MAX_SEC = 20.0
+EV_VARIANTS = 3
+# テーマごとの合いの手（主役の連打の間に入れる）。たぬき＝ぽんぽこの太鼓とドロン、もぐら＝掘る音と土、シカ＝ひづめと鈴
+ACCENTS = {"tanuki": ["tn_taiko", "tn_festive", "tn_poof"], "mole": ["ml_dig", "ml_dirt", "ml_popup"], "deer": ["dr_hooves", "dr_chime"], "aurora": ["fw_glitter"]}
+
+
+def derived_sets():
+    """選曲表に直接は無いセット（豪華版・段階の専用ミックス）→ 主役を借りるテーマ"""
+    out = {f"p-{t}": t for t in PREMIUM_BASE}
+    for t in EVENT_BULK_THEMES:
+        for g in EV_TARGET:
+            out[f"ev-{t}-{g}"] = t
+    return out
+
+
+def base_theme(set_name):
+    return derived_sets().get(set_name, set_name)
+
 POOLS = {}
 _THEME_CACHE = {}
 
@@ -470,10 +507,17 @@ def compose(set_name, variant, mains, rng):
         rng.shuffle(rest)
         chosen += rest[: hits - 1]
     main_end, start = t, t
-    for m in chosen:
+    accents = [a for a in ACCENTS.get(base_theme(set_name), []) if POOLS.get(a)]
+    for i, m in enumerate(chosen):
         cut = min(plen(m), HIT_CUT[level])
         add(m, start, cut, 1.0)
         main_end = max(main_end, start + cut)
+        if accents:
+            # 合いの手は、これから鳴らす主役（chosen）とも重ならないように選ぶ（同じ素材が 1 本に 2 回入らないように）
+            a = pick(rng, POOLS[accents[i % len(accents)]], exclude=used() | {c["id"] for c in chosen})[0]
+            acut = min(plen(a), 1.6)
+            add(a, start + min(0.35, cut * 0.5), acut, 0.7)
+            main_end = max(main_end, start + min(0.35, cut * 0.5) + acut)
         start += min(HIT_GAP_MAX[level], max(0.45, cut * 0.6))
     payoff_start = max(0.0, main_end - 0.4)
     if (level >= 3 or set_name in KAKUTEI_EXTRA) and POOLS.get("kakutei"):
@@ -530,7 +574,9 @@ def compose(set_name, variant, mains, rng):
         payoff_end = max(payoff_end, payoff_start + 0.1 + cut)
     fill_pools = ["sparkle", "win_small"] if level == 1 else (["sparkle", "coins", "win_small"] if level == 2 else ["cheer", "sparkle", "fireworks"])
     fills = 0
-    while payoff_end + 0.3 < 0.8 * target and fills < 4:
+    # 目標の 8 割まで埋める。有料のレベル 2 以上は、最後の音が鳴り終わる時刻（= ファイルの長さ）を MIN_SEC 以上にする（S25）。
+    # ミックスは一番遅く終わる素材で終わるので、+0.3 の余白ではなく payoff_end そのもので比べる
+    while (payoff_end + 0.3 < 0.8 * target or (level >= 2 and payoff_end < MIN_SEC)) and fills < 10:
         cand = pick(rng, POOLS.get(fill_pools[fills % len(fill_pools)]) or [], exclude=used())
         fills += 1
         if not cand:
@@ -540,6 +586,255 @@ def compose(set_name, variant, mains, rng):
         add(cand[0], st, cut, 0.6)
         payoff_end = max(payoff_end, st + cut)
     return parts, min(MAX_SEC, target, payoff_end + 0.3)
+
+
+def _pool(name):
+    return POOLS.get(name) or []
+
+
+def compose_fireworks(set_name, variant, mains, rng, target):
+    """花火ショー（S25）: 打ち上げのヒュ〜 → ドーン → パチパチの尾 を重ねながら数発、合間に歓声「おお〜」ときらめき、
+    最後に連発のフィナーレ → 大玉 → 長いパチパチ → 拍手。ファンファーレなどのパチンコ系の音は入れない"""
+    parts = []
+
+    def add(it, start, cut, gain):
+        parts.append((it, max(0.0, start), cut, gain))
+
+    def used():
+        return {p[0]["id"] for p in parts}
+
+    bursts = mains + _pool("fw_burst")
+    finale_len = min(7.0, max(3.5, target * 0.35))
+    finale_at = max(3.0, target - finale_len - 1.2)
+    t, i, end = 0.0, 0, 0.0
+    while t < finale_at - 0.8 and i < 12:
+        la = pick(rng, _pool("fw_launch") or bursts, exclude=used())[0]
+        lcut = min(plen(la), 2.0)
+        add(la, t, lcut, 0.65)
+        b_at = t + max(0.4, lcut - 0.2)
+        b = pick(rng, bursts, exclude=used())[0] if i else mains[variant % len(mains)]
+        bcut = min(plen(b), 3.2)
+        add(b, b_at, bcut, 1.0)
+        end = max(end, b_at + bcut)
+        if _pool("fw_crackle") and i % 2 == 0:
+            c = pick(rng, _pool("fw_crackle"), exclude=used())[0]
+            ccut = min(plen(c), 3.0)
+            add(c, b_at + 0.3, ccut, 0.55)
+            end = max(end, b_at + 0.3 + ccut)
+        if _pool("fw_glitter") and i % 2 == 1:
+            g = pick(rng, _pool("fw_glitter"), exclude=used())[0]
+            gcut = min(plen(g), 2.5)
+            add(g, b_at + 0.15, gcut, 0.45)
+            end = max(end, b_at + 0.15 + gcut)
+        if i == 1 and _pool("fw_crowd"):
+            cr = pick(rng, _pool("fw_crowd"), exclude=used())[0]
+            crcut = min(plen(cr), 3.5)
+            add(cr, b_at + 0.5, crcut, 0.5)
+            end = max(end, b_at + 0.5 + crcut)
+        # 次の打ち上げは前の破裂に少し重ねる（間が空かないように）
+        t = b_at + rng.uniform(0.7, 1.3)
+        i += 1
+    # フィナーレ: 連発 → 大玉 → 長いパチパチ → 拍手・歓声 → きらめき
+    fin_start = max(t, finale_at)
+    if _pool("fw_finale"):
+        f = pick(rng, _pool("fw_finale"), exclude=used())[0]
+        fcut = min(plen(f), finale_len)
+        add(f, fin_start, fcut, 0.9)
+        end = max(end, fin_start + fcut)
+    for k in range(2 if target >= 14 else 1):
+        b = pick(rng, bursts, exclude=used())[0]
+        bcut = min(plen(b), 3.5)
+        at = fin_start + 0.8 + k * 1.3
+        add(b, at, bcut, 1.0)
+        end = max(end, at + bcut)
+    if _pool("fw_crackle"):
+        c = pick(rng, _pool("fw_crackle"), exclude=used())[0]
+        ccut = min(plen(c), 4.5)
+        add(c, fin_start + 1.4, ccut, 0.6)
+        end = max(end, fin_start + 1.4 + ccut)
+    crowd = _pool("crowd_roar") if target >= 17 and _pool("crowd_roar") else (_pool("fw_crowd") or _pool("cheer"))
+    if crowd:
+        cr = pick(rng, crowd, exclude=used())[0]
+        crcut = min(plen(cr), 5.0)
+        add(cr, fin_start + 1.8, crcut, 0.5)
+        end = max(end, fin_start + 1.8 + crcut)
+    gl = _pool("fw_glitter") or _pool("sparkle")
+    if gl:
+        g = pick(rng, gl, exclude=used())[0]
+        gcut = min(plen(g), 3.0)
+        at = max(fin_start + 2.0, end - gcut - 0.2)
+        add(g, at, gcut, 0.45)
+        end = max(end, at + gcut)
+    fills = 0
+    while end < max(0.85 * target, MIN_SEC) and fills < 8:
+        pool = [bursts, _pool("fw_crackle"), _pool("fw_glitter") or _pool("sparkle")][fills % 3]
+        fills += 1
+        if not pool:
+            continue
+        c = pick(rng, pool, exclude=used())[0]
+        st = max(0.0, end - 0.4)
+        ccut = min(plen(c), max(0.8, target - st))
+        add(c, st, ccut, 0.6)
+        end = max(end, st + ccut)
+    close_gaps(parts, rng, ["fw_crackle", "fw_crowd", "fw_glitter"], min(target, end), 0.5)
+    return parts, min(EV_MAX_SEC, target, end + 0.4)
+
+
+GRADE_IDX = {"COOL": 0, "GREAT": 1, "FANTASTIC": 2, "MIRACLE": 3}
+
+
+def close_gaps(parts, rng, pool_names, limit, gain=0.5):
+    """鳴っている区間の合間（0.25 秒超）を、続く音（パチパチ・歓声など）で埋める。点検の「途中の無音」を防ぐ（S25）。
+    合間が無ければ何もしない（乱数も消費しないので、合間の無いミックスは変わらない）"""
+    for n in range(10):
+        iv = sorted((p_[1], p_[1] + p_[2]) for p_ in parts)
+        cur_end, gap = iv[0][1], None
+        for st, en in iv[1:]:
+            if st > cur_end + 0.25 and cur_end < limit - 0.6:
+                gap = (cur_end, st)
+                break
+            cur_end = max(cur_end, en)
+        if gap is None:
+            return
+        pools = [p for p in (_pool(x) for x in pool_names) if p]
+        if not pools:
+            return
+        pool = pools[n % len(pools)]
+        used = {p_[0]["id"] for p_ in parts}
+        c = pick(rng, pool, exclude=used)[0]
+        st = max(0.0, gap[0] - 0.3)
+        cut = min(plen(c), max(0.8, gap[1] - st + 0.6))
+        parts.append((c, st, cut, gain))
+
+
+def compose_event_bulk(theme, grade, variant, mains, rng, target):
+    """主要なイベントアイテムのまとめ投げ（S25）: 段階が上がるほど長く豪華に（COOL 9 秒 → MIRACLE 20 秒）。
+    幕開け（ライザー / ドラムロール）→ 主役の連打（合いの手つき）→ 確定音 → 祝福（ファンファーレ・歓声・紙吹雪・コインの雨・花火）
+    → 祝福の上で主役がもう一度鳴く → きらめきで締め"""
+    gi = GRADE_IDX[grade]
+    parts = []
+
+    def add(it, start, cut, gain):
+        parts.append((it, max(0.0, start), cut, gain))
+
+    def used():
+        return {p[0]["id"] for p in parts}
+
+    t = 0.0
+    if gi >= 2 and _pool("drumroll"):
+        r = pick(rng, _pool("drumroll"))[0]
+        cut = min(plen(r), 2.4 + 0.6 * (gi - 2))
+        add(r, 0.0, cut, 0.8)
+        t = cut - 0.15
+    elif _pool("riser"):
+        r = pick(rng, _pool("riser"))[0]
+        cut = min(plen(r), 1.4 + 0.4 * gi)
+        add(r, 0.0, cut, 0.7)
+        t = max(0.0, cut - 0.25)
+    if _pool("impact"):
+        im = pick(rng, _pool("impact"), exclude=used())[0]
+        add(im, t, min(plen(im), 2.5), 0.85)
+    if gi >= 1 and _pool("orch_hit"):
+        oh = pick(rng, _pool("orch_hit"), exclude=used())[0]
+        add(oh, t + 0.05, min(plen(oh), 2.0), 0.6)
+    accents = [a for a in ACCENTS.get(theme, []) if _pool(a)]
+    n1 = [3, 4, 4, 5][gi]
+    order = [mains[(variant + k) % len(mains)] for k in range(n1)]
+    start, main_end = t, t
+    for k, m in enumerate(order):
+        cut = min(plen(m), 2.0)
+        add(m, start, cut, 1.0)
+        main_end = max(main_end, start + cut)
+        if accents:
+            a = pick(rng, _pool(accents[k % len(accents)]), exclude=used() | {m_["id"] for m_ in mains})[0]
+            acut = min(plen(a), 1.6)
+            add(a, start + min(0.35, cut * 0.5), acut, 0.7)
+            main_end = max(main_end, start + min(0.35, cut * 0.5) + acut)
+        start += min(0.95, max(0.5, cut * 0.65))
+    ps = max(0.0, main_end - 0.4)
+    if _pool("kakutei"):
+        k = pick(rng, _pool("kakutei"), exclude=used())[0]
+        kcut = min(plen(k), 2.2)
+        add(k, ps + 0.1, kcut, 0.95)
+        ps = ps + 0.1 + min(kcut, 1.1)
+    end = ps
+    # 祝福の主旋律
+    lead_pool = [_pool("win_mid"), _pool("victory") or _pool("fanfare"), _pool("fanfare"), _pool("fever") or _pool("fanfare")][gi]
+    if lead_pool:
+        f = pick(rng, lead_pool, exclude=used())[0]
+        fcut = min(plen(f), [3.5, 5.5, 7.0, 9.0][gi])
+        add(f, ps, fcut, 0.9)
+        end = max(end, ps + fcut)
+    if gi >= 2 and _pool("epic"):
+        e = pick(rng, _pool("epic"), exclude=used())[0]
+        ecut = min(plen(e), 6.0)
+        add(e, ps + 0.4, ecut, 0.5)
+        end = max(end, ps + 0.4 + ecut)
+    if gi >= 1 and _pool("confetti"):
+        for j, c in enumerate(pick(rng, _pool("confetti"), 1 + gi // 2, exclude=used())):
+            add(c, ps + 0.05 + j * 0.6, min(plen(c), 1.5), 0.6)
+    crowd = (_pool("crowd_roar") or _pool("cheer")) if gi >= 2 else _pool("cheer")
+    if crowd:
+        c = pick(rng, crowd, exclude=used())[0]
+        ccut = min(plen(c), [4.0, 5.5, 7.0, 9.0][gi])
+        add(c, ps + 0.4, ccut, 0.5)
+        end = max(end, ps + 0.4 + ccut)
+    coins = (_pool("coin_shower") or _pool("coins")) if gi >= 1 else _pool("coins")
+    for j, c in enumerate(pick(rng, coins, [2, 2, 3, 4][gi], exclude=used()) if coins else []):
+        ccut = min(plen(c), 2.5)
+        add(c, ps + 0.2 + j * 0.8, ccut, 0.5)
+        end = max(end, ps + 0.2 + j * 0.8 + ccut)
+    if gi >= 2:
+        fw = _pool("fw_burst") or _pool("fireworks")
+        for j, b in enumerate(pick(rng, fw, [0, 0, 2, 4][gi], exclude=used()) if fw else []):
+            at = ps + 1.2 + j * 1.5
+            bcut = min(plen(b), 3.0)
+            add(b, at, bcut, 0.6)
+            end = max(end, at + bcut)
+        if _pool("fw_crackle"):
+            c = pick(rng, _pool("fw_crackle"), exclude=used())[0]
+            add(c, ps + 1.6, min(plen(c), 3.5), 0.45)
+    if gi == 3 and _pool("siren"):
+        s_ = pick(rng, _pool("siren"), exclude=used())[0]
+        add(s_, ps + 0.3, min(plen(s_), 4.0), 0.4)
+    # 祝福の上で主役がもう一度（段階が上がるほど多く）
+    n2 = [1, 2, 3, 4][gi]
+    at = ps + 1.0
+    for k in range(n2):
+        m = mains[(variant + n1 + k) % len(mains)]
+        cut = min(plen(m), 2.0)
+        add(m, at, cut, 0.85)
+        end = max(end, at + cut)
+        at += max(1.0, (target - ps - 3.0) / max(1, n2))
+    fills = 0
+    fill_pools = ["cheer", "sparkle", "coins"] if gi < 2 else ["crowd_roar", "fw_burst", "sparkle", "coin_shower", "cheer"]
+    while end < 0.88 * target and fills < 10:
+        fp = _pool(fill_pools[fills % len(fill_pools)])
+        fills += 1
+        if not fp:
+            continue
+        cand = pick(rng, fp, exclude=used())
+        st = max(0.0, end - 0.3)
+        cut = min(plen(cand[0]), max(0.8, target - st))
+        add(cand[0], st, cut, 0.55)
+        end = max(end, st + cut)
+    # 締め: ミラクルは最後に大きな一撃と主役
+    if gi == 3:
+        if _pool("orch_hit"):
+            oh = pick(rng, _pool("orch_hit"), exclude=used())[0]
+            at = max(ps + 2.0, min(end, target) - 2.2)
+            add(oh, at, min(plen(oh), 2.0), 0.75)
+        m = mains[variant % len(mains)]
+        add(m, max(ps + 2.0, min(end, target) - 1.9), min(plen(m), 1.8), 0.9)
+    sp = _pool("fw_glitter") or _pool("sparkle")
+    if sp:
+        g = pick(rng, sp, exclude=used())[0]
+        gcut = min(plen(g), 3.0)
+        at = max(ps + 1.0, min(end, target) - gcut - 0.1)
+        add(g, at, gcut, 0.45)
+        end = max(end, at + gcut)
+    close_gaps(parts, rng, ["crowd_roar", "cheer", "fw_crackle", "sparkle"], min(target, end), 0.5)
+    return parts, min(EV_MAX_SEC, target, end + 0.4)
 
 
 TARGET_LUFS = -14.0
@@ -577,6 +872,37 @@ def render_mix(parts, total, dst, target_lufs=None):
         gain_db = min(20.0, gain_db + min(4.0, target_lufs - 0.5 - got))
     shutil.move(tmp_mp3, dst)
     return probe(dst)
+
+
+def internal_gaps(fn, min_len=0.35):
+    """書き出したミックスの途中の無音（-45dB 以下が min_len 秒以上・頭と末尾 0.3 秒は除く）。check_cc0_library.py と同じ見方"""
+    d = probe(fn) or 0.0
+    r = run(["ffmpeg", "-hide_banner", "-nostats", "-i", fn, "-af", f"silencedetect=n=-45dB:d={min_len}", "-f", "null", "-"])
+    out = []
+    for st, en in zip(re.findall(r"silence_start: (\d+(?:\.\d+)?)", r.stderr), re.findall(r"silence_end: (\d+(?:\.\d+)?)", r.stderr)):
+        st, en = float(st), float(en)
+        if st > 0.05 and en < d - 0.3:
+            out.append((st, en))
+    return out
+
+
+def render_mix_no_gaps(parts, total, dst, rng, filler_pools, tries=3):
+    """ミックスを書き出し、途中に無音があればその位置に続く音（パチパチ・歓声・きらきら）を足して書き直す（S25）"""
+    d = render_mix(parts, total, dst)
+    for n in range(tries):
+        gaps = internal_gaps(dst)
+        if not gaps:
+            break
+        pools = [p for p in (_pool(x) for x in filler_pools) if p]
+        if not pools:
+            break
+        for k, (st, en) in enumerate(gaps):
+            used = {p_[0]["id"] for p_ in parts}
+            c = pick(rng, pools[(n + k) % len(pools)], exclude=used)[0]
+            s0 = max(0.0, st - 0.3)
+            parts.append((c, s0, min(plen(c), max(0.8, en - s0 + 0.6)), 0.5))
+        d = render_mix(parts, total, dst)
+    return d
 
 
 def render_single(it, dst, cut_max, target_lufs, short_peak_db, limit=0.5):
@@ -670,19 +996,32 @@ def build_singles(manifest, only):
 
 def build_mixes(manifest, only):
     build_pools()
-    for set_name in PICKS.THEME_PICKS:
+    derived = derived_sets()
+    for set_name in list(PICKS.THEME_PICKS) + list(derived):
         if only and set_name not in only:
             continue
-        mains = theme_mains(set_name)
+        base = derived.get(set_name, set_name)
+        mains = theme_mains(base)
         if len(mains) < 2:
             print(f"WARN {set_name}: テーマ音が {len(mains)} 本しか無い", file=sys.stderr)
         rows = []
-        for v in range(5):
+        for v in range(EV_VARIANTS if set_name.startswith("ev-") else 5):
             rng = random.Random(f"v7:{set_name}#{v}")
             try:
-                parts, total = compose(set_name, v, mains, rng)
+                if set_name.startswith("ev-"):
+                    grade = set_name.rsplit("-", 1)[1]
+                    target = (EV_TARGET_FIREWORKS if base == "fireworks" else EV_TARGET)[grade]
+                    if base == "fireworks":
+                        parts, total = compose_fireworks(set_name, v, mains, rng, target)
+                    else:
+                        parts, total = compose_event_bulk(base, grade, v, mains, rng, target)
+                elif set_name == "fireworks":
+                    parts, total = compose_fireworks(set_name, v, mains, rng, TARGET_OVERRIDE["fireworks"])
+                else:
+                    parts, total = compose(set_name, v, mains, rng)
                 dst = os.path.join(OUT, set_name, f"{PREFIX}{v + 1}.mp3")
-                d = render_mix(parts, total, dst)
+                fillers = ["fw_crackle", "fw_crowd", "fw_glitter"] if base == "fireworks" else ["crowd_roar", "cheer", "sparkle", "coins"]
+                d = render_mix_no_gaps(parts, total, dst, rng, fillers)
                 rows.append({"id": f"{PREFIX}{v + 1}", "file": f"/se/lib/{set_name}/{PREFIX}{v + 1}.mp3", "title": f"{set_name} ミックス {v + 1}（{len(parts)} 素材・{d:.1f}s）", "seconds": round(d or 0, 2), "bytes": os.path.getsize(dst), "components": [comp_of(p[0], p[1]) for p in parts]})
             except Exception as e:
                 print(f"WARN {set_name} {PREFIX}{v + 1}: {e}", file=sys.stderr)
@@ -743,7 +1082,9 @@ def write_manifest(manifest):
 def write_catalog():
     """選曲表の全 id の取得先を cc0_catalog.json に書く（Freesound: HQ プレビューの URL・タイトル・作者・ページ / Kenney: パックとファイル）"""
     global _CATALOG
-    _CATALOG = {}
+    # 今の一覧にある素材はその記録を引き継ぎ、新しい素材だけ検索キャッシュ（CC0 フィルタ付き）と Kenney から引く。
+    # 一覧を空にしてから引くと、キャッシュの検索結果に今は出てこない既存の素材で止まる（2026-09-30 S25 で fs106392）
+    _CATALOG = json.load(open(CATALOG, encoding="utf-8"))["items"] if os.path.exists(CATALOG) else {}
     ids = sorted({x for tbl in (PICKS.POOL_PICKS, PICKS.THEME_PICKS, PICKS.LITE_PICKS, PICKS.DEFAULT_PICKS) for v in tbl.values() for x in v})
     items = {}
     for sid in ids:

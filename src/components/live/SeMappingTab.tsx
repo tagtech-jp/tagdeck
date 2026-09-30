@@ -8,7 +8,8 @@ import { tierForGift, TIER_LABELS, type SeTier } from "@/lib/se/tiers";
 import { expandablePatternRows } from "@/lib/se/pattern-rows";
 import { WEB_BONUS_GROUP, WEB_BONUS_LABEL, isWebBonusItem } from "@/lib/se/web-bonus";
 import { BULK_GRADE_LABELS, MAIN_BULK_GRADES, bulkItemKey, bulkKey, describeDecorations, type BulkDecoration, type BulkGrade } from "@/lib/se/bulk-grade";
-import { libraryFiles, liteSetFor, pickVariant, THEME_LABELS, themeForItem } from "@/lib/se/auto-library";
+import { bulkSetFor, isPremiumPrice, libraryFiles, liteSetFor, pickVariant, THEME_LABELS, themeForItem, themeSetFor } from "@/lib/se/auto-library";
+import { isClearedSingleRow } from "@/lib/se/choose-sound";
 import { AUTO_LIBRARY_CREDITS, AUTO_LIBRARY_FILE_COUNT } from "@/lib/se/auto-library-data";
 import { variantKeys } from "@/lib/se/choose-sound";
 import { VolumeSlider } from "./VolumeSlider";
@@ -655,15 +656,25 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
                                 const own = byKey.get(`item:${it.itemId}`);
                                 // 無料アイテムは控えめな音（lite-{テーマ}・2026-09-30 社長指示「無料が派手すぎる」）
                                 const free = !(it.priceJpy !== null && it.priceJpy > 0);
-                                const set = free ? liteSetFor(it.itemName, it.groups, false) : theme;
+                                // 単価 ¥160 以上は 5 秒以上の豪華版（p-{テーマ}）。公式既定の単発音の行はミックスに置き換わる（S25）
+                                const premium = !free && isPremiumPrice(it.priceJpy);
+                                const set = free ? liteSetFor(it.itemName, it.groups, false) : theme ? themeSetFor(theme, premium) : null;
                                 const shown = free ? (set ? set.slice(5) : null) : theme;
                                 const n = set ? libraryFiles(set).length : 0;
+                                const ownWins = own && own.enabled && !((premium || theme === "fireworks") && !free && isClearedSingleRow(own));
                                 return (
                                   <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                                     {shown && set && n > 0 ? (
                                       <>
                                         <span>
-                                          自動{free ? "（無料・控えめ）" : ""}: {THEME_LABELS[shown] ?? shown}（{n} 本ランダム）{own ? "・いまは上の割り当てが優先" : ""}
+                                          自動{free ? "（無料・控えめ）" : premium ? "（¥160 以上・豪華版）" : ""}: {THEME_LABELS[shown] ?? shown}（{n} 本ランダム）
+                                          {own && !own.enabled
+                                            ? "・いまは上で「鳴らさない」"
+                                            : ownWins
+                                              ? "・いまは上の割り当てが優先"
+                                              : own
+                                                ? "・上の既定の単発音の代わりにこのミックスが鳴る"
+                                                : ""}
                                         </span>
                                         <button type="button" onClick={() => void previewAuto(set)} className="min-h-7 rounded-full border border-border bg-muted px-2 text-[11px] text-foreground hover:border-foreground/30">
                                           ▶ 試聴
@@ -685,6 +696,24 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
                                   </button>
                                   {MAIN_BULK_GRADES.some((g) => isUser(bulkItemKey(it.itemId, g))) && <span className="rounded-full bg-status-warning/10 px-2 py-0.5 text-status-warning">段階別 割り当て済み</span>}
                                 </div>
+                                {(() => {
+                                  // 主要なイベントアイテム・花火は段階ごとに専用の長いミックス（S25）。未設定の段階はこれが鳴る
+                                  const free = !(it.priceJpy !== null && it.priceJpy > 0);
+                                  const theme = themeForItem(it.itemName, it.groups);
+                                  if (free || !theme) return null;
+                                  const sets = MAIN_BULK_GRADES.map((g) => ({ g, set: bulkSetFor(g, theme) })).filter((x) => x.set.startsWith("ev-"));
+                                  if (sets.length === 0) return null;
+                                  return (
+                                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                                      <span>自動（段階ごとの専用ミックス）:</span>
+                                      {sets.map(({ g, set }) => (
+                                        <button key={set} type="button" onClick={() => void previewAuto(set)} className="min-h-7 rounded-full border border-border bg-muted px-2 text-[11px] text-foreground hover:border-foreground/30">
+                                          ▶ {BULK_GRADE_LABELS[g]}（{libraryFiles(set).length} 本）
+                                        </button>
+                                      ))}
+                                    </div>
+                                  );
+                                })()}
                                 {bulkOpen.has(it.itemId) &&
                                   [...(it.decorations ?? [])]
                                     .sort((a, b) => a.count - b.count)
