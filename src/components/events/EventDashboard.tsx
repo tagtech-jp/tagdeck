@@ -510,6 +510,25 @@ export function EventDashboard({ event, onDeleted }: Props) {
           </div>
         )}
 
+        {isRankingType && event.platform === "whowatch" && !event.rankingType && (
+          // 区分が空だと 5 分ごとの順位の自動取得（src/worker.ts）の対象外になり、黙って止まる（2026-09-30 の実害）
+          <div role="alert" className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-status-warning/40 bg-status-warning/10 px-3 py-2 text-xs text-status-warning">
+            <span>
+              ランキング区分が未設定のため、順位の自動取得（5 分ごと）が止まっています。
+              {event.whowatchEventId ? "区分を選んで保存すると、次の 5 分から取得します。" : "ふわっちのイベントに紐付けると区分を選べます。"}
+            </span>
+            {event.whowatchEventId && !editingSettings && (
+              <button
+                type="button"
+                onClick={() => setEditingSettings(true)}
+                className="min-h-8 rounded-full border border-status-warning/40 bg-card px-3 text-xs text-foreground"
+              >
+                区分を選ぶ
+              </button>
+            )}
+          </div>
+        )}
+
         {hero && <p className="mt-2 text-xs text-foreground">{hero.message}</p>}
         {historicalPace.hasSufficientData && (
           <p className="mt-1 text-xs text-muted-foreground">
