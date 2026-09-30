@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
 import { eventSimulators, rankingSnapshots } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
+import { ownedSimulator } from "@/lib/events/simulator-scope";
 import { WhowatchRankingException } from "@/lib/platforms/whowatch-ranking";
 import { syncSimulatorRanking } from "@/lib/whowatch/ranking-sync";
 import { WhowatchRankingApiError } from "@/lib/whowatch/rankings";
@@ -32,7 +33,7 @@ export async function POST(
   const [event] = await db
     .select()
     .from(eventSimulators)
-    .where(and(eq(eventSimulators.id, id), eq(eventSimulators.userId, user.id)))
+    .where(ownedSimulator(id, user.id))
     .limit(1);
 
   if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });

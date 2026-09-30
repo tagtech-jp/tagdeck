@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
 import { eventSimulators } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { ownedSimulator } from "@/lib/events/simulator-scope";
 import { z } from "zod";
 
 const manualRivalsSchema = z.object({
@@ -41,7 +41,7 @@ export async function POST(
       manualRivals: parsed.data.rivals,
       updatedAt: new Date(),
     })
-    .where(and(eq(eventSimulators.id, id), eq(eventSimulators.userId, user.id)))
+    .where(ownedSimulator(id, user.id))
     .returning({ id: eventSimulators.id });
 
   if (result.length === 0) {

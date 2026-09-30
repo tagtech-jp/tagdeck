@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { and, desc, eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
 import { eventSimulators, rankingSnapshots } from "@/lib/db/schema";
+import { ownedSimulator } from "@/lib/events/simulator-scope";
 
 /**
  * GET /api/events/[id]/snapshots?limit=48 → 自分のシミュレーターの ranking_snapshots（新しい順）。E3 のクライアント計算用。
@@ -21,7 +22,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const [ev] = await db
     .select({ id: eventSimulators.id })
     .from(eventSimulators)
-    .where(and(eq(eventSimulators.id, id), eq(eventSimulators.userId, user.id)))
+    .where(ownedSimulator(id, user.id))
     .limit(1);
   if (!ev) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
