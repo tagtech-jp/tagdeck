@@ -112,6 +112,7 @@ export const eventSimulators = pgTable("event_simulators", {
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time").notNull(),
 
+  // 'active'（開催中・一覧/同期の対象）| 'completed'（完了記録済み）| 'deleted'（論理削除。id 指定でも 404 扱い）
   status: text("status").notNull().default("active"),
 
   // 進捗
@@ -160,7 +161,8 @@ export const eventSimulators = pgTable("event_simulators", {
 });
 
 // ランキングスナップショット（E2）。公開 API /rankings/{type} の取得結果を append-only で残す。
-// drizzle/0011_ranking_snapshots.sql で作成。simulator 削除時は連鎖削除（DELETE /api/events/[id] を壊さない）
+// drizzle/0011_ranking_snapshots.sql で作成。FK は ON DELETE cascade（event_simulators の行を物理削除すると履歴も連鎖で消える）。
+// そのため DELETE /api/events/[id] は物理削除せず status='deleted' の論理削除にしている（src/lib/events/simulator-scope.ts・2026-09-30）
 export const rankingSnapshots = pgTable(
   "ranking_snapshots",
   {
