@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { CLEARED_SOUND_IDS, CLEARED_SOUNDS, clearedSoundFor, clearedSoundLabel, clearedSoundUrl, toClearedDefaultRows, type ClearedSoundId } from "./cleared-defaults";
+import { CLEARED_SOUND_IDS, CLEARED_SOUNDS, clearedIdFromUrl, clearedSoundFor, clearedSoundLabel, clearedSoundUrl, planOwnCc0Conversion, toClearedDefaultRows, type ClearedSoundId } from "./cleared-defaults";
+import { DEFAULT_SE_MAPPINGS } from "./default-mappings";
 
 // 2026-09-30 時点の同期元（社長）の割り当てに使われていた音源のファイル名 21 種と、置き換え先の CC0 の音
 const OBSERVED: ReadonlyArray<readonly [string, ClearedSoundId | null]> = [
@@ -100,5 +101,72 @@ describe("CLEARED_SOUNDS", () => {
       expect(CLEARED_SOUNDS[id].volume).toBeGreaterThanOrEqual(0);
       expect(CLEARED_SOUNDS[id].volume).toBeLessThanOrEqual(100);
     }
+  });
+});
+
+describe("CC0 に置き換え済みの行（S24）", () => {
+  it("CC0 のラベルからも同じ種類に戻る（同期元が置き換え済みでも他の利用者に同じ音を配れる）", () => {
+    for (const id of CLEARED_SOUND_IDS) expect(clearedSoundFor(clearedSoundLabel(id)), id).toBe(id);
+  });
+
+  it("clearedIdFromUrl は同梱の CC0 の音の URL だけ種類を返す", () => {
+    expect(clearedIdFromUrl("/se/defaults/cc0/drumroll.mp3")).toBe("drumroll");
+    expect(clearedIdFromUrl("/se/defaults/cc0/unknown.mp3")).toBeNull();
+    expect(clearedIdFromUrl("/se/defaults/drumroll.mp3")).toBeNull();
+    expect(clearedIdFromUrl("https://x.supabase.co/storage/v1/object/public/se/u/drumroll.mp3")).toBeNull();
+    expect(clearedIdFromUrl(null)).toBeNull();
+  });
+
+  it("toClearedDefaultRows は置き換え済みの行を URL から判定する（ラベルが何でも同じ音）", () => {
+    const out = toClearedDefaultRows([{ key: "item:14", url: "/se/defaults/cc0/drumroll.mp3", volume: 80, enabled: true, label: "何でもよい" }]);
+    expect(out).toEqual([{ key: "item:14", url: "/se/defaults/cc0/drumroll.mp3", volume: 80, enabled: true, label: "ドラムロール（CC0）" }]);
+  });
+});
+
+describe("planOwnCc0Conversion（自分の割り当てを CC0 だけに・S24）", () => {
+  const up = (key: string, label: string | null) => ({ key, url: `https://x.supabase.co/storage/v1/object/public/se/u/${encodeURIComponent(label ?? "x")}`, volume: 25, enabled: true, label });
+
+  it("アップロードの行は CC0 の同種の音へ、価格帯・廃止キー・分からない音は外し、音源なし・同梱の行はそのまま", () => {
+    const plan = planOwnCc0Conversion([
+      up("item:14", "ドラムロール.mp3"),
+      up("tier:T2", "nc106374__【任天堂】コインの音【スーパーマリオ】.wav"),
+      up("tier:combo", "ポキューン！先バレ風激熱通知音.mp3"),
+      up("item:999", "0a1b2c3d.mp3"),
+      { key: "item:5", url: null, volume: 30, enabled: true, label: null },
+      { key: "item:6", url: "/se/defaults/cc0/fireworks.mp3", volume: 80, enabled: true, label: "打ち上げ花火（CC0）" },
+      { ...up("item:10773", "ゾウの鳴き声1.mp3"), enabled: false },
+    ]);
+    expect(plan.updates).toEqual([
+      { key: "item:14", url: "/se/defaults/cc0/drumroll.mp3", label: "ドラムロール（CC0）", volume: 80, from: "ドラムロール.mp3" },
+      // 鳴らす OFF の行も音源は CC0 に置き換える（ON/OFF はそのまま）
+      { key: "item:10773", url: "/se/defaults/cc0/elephant.mp3", label: "ゾウの鳴き声（CC0）", volume: 80, from: "ゾウの鳴き声1.mp3" },
+    ]);
+    expect(plan.deletes.map((d) => d.key)).toEqual(["tier:T2", "tier:combo", "item:999"]);
+    expect(plan.kept).toEqual(["item:5", "item:6"]);
+  });
+
+  it("2026-09-30 時点の社長の割り当て（アイテム 75 件 + 価格帯 6 件）は、75 件を CC0 に置き換えて 6 件を外す", () => {
+    const labelOf = (url: string) =>
+      ({
+        drumroll: "ドラムロール.mp3", elephant: "ゾウの鳴き声1.mp3", dog_bark: "狂犬が連続で吠える.mp3", pig_oink: "x3_vol5.mp3", fireworks: "打ち上げ花火1.mp3",
+        air_horn: "エアーホーン.mp3", cat_meow: "ani_ge_cat_nya03.mp3", mouse_squeak: "ネズミの鳴き声1回.mp3", bird_song: "ウグイスのさえずり1.mp3", bird_chirp: "ヒヨドリの鳴き声2.mp3",
+        sparkle_shing: "シャキーン2.mp3", jackpot_alert: "ポキューン！先バレ風激熱通知音.mp3", slot_clunk: "ziyagura-gako.mp3", dance_jingle: "harakiridrive.mp3",
+        star_jingle: "super-mario-bros-nes-music-star-theme-cut-mp3.mp3", summon_magic: "「出でよ、我がしもべよ！」.mp3", deer_call: "d584ae8d-2137-4660-b356-9e55f22e2fb5.mp3",
+      })[clearedIdFromUrl(url) as string] ?? "";
+    const rows = [
+      ...DEFAULT_SE_MAPPINGS.map((d) => up(d.key, labelOf(d.url))),
+      up("tier:T0", "クイズ正解1.mp3"),
+      up("tier:T1", "ata_a14.mp3"),
+      up("tier:T2", "nc106374__【任天堂】コインの音【スーパーマリオ】.wav"),
+      up("tier:T3", "レジスターで精算.mp3"),
+      up("tier:T4", "ポキューン！先バレ風激熱通知音.mp3"),
+      up("tier:combo", "ポキューン！先バレ風激熱通知音.mp3"),
+    ];
+    const plan = planOwnCc0Conversion(rows);
+    expect(plan.updates).toHaveLength(75);
+    expect(plan.deletes.map((d) => d.key).sort()).toEqual(["tier:T0", "tier:T1", "tier:T2", "tier:T3", "tier:T4", "tier:combo"]);
+    // 置き換え後の音は、他の利用者に配っている公式既定（同梱スナップショット）と同じ
+    const byKey = new Map(DEFAULT_SE_MAPPINGS.map((d) => [d.key, d.url]));
+    for (const u of plan.updates) expect(u.url, u.key).toBe(byKey.get(u.key));
   });
 });

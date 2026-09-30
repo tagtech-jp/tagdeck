@@ -101,9 +101,47 @@ export function toClearedDefaultRows<T extends SourceRow>(rows: readonly T[]): T
   const out: T[] = [];
   for (const r of rows) {
     if (!r.enabled || !r.url || !DISTRIBUTABLE_KEY_RE.test(r.key)) continue;
-    const id = clearedSoundFor(r.label);
+    // 同期元の行がすでに CC0 の音（S24 で置き換え済み）なら URL から、そうでなければファイル名から決める
+    const id = clearedIdFromUrl(r.url) ?? clearedSoundFor(r.label);
     if (!id) continue;
     out.push({ ...r, url: clearedSoundUrl(id), label: clearedSoundLabel(id), volume: CLEARED_SOUNDS[id].volume });
   }
   return out;
+}
+
+/** 同梱の CC0 の音の URL（/se/defaults/cc0/<id>.mp3）なら、その音の種類。それ以外は null */
+export function clearedIdFromUrl(url: string | null | undefined): ClearedSoundId | null {
+  const m = /^\/se\/defaults\/cc0\/([a-z_]+)\.mp3$/.exec(url ?? "");
+  return m && Object.prototype.hasOwnProperty.call(CLEARED_SOUNDS, m[1]) ? (m[1] as ClearedSoundId) : null;
+}
+
+export interface OwnCc0Plan {
+  /** CC0 の同種の音に置き換える行（key はそのまま・鳴らす ON/OFF もそのまま） */
+  updates: Array<{ key: string; url: string; label: string; volume: number; from: string | null }>;
+  /** 外す行（価格帯・廃止キー・種類の分からないアップロード）。外すと自動ライブラリ（CC0）が鳴る */
+  deletes: Array<{ key: string; from: string | null }>;
+  /** そのままの行（音源なし＝音量・鳴らすだけの行、すでに同梱の音） */
+  kept: string[];
+}
+
+/**
+ * 自分の割り当てを CC0 の音だけにする計画（2026-09-30 社長指示「社長の環境にも新音源を全て同期して著作権回避と商用利用可能なものだけにする」・S24）。
+ * アップロードした音（Storage の URL）の行は、ファイル名から CC0 の同種の音に置き換える（公式既定として他の利用者に配っている音と同じ）。
+ * 価格帯（tier:*）・廃止キー・種類の分からない音の行は外す（自動ライブラリの CC0 の音が鳴る。音源なしの行を残すと合成音になるので残さない）。
+ */
+export function planOwnCc0Conversion(rows: readonly SourceRow[]): OwnCc0Plan {
+  const plan: OwnCc0Plan = { updates: [], deletes: [], kept: [] };
+  for (const r of rows) {
+    if (!r.url || r.url.startsWith("/se/")) {
+      plan.kept.push(r.key);
+      continue;
+    }
+    const id = DISTRIBUTABLE_KEY_RE.test(r.key) ? (clearedIdFromUrl(r.url) ?? clearedSoundFor(r.label)) : null;
+    if (!id) {
+      plan.deletes.push({ key: r.key, from: r.label });
+      continue;
+    }
+    plan.updates.push({ key: r.key, url: clearedSoundUrl(id), label: clearedSoundLabel(id), volume: CLEARED_SOUNDS[id].volume, from: r.label });
+  }
+  return plan;
 }
