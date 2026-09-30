@@ -3,14 +3,21 @@
 // 優先順（S15）:
 //   1. ユーザー／公式既定の個別行: bulk:item:{id}:{段階} → pattern:{id} → bulk:{段階} → item:{id}
 //      同じ key の変種（key#2〜key#5）があればランダムに 1 本（鳴らす ON かつ音源あり。全部 OFF なら「鳴らさない」）
-//   2. 自動ライブラリ（auto-library.ts）: 段階 → 当たり → アイテム名のテーマ（無料アイテムは控えめな音 lite-hit / lite-{テーマ}）
+//      ただし公式既定の単発音（public/se/defaults/cc0/・S23/S24 で置き換えた CC0 の 1 音）の行は、有料で次のどれかなら飛ばして 2 のミックスにする
+//      （2026-09-30 社長指示「160円以上のアイテムの SE をもっと 5 秒以上で組み合わせて豪華に」「主要なイベントアイテムはまとめ投げごとにさらに長い豪華な音に」
+//      「花火系ももっと花火らしい綺羅びやかな長い SE に」・S25）: 単価 ¥160 以上 / まとめ投げの段階付き / 花火のテーマ。
+//      音量はその行の音量を引き継ぐ。自分でアップロードした音源の行はこれまでどおり最優先
+//      音源の無い行（音量・「鳴らす」だけ変えた行）も合成音にせず、その音量でライブラリを鳴らす。飛ばしたあとの OFF の行では止めない
+//   2. 自動ライブラリ（auto-library.ts）: 段階 → 当たり → アイテム名のテーマ（無料アイテムは控えめな音 lite-hit / lite-{テーマ}）。
+//      単価 ¥160 以上は 5 秒以上の豪華版（p-{テーマ}）、主要なイベントアイテムと花火の段階は専用の長いミックス（ev-{テーマ}-{段階}）
 //   3. ユーザー／公式既定の一括行: cat:group:{key} → cat:kind:{種類} → tier:{T0..T4|hit}（変種ランダム）
 //   4. 自動ライブラリの価格帯の既定（tier-T0..T4 / hit）
 //   5. null（engine.ts の合成音）
 //
 // 「明示的に無効化」は従来どおり: その段階の key に行があって全部 OFF なら何も鳴らさない（下位に落とさない）
 
-import { chooseAutoForItem, chooseAutoForTier, FREE_AUTO_VOLUME, THEME_LABELS } from "./auto-library";
+import { chooseAutoForItem, chooseAutoForTier, FREE_AUTO_VOLUME, isPremiumPrice, THEME_LABELS, themeForItem } from "./auto-library";
+import { clearedIdFromUrl } from "./cleared-defaults";
 import type { BulkGrade } from "./bulk-grade";
 import type { ItemKind } from "./item-kind";
 import type { SeTier } from "./tiers";
@@ -36,6 +43,8 @@ export interface PlayTarget {
   bulkGrade?: BulkGrade | null;
   /** 無料アイテム（単価 0・不明）。自動ライブラリは控えめな音にする（2026-09-30） */
   free?: boolean;
+  /** 1 個あたりの単価（円）。¥160 以上は 5 秒以上の豪華版（S25）。null・未指定は判定しない */
+  unitPriceYen?: number | null;
 }
 
 export interface SoundChoice {
@@ -78,7 +87,7 @@ function pickFromRows(rows: SoundRow[] | undefined, rand: () => number): SoundRo
   if (!rows || rows.length === 0) return undefined;
   const enabled = rows.filter((r) => r.enabled);
   if (enabled.length === 0) return null;
-  // 音源ありを優先（url null の行だけなら「既定（合成音）」の意味なので 1 本目を返す）
+  // 音源ありを優先（url null の行だけなら 1 本目を返す。個別・カテゴリの key では音源の無い行を tryKeys で飛ばしてライブラリにするので、ここに来るのは旧来の価格帯の行だけ）
   const withUrl = enabled.filter((r) => r.url);
   const pool = withUrl.length > 0 ? withUrl : enabled;
   return pool[Math.floor(rand() * pool.length)] ?? pool[0];
@@ -90,14 +99,43 @@ function toChoice(m: SoundRow): SoundChoice {
 
 const DISABLED: unique symbol = Symbol("disabled");
 
-function tryKeys(grouped: Grouped, keys: readonly string[], rand: () => number): SoundChoice | typeof DISABLED | null {
+/** 公式既定の単発音（S23/S24 で置き換えた CC0 の 1 音）の行か。自分でアップロードした音源・ライブラリの音は false */
+export function isClearedSingleRow(r: Pick<SoundRow, "url">): boolean {
+  return clearedIdFromUrl(r.url) !== null;
+}
+
+function tryKeys(grouped: Grouped, keys: readonly string[], rand: () => number, skip?: (r: SoundRow) => boolean, skipped?: SoundRow[]): SoundChoice | typeof DISABLED | null {
   for (const k of keys) {
-    const r = pickFromRows(grouped.get(k), rand);
+    let rows = grouped.get(k);
+    if (rows && skip) {
+      // 鳴らす ON の単発音だけ飛ばす（OFF の行は「鳴らさない」の意味なので残す）
+      const drop = rows.filter((r) => r.enabled && skip(r));
+      if (drop.length > 0) {
+        skipped?.push(...drop);
+        rows = rows.filter((r) => !drop.includes(r));
+      }
+    }
+    const r = pickFromRows(rows, rand);
     if (r === undefined) continue;
-    if (r === null) return DISABLED;
+    // 鳴らす ON の行を（この key か上位の key で）飛ばしたあとは、残りが全部 OFF でも止めない。
+    // 例: 既定の単発音（ON）と OFF の変種 → 単発音を飛ばしたら OFF だけが残るが、利用者は「鳴らす」つもり（S25 レビュー）
+    if (r === null) {
+      if (skipped && skipped.length > 0) continue;
+      return DISABLED;
+    }
     return toChoice(r);
   }
   return null;
+}
+
+/**
+ * 公式既定の単発音の行を飛ばしてミックスにするか（S25）。有料で、単価 ¥160 以上 / まとめ投げの段階付き / 花火のテーマ のどれか
+ */
+export function upgradesClearedSingles(t: PlayTarget): boolean {
+  if (t.free) return false;
+  if (isPremiumPrice(t.unitPriceYen)) return true;
+  if (t.bulkGrade) return true;
+  return themeForItem(t.itemName, t.groups) === "fireworks";
 }
 
 /** @returns SoundChoice。"disabled" は明示的に鳴らさない */
@@ -108,18 +146,26 @@ export function chooseSound(mappings: readonly SoundRow[], t: PlayTarget, rand: 
   if (t.patternId !== null) specific.push(`pattern:${t.patternId}`);
   if (t.bulkGrade) specific.push(`bulk:${t.bulkGrade}`);
   if (t.itemId !== null) specific.push(`item:${t.itemId}`);
-  const s1 = tryKeys(grouped, specific, rand);
+  const premium = !t.free && isPremiumPrice(t.unitPriceYen);
+  const skipped: SoundRow[] = [];
+  // 飛ばす行: 音源の無い行（音量・「鳴らす」だけ変えた行。合成音ではなくライブラリをその音量で鳴らす）と、
+  // ミックスに上げる条件（upgradesClearedSingles）のときの公式既定の単発音の行
+  const upgrade = upgradesClearedSingles(t);
+  const skip = (r: SoundRow) => !r.url || (upgrade && isClearedSingleRow(r));
+  const s1 = tryKeys(grouped, specific, rand, skip, skipped);
   if (s1 === DISABLED) return "disabled";
   if (s1) return s1;
+  // 飛ばした単発音の行の音量（ユーザーが音量だけ変えていればそれを引き継ぐ）
+  const hintVolume = skipped[0]?.volume;
 
-  const auto = chooseAutoForItem({ itemName: t.itemName, groups: t.groups, tier: t.tier, isHit: t.isHit, bulkGrade: t.bulkGrade, free: t.free }, rand);
+  const auto = chooseAutoForItem({ itemName: t.itemName, groups: t.groups, tier: t.tier, isHit: t.isHit, bulkGrade: t.bulkGrade, free: t.free, premium }, rand);
   // 無料アイテムの控えめな音は音量も一段小さく（FREE_AUTO_VOLUME）
-  if (auto) return { url: auto.file.file, volume: t.free ? FREE_AUTO_VOLUME : 80, label: auto.file.title, key: auto.set, source: "auto", theme: auto.theme };
+  if (auto) return { url: auto.file.file, volume: t.free ? FREE_AUTO_VOLUME : (hintVolume ?? 80), label: auto.file.title, key: auto.set, source: "auto", theme: auto.theme };
 
   const generic: string[] = [];
   for (const g of t.groups ?? []) generic.push(`cat:group:${g}`);
   if (t.kind) generic.push(`cat:kind:${t.kind}`);
-  const s3 = tryKeys(grouped, generic, rand);
+  const s3 = tryKeys(grouped, generic, rand, skip, skipped);
   if (s3 === DISABLED) return "disabled";
   if (s3) return s3;
 
@@ -130,9 +176,10 @@ export function chooseSound(mappings: readonly SoundRow[], t: PlayTarget, rand: 
   const tierRows = grouped.get(tierKey)?.filter((r) => r.source !== "default");
   const own = pickFromRows(tierRows, rand);
   if (own === null) return "disabled";
-  if (own && own.url) return toChoice(own);
-  const autoTier = chooseAutoForTier(t.tier, rand);
-  if (autoTier) return { url: autoTier.file.file, volume: own?.volume ?? (t.free ? FREE_AUTO_VOLUME : 80), label: autoTier.file.title, key: autoTier.set, source: "auto", theme: null };
+  // 音量だけ変えた tier 行は、合成済みの既定（きらきら 2 秒の単発音）を URL に持つことがある → ライブラリをその音量で（S25 レビュー）
+  if (own && own.url && !isClearedSingleRow(own)) return toChoice(own);
+  const autoTier = chooseAutoForTier(t.tier, rand, premium);
+  if (autoTier) return { url: autoTier.file.file, volume: own?.volume ?? hintVolume ?? (t.free ? FREE_AUTO_VOLUME : 80), label: autoTier.file.title, key: autoTier.set, source: "auto", theme: null };
   // ライブラリに価格帯セットが無い（通常は無い）ときだけ旧来の既定行
   const legacy = tryKeys(grouped, [tierKey], rand);
   if (legacy === DISABLED) return "disabled";

@@ -1,4 +1,7 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { AUTO_LIBRARY } from "./auto-library-data";
 import { baseKey, chooseSound, groupByBase, variantKeys, type SoundRow } from "./choose-sound";
 
 const row = (key: string, url: string | null = `https://x/${key}.mp3`, enabled = true, volume = 80): SoundRow => ({ key, url, enabled, volume, label: key, source: "user" });
@@ -129,5 +132,145 @@ describe("chooseSound（無料アイテムは控えめ・2026-09-30 社長指示
 
   it("自分で割り当てた個別行は無料でも優先", () => {
     expect(chooseSound([row("item:13098")], t)).toMatchObject({ key: "item:13098", source: "user" });
+  });
+});
+
+describe("chooseSound（¥160 以上は 5 秒以上の豪華なミックス・イベントアイテムと花火の段階・S25）", () => {
+  // 公式既定・社長の行（S23/S24 で置き換えた CC0 の単発音）
+  const cleared = (key: string, id: string, volume = 80, enabled = true): SoundRow => ({ key, url: `/se/defaults/cc0/${id}.mp3`, enabled, volume, label: id, source: "default" });
+  const pig = { patternId: 1, itemId: 10842, itemName: "トンでもない応援をするぶたさん", tier: "T1" as const, isHit: false, groups: ["wolfcoming"], kind: "normal" as const, free: false, unitPriceYen: 160 };
+  const secondsOf = (url: string | null) => {
+    const m = /^\/se\/lib\/([^/]+)\/([^/]+)\.mp3$/.exec(url ?? "");
+    return m ? AUTO_LIBRARY[m[1]]?.find((f) => f.file === url)?.seconds ?? 0 : 0;
+  };
+
+  it("¥160 のイベントアイテムは既定の単発音（ぶたの鳴き声 0.7 秒）ではなく、テーマのミックス（5 秒以上）。音量は行の音量", () => {
+    const c = chooseSound([cleared("item:10842", "pig_oink", 70)], pig, () => 0);
+    expect(c).not.toBe("disabled");
+    if (c !== "disabled") {
+      expect(c).toMatchObject({ source: "auto", key: "pig", theme: "pig", volume: 70 });
+      expect(secondsOf(c.url)).toBeGreaterThanOrEqual(5);
+    }
+  });
+
+  it("¥160 未満の有料アイテムは既定の単発音のまま（風船 ¥1 のエアホーン）", () => {
+    expect(chooseSound([cleared("item:1", "air_horn")], { ...pig, itemId: 1, itemName: "風船", unitPriceYen: 1 })).toMatchObject({ key: "item:1", source: "default" });
+  });
+
+  it("まとめ投げの段階は既定の単発音より段階のミックス。主要なイベントアイテムは専用の長いミックス ev-{テーマ}-{段階}", () => {
+    for (const grade of ["COOL", "GREAT", "FANTASTIC", "MIRACLE"] as const) {
+      const c = chooseSound([cleared("item:10842", "pig_oink")], { ...pig, tier: "T3", bulkGrade: grade }, () => 0);
+      if (c === "disabled") throw new Error("disabled");
+      expect(c.key).toBe(`ev-pig-${grade}`);
+    }
+    const len = (g: "COOL" | "MIRACLE") => Math.min(...AUTO_LIBRARY[`ev-pig-${g}`].map((f) => f.seconds));
+    expect(len("MIRACLE")).toBeGreaterThan(len("COOL"));
+    // 共通の段階セットより長い（まとめ投げごとにさらに長く）
+    expect(Math.min(...AUTO_LIBRARY["ev-pig-COOL"].map((f) => f.seconds))).toBeGreaterThan(Math.max(...AUTO_LIBRARY["pig"].map((f) => f.seconds)));
+    // 安いアイテムの段階も既定の単発音ではなく共通の段階セット
+    const balloon = chooseSound([cleared("item:1", "air_horn")], { ...pig, itemId: 1, itemName: "風船", unitPriceYen: 1, tier: "T0", bulkGrade: "COOL" }, () => 0);
+    if (balloon !== "disabled") expect(balloon.key).toBe("bulk-COOL");
+  });
+
+  it("花火は値段にかかわらず花火ショー（既定の単発音 4 秒ではなく fireworks のミックス）。段階は ev-fireworks-*", () => {
+    const fw = { ...pig, itemId: 5, itemName: "花火", unitPriceYen: 1100, tier: "T2" as const, groups: [] };
+    const c = chooseSound([cleared("item:5", "fireworks")], fw, () => 0);
+    if (c === "disabled") throw new Error("disabled");
+    expect(c.key).toBe("fireworks");
+    expect(secondsOf(c.url)).toBeGreaterThanOrEqual(8);
+    const cheap = chooseSound([cleared("item:5", "fireworks")], { ...fw, unitPriceYen: 100, tier: "T1" }, () => 0);
+    if (cheap !== "disabled") expect(cheap.key).toBe("fireworks");
+    const m = chooseSound([cleared("item:5", "fireworks")], { ...fw, bulkGrade: "MIRACLE" }, () => 0);
+    if (m !== "disabled") expect(m.key).toBe("ev-fireworks-MIRACLE");
+  });
+
+  it("自分でアップロードした音源の行は ¥160 以上・段階でも最優先。鳴らす OFF の既定行は鳴らさない", () => {
+    expect(chooseSound([row("item:10842")], pig)).toMatchObject({ key: "item:10842", source: "user" });
+    expect(chooseSound([row("item:10842")], { ...pig, bulkGrade: "MIRACLE" })).toMatchObject({ key: "item:10842", source: "user" });
+    expect(chooseSound([cleared("item:10842", "pig_oink", 80, false)], pig)).toBe("disabled");
+  });
+
+  it("無料アイテムは既定の単発音のまま（控えめ）", () => {
+    expect(chooseSound([cleared("item:13100", "summon_magic")], { ...pig, itemId: 13100, itemName: "おばあさんたぬっち", free: true, unitPriceYen: 0 })).toMatchObject({ key: "item:13100", source: "default" });
+  });
+
+  it("¥160 以上でテーマのミックスが短い（レベル 1）テーマは豪華版 p-{テーマ}、テーマなしは価格帯 T2 以上", () => {
+    const food = chooseSound([], { ...pig, itemId: 999, itemName: "月見ハンバーガー", groups: [], unitPriceYen: 300 }, () => 0);
+    if (food === "disabled") throw new Error("disabled");
+    expect(food.key).toBe("p-food");
+    expect(secondsOf(food.url)).toBeGreaterThanOrEqual(5);
+    const cheapFood = chooseSound([], { ...pig, itemId: 999, itemName: "月見ハンバーガー", groups: [], unitPriceYen: 30 }, () => 0);
+    if (cheapFood !== "disabled") expect(cheapFood.key).toBe("food");
+    const none = chooseSound([], { ...pig, itemId: 998, itemName: "うろこ", groups: [], unitPriceYen: 160, tier: "T1" }, () => 0);
+    if (none !== "disabled") expect(none.key).toBe("tier-T2");
+  });
+
+  it("おばあさんたぬっち・もぐらさん・シカさんは専用テーマ（ぽんぽこ・もぐら・シカ）", () => {
+    for (const [itemId, itemName, theme, cid] of [
+      [13100, "おばあさんたぬっち", "tanuki", "summon_magic"],
+      [12132, "もぐりながら応援するもぐらさん", "mole", "sparkle_shing"],
+      [12131, "たしかな応援をするシカさん", "deer", "deer_call"],
+    ] as const) {
+      const c = chooseSound([cleared(`item:${itemId}`, cid)], { ...pig, itemId, itemName }, () => 0);
+      if (c === "disabled") throw new Error("disabled");
+      expect(c.key).toBe(theme);
+      expect(secondsOf(c.url)).toBeGreaterThanOrEqual(5);
+      const b = chooseSound([cleared(`item:${itemId}`, cid)], { ...pig, itemId, itemName, bulkGrade: "GREAT" }, () => 0);
+      if (b !== "disabled") expect(b.key).toBe(`ev-${theme}-GREAT`);
+    }
+  });
+});
+
+describe("chooseSound（ギンギラギンギャラクシーオーロラ・2026-09-30 社長指示「音が悲しい」）", () => {
+  it("¥1,000 のオーロラは既定の単発音（きらめきのジングル）ではなく、オーロラ・銀河のミックス（明るいきらめき・5 秒以上）", () => {
+    const row: SoundRow = { key: "item:13064", url: "/se/defaults/cc0/star_jingle.mp3", enabled: true, volume: 80, label: "star_jingle", source: "default" };
+    const c = chooseSound([row], { patternId: 1, itemId: 13064, itemName: "ギンギラギンギャラクシーオーロラ", tier: "T2", isHit: false, groups: ["gingiragin"], kind: "normal", free: false, unitPriceYen: 1000 }, () => 0);
+    if (c === "disabled") throw new Error("disabled");
+    expect(c).toMatchObject({ source: "auto", key: "aurora", theme: "aurora" });
+    const f = AUTO_LIBRARY["aurora"].find((x) => x.file === c.url);
+    expect(f?.seconds ?? 0).toBeGreaterThanOrEqual(5);
+    // 悲しく聞こえた 8 ビットのジングル（jingles_NES00）は、どのミックスにも公式既定にも入っていない
+    const lib = JSON.parse(readFileSync(path.resolve(__dirname, "../../../public/se/lib/manifest.json"), "utf8")) as { themes: Record<string, Array<{ components: Array<{ id: string }> }>> };
+    const defs = JSON.parse(readFileSync(path.resolve(__dirname, "../../../public/se/defaults/cc0/defaults.json"), "utf8")) as { sounds: Record<string, { components: Array<{ id: string }> }> };
+    const ids = [...Object.values(lib.themes).flatMap((rows) => rows.flatMap((r) => r.components.map((c) => c.id))), ...Object.values(defs.sounds).flatMap((d) => d.components.map((c) => c.id))];
+    expect(ids.length).toBeGreaterThan(100);
+    expect(ids.filter((id) => id.includes("jingles_NES00"))).toEqual([]);
+  });
+});
+
+describe("chooseSound（S25 レビューの修正）", () => {
+  const base = { patternId: null, itemId: 900, itemName: "うろこ", tier: "T1" as const, isHit: false, groups: ["wgp"], kind: "normal" as const, free: false, unitPriceYen: 300 };
+  const cleared = (key: string, id: string, source: "user" | "default" = "user", enabled = true, volume = 60): SoundRow => ({ key, url: `/se/defaults/cc0/${id}.mp3`, enabled, volume, label: id, source });
+
+  it("音量だけ変えた tier 行（合成済みの既定 = きらきらの単発音）は、¥160 以上なら T2 のミックスをその音量で", () => {
+    const c = chooseSound([cleared("tier:T1", "chime", "user", true, 55)], base, () => 0);
+    if (c === "disabled") throw new Error("disabled");
+    expect(c).toMatchObject({ key: "tier-T2", volume: 55, source: "auto" });
+  });
+
+  it("カテゴリの行が公式既定の単発音なら、¥160 以上のテーマなしアイテムは価格帯のミックス", () => {
+    const c = chooseSound([cleared("cat:group:wgp", "chime")], base, () => 0);
+    if (c === "disabled") throw new Error("disabled");
+    expect(c.key).toBe("tier-T2");
+  });
+
+  it("既定の単発音（ON）と OFF の変種 → 単発音を飛ばしても鳴らさないにならない", () => {
+    const pigRows = [cleared("item:10842", "pig_oink", "default"), { key: "item:10842#2", url: "https://x/pig2.mp3", enabled: false, volume: 80, label: "off", source: "user" as const }];
+    const c = chooseSound(pigRows, { ...base, itemId: 10842, itemName: "トンでもない応援をするぶたさん", groups: [], unitPriceYen: 160 }, () => 0);
+    if (c === "disabled") throw new Error("disabled");
+    expect(c.key).toBe("pig");
+    // 段階付きでも同じ（上位の key で飛ばしたあと、下位の key の OFF では止めない）
+    const b = chooseSound(pigRows, { ...base, itemId: 10842, itemName: "トンでもない応援をするぶたさん", groups: [], unitPriceYen: 160, bulkGrade: "COOL" }, () => 0);
+    if (b === "disabled") throw new Error("disabled");
+    expect(b.key).toBe("ev-pig-COOL");
+  });
+
+  it("音源の無い個別行（音量・鳴らすだけ）は合成音ではなく、その音量でライブラリ", () => {
+    const row: SoundRow = { key: "item:900", url: null, enabled: true, volume: 42, label: null, source: "user" };
+    const c = chooseSound([row], { ...base, itemName: "月見ハンバーガー", groups: [] }, () => 0);
+    if (c === "disabled") throw new Error("disabled");
+    expect(c).toMatchObject({ source: "auto", key: "p-food", volume: 42 });
+    // OFF の行はこれまでどおり鳴らさない
+    expect(chooseSound([{ ...row, enabled: false }], { ...base, itemName: "月見ハンバーガー", groups: [] })).toBe("disabled");
   });
 });

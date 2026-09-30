@@ -235,16 +235,16 @@
   },
   "star_jingle": {
    "file": "/se/defaults/cc0/star_jingle.mp3",
-   "seconds": 1.76,
-   "bytes": 21986,
+   "seconds": 0.96,
+   "bytes": 12269,
    "components": [
     {
-     "id": "kn-music-jingles-jingles_NES00",
-     "title": "music-jingles/jingles_NES00",
-     "source": "kenney",
-     "author": "Kenney",
+     "id": "fs715067",
+     "title": "achievement-sparkle",
+     "source": "freesound",
+     "author": "SkySpeira",
      "license": "CC0 1.0",
-     "page": "https://kenney.nl/assets/music-jingles",
+     "page": "https://freesound.org/people/SkySpeira/sounds/715067/",
      "at": 0.0
     }
    ]
@@ -298,6 +298,6 @@
    ]
   }
  },
- "generated_at": "2026-09-29T20:20:53Z",
+ "generated_at": "2026-09-30T07:56:04Z",
  "license": "すべて CC0 1.0（Freesound の CC0 フィルタ / Kenney）。社長の割り当ての「どんな音か」に合わせて選んだ同種の音（src/lib/se/cleared-defaults.ts）"
 }

@@ -31,6 +31,8 @@ def measure(f):
 
 
 files = [(k, r) for k, rows in m["themes"].items() for r in rows]
+# 5 秒未満でよいセット（無料の単発音・安いアイテム向けのレベル 1 テーマ・T1）
+SHORT_OK = {"tier-T0", "tier-T1", "balloon", "bird", "cute", "food", "pop", "notify", "kids", "whoosh"}
 with ThreadPoolExecutor(8) as ex:
     res = {f: (lu, tp, d, g) for f, lu, tp, d, g in ex.map(measure, [r["file"] for _, r in files])}
 
@@ -55,12 +57,18 @@ for k, r in files:
     if g:
         bad.append(f"途中の無音 {r['file']} {g}")
     ids = [c["id"] for c in r["components"]]
-    if len(ids) != len(set(ids)):
+    # 段階の専用ミックス（ev-*）と花火ショーは、主役の鳴き声・打ち上げ・破裂を繰り返すのが演出なので重複を許す（S25）
+    if len(ids) != len(set(ids)) and not (k.startswith("ev-") or k == "fireworks"):
         bad.append(f"素材の重複 {r['file']}")
     if (k.startswith("lite-") or k == "tier-T0") and d > 1.6:
         bad.append(f"無料が長い {r['file']} {d}")
     if lu is not None and not (k.startswith("lite-") or k == "tier-T0") and lu < -17.5:
         bad.append(f"ミックスが小さい {r['file']} {lu}")
+    # S25: 有料のミックスは 5 秒以上（5 秒未満でよいのは安いアイテム用のレベル 1 テーマと T1 だけ。¥160 以上はその豪華版 p-* を使う）
+    if not (k.startswith("lite-") or k in SHORT_OK) and d < 5.0:
+        bad.append(f"有料のミックスが 5 秒未満 {r['file']} {d:.2f}")
+    if d > (20.5 if k.startswith("ev-") else 15.5):
+        bad.append(f"長すぎる {r['file']} {d:.2f}")
 print("問題", len(bad))
 for b in bad[:40]:
     print("  ", b)

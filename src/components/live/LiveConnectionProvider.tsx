@@ -5,7 +5,7 @@ import { ensureAudioRunning, getAudioContext, getAudioState, installAudioAutoRes
 import { createSeQueue } from "@/lib/se/queue";
 import { tierForGift, type SeTier } from "@/lib/se/tiers";
 import { chooseSound } from "@/lib/se/choose-sound";
-import { coreLibraryUrls } from "@/lib/se/auto-library";
+import { coreLibraryUrls, isPremiumPrice } from "@/lib/se/auto-library";
 import { nextPollDelay, partitionFreshGifts, pollIntervalFor } from "@/lib/live/polling";
 import { idlePollInterval, INITIAL_AUTO_CONNECT_STATE, reduceAutoConnect, type AutoConnectPhase } from "@/lib/live/auto-connect";
 import { INITIAL_MASTER_STATE, masterFailed, masterSucceeded, retryCountdownSec, type MasterState } from "@/lib/live/master-retry";
@@ -620,12 +620,15 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     const tier = forceTier ?? tierForGift({ priceYen: g.price_yen, count: g.count, isHit: g.is_hit });
     // 2026-09-29: 個別行（変種ランダム）→ 自動ライブラリ（段階・当たり・アイテム名のテーマ）→ 一括行 → 自動の価格帯既定 → 合成音（choose-sound.ts）
     // 無料（単価 0・不明）は控えめな音（2026-09-30 社長指示「無料が派手すぎる」）。当たり・まとめ投げでも無料なら控えめ
+    // 単価 ¥160 以上は 5 秒以上の豪華版、主要なイベントアイテムと花火の段階は専用の長いミックス（2026-09-30・S25）
     const free = !(g.price_yen !== null && g.price_yen > 0);
-    const choice = chooseSound(mappingsRef.current, { patternId: g.pattern_id, itemId: g.item_id, itemName: g.item_name ?? null, tier, isHit: g.is_hit, kind: g.kind, groups: g.groups, bulkGrade: g.bulk_grade ?? null, free });
+    const choice = chooseSound(mappingsRef.current, { patternId: g.pattern_id, itemId: g.item_id, itemName: g.item_name ?? null, tier, isHit: g.is_hit, kind: g.kind, groups: g.groups, bulkGrade: g.bulk_grade ?? null, free, unitPriceYen: g.price_yen });
     if (choice === "disabled") return; // 明示的に無効化
     const vol = (volumeRef.current / 100) * (choice.volume / 100);
     // 音源が取れなかったときの予備も、無料なら無料の控えめな音（tier-T0）から（無料の当たりで当たりミックスに落ちないように）
-    await playSeUntilEnd(free ? "T0" : tier, { url: choice.url, volume: vol }, waitForEnd);
+    // ¥160 以上は予備も 5 秒以上の価格帯（T0・T1 → T2。S25）
+    const fallbackTier: SeTier = free ? "T0" : isPremiumPrice(g.price_yen) && (tier === "T0" || tier === "T1") ? "T2" : tier;
+    await playSeUntilEnd(fallbackTier, { url: choice.url, volume: vol }, waitForEnd);
   }, []);
 
   const playQueued = useCallback(
