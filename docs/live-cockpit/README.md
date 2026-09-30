@@ -242,6 +242,37 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - Cron が実際に動いているかの確認: Cloudflare Dashboard → Workers & Pages → tagdeck → Logs(observability 有効)で `[ranking-sync/scheduled] targets=N ok=N failed=N` を探す。ターミナルなら `pnpm exec wrangler tail tagdeck --format pretty`(要 `wrangler login`)。DB は `SELECT captured_at, my_rank, my_point FROM ranking_snapshots ORDER BY captured_at DESC LIMIT 5;` が 5 分ごとに増える。`targets=0` なら対象シミュレーターの status/ranking_type/期間を確認、`failed` なら同行の例外メッセージを見る
 - 最終日係数 1.5 は引き続き仮置き(TODO.md)
 
+## 2026-09-30 修正: シミュレーターの削除を論理削除に(ランキング履歴を残す)
+
+### 背景(本番で観測した症状)
+
+- 2026-09-30、本番の `ranking_snapshots` が全体で 0 行だった。9/23・9/25 に同期で書き込んだ先のシミュレーターが削除されており、`ranking_snapshots.simulator_id` の外部キー(`ON DELETE cascade`・`drizzle/0011`)で履歴ごと消えていた。E3 の実データ検証に使う予定のデータで、消えた分は戻らない
+- `DELETE /api/events/[id]` は行を物理削除しており、コメント「他テーブルからの参照も存在しない」は誤りだった
+
+### 追加・変更
+
+| 種別 | パス | 内容 |
+|---|---|---|
+| route | `DELETE /api/events/[id]` | 行を消さず、本人の行の `status` を `'deleted'` にして `updated_at` を更新する(論理削除)。該当なし・他人の行・削除済みは 404(PR #66) |
+| lib | `src/lib/events/simulator-scope.ts` | `ownedSimulator(id, userId)` = id 一致・本人・`status <> 'deleted'`。シミュレーターを id で読み書きする API はすべてこれで絞る(Drizzle は RLS を通らないため本人条件は必須)(PR #66) |
+| route | `PATCH /api/events/[id]`・`POST [id]/complete`・`POST [id]/manual-rivals`・`POST [id]/refresh-ranking`・`GET [id]/snapshots`・`POST /api/platforms/whowatch/events/[event_key]/item-points/estimate` | 削除済みは 404(PR #66)。`complete` は `completed` への更新にも同じ条件を付け、読み込み後に削除された行を戻さない |
+| route | `GET /api/events/[id]/historical-pace` | 以前は id を使っておらず、削除済み・他人の id でも 200 を返していた。`ownedSimulator` で確かめて 404(PR #68) |
+| schema | `src/lib/db/schema.ts` | `rankingSnapshots` のコメントを論理削除の説明に修正、`status` 列に値の一覧(`active` / `completed` / `deleted`)を記載(PR #68) |
+| test | `src/lib/events/simulator-scope.test.ts`・`src/app/api/events/[id]/route.test.ts`(PR #66)、`src/app/api/events/[id]/soft-delete.test.ts`(PR #68・35 件) | 削除済みは id で読む 8 ルートすべてで 404、`active`・`completed` は 200、他人の行は 404、DELETE の後も `ranking_snapshots` が残る。soft-delete.test.ts は Drizzle の WHERE を PgDialect で SQL に描画して評価するインメモリ DB で実行 |
+
+- 変更なし(確認のみ): 一覧 `GET /api/events`・Cron(`src/worker.ts`)・`rankings/sync`・`poll` は以前から `status = 'active'` で絞っているので、削除済みは自然に外れる。`completed` の扱いは変えていない
+- migration なし(`status` は既存の text 列)。画面の削除確認「取り消せません」は、画面から元に戻す手段が無いので変えていない
+
+### 動作確認手順
+
+1. `pnpm exec tsc --noEmit` / `pnpm test` / `pnpm exec next build --webpack`
+2. 本番(読み取りのみ): ログインした状態で、存在しない id の `GET /api/events/<uuid>/historical-pace?eventType=ranking` が 404 になる(PR #68 より前は 200)
+3. 本番(社長・DB への書き込みを伴う): 不要なシミュレーターを画面から削除 → 一覧から消える。DB では `SELECT id, status, updated_at FROM event_simulators WHERE status = 'deleted';` に残り、`SELECT count(*) FROM ranking_snapshots WHERE simulator_id = '<削除した id>';` も減らない
+
+### 未確定・運用
+
+- 削除した行と履歴は DB に残る。完全に消す必要が出たら(退会・削除依頼など)、`status = 'deleted'` の行を後から物理削除する仕組みを別途検討する(TODO.md)
+
 ## S2: SE プリセット(保存・共有・取り込み)(実装済み・2026-09-25 → **2026-09-26 廃止**)
 
 > 2026-09-26 社長指示「SE プリセットは不要。社長が SE を入れるたびに他の人にも同期する仕組みに」により、UI(SePresetPanel)・API(/api/se/presets*)・lib(presets*.ts)を削除した。同期は S4 の仕組み(運営アカウント = SE_DEFAULT_SOURCE_USER_ID の現在の割り当てを全員の既定にする)。読み直しは 開いたとき・5 分ごと・タブに戻ったとき(**2026-09-30 社長指示で同期状況のカードと「今すぐ同期」は外し、表示なしで自動同期**。S19)。se_presets テーブルは残置。以下は記録として残す。
