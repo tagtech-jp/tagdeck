@@ -4,7 +4,7 @@ import { createDbClient } from "@/lib/db/client";
 import { eventSimulators, eventHistory } from "@/lib/db/schema";
 import { ensureUserRow } from "@/lib/db/ensure-user";
 import { dbConstraintErrorResponse } from "@/lib/db/errors";
-import { eq, and } from "drizzle-orm";
+import { ownedSimulator } from "@/lib/events/simulator-scope";
 import { z } from "zod";
 
 const completeBodySchema = z.object({
@@ -37,7 +37,7 @@ export async function POST(
   const [event] = await db
     .select()
     .from(eventSimulators)
-    .where(and(eq(eventSimulators.id, id), eq(eventSimulators.userId, user.id)))
+    .where(ownedSimulator(id, user.id))
     .limit(1);
 
   if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -80,7 +80,7 @@ export async function POST(
       await tx
         .update(eventSimulators)
         .set({ status: "completed", updatedAt: now })
-        .where(and(eq(eventSimulators.id, id), eq(eventSimulators.userId, user.id)));
+        .where(ownedSimulator(id, user.id));
 
       return rows;
     });

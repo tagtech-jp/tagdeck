@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
 import { eventSimulators } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { ownedSimulator, SIMULATOR_DELETED_STATUS } from "@/lib/events/simulator-scope";
 
 const patchScoreSchema = z.object({
   score: z.number().int().min(0),
@@ -61,7 +61,7 @@ export async function PATCH(
         ...(d.targetRank !== undefined ? { targetRank: d.targetRank } : {}),
         updatedAt: new Date(),
       })
-      .where(and(eq(eventSimulators.id, id), eq(eventSimulators.userId, user.id)))
+      .where(ownedSimulator(id, user.id))
       .returning();
     if (!updatedSettings) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ event: updatedSettings });
@@ -77,7 +77,7 @@ export async function PATCH(
   const [event] = await db
     .select()
     .from(eventSimulators)
-    .where(and(eq(eventSimulators.id, id), eq(eventSimulators.userId, user.id)))
+    .where(ownedSimulator(id, user.id))
     .limit(1);
 
   if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -100,15 +100,17 @@ export async function PATCH(
         : existingPaceHistory,
       updatedAt: ts,
     })
-    .where(and(eq(eventSimulators.id, id), eq(eventSimulators.userId, user.id)))
+    .where(ownedSimulator(id, user.id))
     .returning();
 
   return NextResponse.json({ event: updated });
 }
 
-/** DELETE /api/events/[id] → 自分のイベントを削除する。
- * event_history.event_id は event_simulators.id への実FK制約を持たず（削除後も履歴保持する設計）、
- * 他テーブルからの参照も存在しないため、連鎖削除・保護処理は不要（単純DELETE）。 */
+/** DELETE /api/events/[id] → 自分のイベントを削除する（論理削除: status を "deleted" にする）。
+ * 行は消さない。ranking_snapshots は event_simulators.id を外部キー（ON DELETE CASCADE・drizzle/0011）で参照しており、
+ * 行を消すとランキング履歴が一緒に消えるため（2026-09-30 に、削除済みの秋コレのシミュレーターの履歴が 0 件になっているのを確認）。
+ * 削除済みは一覧・Cron・poll（status = "active" で絞る）と、id 指定の API（ownedSimulator で絞る）から外れる。
+ * event_history.event_id は event_simulators.id への実FK制約を持たない（削除後も履歴保持する設計）。 */
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -124,8 +126,9 @@ export async function DELETE(
   // 重要: Drizzle は postgres ロール (BYPASSRLS) のため user_id 条件は必須（自分のイベントのみ削除可）
   const db = createDbClient();
   const [deleted] = await db
-    .delete(eventSimulators)
-    .where(and(eq(eventSimulators.id, id), eq(eventSimulators.userId, user.id)))
+    .update(eventSimulators)
+    .set({ status: SIMULATOR_DELETED_STATUS, updatedAt: new Date() })
+    .where(ownedSimulator(id, user.id))
     .returning({ id: eventSimulators.id });
 
   if (!deleted) return NextResponse.json({ error: "Not found" }, { status: 404 });

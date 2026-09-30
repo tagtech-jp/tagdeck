@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
 import { eventSimulators, events, rankingSnapshots, streamerProfiles } from "@/lib/db/schema";
+import { ownedSimulator } from "@/lib/events/simulator-scope";
 
 const EVENT_KEY_RE = /^[a-z0-9_\-]{1,100}$/i;
 const bodySchema = z.object({ simulatorId: z.string().uuid(), itemId: z.string().min(1).max(100) });
@@ -29,7 +30,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ eve
   const [sim] = await db
     .select({ id: eventSimulators.id })
     .from(eventSimulators)
-    .where(and(eq(eventSimulators.id, simulatorId), eq(eventSimulators.userId, user.id)))
+    .where(ownedSimulator(simulatorId, user.id))
     .limit(1);
   if (!sim) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
