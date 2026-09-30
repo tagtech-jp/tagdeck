@@ -364,6 +364,38 @@ class TestBuildItemRows:
         rows = sut.build_item_rows(self._payments3(), [], {"2026_09_wolfcoming"}, "t")
         assert len(rows) == 2
 
+    # 常設の無料アイテム（2026-09-30 社長指示「ふわっちくんメガホン（10863）を無料アイテムとして単価表に登録」）
+    MEGAPHONE = {"id": 10863, "name": "ふわっちくんメガホン", "play_item_pattern": [
+        {"image_url": "https://img.whowatch.tv/events/whowatch_megaphone/whowatch-megaphone.png"},
+        {"image_url": "https://img.whowatch.tv/events/whowatch_megaphone/whowatch-megaphone_x10.png"}]}
+
+    def test_fixed_free_item_is_free_like_event_free_items_even_without_active_events(self):
+        rows = sut.build_item_rows(self._payments3(), self._master() + [self.MEGAPHONE], set(), "t")
+        by_id = {r["item_id"]: r for r in rows}
+        assert set(by_id) == {"13100", "12880", "10863"}
+        # 銀の貯金箱（13060）など、イベントの無料配布と同じ形の行
+        assert by_id["10863"] == {
+            "platform": "whowatch", "item_id": "10863", "item_name": "ふわっちくんメガホン", "base_point": 0, "product_id": "",
+            "price_jpy": 0, "whowatch_id": 10863, "description": None, "has_animation": False, "state": "FREE", "last_fetched_at": "t",
+        }
+
+    def test_fixed_free_item_keeps_price_when_purchasable(self):
+        cats = self._payments3()
+        cats[0]["play_item"].append({"id": 10863, "name": "ふわっちくんメガホン", "play_item_payment_product": [{"price": 500, "quantity": 1, "product_id": "mega.1", "state": "OPEN"}]})
+        rows = sut.build_item_rows(cats, [self.MEGAPHONE], set(), "t")
+        mega = [r for r in rows if r["item_id"] == "10863"]
+        assert len(mega) == 1 and mega[0]["price_jpy"] == 500 and mega[0]["state"] == "OPEN"
+
+    def test_fixed_free_item_not_in_master_makes_no_row(self):
+        rows = sut.build_item_rows(self._payments3(), self._master(), set(), "t")
+        assert "10863" not in {r["item_id"] for r in rows}
+
+    def test_other_items_in_undated_event_folders_stay_out(self):
+        other = {"id": 10864, "name": "別のメガホン", "play_item_pattern": [{"image_url": "https://img.whowatch.tv/events/whowatch_megaphone/other.png"}]}
+        rows = sut.build_item_rows(self._payments3(), [self.MEGAPHONE, other], {"2026_09_wolfcoming"}, "t")
+        ids = {r["item_id"] for r in rows}
+        assert "10863" in ids and "10864" not in ids
+
 
 class TestDiffPrices:
     def test_added_changed_free(self):
@@ -392,6 +424,20 @@ class TestFetchItemsWithMaster:
             rows = sut.fetch_items("dev-id", {"2026_09_x"})
         assert {r["item_id"] for r in rows} == {"1", "2"}
         assert calls == [f"{sut.BASE_URL}/playitems/payments3", f"{sut.BASE_URL}/playitems"]
+
+    def test_fetches_master_for_fixed_free_items_even_without_events(self):
+        calls = []
+
+        def fake(url, device_id):
+            calls.append(url)
+            if url.endswith("/playitems/payments3"):
+                return [{"play_item": [{"id": 1, "name": "A", "play_item_payment_product": [{"price": 10, "quantity": 1, "product_id": "p1"}]}]}]
+            return [{"id": 10863, "name": "ふわっちくんメガホン", "play_item_pattern": [{"image_url": "https://img.whowatch.tv/events/whowatch_megaphone/whowatch-megaphone.png"}]}]
+
+        with patch.object(sut, "fetch_json", side_effect=fake):
+            rows = sut.fetch_items("dev-id", set())
+        assert calls == [f"{sut.BASE_URL}/playitems/payments3", f"{sut.BASE_URL}/playitems"]
+        assert {(r["item_id"], r["state"], r["price_jpy"]) for r in rows} == {("1", "OPEN", 10), ("10863", "FREE", 0)}
 
     def test_master_failure_keeps_paid_rows(self):
         def fake(url, device_id):
