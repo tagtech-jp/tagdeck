@@ -4,7 +4,7 @@
 //   - POST /api/platforms/whowatch/events/sync（open/pre 全件・Daily whowatch sync と手動実行）
 // 2026-09-21 までは前者しか無く、本番で誰もイベントを選択していなければ詳細列は NULL のままだった。
 
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { createDbClient } from "@/lib/db/client";
 import { whowatchEvents } from "@/lib/db/schema";
 import {
@@ -52,6 +52,36 @@ export function isDetailFresh(
   const missingStruct = row.rankingPrefix !== "" && !isUsableStruct(row.struct);
   const limit = missingStruct ? Math.min(maxAgeMs, STRUCT_RETRY_MS) : maxAgeMs;
   return nowMs - row.detailFetchedAt.getTime() < limit;
+}
+
+/**
+ * 1 回の UPDATE で送る本文の上限（UTF-8 のバイト数）。
+ * 2026-10-01 本番の実測: Workers から DB への 1 回の書き込みが 76,806 / 86,898 バイトのときは毎回「Network connection lost」で失敗した。
+ * 61,298 / 53,045 バイトは成功した。約 64KB を超えると落ちると見られる（どの層の制限かは未確認）。
+ * 2026_10_magicfantasy はルール本文が 72,594 バイトあり、同じ UPDATE に入れていた struct ごと保存できず、区分が出なかった。
+ * 余裕を見て 16KB ずつに分ける
+ */
+export const DB_WRITE_CHUNK_BYTES = 16 * 1024;
+
+/** 純関数: UTF-8 のバイト数が maxBytes 以下になるよう、文字の境目で分ける（空文字は [""]） */
+export function splitUtf8ByBytes(text: string, maxBytes: number): string[] {
+  const limit = Math.max(4, Math.floor(maxBytes));
+  const out: string[] = [];
+  let start = 0;
+  let bytes = 0;
+  for (let i = 0; i < text.length; ) {
+    const cp = text.codePointAt(i) ?? 0;
+    const len = cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
+    if (bytes + len > limit) {
+      out.push(text.slice(start, i));
+      start = i;
+      bytes = 0;
+    }
+    bytes += len;
+    i += cp > 0xffff ? 2 : 1;
+  }
+  out.push(text.slice(start));
+  return out;
 }
 
 /** 一時的な DB の切断（Network connection lost 等）に備えて 1 回だけやり直す */
@@ -288,33 +318,33 @@ export async function syncEventDetail(db: Db, eventKey: string, opts: SyncEventD
       throw new EventDetailSyncError("db", eventKey, describeDbError(e));
     }
 
-    // 大きい列（rules_html / rules_text / struct）は別 UPDATE。失敗しても小さい列の保存は残す（参考情報なので警告扱い）
+    // 大きい列（struct / rules_text / rules_html）は別 UPDATE。失敗しても小さい列の保存は残す（参考情報なので警告扱い）。
+    // 区分に要る struct（数 KB）を単独で先に保存し、長い本文の失敗に巻き込まない（2026-10-01 2026_10_magicfantasy の実害）。
+    // どれも一時的な切断に備えて 1 回だけやり直す
+    const warn = (label: string, e: unknown) => {
+      const w = `${label} の保存に失敗: ${describeDbError(e)}`;
+      dbWarning = dbWarning ? `${dbWarning} / ${w}` : w;
+      console.warn("[event-detail-sync] large column failed", eventKey, w);
+    };
     try {
-      // 2026-10-01: 一時的な切断（Network connection lost）で struct が保存されず区分が出なかったので 1 回だけやり直す
       await withOneRetry(() =>
         db
           .update(whowatchEvents)
-          .set({
-            rulesText: rulesText ? sanitizeText(rulesText) : null,
-            struct: struct ? (sanitizeJson(struct) as Record<string, unknown>) : null,
-          })
+          .set({ struct: struct ? (sanitizeJson(struct) as Record<string, unknown>) : null })
           .where(eq(whowatchEvents.id, id)),
       );
     } catch (e) {
-      dbWarning = `rules_text/struct の保存に失敗: ${describeDbError(e)}`;
-      console.warn("[event-detail-sync] large columns (text/struct) failed", eventKey, dbWarning);
+      warn("struct", e);
     }
     try {
-      await withOneRetry(() =>
-        db
-          .update(whowatchEvents)
-          .set({ rulesHtml: rulesHtml ? slimHtml(rulesHtml) : null })
-          .where(eq(whowatchEvents.id, id)),
-      );
+      await writeLongText(db, id, "rulesText", rulesText ? sanitizeText(rulesText) : null);
     } catch (e) {
-      const w = `rules_html の保存に失敗: ${describeDbError(e)}`;
-      dbWarning = dbWarning ? `${dbWarning} / ${w}` : w;
-      console.warn("[event-detail-sync] large column (html) failed", eventKey, w);
+      warn("rules_text", e);
+    }
+    try {
+      await writeLongText(db, id, "rulesHtml", rulesHtml ? slimHtml(rulesHtml) : null);
+    } catch (e) {
+      warn("rules_html", e);
     }
   }
 
@@ -336,6 +366,32 @@ export async function syncEventDetail(db: Db, eventKey: string, opts: SyncEventD
     rulesParsed,
     source: "api",
   };
+}
+
+/**
+ * 長い本文（rules_text / rules_html）を DB_WRITE_CHUNK_BYTES ずつに分けて書く。1 つに収まれば UPDATE 1 回。
+ * 分ける場合は 1 つのトランザクションで「1 つ目で置き換え → 残りを後ろに足す」。全体を 1 回だけやり直す
+ * （1 つ目で置き換えるので、やり直しても本文は重複しない）
+ */
+async function writeLongText(db: Db, id: number, column: "rulesText" | "rulesHtml", text: string | null): Promise<void> {
+  const value = (v: string | null) => (column === "rulesText" ? { rulesText: v } : { rulesHtml: v });
+  const chunks = text === null ? [null] : splitUtf8ByBytes(text, DB_WRITE_CHUNK_BYTES);
+  if (chunks.length === 1) {
+    await withOneRetry(() => db.update(whowatchEvents).set(value(chunks[0])).where(eq(whowatchEvents.id, id)));
+    return;
+  }
+  const col = column === "rulesText" ? whowatchEvents.rulesText : whowatchEvents.rulesHtml;
+  await withOneRetry(() =>
+    db.transaction(async (tx) => {
+      await tx.update(whowatchEvents).set(value(chunks[0])).where(eq(whowatchEvents.id, id));
+      for (const chunk of chunks.slice(1)) {
+        await tx
+          .update(whowatchEvents)
+          .set(column === "rulesText" ? { rulesText: sql`coalesce(${col}, '') || ${chunk}` } : { rulesHtml: sql`coalesce(${col}, '') || ${chunk}` })
+          .where(eq(whowatchEvents.id, id));
+      }
+    }),
+  );
 }
 
 export interface SyncAllResult {

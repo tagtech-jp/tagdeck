@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DETAIL_STALE_MS, isDetailFresh, isUsableStruct, planSyncTargets, STRUCT_RETRY_MS, SYNC_BATCH_LIMIT } from "./event-detail-sync";
+import { DB_WRITE_CHUNK_BYTES, DETAIL_STALE_MS, isDetailFresh, isUsableStruct, planSyncTargets, splitUtf8ByBytes, STRUCT_RETRY_MS, SYNC_BATCH_LIMIT } from "./event-detail-sync";
 import type { EventListItem } from "./events";
 
 function item(eventKey: string, status: "open" | "pre" = "open"): EventListItem {
@@ -85,5 +85,29 @@ describe("isDetailFresh / isUsableStruct（区分の構造の取り直し・2026
     expect(isUsableStruct([])).toBe(false);
     expect(isUsableStruct("x")).toBe(false);
     expect(isUsableStruct({ error_code: "Z-002" })).toBe(false);
+  });
+});
+
+describe("splitUtf8ByBytes（長い本文の分割書き込み・2026-10-01）", () => {
+  const bytes = (s: string) => Buffer.byteLength(s, "utf8");
+
+  it("UTF-8 のバイト数で区切り、つなげると元に戻る。日本語（3 バイト）や絵文字（4 バイト）の途中で切らない", () => {
+    expect(DB_WRITE_CHUNK_BYTES).toBe(16 * 1024);
+    const text = "abcあいう🎩".repeat(3000);
+    const chunks = splitUtf8ByBytes(text, 1000);
+    expect(chunks.join("")).toBe(text);
+    for (const c of chunks) {
+      expect(bytes(c)).toBeLessThanOrEqual(1000);
+      expect(c).not.toMatch(/^[\udc00-\udfff]|[\ud800-\udbff]$/);
+    }
+    // 詰められるだけ詰める（最後以外は上限まで残り 3 バイト以内）
+    for (const c of chunks.slice(0, -1)) expect(bytes(c)).toBeGreaterThan(1000 - 4);
+  });
+
+  it("上限ちょうどは 1 つ、空文字は [\"\"]", () => {
+    expect(splitUtf8ByBytes("a".repeat(16), 16)).toEqual(["a".repeat(16)]);
+    expect(splitUtf8ByBytes("a".repeat(17), 16)).toEqual(["a".repeat(16), "a"]);
+    expect(splitUtf8ByBytes("あいう", 6)).toEqual(["あい", "う"]);
+    expect(splitUtf8ByBytes("", 16)).toEqual([""]);
   });
 });

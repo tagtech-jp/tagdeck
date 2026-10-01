@@ -282,6 +282,11 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - **原因 1: 構造の保存失敗が 24 時間残った。** Daily whowatch sync(run 36767963495・2026-09-30T19:46:41Z)で `rules_text/struct の保存に失敗: Failed query ← Network connection lost.` が出た
   - 小さい列(`detail_fetched_at`・`periods` など)は先に保存済みだった。そのため 24 時間の鮮度判定(`DETAIL_STALE_MS`)が `struct` NULL の行をそのまま返し、区分の選択肢が 0 件になった
   - 期間が出ていたのは、`periods` を取得時のメモリ上の構造から計算して小さい列で保存していたため
+  - **保存失敗は一時的な切断ではなかった**(PR #70 のマージ後に判明)
+    - 2026-10-01 03:35Z の 5 分同期が取り直したときも、`struct`・`rules_text`・`rules_html` の 3 列がそろって保存できなかった(1 回のやり直し込み)
+    - 保存しようとした大きさ: マジックファンタジーは 1 回目の UPDATE(rules_text 72,594＋struct 4,212)が 76,806 バイト、rules_html が 86,898 バイト
+    - 保存できたオオカミさんは 61,298 バイトと 53,045 バイト。本番 DB で保存できている値は最大でも約 53KB で、本文が NULL のままのイベントはマジックファンタジーだけだった
+    - Workers から DB への 1 回の書き込みが約 64KB を超えると、毎回「Network connection lost」で落ちると見られる。どの層(Workers のソケット・Supabase のプーラーなど)の制限かは未確認
 - **原因 2: 構造 JSON の 4 つ目の形。** selectbox の直下に `chips[]` が並ぶ(`tabs` なし)形があった
   - 該当は doll(もりあげ魔法ねこさんぬいぐるみ)と deco(マジシャンデコレーション)
   - 従来は `magicfantasy_1st_doll` を作っていたが、公開 API ではこのキーが空配列になる
@@ -295,12 +300,13 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 |---|---|---|
 | lib | `src/lib/whowatch/events.ts` | `RankingSelectbox.chips` を追加し、selectbox 直下のチップを `{prefix}_{option}_{selectbox}_{chip}` に平坦化する。チップの無いキーは作らない。`getRankingStruct` は `error_code` 付きの応答を 404(`WhowatchEventApiError`)として投げ、キャッシュしない |
 | lib | `src/lib/whowatch/event-detail-sync.ts` | `isUsableStruct` を追加(NULL・配列・`error_code` 付きは使えない)。`isDetailFresh` は、RANKING タブがあるのに構造が使えない行を `STRUCT_RETRY_MS`(10 分)で古い扱いにする。それ以外は従来どおり 24 時間。大きい列(`rules_text`+`struct`、`rules_html`)の UPDATE は、一時的な切断に備えて 300ms 後に 1 回だけやり直す。やり直しも失敗した場合は警告にとどめ、取り直した構造はメモリ上で返す。先頭の読み込み(SELECT)の失敗は、SQL 全文と params を落とした `EventDetailSyncError`(stage `db`)で投げる(drizzle の `DrizzleQueryError` は message に SQL と params を含み、イベント詳細 API の 502 応答の `detail` にもそのまま出ていた) |
+| lib | `src/lib/whowatch/event-detail-sync.ts`(保存の分割) | 区分に要る `struct`(数 KB)を単独の UPDATE で先に保存し、本文の失敗に巻き込まない。長い本文(`rules_text`・`rules_html`)は `DB_WRITE_CHUNK_BYTES`(16KB)ずつに分ける(`splitUtf8ByBytes`・文字の途中では切らない)。1 つのトランザクションで「1 つ目で置き換え → `coalesce(列, '') \|\| $1` で後ろに足す」形にし、全体を 1 回だけやり直す(1 つ目で置き換えるので重複しない)。失敗の警告は列ごと(`struct の保存に失敗`・`rules_text の保存に失敗`・`rules_html の保存に失敗`) |
 | lib(新規) | `src/lib/whowatch/ranking-choice.ts` | `choicesForOption`・`defaultChoice`(総合 → 先頭)・`periodKeyAt`・`pickDefaultRankingType`。作成フォーム、設定画面、5 分同期の 3 か所で同じ規則を使う(ブラウザでも読み込む) |
 | lib(新規) | `src/lib/whowatch/auto-ranking-type.ts` | `autoAssignRankingTypes`: 詳細は下の「自動設定の規則」 |
 | worker | `src/worker.ts` | 同期のトランザクションより前に `autoAssignRankingTypes` を呼ぶ。失敗しても順位の同期は続ける。ログは `auto ranking_type assigned=<id 先頭 8>:<区分> repaired=<event_key>`(入れた・取り直した回だけ)と `auto ranking_type skipped=<id>:<理由>`(warn)。順位の同期の失敗ログも `describeDbError` を通す(SQL 全文・params を出さない) |
 | UI | `EventCreateForm`・`EventSettingsEditor` | RANKING タブがあるのに区分が 0 件のときの文言を「ランキング区分をまだ取得できていません。このまま作成すれば、期間中は 5 分ごとの同期が区分を取り直して自動で設定します」に変更。RANKING タブが無いときは従来の「区分がありません」。区分の絞り込みと既定は `ranking-choice.ts` を使う |
 | UI | `EventDashboard` | 区分が空の警告: 紐付け済みなら「期間中は 5 分ごとの同期が区分(総合)を自動で設定して、順位の取得を始めます」、紐付けなしなら従来の文言 |
-| test | `events.test.ts`(+2)・`ranking-choice.test.ts`(新規 7)・`auto-ranking-type.test.ts`(新規 14)・`event-detail-sync.test.ts`(+5)・`event-detail-sync.retry.test.ts`(新規 4)・`worker.test.ts`(+4) | マジックファンタジーの実応答を縮約したフィクスチャ、`error_code` 応答の 404 化、10 分での取り直し、保存のやり直し、自動設定の対象と上限、取り直す対象の選び方、トランザクションより前に呼ぶこと、ログに SQL 全文・params を出さないこと |
+| test | `events.test.ts`(+2)・`ranking-choice.test.ts`(新規 7)・`auto-ranking-type.test.ts`(新規 14)・`event-detail-sync.test.ts`(+7)・`event-detail-sync.retry.test.ts`(新規 5)・`worker.test.ts`(+4) | マジックファンタジーの実応答を縮約したフィクスチャ、`error_code` 応答の 404 化、10 分での取り直し、保存のやり直し、64KB を超える本文の分割書き込み(16KB 以下・文字の途中で切らない・つなげると元に戻る・追記の SQL)、自動設定の対象と上限、取り直す対象の選び方、トランザクションより前に呼ぶこと、ログに SQL 全文・params を出さないこと |
 
 #### 自動設定の規則
 
@@ -314,6 +320,13 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
   - 失敗ログは `describeDbError` を通す
 - **入れる区分**: シミュレーターの開始日時を含む区分(前半/後半)の「総合」。どの区分にも入らなければ、それより前に始まった最後の区分。作成フォームの既定と同じ規則
 - **書き込み**: `ranking_type IS NULL` の行だけを更新する(`updated_at` も更新)。利用者がその間に選んだ区分は上書きしない。入れた行は同じ回の同期から対象になる
+
+### 本番の経過(2026-10-01)
+
+- PR #70(af0452f)が 03:29:37Z にマージされ、Deploy run 36810756860 が成功した
+- 03:35Z の 5 分同期がマジックファンタジーの構造を取り直し(`detail_fetched_at` = 03:35:45Z)、シミュレーター `49a163c8` に `magicfantasy_1st_overall` を入れた。同じ回で順位スナップショット 1 件(03:35:51Z)を書いた
+  - 構造の保存は 64KB の問題で失敗したが、メモリ上の構造で区分を決めたため自動設定は効いた
+- 構造と本文の保存は、続く PR(分割書き込み)で直す
 
 ### 動作確認手順
 
