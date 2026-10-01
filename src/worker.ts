@@ -8,14 +8,16 @@ import handler from "../.open-next/worker.js";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { createDbClient } from "@/lib/db/client";
 import { eventSimulators } from "@/lib/db/schema";
+import { autoAssignRankingTypes, RANKING_EVENT_TYPES as RANKING_EVENT_TYPE_LIST } from "@/lib/whowatch/auto-ranking-type";
 import { syncSimulatorRanking } from "@/lib/whowatch/ranking-sync";
+import { describeDbError } from "@/lib/whowatch/sanitize";
 
 // pg_try_advisory_xact_lock 用の固定キー。E2 ランキング同期専用であることが分かればよいので
 // 値そのものに意味はない(他機能のロックキーと衝突しない値を適当に割り当てただけ)。
 const RANKING_SYNC_LOCK_KEY = 861025;
 
-/** 順位表を使うイベントタイプ（EventDashboard の isRankingType と同じ） */
-const RANKING_EVENT_TYPES: ReadonlySet<string> = new Set(["ranking", "nice", "viewer"]);
+/** 順位表を使うイベントタイプ（EventDashboard の isRankingType と同じ・定義は auto-ranking-type.ts） */
+const RANKING_EVENT_TYPES: ReadonlySet<string> = new Set(RANKING_EVENT_TYPE_LIST);
 
 /**
  * Cloudflare Cron Trigger(5分毎)から呼ばれる本体。
@@ -34,6 +36,20 @@ export async function runRankingSync(env: Record<string, unknown>) {
   }
 
   const db = createDbClient();
+
+  // 区分（ranking_type）が空のシミュレーターに既定の区分を入れる（2026-10-01 社長指示「今後自動で取ってくるように」）。
+  // 区分の構造が保存されていないイベントは先に取り直す。ここが失敗しても順位の同期は続ける（トランザクションの外で行う）
+  try {
+    const auto = await autoAssignRankingTypes(db, new Date());
+    if (auto.assigned.length > 0 || auto.repaired.length > 0) {
+      console.log(`[ranking-sync/scheduled] auto ranking_type assigned=${auto.assigned.map((a) => `${a.id.slice(0, 8)}:${a.rankingType}`).join(",") || "-"} repaired=${auto.repaired.join(",") || "-"}`);
+    }
+    if (auto.skipped.length > 0) {
+      console.warn(`[ranking-sync/scheduled] auto ranking_type skipped=${auto.skipped.map((s) => `${s.id.slice(0, 8)}:${s.reason}`).join(",")}`);
+    }
+  } catch (e) {
+    console.warn("[ranking-sync/scheduled] auto ranking_type failed", describeDbError(e));
+  }
 
   // DATABASE_URL は Supabase の「トランザクションプーラー」経由(db/client.ts の
   // `prepare: false // Supabase のトランザクションプーラー対応` で判明。値は見ていない)。
@@ -68,7 +84,7 @@ export async function runRankingSync(env: Record<string, unknown>) {
     const noRankingType = inPeriod.filter((ev) => !ev.rankingType && ev.platform === "whowatch" && RANKING_EVENT_TYPES.has(ev.eventType));
     if (noRankingType.length > 0) {
       console.warn(
-        `[ranking-sync/scheduled] ranking_type が空のため対象外: ${noRankingType.map((ev) => ev.id.slice(0, 8)).join(",")}（イベントの「区分・期間を編集」で区分を選ぶと対象になる）`,
+        `[ranking-sync/scheduled] ranking_type が空のため対象外: ${noRankingType.map((ev) => ev.id.slice(0, 8)).join(",")}（自動設定できなかったもの。理由は auto ranking_type skipped のログ。イベントの「区分・期間を編集」で区分を選ぶと対象になる）`,
       );
     }
 

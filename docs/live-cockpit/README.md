@@ -273,6 +273,60 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 
 - 削除した行と履歴は DB に残る。完全に消す必要が出たら(退会・削除依頼など)、`status = 'deleted'` の行を後から物理削除する仕組みを別途検討する(TODO.md)
 
+## E6: ランキング区分の取り直しと自動設定(実装済み・2026-10-01)
+
+社長報告「イベントでランキング区分が取れないので、今後自動で取ってくるようにして」への対応(オートモードで自走)。対象は ふわっちマジックファンタジーワールド(`2026_10_magicfantasy`・id 1523)。作成フォームに「このイベントにはランキング区分がありません(ランキング自動取得は使えません)」と出た。期間「前半 10/1 00:00 〜 10/7 00:00」は出ていた。区分が空のまま作ったシミュレーターには、ダッシュボードの警告(PR #65)が出ていた。
+
+### 背景(本番で観測した症状と原因)
+
+- **原因 1: 構造の保存失敗が 24 時間残った。** Daily whowatch sync(run 36767963495・2026-09-30T19:46:41Z)で `rules_text/struct の保存に失敗: Failed query ← Network connection lost.` が出た
+  - 小さい列(`detail_fetched_at`・`periods` など)は先に保存済みだった。そのため 24 時間の鮮度判定(`DETAIL_STALE_MS`)が `struct` NULL の行をそのまま返し、区分の選択肢が 0 件になった
+  - 期間が出ていたのは、`periods` を取得時のメモリ上の構造から計算して小さい列で保存していたため
+- **原因 2: 構造 JSON の 4 つ目の形。** selectbox の直下に `chips[]` が並ぶ(`tabs` なし)形があった
+  - 該当は doll(もりあげ魔法ねこさんぬいぐるみ)と deco(マジシャンデコレーション)
+  - 従来は `magicfantasy_1st_doll` を作っていたが、公開 API ではこのキーが空配列になる
+  - 2026-10-01 の実測: `/rankings/{type}` で `magicfantasy_1st_doll_free`〜`_bronzeplus`、`magicfantasy_1st_deco_free`〜`_bronze`、`magicfantasy_2nd_deco_*`、`magicfantasy_1st_overall`、`magicfantasy_2nd_overall` などが取れる。構造からは全 60 キーができる
+- **予防: 未公開時の応答。** 未公開の構造 JSON は HTTP 200 で `{"error_code":"Z-002","error_message":"データが見つかりません"}` を返す。修正前はこれをそのまま構造として保存し、区分 0 件のまま「取得済み」になり得た
+- **区分が空のまま作られる。** 作成フォームは区分が無くても作成できる。区分が空のシミュレーターは 5 分同期の対象外になり、書き込みが止まる(2026-09-30 のオオカミさんがやってくる！と同じ)
+
+### 追加・変更
+
+| 種別 | パス | 内容 |
+|---|---|---|
+| lib | `src/lib/whowatch/events.ts` | `RankingSelectbox.chips` を追加し、selectbox 直下のチップを `{prefix}_{option}_{selectbox}_{chip}` に平坦化する。チップの無いキーは作らない。`getRankingStruct` は `error_code` 付きの応答を 404(`WhowatchEventApiError`)として投げ、キャッシュしない |
+| lib | `src/lib/whowatch/event-detail-sync.ts` | `isUsableStruct` を追加(NULL・配列・`error_code` 付きは使えない)。`isDetailFresh` は、RANKING タブがあるのに構造が使えない行を `STRUCT_RETRY_MS`(10 分)で古い扱いにする。それ以外は従来どおり 24 時間。大きい列(`rules_text`+`struct`、`rules_html`)の UPDATE は、一時的な切断に備えて 300ms 後に 1 回だけやり直す。やり直しも失敗した場合は警告にとどめ、取り直した構造はメモリ上で返す |
+| lib(新規) | `src/lib/whowatch/ranking-choice.ts` | `choicesForOption`・`defaultChoice`(総合 → 先頭)・`periodKeyAt`・`pickDefaultRankingType`。作成フォーム、設定画面、5 分同期の 3 か所で同じ規則を使う(ブラウザでも読み込む) |
+| lib(新規) | `src/lib/whowatch/auto-ranking-type.ts` | `autoAssignRankingTypes`: 詳細は下の「自動設定の規則」 |
+| worker | `src/worker.ts` | 同期のトランザクションより前に `autoAssignRankingTypes` を呼ぶ。失敗しても順位の同期は続ける。ログは `auto ranking_type assigned=<id 先頭 8>:<区分> repaired=<event_key>`(入れた・取り直した回だけ)と `auto ranking_type skipped=<id>:<理由>`(warn) |
+| UI | `EventCreateForm`・`EventSettingsEditor` | RANKING タブがあるのに区分が 0 件のときの文言を「ランキング区分をまだ取得できていません。このまま作成すれば、期間中は 5 分ごとの同期が区分を取り直して自動で設定します」に変更。RANKING タブが無いときは従来の「区分がありません」。区分の絞り込みと既定は `ranking-choice.ts` を使う |
+| UI | `EventDashboard` | 区分が空の警告: 紐付け済みなら「期間中は 5 分ごとの同期が区分(総合)を自動で設定して、順位の取得を始めます」、紐付けなしなら従来の文言 |
+| test | `events.test.ts`(+2)・`ranking-choice.test.ts`(新規 7)・`auto-ranking-type.test.ts`(新規 10)・`event-detail-sync.test.ts`(+5)・`event-detail-sync.retry.test.ts`(新規 3)・`worker.test.ts`(+3) | マジックファンタジーの実応答を縮約したフィクスチャ、`error_code` 応答の 404 化、10 分での取り直し、保存のやり直し、自動設定の対象と上限、トランザクションより前に呼ぶこと |
+
+#### 自動設定の規則
+
+- **対象**: ふわっち・`active`・ランキング型(ranking / nice / viewer)・`ranking_type` が空・期間内・イベント紐付けあり
+- **除外**: 紐付け先が「詳細取得済みで RANKING タブ無し」のもの。毎回の上限枠を塞がないため
+- **上限**: 1 回の同期で開始日時の早い順に最大 10 件
+- **取り直し**: 詳細が未取得、または構造が使えないイベントは、先に `syncEventDetail` で取り直す。1 回の同期で 1 イベントまで(外部 API 最大 5 回)。10 分以内に取り直したばかりなら API を叩かない
+- **入れる区分**: シミュレーターの開始日時を含む区分(前半/後半)の「総合」。どの区分にも入らなければ、それより前に始まった最後の区分。作成フォームの既定と同じ規則
+- **書き込み**: `ranking_type IS NULL` の行だけを更新する(`updated_at` も更新)。利用者がその間に選んだ区分は上書きしない。入れた行は同じ回の同期から対象になる
+
+### 動作確認手順
+
+1. `pnpm exec tsc --noEmit` / `pnpm test` / `pnpm exec next build --webpack`
+2. デプロイ後、`pnpm exec wrangler tail tagdeck --format pretty` で 5 分の境目をまたいで見る
+   - 区分が空のシミュレーターがあれば `auto ranking_type assigned=…`(構造を取り直した回は `repaired=<event_key>` も)が出る
+   - 続けて `targets=N ok=N failed=0` が出る
+3. DB(読み取り)
+   - `SELECT id, ranking_type, updated_at FROM event_simulators WHERE whowatch_event_id = 1523;` で区分が入っている
+   - `SELECT jsonb_typeof(struct), detail_fetched_at FROM whowatch_events WHERE id = 1523;` が `object`
+   - `ranking_snapshots` が 5 分ごとに増える
+
+### 未確定・運用
+
+- 自動で入るのは「総合」。キャラ別やクラス別の順位で目標を立てる場合は、「区分・期間を編集」で選び直す(選んだ区分が優先され、自動設定は空の行にしか書かない)
+- 後半(2nd)に入っても、前半に入れた区分は自動では切り替えない(区分が空の行だけが対象)。後半の順位を追う場合は、設定画面で後半を選ぶ
+
 ## S2: SE プリセット(保存・共有・取り込み)(実装済み・2026-09-25 → **2026-09-26 廃止**)
 
 > 2026-09-26 社長指示「SE プリセットは不要。社長が SE を入れるたびに他の人にも同期する仕組みに」により、UI(SePresetPanel)・API(/api/se/presets*)・lib(presets*.ts)を削除した。同期は S4 の仕組み(運営アカウント = SE_DEFAULT_SOURCE_USER_ID の現在の割り当てを全員の既定にする)。読み直しは 開いたとき・5 分ごと・タブに戻ったとき(**2026-09-30 社長指示で同期状況のカードと「今すぐ同期」は外し、表示なしで自動同期**。S19)。se_presets テーブルは残置。以下は記録として残す。

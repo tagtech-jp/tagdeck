@@ -76,6 +76,8 @@ export interface RankingSelectbox {
   value?: string;
   border?: RankingBorder[];
   tabs?: RankingTab[];
+  /** tabs を挟まずにチップ（クラス）が並ぶ形（例: 2026_10_magicfantasy の doll）。rankingType は {selectbox}_{chip} */
+  chips?: RankingChip[];
 }
 export interface RankingOption {
   key: string;
@@ -89,6 +91,8 @@ export interface RankingOption {
  *   tabs 型       : tabs[] → chips[]
  * 2026-09-29: selectboxes 型に未対応で「区分がありません」と出ていた（社長報告）。実測の rankingType は
  *   wolfcoming_across_goods_free / wolfcoming_teambattle / wolfcoming_overall_whowatchchan / wolfcoming_side
+ * 2026-10-01: selectbox の直下に chips が並ぶ形（tabs なし）を追加。実測（公開 API で取得できるキー）:
+ *   magicfantasy_1st_doll_free（magicfantasy_1st_doll は空配列）・magicfantasy_1st_goods_ice_free・magicfantasy_1st_overall
  */
 export interface RankingStruct {
   name?: string;
@@ -247,7 +251,10 @@ export function flattenRankingChoices(prefix: string, struct: RankingStruct | nu
       const sParts = [...parts, sb.key];
       const sLabels = [...labels, clean(sb.value, sb.key)];
       if (sb.tabs && sb.tabs.length > 0) walkTabs(sb.tabs, sParts, sLabels, sb.border);
-      else pushLeaf(sParts, sLabels, sb.border);
+      else if (sb.chips && sb.chips.length > 0) {
+        // selectbox の直下のチップ（クラス）。チップを付けないキーは公開 API で空配列になる（2026-10-01 実測）
+        for (const chip of sb.chips) pushLeaf([...sParts, chip.key], [...sLabels, clean(chip.value, chip.key)], sb.border);
+      } else pushLeaf(sParts, sLabels, sb.border);
     }
   };
 
@@ -328,7 +335,16 @@ export async function getEventDetail(eventKey: string): Promise<EventDetail> {
 
 /** GET /resources/json/rankings/{prefix} → 区分構造（そのまま） */
 export async function getRankingStruct(prefix: string): Promise<RankingStruct> {
-  return cached(`ranking_struct:${prefix}`, () => getJson<RankingStruct>(`/resources/json/rankings/${encodeURIComponent(prefix)}`));
+  return cached(`ranking_struct:${prefix}`, async () => {
+    const path = `/resources/json/rankings/${encodeURIComponent(prefix)}`;
+    const data = await getJson<RankingStruct & { error_code?: unknown; error_message?: unknown }>(path);
+    // 未公開のときは HTTP 200 で {"error_code":"Z-002","error_message":"データが見つかりません"} が返る。
+    // 構造として保存すると区分 0 件のまま「取得済み」になるので、404 と同じ扱いにする（キャッシュもしない）
+    if (data && typeof data === "object" && "error_code" in data && data.error_code) {
+      throw new WhowatchEventApiError(404, `whowatch API ${path} → ${String(data.error_code)}`);
+    }
+    return data;
+  });
 }
 
 /** GET /users/me/notifications/{id} → ルール本文（HTML と text）。認証なしで取得できることを 2026-09-20 に確認 */

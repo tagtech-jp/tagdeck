@@ -31,6 +31,44 @@ type EventRow = typeof whowatchEvents.$inferSelect;
 export const DETAIL_STALE_MS = 24 * 60 * 60 * 1000;
 
 /**
+ * ランキング prefix があるのに区分の構造（struct）が保存されていないイベントは、24 時間を待たずにこの間隔で取り直す（2026-10-01）。
+ * 実害: 2026_10_magicfantasy で日次同期の struct 保存が「Network connection lost」で失敗し、取得時刻だけ記録されて
+ * 24 時間「区分がありません」のままになった。未公開（構造 JSON が 404 / error_code）のイベントも同じ間隔で取り直す
+ */
+export const STRUCT_RETRY_MS = 10 * 60 * 1000;
+
+/** 区分の構造として使えるか。NULL・配列・未公開時の応答（{"error_code":"Z-002",…}。修正前に保存された行）は使えない */
+export function isUsableStruct(struct: unknown): struct is RankingStruct {
+  return typeof struct === "object" && struct !== null && !Array.isArray(struct) && !("error_code" in struct);
+}
+
+/** DB の詳細をそのまま使ってよいか（純関数）。構造が欠けている行は STRUCT_RETRY_MS で古い扱いにする */
+export function isDetailFresh(
+  row: Pick<EventRow, "detailFetchedAt" | "rankingPrefix" | "struct"> | null | undefined,
+  nowMs: number,
+  maxAgeMs: number = DETAIL_STALE_MS,
+): boolean {
+  if (!row?.detailFetchedAt || row.rankingPrefix === null) return false;
+  const missingStruct = row.rankingPrefix !== "" && !isUsableStruct(row.struct);
+  const limit = missingStruct ? Math.min(maxAgeMs, STRUCT_RETRY_MS) : maxAgeMs;
+  return nowMs - row.detailFetchedAt.getTime() < limit;
+}
+
+/** 一時的な DB の切断（Network connection lost 等）に備えて 1 回だけやり直す */
+async function withOneRetry<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (first) {
+    await new Promise((r) => setTimeout(r, 300));
+    try {
+      return await fn();
+    } catch {
+      throw first;
+    }
+  }
+}
+
+/**
  * 1 リクエストで処理するイベント数の既定。Cloudflare Workers はリクエストあたりのサブリクエスト上限（無料 50）があり、
  * 1 イベントあたり 外部 API 最大 4（詳細 1 + 構造 1 + 概要通知 最大 2）+ DB 2（select / upsert）= 最大 6、
  * 加えて一覧取得 1。3 件なら 19 で上限内。続きは cursor で再呼び出しする。
@@ -150,7 +188,7 @@ export interface SyncEventDetailOptions {
 export async function syncEventDetail(db: Db, eventKey: string, opts: SyncEventDetailOptions = {}): Promise<EventDetailView> {
   const maxAge = opts.maxAgeMs ?? DETAIL_STALE_MS;
   const [row] = await db.select().from(whowatchEvents).where(eq(whowatchEvents.eventKey, eventKey)).limit(1);
-  if (!opts.force && row?.detailFetchedAt && row.rankingPrefix !== null && Date.now() - row.detailFetchedAt.getTime() < maxAge) {
+  if (!opts.force && isDetailFresh(row, Date.now(), maxAge)) {
     return viewFromRow(row);
   }
 
@@ -246,22 +284,27 @@ export async function syncEventDetail(db: Db, eventKey: string, opts: SyncEventD
 
     // 大きい列（rules_html / rules_text / struct）は別 UPDATE。失敗しても小さい列の保存は残す（参考情報なので警告扱い）
     try {
-      await db
-        .update(whowatchEvents)
-        .set({
-          rulesText: rulesText ? sanitizeText(rulesText) : null,
-          struct: struct ? (sanitizeJson(struct) as Record<string, unknown>) : null,
-        })
-        .where(eq(whowatchEvents.id, id));
+      // 2026-10-01: 一時的な切断（Network connection lost）で struct が保存されず区分が出なかったので 1 回だけやり直す
+      await withOneRetry(() =>
+        db
+          .update(whowatchEvents)
+          .set({
+            rulesText: rulesText ? sanitizeText(rulesText) : null,
+            struct: struct ? (sanitizeJson(struct) as Record<string, unknown>) : null,
+          })
+          .where(eq(whowatchEvents.id, id)),
+      );
     } catch (e) {
       dbWarning = `rules_text/struct の保存に失敗: ${describeDbError(e)}`;
       console.warn("[event-detail-sync] large columns (text/struct) failed", eventKey, dbWarning);
     }
     try {
-      await db
-        .update(whowatchEvents)
-        .set({ rulesHtml: rulesHtml ? slimHtml(rulesHtml) : null })
-        .where(eq(whowatchEvents.id, id));
+      await withOneRetry(() =>
+        db
+          .update(whowatchEvents)
+          .set({ rulesHtml: rulesHtml ? slimHtml(rulesHtml) : null })
+          .where(eq(whowatchEvents.id, id)),
+      );
     } catch (e) {
       const w = `rules_html の保存に失敗: ${describeDbError(e)}`;
       dbWarning = dbWarning ? `${dbWarning} / ${w}` : w;

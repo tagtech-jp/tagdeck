@@ -7,7 +7,9 @@ import {
   flattenRankingChoices,
   getEventDetail,
   getEventLists,
+  getRankingStruct,
   htmlToText,
+  WhowatchEventApiError,
   type RankingStruct,
 } from "./events";
 
@@ -41,6 +43,33 @@ const STRUCT_SELECTBOXES: RankingStruct = {
     { key: "teambattle", value: "チーム対抗ランキング", border: [{ rank: 2 }] },
     { key: "overall", value: "総合ランキング", tabs: [{ key: "whowatchchan", value: "赤ずきん<br>ふわっちちゃん", chips: [] }, { key: "kumasan", value: "オオカミ<br>くまさん" }] },
     { key: "side", value: "赤ずきんちゃん気をつけて！レース", border: [{ rank: 200 }] },
+  ],
+};
+
+// 2026-10-01 実応答の縮約フィクスチャ（ふわっちマジックファンタジーワールド）。doll / deco は tabs を挟まず selectbox の直下に chips が並ぶ
+const STRUCT_SELECTBOX_CHIPS: RankingStruct = {
+  name: "ふわっちマジックファンタジーワールド",
+  options: [
+    {
+      key: "1st",
+      value: "前半",
+      selectboxes: [
+        { key: "overall", value: "前半総合", border: [{ rank: 10 }] },
+        { key: "treasurehunt", value: "ファンタジー宝探し大会", border: [{ rank: 3 }], tabs: [{ key: "whowatchkun_free", value: "ふわっちくん<br class='pc-only'>チーム" }] },
+        {
+          key: "goods",
+          value: "魔法のような電化製品・雑貨グッズ",
+          border: [{ rank: 3 }],
+          tabs: [
+            { key: "laser_free", value: "レーザー<br>プロジェクター" },
+            { key: "ice", value: "高速製氷機", chips: [{ key: "free", value: "フリー" }, { key: "platinum", value: "プラチナ" }] },
+          ],
+        },
+        { key: "doll", value: "もりあげ魔法ねこさんぬいぐるみ", border: [{ rank: 3 }], chips: [{ key: "free", value: "フリー" }, { key: "goldplus", value: "ゴールド+" }] },
+        { key: "deco", value: "マジシャンデコレーション", border: [{ rank: 1 }, { rank: 5 }], chips: [{ key: "free", value: "フリー" }] },
+      ],
+    },
+    { key: "2nd", value: "後半", selectboxes: [{ key: "overall", value: "後半総合", border: [{ rank: 10 }] }] },
   ],
 };
 
@@ -101,6 +130,27 @@ describe("ranking type 構築", () => {
     expect(choices[3]).toMatchObject({ label: "チーム対抗ランキング", parts: ["teambattle"], border: [{ rank: 2 }] });
     expect(choices[4].label).toBe("総合ランキング › 赤ずきん ふわっちちゃん");
     expect(choices[6].parts).toEqual(["side"]);
+  });
+
+  it("selectbox の直下の chips（マジックファンタジーのぬいぐるみ・デコ）: prefix_option_selectbox_chip。チップの無いキーは作らない", () => {
+    const choices = flattenRankingChoices("magicfantasy", STRUCT_SELECTBOX_CHIPS);
+    // 2026-10-01 実測: 下のキーはすべて /rankings/{type} で取れる。magicfantasy_1st_doll / _deco は空配列
+    expect(choices.map((c) => c.rankingType)).toEqual([
+      "magicfantasy_1st_overall",
+      "magicfantasy_1st_treasurehunt_whowatchkun_free",
+      "magicfantasy_1st_goods_laser_free",
+      "magicfantasy_1st_goods_ice_free",
+      "magicfantasy_1st_goods_ice_platinum",
+      "magicfantasy_1st_doll_free",
+      "magicfantasy_1st_doll_goldplus",
+      "magicfantasy_1st_deco_free",
+      "magicfantasy_2nd_overall",
+    ]);
+    const doll = choices.find((c) => c.rankingType === "magicfantasy_1st_doll_free");
+    expect(doll).toMatchObject({ label: "前半 › もりあげ魔法ねこさんぬいぐるみ › フリー", parts: ["1st", "doll", "free"] });
+    // チップに border が無ければ selectbox の border を引き継ぐ
+    expect(doll?.border.map((b) => b.rank)).toEqual([3]);
+    expect(choices.find((c) => c.rankingType === "magicfantasy_1st_deco_free")?.border.map((b) => b.rank)).toEqual([1, 5]);
   });
 
   it("tabs 型: prefix_tab_chip", () => {
@@ -184,5 +234,23 @@ describe("API クライアント", () => {
     expect(d.rankingPrefix).toBe("autumncollection");
     expect(d.notificationIds).toEqual(["2329967", "2329968"]);
     expect(d.name).toBe("オータムグッズ");
+  });
+
+  it("構造 JSON が HTTP 200 の error_code（未公開）なら 404 として投げ、キャッシュしない", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error_code: "Z-002", error_message: "データが見つかりません" }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(STRUCT_SELECTBOX_CHIPS), { status: 200 }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const err = await getRankingStruct("magicfantasy").catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(WhowatchEventApiError);
+    expect((err as WhowatchEventApiError).status).toBe(404);
+    expect((err as Error).message).toContain("Z-002");
+
+    // 公開されたら次の呼び出しで取れる（失敗はキャッシュに残らない）
+    const struct = await getRankingStruct("magicfantasy");
+    expect(struct.name).toBe("ふわっちマジックファンタジーワールド");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
