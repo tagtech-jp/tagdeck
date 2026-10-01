@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+// 区分の絞り込みと既定（総合 → 先頭）は 5 分同期の自動設定と共通（2026-10-01）
+import { choicesForOption, defaultChoice } from "@/lib/whowatch/ranking-choice";
 import { Check } from "lucide-react";
 
 type EventType = "score" | "ranking" | "nice" | "viewer";
@@ -42,14 +44,6 @@ interface WhowatchEventDetail {
   periods: EventPeriod[];
 }
 
-/** 区分（option_key）に属する選択肢。既定は「総合」(selectbox=overall・末端) → 無ければ先頭 */
-function choicesForOption(choices: RankingChoice[], optionKey: string | null): RankingChoice[] {
-  if (!optionKey) return choices;
-  return choices.filter((c) => c.parts[0] === optionKey);
-}
-function defaultChoice(choices: RankingChoice[]): RankingChoice | null {
-  return choices.find((c) => c.parts.length === 2 && c.parts[1] === "overall") ?? choices[0] ?? null;
-}
 function stripOptionLabel(label: string): string {
   const i = label.indexOf(" › ");
   return i >= 0 ? label.slice(i + 3) : label;
@@ -424,9 +418,13 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
               {(() => {
                 const list = choicesForOption(eventDetail.rankingChoices, eventDetail.periods.length > 0 ? periodKey : null);
                 if (list.length === 0) {
+                  // RANKING タブはあるのに区分の構造が取れていない（2026_10_magicfantasy で発生）。期間中は 5 分同期が取り直して入れる
+                  const pending = Boolean(eventDetail.rankingPrefix) && eventDetail.rankingChoices.length === 0;
                   return (
                     <p className="px-1 text-xs text-status-warning">
-                      このイベントにはランキング区分がありません（ランキング自動取得は使えません）
+                      {pending
+                        ? "ランキング区分をまだ取得できていません。このまま作成すれば、期間中は 5 分ごとの同期が区分を取り直して自動で設定します"
+                        : "このイベントにはランキング区分がありません（ランキング自動取得は使えません）"}
                     </p>
                   );
                 }

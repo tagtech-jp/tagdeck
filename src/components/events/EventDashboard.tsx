@@ -511,11 +511,13 @@ export function EventDashboard({ event, onDeleted }: Props) {
         )}
 
         {isRankingType && event.platform === "whowatch" && !event.rankingType && (
-          // 区分が空だと 5 分ごとの順位の自動取得（src/worker.ts）の対象外になり、黙って止まる（2026-09-30 の実害）
+          // 区分が空だと 5 分ごとの順位の自動取得（src/worker.ts）の対象外になり、黙って止まる（2026-09-30 の実害）。
+          // 2026-10-01 から、紐付け済みなら期間中は 5 分同期が既定の区分（総合）を自動で入れる（auto-ranking-type.ts）
           <div role="alert" className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-status-warning/40 bg-status-warning/10 px-3 py-2 text-xs text-status-warning">
             <span>
-              ランキング区分が未設定のため、順位の自動取得（5 分ごと）が止まっています。
-              {event.whowatchEventId ? "区分を選んで保存すると、次の 5 分から取得します。" : "ふわっちのイベントに紐付けると区分を選べます。"}
+              {event.whowatchEventId
+                ? "ランキング区分が未設定です。期間中は 5 分ごとの同期が区分（総合）を自動で設定して、順位の取得を始めます。別の区分にするときは選んで保存してください。"
+                : "ランキング区分が未設定のため、順位の自動取得（5 分ごと）が止まっています。ふわっちのイベントに紐付けると区分を選べます。"}
             </span>
             {event.whowatchEventId && !editingSettings && (
               <button

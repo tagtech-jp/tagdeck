@@ -18,6 +18,12 @@ const syncMock = vi.fn();
 vi.mock("@/lib/whowatch/ranking-sync", () => ({
   syncSimulatorRanking: (...args: unknown[]) => syncMock(...args),
 }));
+// 区分の自動設定（2026-10-01）。RANKING_EVENT_TYPES は worker.ts の「区分が空」の数え方にも使うので本物と同じ値を出す
+const autoAssignMock = vi.fn();
+vi.mock("@/lib/whowatch/auto-ranking-type", () => ({
+  RANKING_EVENT_TYPES: ["ranking", "nice", "viewer"],
+  autoAssignRankingTypes: (...args: unknown[]) => autoAssignMock(...args),
+}));
 
 import { runRankingSync } from "./worker";
 
@@ -27,6 +33,8 @@ describe("runRankingSync (scheduled)", () => {
     selectMock.mockReset();
     transactionMock.mockClear();
     syncMock.mockReset();
+    autoAssignMock.mockReset();
+    autoAssignMock.mockResolvedValue({ assigned: [], repaired: [], skipped: [] });
     for (const k of ["DATABASE_URL", "SOME_VAR"]) delete process.env[k];
   });
   afterEach(() => {
@@ -88,6 +96,8 @@ describe("runRankingSync（区分が空のイベントを数える・2026-09-30�
     lockExecuteMock.mockReset();
     selectMock.mockReset();
     syncMock.mockReset();
+    autoAssignMock.mockReset();
+    autoAssignMock.mockResolvedValue({ assigned: [], repaired: [], skipped: [] });
   });
 
   it("ranking_type が空のものは同期しない。ランキング型のふわっちイベントならログに件数と id を出す", async () => {
@@ -105,6 +115,71 @@ describe("runRankingSync（区分が空のイベントを数える・2026-09-30�
     expect(syncMock.mock.calls[0][1]).toMatchObject({ id: "sim-with-type" });
     expect(log).toHaveBeenCalledWith("[ranking-sync/scheduled] targets=1 ok=1 failed=0 no_ranking_type=1");
     expect(warn.mock.calls.some((c) => String(c[0]).includes("74671ff8") && !String(c[0]).includes("score-ev"))).toBe(true);
+    log.mockRestore();
+    warn.mockRestore();
+  });
+});
+
+describe("runRankingSync（区分の自動設定・2026-10-01）", () => {
+  beforeEach(() => {
+    lockExecuteMock.mockReset();
+    selectMock.mockReset();
+    transactionMock.mockClear();
+    syncMock.mockReset();
+    autoAssignMock.mockReset();
+  });
+
+  it("同期のトランザクションより前に区分を自動で入れ、入れた区分と取り直したイベントをログに出す", async () => {
+    autoAssignMock.mockResolvedValue({
+      assigned: [{ id: "49a163c8-0000-4000-8000-000000000000", rankingType: "magicfantasy_1st_overall" }],
+      repaired: ["2026_10_magicfantasy"],
+      skipped: [{ id: "deadbeef-0000", reason: "区分の構造がまだ取れていない" }],
+    });
+    lockExecuteMock.mockResolvedValue([{ locked: true }]);
+    selectMock.mockResolvedValue([{ id: "49a163c8-0000-4000-8000-000000000000", rankingType: "magicfantasy_1st_overall", platform: "whowatch", eventType: "ranking" }]);
+    syncMock.mockResolvedValue({ myEntry: null, snapshotId: null });
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await runRankingSync({});
+
+    expect(autoAssignMock).toHaveBeenCalledTimes(1);
+    expect(autoAssignMock.mock.calls[0][1]).toBeInstanceOf(Date);
+    expect(autoAssignMock.mock.invocationCallOrder[0]).toBeLessThan(transactionMock.mock.invocationCallOrder[0]);
+    expect(log).toHaveBeenCalledWith("[ranking-sync/scheduled] auto ranking_type assigned=49a163c8:magicfantasy_1st_overall repaired=2026_10_magicfantasy");
+    expect(warn).toHaveBeenCalledWith("[ranking-sync/scheduled] auto ranking_type skipped=deadbeef:区分の構造がまだ取れていない");
+    expect(log).toHaveBeenCalledWith("[ranking-sync/scheduled] targets=1 ok=1 failed=0 no_ranking_type=0");
+    log.mockRestore();
+    warn.mockRestore();
+  });
+
+  it("自動設定が失敗しても順位の同期は続ける", async () => {
+    autoAssignMock.mockRejectedValue(new Error("Network connection lost."));
+    lockExecuteMock.mockResolvedValue([{ locked: true }]);
+    selectMock.mockResolvedValue([{ id: "sim-1", rankingType: "a", platform: "whowatch", eventType: "ranking" }]);
+    syncMock.mockResolvedValue({ myEntry: null, snapshotId: null });
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await expect(runRankingSync({})).resolves.toBeUndefined();
+
+    expect(warn.mock.calls.some((c) => String(c[0]).includes("auto ranking_type failed"))).toBe(true);
+    expect(transactionMock).toHaveBeenCalledTimes(1);
+    expect(syncMock).toHaveBeenCalledTimes(1);
+    log.mockRestore();
+    warn.mockRestore();
+  });
+
+  it("何も入れず何も飛ばさなかった回は自動設定のログを出さない", async () => {
+    autoAssignMock.mockResolvedValue({ assigned: [], repaired: [], skipped: [] });
+    lockExecuteMock.mockResolvedValue([{ locked: true }]);
+    selectMock.mockResolvedValue([]);
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await runRankingSync({});
+
+    expect([...log.mock.calls, ...warn.mock.calls].some((c) => String(c[0]).includes("auto ranking_type"))).toBe(false);
     log.mockRestore();
     warn.mockRestore();
   });

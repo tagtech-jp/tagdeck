@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+// 区分の絞り込みと既定（総合 → 先頭）は 5 分同期の自動設定と共通（2026-10-01）
+import { choicesForOption, defaultChoice } from "@/lib/whowatch/ranking-choice";
 
 // E1b: 作成済みシミュレーターの区分（前半/後半）・ランキング種別・期間を後から変更する編集導線。
 // 例: オータムグッズコレクションを「後半（2nd, 9/23 00:00〜9/28 00:00 JST, autumncollection_2nd_overall）」へ更新する。
@@ -21,6 +23,7 @@ interface EventPeriod {
 interface Detail {
   eventKey: string;
   name: string;
+  rankingPrefix?: string | null;
   rankingChoices: RankingChoice[];
   periods: EventPeriod[];
 }
@@ -44,12 +47,6 @@ function toLocal(iso: string): string {
   const dt = new Date(iso);
   if (isNaN(dt.getTime())) return "";
   return new Date(dt.getTime() - dt.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
-}
-function choicesForOption(choices: RankingChoice[], optionKey: string | null): RankingChoice[] {
-  return optionKey ? choices.filter((c) => c.parts[0] === optionKey) : choices;
-}
-function defaultChoice(choices: RankingChoice[]): RankingChoice | null {
-  return choices.find((c) => c.parts.length === 2 && c.parts[1] === "overall") ?? choices[0] ?? null;
 }
 function stripOptionLabel(label: string): string {
   const i = label.indexOf(" › ");
@@ -224,7 +221,11 @@ export function EventSettingsEditor({ eventId, whowatchEventId, currentRankingTy
               <p className="mt-1 text-xs text-muted-foreground">ranking_type: {rankingType}</p>
             </div>
           ) : (
-            <p className="text-xs text-status-warning">このイベントにはランキング区分がありません</p>
+            <p className="text-xs text-status-warning">
+              {detail.rankingPrefix && detail.rankingChoices.length === 0
+                ? "ランキング区分をまだ取得できていません（期間中は 5 分ごとの同期が取り直して自動で設定します）"
+                : "このイベントにはランキング区分がありません"}
+            </p>
           )}
         </>
       ) : null}
