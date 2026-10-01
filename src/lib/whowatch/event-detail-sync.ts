@@ -21,7 +21,7 @@ import {
   type RankingStruct,
 } from "./events";
 import { resolveEventPeriods, type EventPeriod } from "./periods";
-import { describeDbError, sanitizeJson, sanitizeText, slimHtml } from "./sanitize";
+import { capText, DB_LARGE_COLUMN_MAX_BYTES, describeDbError, sanitizeJson, sanitizeText, slimHtml } from "./sanitize";
 import { parseRules, RULES_PARSER_VERSION, type RulesParsed } from "./rules-parser";
 
 type Db = ReturnType<typeof createDbClient>;
@@ -282,34 +282,37 @@ export async function syncEventDetail(db: Db, eventKey: string, opts: SyncEventD
       throw new EventDetailSyncError("db", eventKey, describeDbError(e));
     }
 
-    // 大きい列（rules_html / rules_text / struct）は別 UPDATE。失敗しても小さい列の保存は残す（参考情報なので警告扱い）
-    try {
-      // 2026-10-01: 一時的な切断（Network connection lost）で struct が保存されず区分が出なかったので 1 回だけやり直す
-      await withOneRetry(() =>
-        db
-          .update(whowatchEvents)
-          .set({
-            rulesText: rulesText ? sanitizeText(rulesText) : null,
-            struct: struct ? (sanitizeJson(struct) as Record<string, unknown>) : null,
-          })
-          .where(eq(whowatchEvents.id, id)),
-      );
-    } catch (e) {
-      dbWarning = `rules_text/struct の保存に失敗: ${describeDbError(e)}`;
-      console.warn("[event-detail-sync] large columns (text/struct) failed", eventKey, dbWarning);
-    }
-    try {
-      await withOneRetry(() =>
-        db
-          .update(whowatchEvents)
-          .set({ rulesHtml: rulesHtml ? slimHtml(rulesHtml) : null })
-          .where(eq(whowatchEvents.id, id)),
-      );
-    } catch (e) {
-      const w = `rules_html の保存に失敗: ${describeDbError(e)}`;
-      dbWarning = dbWarning ? `${dbWarning} / ${w}` : w;
-      console.warn("[event-detail-sync] large column (html) failed", eventKey, w);
-    }
+    // 大きい列（struct / rules_text / rules_html）は 1 列ずつ別 UPDATE。失敗しても小さい列の保存は残す（警告扱い）。
+    // 2026-10-01: 1 回の書き込みが大きいと毎回「Network connection lost」になり（DB_LARGE_COLUMN_MAX_BYTES の説明）、
+    // rules_text と同じ UPDATE に入れていた struct（区分の構造・数 KB）まで保存されず、区分が出なかった（magicfantasy）。
+    // 区分に要る struct を先に単独で保存し、本文は上限まで切り詰める。一時的な切断に備えて各 1 回だけやり直す
+    const saveLarge = async (column: string, run: () => Promise<unknown>) => {
+      try {
+        await withOneRetry(run);
+      } catch (e) {
+        const w = `${column} の保存に失敗: ${describeDbError(e)}`;
+        dbWarning = dbWarning ? `${dbWarning} / ${w}` : w;
+        console.warn("[event-detail-sync] large column failed", eventKey, w);
+      }
+    };
+    await saveLarge("struct", () =>
+      db
+        .update(whowatchEvents)
+        .set({ struct: struct ? (sanitizeJson(struct) as Record<string, unknown>) : null })
+        .where(eq(whowatchEvents.id, id)),
+    );
+    await saveLarge("rules_text", () =>
+      db
+        .update(whowatchEvents)
+        .set({ rulesText: rulesText ? capText(sanitizeText(rulesText)) : null })
+        .where(eq(whowatchEvents.id, id)),
+    );
+    await saveLarge("rules_html", () =>
+      db
+        .update(whowatchEvents)
+        .set({ rulesHtml: rulesHtml ? slimHtml(rulesHtml, DB_LARGE_COLUMN_MAX_BYTES) : null })
+        .where(eq(whowatchEvents.id, id)),
+    );
   }
 
   return {
