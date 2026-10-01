@@ -26,12 +26,13 @@ export default async function DashboardLayout({
     <Providers>
       <div className="flex min-h-screen flex-col bg-background text-foreground">
       <BuildGuard />
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background px-4 py-3">
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-bold">TagDeck</h1>
+      {/* SP: 2 rows (title + actions / full-width platform switcher) so nothing overflows at 375px; md+: 1 row */}
+      <header className="sticky top-0 z-40 flex flex-wrap items-center gap-x-2 gap-y-2 border-b border-border bg-background px-4 py-2 md:flex-nowrap md:gap-x-4 md:py-3">
+        <h1 className="text-lg font-bold">TagDeck</h1>
+        <div className="order-last w-full md:order-none md:w-auto">
           <PlatformSwitcher />
         </div>
-        <div className="flex items-center gap-1">
+        <div className="ml-auto flex items-center gap-1">
           <LiveStatusIndicator />
           <form action="/auth/signout" method="post">
             {/* SP: icon only (text wrapped vertically at 390px); md+: text */}
