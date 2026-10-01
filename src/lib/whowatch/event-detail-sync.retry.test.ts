@@ -32,7 +32,7 @@ vi.mock("./events", async (importOriginal) => {
   };
 });
 
-import { syncEventDetail } from "./event-detail-sync";
+import { EventDetailSyncError, syncEventDetail } from "./event-detail-sync";
 
 type Row = Record<string, unknown>;
 
@@ -116,6 +116,27 @@ describe("syncEventDetail（構造の取り直し・保存のやり直し）", (
     expect(v.struct).toEqual(STRUCT);
     expect(v.note).toContain("rules_text/struct の保存に失敗");
     warn.mockRestore();
+  });
+
+  it("先頭の読み込みが失敗したら EventDetailSyncError（db）。message に SQL 全文・params を含めない", async () => {
+    const db = {
+      select: () => ({
+        from: () => ({
+          where: () => ({
+            limit: async () => {
+              throw new Error('Failed query: select "id", "event_key" from "whowatch_events" where "event_key" = $1 limit $2\nparams: 2026_10_magicfantasy,1');
+            },
+          }),
+        }),
+      }),
+    } as unknown as Parameters<typeof syncEventDetail>[0];
+    const err = await syncEventDetail(db, "2026_10_magicfantasy").catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(EventDetailSyncError);
+    expect((err as EventDetailSyncError).stage).toBe("db");
+    expect((err as Error).message).toContain("Failed query");
+    expect((err as Error).message).not.toContain("select");
+    expect((err as Error).message).not.toContain("params");
+    expect(getEventDetailMock).not.toHaveBeenCalled();
   });
 
   it("10 分以内に取り直したばかりなら API を叩かず DB のまま返す", async () => {

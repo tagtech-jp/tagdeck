@@ -294,20 +294,24 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 | 種別 | パス | 内容 |
 |---|---|---|
 | lib | `src/lib/whowatch/events.ts` | `RankingSelectbox.chips` を追加し、selectbox 直下のチップを `{prefix}_{option}_{selectbox}_{chip}` に平坦化する。チップの無いキーは作らない。`getRankingStruct` は `error_code` 付きの応答を 404(`WhowatchEventApiError`)として投げ、キャッシュしない |
-| lib | `src/lib/whowatch/event-detail-sync.ts` | `isUsableStruct` を追加(NULL・配列・`error_code` 付きは使えない)。`isDetailFresh` は、RANKING タブがあるのに構造が使えない行を `STRUCT_RETRY_MS`(10 分)で古い扱いにする。それ以外は従来どおり 24 時間。大きい列(`rules_text`+`struct`、`rules_html`)の UPDATE は、一時的な切断に備えて 300ms 後に 1 回だけやり直す。やり直しも失敗した場合は警告にとどめ、取り直した構造はメモリ上で返す |
+| lib | `src/lib/whowatch/event-detail-sync.ts` | `isUsableStruct` を追加(NULL・配列・`error_code` 付きは使えない)。`isDetailFresh` は、RANKING タブがあるのに構造が使えない行を `STRUCT_RETRY_MS`(10 分)で古い扱いにする。それ以外は従来どおり 24 時間。大きい列(`rules_text`+`struct`、`rules_html`)の UPDATE は、一時的な切断に備えて 300ms 後に 1 回だけやり直す。やり直しも失敗した場合は警告にとどめ、取り直した構造はメモリ上で返す。先頭の読み込み(SELECT)の失敗は、SQL 全文と params を落とした `EventDetailSyncError`(stage `db`)で投げる(drizzle の `DrizzleQueryError` は message に SQL と params を含み、イベント詳細 API の 502 応答の `detail` にもそのまま出ていた) |
 | lib(新規) | `src/lib/whowatch/ranking-choice.ts` | `choicesForOption`・`defaultChoice`(総合 → 先頭)・`periodKeyAt`・`pickDefaultRankingType`。作成フォーム、設定画面、5 分同期の 3 か所で同じ規則を使う(ブラウザでも読み込む) |
 | lib(新規) | `src/lib/whowatch/auto-ranking-type.ts` | `autoAssignRankingTypes`: 詳細は下の「自動設定の規則」 |
-| worker | `src/worker.ts` | 同期のトランザクションより前に `autoAssignRankingTypes` を呼ぶ。失敗しても順位の同期は続ける。ログは `auto ranking_type assigned=<id 先頭 8>:<区分> repaired=<event_key>`(入れた・取り直した回だけ)と `auto ranking_type skipped=<id>:<理由>`(warn) |
+| worker | `src/worker.ts` | 同期のトランザクションより前に `autoAssignRankingTypes` を呼ぶ。失敗しても順位の同期は続ける。ログは `auto ranking_type assigned=<id 先頭 8>:<区分> repaired=<event_key>`(入れた・取り直した回だけ)と `auto ranking_type skipped=<id>:<理由>`(warn)。順位の同期の失敗ログも `describeDbError` を通す(SQL 全文・params を出さない) |
 | UI | `EventCreateForm`・`EventSettingsEditor` | RANKING タブがあるのに区分が 0 件のときの文言を「ランキング区分をまだ取得できていません。このまま作成すれば、期間中は 5 分ごとの同期が区分を取り直して自動で設定します」に変更。RANKING タブが無いときは従来の「区分がありません」。区分の絞り込みと既定は `ranking-choice.ts` を使う |
 | UI | `EventDashboard` | 区分が空の警告: 紐付け済みなら「期間中は 5 分ごとの同期が区分(総合)を自動で設定して、順位の取得を始めます」、紐付けなしなら従来の文言 |
-| test | `events.test.ts`(+2)・`ranking-choice.test.ts`(新規 7)・`auto-ranking-type.test.ts`(新規 10)・`event-detail-sync.test.ts`(+5)・`event-detail-sync.retry.test.ts`(新規 3)・`worker.test.ts`(+3) | マジックファンタジーの実応答を縮約したフィクスチャ、`error_code` 応答の 404 化、10 分での取り直し、保存のやり直し、自動設定の対象と上限、トランザクションより前に呼ぶこと |
+| test | `events.test.ts`(+2)・`ranking-choice.test.ts`(新規 7)・`auto-ranking-type.test.ts`(新規 14)・`event-detail-sync.test.ts`(+5)・`event-detail-sync.retry.test.ts`(新規 4)・`worker.test.ts`(+4) | マジックファンタジーの実応答を縮約したフィクスチャ、`error_code` 応答の 404 化、10 分での取り直し、保存のやり直し、自動設定の対象と上限、取り直す対象の選び方、トランザクションより前に呼ぶこと、ログに SQL 全文・params を出さないこと |
 
 #### 自動設定の規則
 
 - **対象**: ふわっち・`active`・ランキング型(ranking / nice / viewer)・`ranking_type` が空・期間内・イベント紐付けあり
 - **除外**: 紐付け先が「詳細取得済みで RANKING タブ無し」のもの。毎回の上限枠を塞がないため
 - **上限**: 1 回の同期で開始日時の早い順に最大 10 件
-- **取り直し**: 詳細が未取得、または構造が使えないイベントは、先に `syncEventDetail` で取り直す。1 回の同期で 1 イベントまで(外部 API 最大 5 回)。10 分以内に取り直したばかりなら API を叩かない
+- **取り直し**: 詳細が未取得、または構造が使えないイベントは、先に `syncEventDetail` で取り直す
+  - 1 回の同期で 1 イベントまで(外部 API 最大 5 回・DB 最大 6 本)
+  - 10 分以内に取り直したイベントは呼ばない(`isDetailFresh`)
+  - 取得が最も古いもの(未取得が先)から選ぶ。構造がずっと取れないイベントが、毎回の枠を使い続けないようにするため(`pickRepairTargets`)
+  - 失敗ログは `describeDbError` を通す
 - **入れる区分**: シミュレーターの開始日時を含む区分(前半/後半)の「総合」。どの区分にも入らなければ、それより前に始まった最後の区分。作成フォームの既定と同じ規則
 - **書き込み**: `ranking_type IS NULL` の行だけを更新する(`updated_at` も更新)。利用者がその間に選んだ区分は上書きしない。入れた行は同じ回の同期から対象になる
 

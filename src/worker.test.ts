@@ -170,6 +170,22 @@ describe("runRankingSync（区分の自動設定・2026-10-01）", () => {
     warn.mockRestore();
   });
 
+  it("順位の同期の失敗ログに SQL 全文・params を出さない", async () => {
+    autoAssignMock.mockResolvedValue({ assigned: [], repaired: [], skipped: [] });
+    lockExecuteMock.mockResolvedValue([{ locked: true }]);
+    selectMock.mockResolvedValue([{ id: "sim-1", rankingType: "a", platform: "whowatch", eventType: "ranking" }]);
+    syncMock.mockRejectedValue(new Error('Failed query: insert into "ranking_snapshots" values ($1)\nparams: x'));
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await runRankingSync({});
+
+    const failed = warn.mock.calls.find((c) => c[0] === "[ranking-sync/scheduled] failed");
+    expect(failed?.slice(1)).toEqual(["sim-1", "Failed query"]);
+    log.mockRestore();
+    warn.mockRestore();
+  });
+
   it("何も入れず何も飛ばさなかった回は自動設定のログを出さない", async () => {
     autoAssignMock.mockResolvedValue({ assigned: [], repaired: [], skipped: [] });
     lockExecuteMock.mockResolvedValue([{ locked: true }]);

@@ -10,17 +10,19 @@
 import { and, asc, eq, gte, inArray, isNotNull, isNull, lte, ne, or } from "drizzle-orm";
 import type { createDbClient } from "@/lib/db/client";
 import { eventSimulators, whowatchEvents } from "@/lib/db/schema";
-import { isUsableStruct, syncEventDetail, viewFromRow } from "./event-detail-sync";
+import { isDetailFresh, isUsableStruct, syncEventDetail, viewFromRow } from "./event-detail-sync";
 import { flattenRankingChoices } from "./events";
 import { pickDefaultRankingType, type PeriodLike } from "./ranking-choice";
+import { describeDbError } from "./sanitize";
 
 type Db = ReturnType<typeof createDbClient>;
+type EventRow = typeof whowatchEvents.$inferSelect;
 
 /** 順位表を使うイベントタイプ（EventDashboard の isRankingType・worker.ts と同じ） */
 export const RANKING_EVENT_TYPES = ["ranking", "nice", "viewer"] as const;
 /** 1 回の 5 分同期で区分を入れる上限（1 件あたり DB の UPDATE 1 回と、同じ回の順位取得 1 回が増える） */
 export const AUTO_ASSIGN_MAX_PER_RUN = 10;
-/** 1 回の 5 分同期で詳細を取り直すイベントの上限（1 件あたり外部 API 最大 5・DB 最大 4。Workers のサブリクエスト上限に余裕を残す） */
+/** 1 回の 5 分同期で詳細を取り直すイベントの上限（1 件あたり外部 API 最大 5・DB 最大 6（保存のやり直しを含む）。Workers のサブリクエスト上限に余裕を残す） */
 export const AUTO_REPAIR_MAX_PER_RUN = 1;
 
 export interface AutoAssignTarget {
@@ -57,6 +59,22 @@ export function decideRankingType(sim: AutoAssignTarget, d: AssignDetail | null)
   return { id: sim.id, rankingType: pick.rankingType, optionKey: pick.optionKey };
 }
 
+/**
+ * 純関数: 今回取り直すイベント。詳細や構造が欠けていて、10 分以内に取り直していない（isDetailFresh でない）もの。
+ * 取得が最も古いもの（未取得が先）から max 件。構造がずっと取れないイベントが毎回の枠を使い続けないようにする
+ */
+export function pickRepairTargets<T extends { row: Pick<EventRow, "detailFetchedAt" | "rankingPrefix" | "struct">; detail: AssignDetail }>(
+  entries: readonly T[],
+  nowMs: number,
+  max: number = AUTO_REPAIR_MAX_PER_RUN,
+): T[] {
+  const fetchedMs = (e: T) => e.row.detailFetchedAt?.getTime() ?? Number.NEGATIVE_INFINITY;
+  return entries
+    .filter((e) => needsDetailRepair(e.detail) && !isDetailFresh(e.row, nowMs))
+    .sort((a, b) => (fetchedMs(a) < fetchedMs(b) ? -1 : fetchedMs(a) > fetchedMs(b) ? 1 : 0))
+    .slice(0, Math.max(0, max));
+}
+
 export interface AutoAssignResult {
   assigned: Array<{ id: string; rankingType: string }>;
   /** 詳細を API から取り直したイベント（event_key） */
@@ -90,30 +108,28 @@ export async function autoAssignRankingTypes(db: Db, now: Date): Promise<AutoAss
 
   const eventIds = [...new Set(sims.map((s) => s.whowatchEventId).filter((v): v is number => typeof v === "number"))];
   const rows = eventIds.length > 0 ? await db.select().from(whowatchEvents).where(inArray(whowatchEvents.id, eventIds)) : [];
-  const details = new Map<number, { eventKey: string; detail: AssignDetail }>(
+  const entries = new Map<number, { row: EventRow; detail: AssignDetail }>(
     rows.map((r) => [
       r.id,
-      { eventKey: r.eventKey, detail: { rankingPrefix: r.rankingPrefix, struct: r.struct, periods: viewFromRow(r).periods, fetched: r.detailFetchedAt !== null } },
+      { row: r, detail: { rankingPrefix: r.rankingPrefix, struct: r.struct, periods: viewFromRow(r).periods, fetched: r.detailFetchedAt !== null } },
     ]),
   );
 
-  let repairAttempts = 0;
+  for (const e of pickRepairTargets([...entries.values()], now.getTime())) {
+    try {
+      const v = await syncEventDetail(db, e.row.eventKey);
+      // 保存に失敗しても、取り直した構造（メモリ上）で区分を決められる
+      e.detail = { rankingPrefix: v.rankingPrefix, struct: v.struct, periods: v.periods, fetched: true };
+      if (v.source === "api") result.repaired.push(v.eventKey);
+    } catch (err) {
+      // SQL 全文・params はログに出さない（describeDbError が落とす）
+      console.warn("[auto-ranking-type] detail re-fetch failed", e.row.eventKey, describeDbError(err));
+    }
+  }
+
   for (const sim of sims) {
     if (sim.whowatchEventId === null) continue;
-    const entry = details.get(sim.whowatchEventId) ?? null;
-    // 詳細や構造が欠けていれば取り直す（10 分以内に取り直したばかりなら API を叩かず DB のまま返る）
-    if (entry && needsDetailRepair(entry.detail) && repairAttempts < AUTO_REPAIR_MAX_PER_RUN) {
-      repairAttempts++;
-      try {
-        const v = await syncEventDetail(db, entry.eventKey);
-        // 保存に失敗しても、取り直した構造（メモリ上）で区分を決められる
-        entry.detail = { rankingPrefix: v.rankingPrefix, struct: v.struct, periods: v.periods, fetched: true };
-        if (v.source === "api") result.repaired.push(v.eventKey);
-      } catch (e) {
-        console.warn("[auto-ranking-type] detail re-fetch failed", entry.eventKey, e instanceof Error ? e.message : String(e));
-      }
-    }
-    const d = decideRankingType({ id: sim.id, startTime: sim.startTime, whowatchEventId: sim.whowatchEventId }, entry?.detail ?? null);
+    const d = decideRankingType({ id: sim.id, startTime: sim.startTime, whowatchEventId: sim.whowatchEventId }, entries.get(sim.whowatchEventId)?.detail ?? null);
     if ("skip" in d) {
       result.skipped.push({ id: sim.id, reason: d.skip });
       continue;

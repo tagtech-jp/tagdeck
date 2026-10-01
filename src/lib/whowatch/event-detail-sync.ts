@@ -187,8 +187,14 @@ export interface SyncEventDetailOptions {
  */
 export async function syncEventDetail(db: Db, eventKey: string, opts: SyncEventDetailOptions = {}): Promise<EventDetailView> {
   const maxAge = opts.maxAgeMs ?? DETAIL_STALE_MS;
-  const [row] = await db.select().from(whowatchEvents).where(eq(whowatchEvents.eventKey, eventKey)).limit(1);
-  if (!opts.force && isDetailFresh(row, Date.now(), maxAge)) {
+  // 読み込みの失敗も SQL 全文・params を落としてから投げる（drizzle の DrizzleQueryError は message に SQL と params を含む）
+  let row: EventRow | undefined;
+  try {
+    [row] = await db.select().from(whowatchEvents).where(eq(whowatchEvents.eventKey, eventKey)).limit(1);
+  } catch (e) {
+    throw new EventDetailSyncError("db", eventKey, describeDbError(e));
+  }
+  if (!opts.force && row && isDetailFresh(row, Date.now(), maxAge)) {
     return viewFromRow(row);
   }
 

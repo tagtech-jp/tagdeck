@@ -84,7 +84,7 @@ export async function runRankingSync(env: Record<string, unknown>) {
     const noRankingType = inPeriod.filter((ev) => !ev.rankingType && ev.platform === "whowatch" && RANKING_EVENT_TYPES.has(ev.eventType));
     if (noRankingType.length > 0) {
       console.warn(
-        `[ranking-sync/scheduled] ranking_type が空のため対象外: ${noRankingType.map((ev) => ev.id.slice(0, 8)).join(",")}（自動設定できなかったもの。理由は auto ranking_type skipped のログ。イベントの「区分・期間を編集」で区分を選ぶと対象になる）`,
+        `[ranking-sync/scheduled] ranking_type が空のため対象外: ${noRankingType.map((ev) => ev.id.slice(0, 8)).join(",")}（自動で区分を入れられなかったもの。イベント未紐付け・RANKING タブ無し・構造の取得待ちなど。紐付け済みの理由は auto ranking_type skipped のログ。イベントの「区分・期間を編集」で区分を選ぶと対象になる）`,
       );
     }
 
@@ -96,7 +96,8 @@ export async function runRankingSync(env: Record<string, unknown>) {
         ok++;
       } catch (err) {
         failed++;
-        console.warn("[ranking-sync/scheduled] failed", ev.id, err);
+        // SQL 全文・params はログに出さない（describeDbError が落とす）
+        console.warn("[ranking-sync/scheduled] failed", ev.id, describeDbError(err));
       }
     }
     console.log(`[ranking-sync/scheduled] targets=${targets.length} ok=${ok} failed=${failed} no_ranking_type=${noRankingType.length}`);
