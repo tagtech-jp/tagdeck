@@ -32,6 +32,7 @@ const ROUTE_IMPORTERS: Record<string, () => Promise<{ POST: (req: Request) => Pr
   "/api/platforms/whowatch/events/sync": () => import("@/app/api/platforms/whowatch/events/sync/route"),
   "/api/platforms/whowatch/items/sync": () => import("@/app/api/platforms/whowatch/items/sync/route"),
   "/api/platforms/whowatch/items/export": () => import("@/app/api/platforms/whowatch/items/export/route"),
+  "/api/platforms/whowatch/simulators/export": () => import("@/app/api/platforms/whowatch/simulators/export/route"),
 };
 
 describe("SYNC_ROUTES 登録漏れ検知", () => {
