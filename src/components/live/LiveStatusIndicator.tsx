@@ -42,8 +42,11 @@ export function LiveStatusIndicator() {
           onClick={() => void enableAudio()}
           className="min-h-11 rounded-full border border-status-warning/40 bg-status-warning/10 px-3 text-xs font-bold text-status-warning"
           title="ブラウザの自動再生制限のため、一度押して音を有効にしてください"
+          aria-label="音を有効にする"
         >
-          🔊 音を有効にする
+          {/* SP: short label so the header fits at 375px; the title keeps the full explanation */}
+          <span className="sm:hidden">🔊 音ON</span>
+          <span className="hidden sm:inline">🔊 音を有効にする</span>
         </button>
       )}
     </div>
