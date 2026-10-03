@@ -17,6 +17,17 @@ export const ACTIVE_WINDOW_MS = 60_000;
 /** 応答が遅れても最低これだけは間を空ける */
 export const MIN_POLL_DELAY_MS = 1_000;
 
+/**
+ * 取得の失敗がこの回数続いたら画面に出す（2026-10-03 社長「エラーも出ないようにしてほしい」）。
+ * 10 秒間隔で約 30 秒。1〜2 回の一時的な失敗（通信の揺れ・タイムアウト）は次の回で取り直せるので出さない
+ */
+export const POLL_ERROR_SHOW_AFTER = 3;
+
+/** 純関数: 続いた失敗の回数から、取得エラーを画面に出すか */
+export function shouldShowPollError(consecutiveFailures: number): boolean {
+  return consecutiveFailures >= POLL_ERROR_SHOW_AFTER;
+}
+
 export interface PollIntervalInput {
   /** 他人の配信を見ているか（見ているなら常に idle 間隔） */
   isOther: boolean;

@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { ACTIVE_WINDOW_MS, MIN_POLL_DELAY_MS, nextPollDelay, partitionFreshGifts, POLL_INTERVAL_MS, pollIntervalFor } from "./polling";
+import { ACTIVE_WINDOW_MS, MIN_POLL_DELAY_MS, nextPollDelay, partitionFreshGifts, POLL_ERROR_SHOW_AFTER, POLL_INTERVAL_MS, pollIntervalFor, shouldShowPollError } from "./polling";
+
+describe("shouldShowPollError（一時的な失敗は画面に出さない）", () => {
+  it("1〜2 回の失敗は出さず、3 回続いたら出す", () => {
+    expect(POLL_ERROR_SHOW_AFTER).toBe(3);
+    expect(shouldShowPollError(0)).toBe(false);
+    expect(shouldShowPollError(1)).toBe(false);
+    expect(shouldShowPollError(2)).toBe(false);
+    expect(shouldShowPollError(3)).toBe(true);
+    expect(shouldShowPollError(10)).toBe(true);
+  });
+});
 
 const gift = (id: string) => ({ comment_id: id });
 const NOW = 1_800_000_000_000;

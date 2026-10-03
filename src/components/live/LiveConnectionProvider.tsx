@@ -6,7 +6,8 @@ import { createSeQueue } from "@/lib/se/queue";
 import { tierForGift, type SeTier } from "@/lib/se/tiers";
 import { chooseSound } from "@/lib/se/choose-sound";
 import { coreLibraryUrls, isPremiumPrice } from "@/lib/se/auto-library";
-import { nextPollDelay, partitionFreshGifts, pollIntervalFor } from "@/lib/live/polling";
+import { nextPollDelay, partitionFreshGifts, pollIntervalFor, shouldShowPollError } from "@/lib/live/polling";
+import { isLoginExpiredResponse, refreshSessionNow } from "@/lib/auth/session-refresh";
 import { idlePollInterval, INITIAL_AUTO_CONNECT_STATE, reduceAutoConnect, type AutoConnectPhase } from "@/lib/live/auto-connect";
 import { INITIAL_MASTER_STATE, masterFailed, masterSucceeded, retryCountdownSec, type MasterState } from "@/lib/live/master-retry";
 import { extractComments, isBacklogComment, parseWsMessage, WS_MAX_FAILURES_BEFORE_GIVE_UP, wsReconnectDelay, type WsState } from "@/lib/live/ws-feed";
@@ -131,6 +132,13 @@ export interface BgAudioInfo {
 }
 /** ポーリング・待機確認の fetch がぶら下がったままになると inFlight ガードで以後の取得が止まるため、必ず打ち切る */
 const POLL_FETCH_TIMEOUT_MS = 15_000;
+/** ログインを取り直しても API が 401 のまま（2026-10-03）。このときだけは社長の操作が要るので、回数を待たずに出す */
+class LoginExpiredError extends Error {
+  constructor() {
+    super("ログインの有効期限が切れました。もう一度ログインしてください（その間は配信の記録が止まります）");
+    this.name = "LoginExpiredError";
+  }
+}
 /** 音声コンテキストの監視間隔（無音が続いて suspended / interrupted になっていたら戻す） */
 const AUDIO_WATCHDOG_MS = 5_000;
 
@@ -451,6 +459,9 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const lastPollStartRef = useRef(0);
   const firstPollRef = useRef(true);
   const inFlightRef = useRef(false);
+  // 取得の失敗が続いた回数と、その失敗を画面に出しているか（回復したら消す・2026-10-03）
+  const pollFailuresRef = useRef(0);
+  const pollErrorShownRef = useRef(false);
   const patternLookupRef = useRef<Map<number, PatternInfo>>(new Map());
   const masterFetchedAtRef = useRef(0);
   const lastGiftAtRef = useRef<number | null>(null);
@@ -742,12 +753,21 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       const hidden = typeof document !== "undefined" && document.hidden;
       // 縮退中だけ、まだ聞いていない pattern_id をサーバに照合してもらう（正常時は空＝DBに触らない）
       const needPatterns = masterRef.current.ready ? [] : [...askedPatternsRef.current].slice(0, 50);
-      const res = await fetch("/api/platforms/whowatch/live/poll", {
-        signal: AbortSignal.timeout(POLL_FETCH_TIMEOUT_MS),
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ liveId: id, lastUpdatedAt: lastUpdatedRef.current, dryRun: readOnlyRef.current || (dbg && !autoPlayRef.current), debug: dbg, needPatterns }),
-      });
+      const body = JSON.stringify({ liveId: id, lastUpdatedAt: lastUpdatedRef.current, dryRun: readOnlyRef.current || (dbg && !autoPlayRef.current), debug: dbg, needPatterns });
+      const send = () =>
+        fetch("/api/platforms/whowatch/live/poll", {
+          signal: AbortSignal.timeout(POLL_FETCH_TIMEOUT_MS),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body,
+        });
+      let res = await send();
+      if (isLoginExpiredResponse(res)) {
+        // ログインの期限切れ（2026-10-03）。ブラウザ側で取り直して 1 回だけ送り直す（取り直せれば画面には何も出さない）
+        void res.body?.cancel();
+        if (await refreshSessionNow()) res = await send();
+        if (isLoginExpiredResponse(res)) throw new LoginExpiredError();
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const d = (await res.json()) as PollResponse;
       const receivedAt = Date.now();
@@ -1036,6 +1056,8 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
   const start = useCallback(async () => {
     setStatus("checking");
     setMessage(null);
+    pollFailuresRef.current = 0;
+    pollErrorShownRef.current = false;
     readOnlyRef.current = false;
     setViewingOther(null);
     setSelfByTypedId(false);
@@ -1088,16 +1110,26 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
             inFlightRef.current = true;
             try {
               const keepGoing = await pollOnce(d.liveId!);
+              const recovered = pollErrorShownRef.current;
+              pollFailuresRef.current = 0;
+              pollErrorShownRef.current = false;
               if (!keepGoing) {
                 stop();
                 return;
               }
+              // 取得が戻ったらエラーの表示を消す（従来は再接続するまで残っていた）
+              if (recovered) setMessage(null);
             } finally {
               inFlightRef.current = false;
             }
           }
         } catch (e) {
-          setMessage(`取得エラー: ${e instanceof Error ? e.message : String(e)}（再試行します）`);
+          // 1〜2 回の一時的な失敗は画面に出さない（次の回で取り直す）。ログイン切れは操作が要るのですぐ出す
+          pollFailuresRef.current += 1;
+          if (e instanceof LoginExpiredError || shouldShowPollError(pollFailuresRef.current)) {
+            pollErrorShownRef.current = true;
+            setMessage(e instanceof LoginExpiredError ? e.message : `取得エラー: ${e instanceof Error ? e.message : String(e)}（再試行します）`);
+          }
         }
         // 固定レート: 取得にかかった時間を差し引いて次を予約する
         if (runningRef.current) timerRef.current = setTimeout(loop, nextPollDelay(pollIntervalFor({ isOther: readOnlyRef.current, serverIntervalMs: pollingIntervalRef.current, lastGiftAt: lastGiftAtRef.current, now: Date.now(), wsDelivering: wsDeliveringRef.current }), Date.now() - startedAt));
