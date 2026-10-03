@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
 import { updateSession } from "@/lib/supabase/middleware";
 import { isSyncRoutePath } from "@/lib/sync-routes";
 
@@ -11,19 +10,7 @@ export async function middleware(request: NextRequest) {
   if (isSyncRoutePath(request.nextUrl.pathname)) {
     return NextResponse.next();
   }
-  if (request.nextUrl.pathname === "/") {
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { cookies: { getAll: () => request.cookies.getAll(), setAll: () => {} } }
-    );
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
-  }
+  // ログイン済みでトップ（/）に来たときのダッシュボードへの転送も updateSession が行う（2026-10-03。理由は同ファイル）
   return await updateSession(request);
 }
 

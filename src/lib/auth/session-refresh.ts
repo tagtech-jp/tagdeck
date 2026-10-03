@@ -1,18 +1,24 @@
 // ログインを切らさない（2026-10-03 社長「定期的にエラーが出てログインし直さないといけない」）。
 //
 // ライブ画面のように何時間も開いたままの画面は、ページを移動せず API を 5〜10 秒ごとに呼ぶだけになる。
-// これまでログインの更新（アクセストークンの取り直し）はサーバ側（middleware の getUser）だけが担っており、
-// 期限が切れた瞬間に複数のポーリングが同時に更新を試みる形だった。本番では配信中にログインが切れ、
-// 以後のポーリングが全部ログイン画面へ転送されていた（2026-10-03 の wrangler tail: live/poll が 10 秒ごとに 307 → /login）。
-// ブラウザ側で期限より前に更新しておけば、サーバは常に有効なトークンを受け取り、更新の取り合いが起きない。
-// supabase-js の自動更新はタブが裏にあると止まるため、1 分ごと・タブが前面に戻ったとき・通信が戻ったときに自分で確かめる。
+// アクセストークン（1 時間）は期限より前に取り直しておかないと、期限の瞬間にログインが切れる。
+//
+// 取り直しはサーバ（/api/auth/refresh。Cloudflare Workers → Supabase）だけが行い、新しいトークンは Set-Cookie で返す。
+// ブラウザは Supabase に取り直しを頼まない（createBrowserClient の autoRefreshToken も切る。src/lib/supabase/client.ts）。
+// 理由（2026-10-03 本番）: PR #74 でブラウザの supabase-js に期限 10 分前の refreshSession() をさせたところ、
+// 再ログインから約 50 分後（その取り直しの時刻）に live/poll が 401 になり、以後ずっと 401 だった。
+// - Supabase の Auth ログには取り直しの要求（POST /token）が 1 件も届いていない
+// - 401 の応答は 5 ミリ秒（Supabase へ問い合わせる前に「ログイン Cookie が無い」と判定）＝ブラウザ側で Cookie が消えていた
+// supabase-js はブラウザからの取り直しが「再試行できない」エラーで終わると、その場でログイン Cookie を消す（_removeSession）。
+// ブラウザ → Supabase の取り直しは、失敗した理由がこちらからは見えない（Auth ログにも残らない）まま、ログインごと消える。
+// サーバ → Supabase の取り直しは、ログイン時のコード交換（/auth/callback）と同じ経路で、結果は wrangler tail で見える。
 
-import { createClient } from "@/lib/supabase/client";
-
-/** 何分ごとにログインの期限を確かめるか（裏のタブでもブラウザは 1 分に 1 回はタイマーを動かす） */
+/** 何ミリ秒ごとにログインの期限を確かめるか（裏のタブでもブラウザは 1 分に 1 回はタイマーを動かす） */
 export const SESSION_CHECK_MS = 60_000;
-/** 期限のこれだけ前になったら取り直す（アクセストークンは 1 時間。サーバ側は期限切れ間際に更新するので、それより十分前） */
+/** 期限のこれだけ前になったら取り直す（アクセストークンは 1 時間。middleware の getUser は期限 90 秒前から更新するので、それより十分前） */
 export const REFRESH_BEFORE_MS = 10 * 60_000;
+/** ログインの取り直しを頼むサーバの窓口（src/app/api/auth/refresh/route.ts） */
+export const SESSION_REFRESH_PATH = "/api/auth/refresh";
 
 /** 純関数: いまログインを取り直すべきか（expiresAtSec は Supabase の session.expires_at・秒） */
 export function needsRefresh(expiresAtSec: number | null | undefined, nowMs: number): boolean {
@@ -31,23 +37,46 @@ export function isLoginExpiredResponse(res: Pick<Response, "status" | "redirecte
   }
 }
 
-/** 期限が近ければ取り直す。失敗しても投げない（次の確認でやり直す） */
+/**
+ * 純関数: 届いた Cookie の名前から、ログイン Cookie の状態を短く表す（wrangler tail の診断用。値は出さない）。
+ * Supabase のログイン Cookie は `sb-<プロジェクト>-auth-token`。長いと `.0` `.1` … に分割される
+ */
+export function describeAuthCookies(names: readonly string[]): string {
+  const parts = names.flatMap((n) => {
+    const m = /-auth-token(?:\.(\d+))?$/.exec(n);
+    return m ? [m[1] ?? "分割なし"] : [];
+  });
+  const verifier = names.some((n) => n.endsWith("-auth-token-code-verifier"));
+  return `ログイン Cookie=${parts.length ? parts.join(",") : "なし"}${verifier ? "・code-verifier あり" : ""}・Cookie 総数=${names.length}`;
+}
+
+const postRefresh = (force: boolean) =>
+  fetch(force ? `${SESSION_REFRESH_PATH}?force=1` : SESSION_REFRESH_PATH, {
+    method: "POST",
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+
+/** 期限が近ければサーバに取り直してもらう（近いかどうかはサーバが判断する）。失敗しても投げない（次の確認でやり直す） */
 export async function refreshSessionIfNeeded(): Promise<void> {
   try {
-    const supabase = createClient();
-    const { data } = await supabase.auth.getSession();
-    const session = data.session;
-    if (session && needsRefresh(session.expires_at, Date.now())) await supabase.auth.refreshSession();
+    const res = await postRefresh(false);
+    void res.body?.cancel();
   } catch {
     // 通信が切れている等。次の確認でやり直す
   }
 }
 
-/** いますぐ取り直す（API が 401 を返したとき）。取り直せたら true */
+/** いますぐサーバに取り直してもらう（API が 401 を返したとき）。取り直せたら true */
 export async function refreshSessionNow(): Promise<boolean> {
   try {
-    const { data, error } = await createClient().auth.refreshSession();
-    return !error && Boolean(data.session);
+    const res = await postRefresh(true);
+    if (!res.ok) {
+      void res.body?.cancel();
+      return false;
+    }
+    const body = (await res.json().catch(() => null)) as { ok?: unknown } | null;
+    return body?.ok === true;
   } catch {
     return false;
   }

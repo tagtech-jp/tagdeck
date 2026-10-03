@@ -54,18 +54,23 @@ export async function updateSession(request: NextRequest) {
   // 各 API は自分でログインを確かめて 401（JSON）を返す（2026-10-03 に src/app/api 全 38 ルートを確認。/api/build だけは公開の識別子）
   const isApiRoute = pathname.startsWith("/api/");
 
-  if (!user && !isPublicRoute && !isApiRoute) {
+  // 転送するときも、getUser() が書いた Cookie（取り直した新しいトークン・壊れたログインの削除）を必ず載せる（2026-10-03）。
+  // 載せないと新しいトークンが捨てられ、ブラウザには使用済みの古い更新トークンが残る（次の取り直しで断られてログインが切れる）
+  const redirectTo = (pathnameTo: string, withRedirectParam: boolean) => {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(url);
-  }
+    url.pathname = pathnameTo;
+    if (withRedirectParam) url.searchParams.set("redirect", pathname);
+    const res = NextResponse.redirect(url);
+    for (const cookie of supabaseResponse.cookies.getAll()) res.cookies.set(cookie);
+    return res;
+  };
 
-  if (user && isAuthRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
-  }
+  if (!user && !isPublicRoute && !isApiRoute) return redirectTo("/login", true);
+
+  // ログイン済みでトップ（/）やログイン画面に来たらダッシュボードへ。
+  // トップの判定は以前 src/middleware.ts で getSession() と「書き込まない Cookie」で行っていたが、期限間際だと
+  // 取り直したトークンを捨ててしまうため、ここ（Cookie を書ける getUser の後）へ移した（2026-10-03）
+  if (user && (isAuthRoute || pathname === "/")) return redirectTo("/dashboard", false);
 
   return supabaseResponse;
 }
