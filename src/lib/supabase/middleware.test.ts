@@ -35,4 +35,18 @@ describe("updateSession（未ログイン）", () => {
     const res = await updateSession(req("/login"));
     expect(res.headers.get("location")).toBeNull();
   });
+
+  it.each(["/sitemap.xml", "/robots.txt", "/terms", "/privacy", "/"])(
+    "検索エンジン向けのファイルと規約・方針（%s）は未ログインでも転送しない",
+    async (path) => {
+      const res = await updateSession(req(path));
+      expect(res.status).not.toBe(307);
+      expect(res.headers.get("location")).toBeNull();
+    },
+  );
+
+  it.each(["/termsx", "/privacy/edit", "/sitemap.xml.bak"])("公開の一覧に無いパス（%s）は従来どおり転送する", async (path) => {
+    const res = await updateSession(req(path));
+    expect(res.status).toBe(307);
+  });
 });
