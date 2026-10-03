@@ -763,7 +763,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
         });
       let res = await send();
       if (isLoginExpiredResponse(res)) {
-        // ログインの期限切れ（2026-10-03）。ブラウザ側で取り直して 1 回だけ送り直す（取り直せれば画面には何も出さない）
+        // ログインの期限切れ（2026-10-03）。サーバに取り直してもらい 1 回だけ送り直す（取り直せれば画面には何も出さない）
         void res.body?.cancel();
         if (await refreshSessionNow()) res = await send();
         if (isLoginExpiredResponse(res)) throw new LoginExpiredError();
