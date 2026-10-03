@@ -41,8 +41,12 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/reset-password");
   const isAuthCallback = pathname.startsWith("/auth/");
   const isPublicRoute = pathname === "/" || isAuthRoute || isAuthCallback;
+  // API は画面ではないのでログイン画面へ転送しない（2026-10-03）。転送すると fetch がログイン画面の HTML を受け取り、
+  // ライブ画面に「Unexpected token '<', "<!DOCTYPE"... is not valid JSON」が出ていた。
+  // 各 API は自分でログインを確かめて 401（JSON）を返す（2026-10-03 に src/app/api 全 38 ルートを確認。/api/build だけは公開の識別子）
+  const isApiRoute = pathname.startsWith("/api/");
 
-  if (!user && !isPublicRoute) {
+  if (!user && !isPublicRoute && !isApiRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirect", pathname);
