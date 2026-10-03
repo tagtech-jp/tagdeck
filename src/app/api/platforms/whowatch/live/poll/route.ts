@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
@@ -43,10 +43,33 @@ async function lookupPatterns(db: ReturnType<typeof createDbClient>, patternIds:
 }
 
 /**
+ * リスナーを探す／無ければ作る（累計 0 で作る）。累計はここでは足さない。
+ * 足すのは persistGifts が events への保存に成功したときだけ（同じギフトを 2 回処理しても二重に足さないため）。
+ * listeners に UNIQUE(streamer_id, platform, platform_user_id) は無いので、初めてのギフトを 2 か所で同時に処理すると
+ * 2 行できうる（従来からの挙動。この場合も events に入れた方の行にだけ足すので、合計は二重にならない）
+ */
+async function findOrCreateListener(db: ReturnType<typeof createDbClient>, streamerId: string, platformUserId: string, displayName: string | null): Promise<string | null> {
+  const [existing] = await db
+    .select({ id: listeners.id })
+    .from(listeners)
+    .where(and(eq(listeners.streamerId, streamerId), eq(listeners.platform, "whowatch"), eq(listeners.platformUserId, platformUserId)))
+    .limit(1);
+  if (existing) return existing.id;
+  const [created] = await db
+    .insert(listeners)
+    .values({ streamerId, platform: "whowatch", platformUserId, displayName, lastSeenAt: new Date(), totalGiftAmount: 0 })
+    .returning({ id: listeners.id });
+  return created?.id ?? null;
+}
+
+/**
  * パターン照合＋ listeners / events への保存。ctx.waitUntil() でレスポンス後に実行する。
  * - 照合が失敗しても保存は続ける（パターン列が null の行の方が、行が無いより後から復旧できる）
  * - 1 件の失敗が他の件を止めないよう try/catch を件ごとに掛け、失敗はログに残す（握りつぶさない）
  * - payload.raw にはふわっちAPIの生コメントをそのまま入れる（フィールド名が未確定のため証跡として残す）
+ * - 累計（listeners.total_gift_amount）は events に 1 行入ったときだけ足す（2026-10-02）。同じ配信に 2 台以上の
+ *   ブラウザが接続していると、同じギフトを各ブラウザの poll が受け取ってここへ来る。以前は events の保存より先に
+ *   累計を足していたため、events は部分ユニークで 1 件にまとまるのに、累計は処理した回数だけ増えていた
  */
 async function persistGifts(db: ReturnType<typeof createDbClient>, streamerId: string, liveId: string, giftRaw: LiveComment[]): Promise<void> {
   const patternIds = [...new Set(giftRaw.map((c) => c.play_item_pattern_id).filter((v): v is number => typeof v === "number"))];
@@ -62,37 +85,31 @@ async function persistGifts(db: ReturnType<typeof createDbClient>, streamerId: s
     const g = gifts[i];
     const raw = giftRaw[i];
     try {
-      let listenerId: string | null = null;
-      if (!g.user.anonymized && g.user.id) {
-        const [existing] = await db
-          .select({ id: listeners.id, totalGiftAmount: listeners.totalGiftAmount })
-          .from(listeners)
-          .where(and(eq(listeners.streamerId, streamerId), eq(listeners.platform, "whowatch"), eq(listeners.platformUserId, g.user.id)))
-          .limit(1);
-        if (!existing) {
-          const [created] = await db
-            .insert(listeners)
-            .values({ streamerId, platform: "whowatch", platformUserId: g.user.id, displayName: g.user.name ?? null, lastSeenAt: new Date(), totalGiftAmount: g.count })
-            .returning({ id: listeners.id });
-          listenerId = created?.id ?? null;
-        } else {
-          listenerId = existing.id;
-          await db.update(listeners).set({ lastSeenAt: new Date(), totalGiftAmount: (existing.totalGiftAmount ?? 0) + g.count, ...(g.user.name ? { displayName: g.user.name } : {}) }).where(eq(listeners.id, existing.id));
-        }
-      }
-      await db
-        .insert(events)
-        .values({
-          streamerId,
-          listenerId,
-          platform: "whowatch",
-          eventType: "gift",
-          payload: { ...g, raw } as Record<string, unknown>,
-          occurredAt: g.posted_at ? new Date(g.posted_at) : new Date(),
-          streamId: liveId,
-          platformCommentId: g.comment_id,
-        })
-        .onConflictDoNothing();
+      const listenerId = !g.user.anonymized && g.user.id ? await findOrCreateListener(db, streamerId, g.user.id, g.user.name) : null;
+      // 保存と加算は 1 つのトランザクションに入れる（行はあるのに累計が足りない、という片方だけの反映を残さない）
+      await db.transaction(async (tx) => {
+        const inserted = await tx
+          .insert(events)
+          .values({
+            streamerId,
+            listenerId,
+            platform: "whowatch",
+            eventType: "gift",
+            payload: { ...g, raw } as Record<string, unknown>,
+            occurredAt: g.posted_at ? new Date(g.posted_at) : new Date(),
+            streamId: liveId,
+            platformCommentId: g.comment_id,
+          })
+          .onConflictDoNothing()
+          .returning({ id: events.id });
+        // 0 行 = 別のブラウザ（または同じ lastUpdatedAt での取り直し）が保存済み。累計は足さない
+        if (inserted.length === 0 || !listenerId) return;
+        // 読んでから足すと、同時に動いた 2 件の片方が消える。SQL の中で足す
+        await tx
+          .update(listeners)
+          .set({ lastSeenAt: new Date(), totalGiftAmount: sql`coalesce(${listeners.totalGiftAmount}, 0) + ${g.count}`, ...(g.user.name ? { displayName: g.user.name } : {}) })
+          .where(eq(listeners.id, listenerId));
+      });
     } catch (e) {
       console.error("[live/poll] バックグラウンド保存に失敗", { liveId, commentId: g.comment_id, error: e instanceof Error ? e.message : String(e) });
     }
@@ -120,7 +137,7 @@ const bodySchema = z.object({
  *   ctx.waitUntil() のバックグラウンドへ寄せてある。postgres.js は遅延接続なので、クエリを 1 本も
  *   出さない回は TCP/TLS/SCRAM のハンドシェイク自体が発生しない（2026-09-22 実測の DB 833ms の正体）
  * - ギフトは events に event_type='gift' / platform_comment_id=comment.id / stream_id=live_id で保存（重複は部分ユニークで弾く）
- * - listeners は Kick ルートの流儀（platform_user_id で検索 → insert/update）。匿名は listener_id=null
+ * - listeners は platform_user_id で探す／無ければ累計 0 で作る。累計は events に 1 行入ったときだけ SQL の中で足す。匿名は listener_id=null
  * - 生データは payload.raw に保持。jwt は保存も返却もしない
  */
 export async function POST(request: Request) {
