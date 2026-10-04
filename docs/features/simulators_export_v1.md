@@ -38,9 +38,35 @@
 - `event_key`: `whowatch_event_id` を `whowatch_events` で引いたもの。紐付けが無い（手動入力の）シミュレーターは `null`
 - `current_score`: 手入力（`manual_score`）があればそれ、無ければ自動取得（`current_score`）。どちらかは `current_score_source`
 
+### 予測と自分の点数の推移（2026-10-03 追加・stream-insight の「イベントの追い上げ計画」用）
+
+ランキング型（`ranking_type` あり）のふわっち連携イベントで、目標順位があり、終了から 7 日以内のシミュレーターに付く。
+
+```json
+{
+  "ranking_type": "magicfantasy_1st_doll_gold",
+  "forecast": {
+    "computed_at": "…", "target_rank": 3, "rank_probability": 0.1, "expected_rank": 13.8,
+    "current_rank": 19, "current_point": 18425,
+    "required_points": { "p50": 191622, "p90": 229681 },
+    "target_border_points": { "p50": 0, "p90": 0 }, "my_final_points": { "p10": 0, "p50": 0, "p90": 0 },
+    "remaining_hours": 78, "remaining_days": 3.3, "snapshot_count": 96, "final_day_coefficient": 1.5, "note": "…"
+  },
+  "forecast_error": null,
+  "score_history": [{ "at": "…", "score": 18425 }]
+}
+```
+
+- `forecast`: 画面（`EventDashboard` の `snapshotForecast`）と**同じ入力・同じ関数**（`ranking_snapshots` の最新 96 件 → `forecastRank`）で出す。画面と同じ数字になる（試行の乱数による小さな揺れはある）
+- **ライバルの名前と点数は返さない**（`forecastRank` の `rivals` は含めない）。返すのは集計した数字だけ
+- `score_history`: 自分の点数の推移（`ranking_snapshots.my_point`・5 分ごと・最大 6,000 件）
+- 予測の計算に失敗しても目標そのものは返す（`forecast: null`・`forecast_error` に理由）
+
 ## 設定（社長の作業）
 
-1. 本番の Worker に秘密 `EXPORT_OWNER_USER_ID` を登録する（値は運営者の `users.id`。公開リポなので値はコード・文書に書かない）
+1. 本番の Worker に**秘密（Secret）**として `EXPORT_OWNER_USER_ID` を登録する（値は運営者の `users.id`。公開リポなので値はコード・文書に書かない）
+   - **Text（平文の変数）で登録しないこと。** `wrangler.jsonc` に `vars` があるため、平文の変数は次のデプロイで消える（2026-10-03 に実際に消えた疑い）。Secret はデプロイで消えない
+   - 確認: `npx wrangler secret list` の一覧に `EXPORT_OWNER_USER_ID` が出ること
 2. 呼び出し側（stream-insight）に `RANKING_SYNC_KEY` と同じ値を置く
 
 ## 実装
