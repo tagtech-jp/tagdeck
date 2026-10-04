@@ -31,6 +31,7 @@ export const SYNC_ROUTES: readonly SyncRouteDef[] = [
   { path: "/api/platforms/whowatch/items/sync", envKey: "RANKING_SYNC_KEY", description: "S1: /playitems のアイテムパターンを同期" },
   { path: "/api/platforms/whowatch/items/export", envKey: "RANKING_SYNC_KEY", description: "S14: item_point_mapping を外部ツール（tagtech-OBS の単価表）向けに JSON で返す（読み取り専用・ログイン Cookie でも可）" },
   { path: "/api/platforms/whowatch/simulators/export", envKey: "RANKING_SYNC_KEY", description: "外部連携: 運営者（EXPORT_OWNER_USER_ID）のイベント目標と進捗を外部ツール（stream-insight）向けに JSON で返す（読み取り専用・ログイン Cookie なら本人の分）" },
+  { path: "/api/platforms/whowatch/items/learned", envKey: "RANKING_SYNC_KEY", description: "外部連携: erupi-commentbot が /present の実際の獲得ポイントから学習した 1 個の単価を item_point_mapping.learned_* に書く（書き込み・X-Sync-Key のみ）" },
 ] as const;
 
 export const SYNC_ROUTE_PATHS: readonly string[] = SYNC_ROUTES.map((r) => r.path);

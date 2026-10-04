@@ -12,6 +12,9 @@
 //               既存の不具合 syncItemGroups の回避）。どちらも無ければ null（恒常アイテム）
 //   group_keys  所属カテゴリ（アイテムページの並び順）
 //   on_sale     state=OPEN
+//   learned_point / learned_samples / learned_at（includeLearned のときだけ付く・drizzle/0023・2026-10-04）
+//               配信者が実際に受け取った 1 個あたりのポイント（erupi-commentbot が /present から学習・観測の中央値）と観測回数。
+//               未学習は null / 0。運営者の実際の収益の比率なので、export ルートは X-Sync-Key（自前のツール）のときだけ付ける
 
 export interface ExportMappingRow {
   itemId: string;
@@ -21,6 +24,9 @@ export interface ExportMappingRow {
   state: string;
   whowatchId: number;
   lastFetchedAt: Date | string | null;
+  learnedPoint?: number | null;
+  learnedSamples?: number | null;
+  learnedAt?: Date | string | null;
 }
 export interface ExportGroupRow {
   itemId: number;
@@ -46,9 +52,26 @@ export interface ExportItem {
   state: string;
   on_sale: boolean;
   last_fetched_at: string | null;
+  learned_point?: number | null;
+  learned_samples?: number;
+  learned_at?: string | null;
+}
+
+export interface BuildExportOptions {
+  /** 学習単価（learned_*）を付けるか。既定は付けない */
+  includeLearned?: boolean;
 }
 
 const STATUS_RANK: Record<string, number> = { open: 3, pre: 2, closed: 1 };
+
+function learnedFields(r: ExportMappingRow | undefined): Pick<ExportItem, "learned_point" | "learned_samples" | "learned_at"> {
+  if (!r || r.learnedPoint === null || r.learnedPoint === undefined) return { learned_point: null, learned_samples: 0, learned_at: null };
+  return {
+    learned_point: Number(r.learnedPoint),
+    learned_samples: Number(r.learnedSamples ?? 0),
+    learned_at: r.learnedAt ? new Date(r.learnedAt).toISOString() : null,
+  };
+}
 
 /** 数値の item_id（play_item_id と同じ）。whowatch_id が無ければ item_id を数値として読む */
 export function numericItemId(r: Pick<ExportMappingRow, "itemId" | "whowatchId">): number | null {
@@ -56,7 +79,7 @@ export function numericItemId(r: Pick<ExportMappingRow, "itemId" | "whowatchId">
   return /^\d+$/.test(r.itemId) ? Number(r.itemId) : null;
 }
 
-export function buildExportItems(rows: readonly ExportMappingRow[], groups: readonly ExportGroupRow[], events: readonly ExportEventRow[]): ExportItem[] {
+export function buildExportItems(rows: readonly ExportMappingRow[], groups: readonly ExportGroupRow[], events: readonly ExportEventRow[], options: BuildExportOptions = {}): ExportItem[] {
   const eventByKey = new Map<string, ExportEventRow>();
   for (const e of events) if (e.eventKey) eventByKey.set(e.eventKey, e);
   // カテゴリ key → イベント。同じカテゴリを複数イベントが指す場合は open > pre > closed、同順位なら id の大きい方
@@ -84,14 +107,20 @@ export function buildExportItems(rows: readonly ExportMappingRow[], groups: read
     const bt = b.lastFetchedAt ? new Date(b.lastFetchedAt).getTime() : 0;
     return bt > at ? b : a;
   };
+  // 学習単価は同じ数値 id の行のうち観測回数が最も多い行から取る（書き込み口は両方の行を同じ値で更新するが、念のため）
+  const learnedByKey = new Map<string, ExportMappingRow>();
   for (const r of rows) {
     const id = numericItemId(r);
     const key = id !== null ? String(id) : r.itemId;
     const cur = bestByKey.get(key);
     bestByKey.set(key, cur ? prefer(cur, r) : r);
+    if (r.learnedPoint !== null && r.learnedPoint !== undefined) {
+      const l = learnedByKey.get(key);
+      if (!l || (r.learnedSamples ?? 0) > (l.learnedSamples ?? 0)) learnedByKey.set(key, r);
+    }
   }
   const out: ExportItem[] = [];
-  for (const r of bestByKey.values()) {
+  for (const [key, r] of bestByKey) {
     const id = numericItemId(r);
     const itemId = id !== null ? String(id) : r.itemId;
     const gs = [...(id !== null ? (groupsByItem.get(id) ?? []) : [])].sort((a, b) => (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999) || a.groupKey.localeCompare(b.groupKey));
@@ -123,6 +152,7 @@ export function buildExportItems(rows: readonly ExportMappingRow[], groups: read
       state: r.state,
       on_sale: r.state === "OPEN",
       last_fetched_at: r.lastFetchedAt ? new Date(r.lastFetchedAt).toISOString() : null,
+      ...(options.includeLearned ? learnedFields(learnedByKey.get(key)) : {}),
     });
   }
   return out.sort((a, b) => Number(a.item_id) - Number(b.item_id) || a.item_id.localeCompare(b.item_id));

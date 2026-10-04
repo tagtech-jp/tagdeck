@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, uuid, text, timestamp, integer, jsonb, boolean, unique, uniqueIndex, index, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, integer, doublePrecision, jsonb, boolean, unique, uniqueIndex, index, primaryKey } from "drizzle-orm/pg-core";
 
 // id は auth.users.id と同一。行は auth.users の AFTER INSERT トリガー
 // (drizzle/0009_users_auth_sync.sql) と src/lib/db/ensure-user.ts の両方で保証する。
@@ -365,6 +365,12 @@ export const itemPointMapping = pgTable("item_point_mapping", {
   hasAnimation: boolean("has_animation").notNull().default(false),
   state: text("state").notNull().default("OPEN"),
   lastFetchedAt: timestamp("last_fetched_at").defaultNow().notNull(),
+  // 配信者が実際に受け取ったポイントから学習した 1 個の単価（pt・観測の中央値）。erupi-commentbot が /present の
+  // 増え方から割り出し、POST /api/platforms/whowatch/items/learned で書く（drizzle/0023・2026-10-04）。未学習は null / 0。
+  // 日次同期（sync_items_and_events.py）は送った列しか更新しないので上書きされない
+  learnedPoint: doublePrecision("learned_point"),
+  learnedSamples: integer("learned_samples").notNull().default(0),
+  learnedAt: timestamp("learned_at", { withTimezone: true }),
 });
 
 // ふわっちイベント一覧（events route のオンデマンド同期で更新。旧 n8n 日次同期は廃止済み）

@@ -54,6 +54,30 @@ describe("buildExportItems", () => {
     ]);
   });
 
+  it("学習単価（learned_*）は既定では付けない（ログイン Cookie の利用者向け）", () => {
+    const learnedRows = rows.map((r) => (r.itemId === "13100" ? { ...r, learnedPoint: 64, learnedSamples: 3, learnedAt: at } : r));
+    const out = buildExportItems(learnedRows, groups, events);
+    expect(out.every((o) => !("learned_point" in o) && !("learned_samples" in o) && !("learned_at" in o))).toBe(true);
+  });
+
+  it("includeLearned のときは学習単価を付け、未学習は null / 0 にする", () => {
+    const learnedRows = rows.map((r) => (r.itemId === "13100" ? { ...r, learnedPoint: 64, learnedSamples: 3, learnedAt: at } : r));
+    const byId = Object.fromEntries(buildExportItems(learnedRows, groups, events, { includeLearned: true }).map((o) => [o.item_id, o]));
+    expect(byId["13100"]).toMatchObject({ learned_point: 64, learned_samples: 3, learned_at: "2026-09-28T00:00:00.000Z" });
+    expect(byId["12880"]).toMatchObject({ learned_point: null, learned_samples: 0, learned_at: null });
+  });
+
+  it("同じ数値 id の行が重なるときは、観測回数の多い行の学習単価を使う（無料 0 pt も学習単価として出す）", () => {
+    const dup = [
+      { itemId: "ouen_zou", itemName: "旧シード", priceJpy: 160, productId: "", state: "OPEN", whowatchId: 10773, lastFetchedAt: at, learnedPoint: 70, learnedSamples: 1, learnedAt: at },
+      { itemId: "10773", itemName: "イベント応援するゾウ！", priceJpy: 160, productId: "p", state: "OPEN", whowatchId: 10773, lastFetchedAt: at, learnedPoint: 80, learnedSamples: 5, learnedAt: at },
+      { itemId: "10863", itemName: "ふわっちくんメガホン", priceJpy: 0, productId: "", state: "FREE", whowatchId: 10863, lastFetchedAt: at, learnedPoint: 0, learnedSamples: 2, learnedAt: null },
+    ];
+    const byId = Object.fromEntries(buildExportItems(dup, [], [], { includeLearned: true }).map((o) => [o.item_id, o]));
+    expect(byId["10773"]).toMatchObject({ item_name: "イベント応援するゾウ！", learned_point: 80, learned_samples: 5 });
+    expect(byId["10863"]).toMatchObject({ price_jpy: 0, learned_point: 0, learned_samples: 2, learned_at: null });
+  });
+
   it("numericItemId は whowatch_id を優先し、無ければ数値の item_id、それも無ければ null", () => {
     expect(numericItemId({ itemId: "1", whowatchId: 13100 })).toBe(13100);
     expect(numericItemId({ itemId: "42", whowatchId: 0 })).toBe(42);
