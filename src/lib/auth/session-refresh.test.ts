@@ -85,9 +85,10 @@ describe("refreshSessionIfNeeded / refreshSessionNow（取り直しはサーバ�
     await expect(refreshSessionIfNeeded()).resolves.toBeUndefined();
   });
 
-  it("refreshSessionNow は force=1 で頼み、取り直せたら true", async () => {
+  it("refreshSessionNow は窓口へ POST し、ログインが生きていれば true", async () => {
     expect(await refreshSessionNow()).toBe(true);
-    expect(calls[0].url).toBe(`${SESSION_REFRESH_PATH}?force=1`);
+    expect(calls[0].url).toBe(SESSION_REFRESH_PATH);
+    expect(calls[0].init?.method).toBe("POST");
   });
 
   it("refreshSessionNow はログインが無い（401）・一時的な失敗（503）・通信断・壊れた応答なら false", async () => {
