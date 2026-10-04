@@ -4,7 +4,12 @@
 // アクセストークン（1 時間）は期限より前に取り直しておかないと、期限の瞬間にログインが切れる。
 //
 // 取り直しはサーバ（/api/auth/refresh。Cloudflare Workers → Supabase）だけが行い、新しいトークンは Set-Cookie で返す。
-// ブラウザは Supabase に取り直しを頼まない（createBrowserClient の autoRefreshToken も切る。src/lib/supabase/client.ts）。
+// ブラウザは Supabase に取り直しを頼まない。
+// - SessionKeeper とライブ画面は、この窓口を直接呼ぶ（このファイル）
+// - ブラウザの supabase-js が自分で取り直そうとしたとき（スリープ明けに期限が切れていた等）も、fetch を差し替えて
+//   Supabase ではなくこの窓口へ回す。自動の取り直し（autoRefreshToken）も切る（src/lib/supabase/client.ts）
+// これで「ログインし直し」が要るのは、自分でログアウトしたとき・Cookie を消したときだけになる
+// （Supabase の更新トークンには期限が無く、ログイン Cookie は 400 日。取り直すたびに 400 日へ延びる）。
 // 理由（2026-10-03 本番）: PR #74 でブラウザの supabase-js に期限 10 分前の refreshSession() をさせたところ、
 // 再ログインから約 50 分後（その取り直しの時刻）に live/poll が 401 になり、以後ずっと 401 だった。
 // - Supabase の Auth ログには取り直しの要求（POST /token）が 1 件も届いていない
@@ -50,27 +55,25 @@ export function describeAuthCookies(names: readonly string[]): string {
   return `ログイン Cookie=${parts.length ? parts.join(",") : "なし"}${verifier ? "・code-verifier あり" : ""}・Cookie 総数=${names.length}`;
 }
 
-const postRefresh = (force: boolean) =>
-  fetch(force ? `${SESSION_REFRESH_PATH}?force=1` : SESSION_REFRESH_PATH, {
-    method: "POST",
-    credentials: "same-origin",
-    cache: "no-store",
-  });
+const postRefresh = () => fetch(SESSION_REFRESH_PATH, { method: "POST", credentials: "same-origin", cache: "no-store" });
 
 /** 期限が近ければサーバに取り直してもらう（近いかどうかはサーバが判断する）。失敗しても投げない（次の確認でやり直す） */
 export async function refreshSessionIfNeeded(): Promise<void> {
   try {
-    const res = await postRefresh(false);
+    const res = await postRefresh();
     void res.body?.cancel();
   } catch {
     // 通信が切れている等。次の確認でやり直す
   }
 }
 
-/** いますぐサーバに取り直してもらう（API が 401 を返したとき）。取り直せたら true */
+/**
+ * API が 401 を返したときに呼ぶ。サーバでログインが生きているか確かめ、期限が近ければ取り直してもらう。
+ * ログインが生きていれば true（呼んだ側は 1 回だけ送り直す）
+ */
 export async function refreshSessionNow(): Promise<boolean> {
   try {
-    const res = await postRefresh(true);
+    const res = await postRefresh();
     if (!res.ok) {
       void res.body?.cancel();
       return false;
