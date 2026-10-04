@@ -517,6 +517,20 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - 表示(2026-09-26 追記): SE タブの「価格ありのみ」(既定 ON)がカテゴリ内の無料アイテムまで隠していたため「反映されていない」ように見えた。イベントのカテゴリに属する無料アイテムは ON でも表示し、価格欄は「無料(イベント配布)」と出す。「価格ありのみ」が隠すのは分類なしの無料アイテムだけ
 - 社長作業: (1) `drizzle/0021_free_event_items_manual.sql` を適用 (2) Actions「Whowatch item patterns sync (manual)」を 1 回実行(応答 `freeItems.rows`)
 
+## 学習単価の受け口: item_point_mapping.learned_*(実装済み・2026-10-04・本番 DB への適用待ち)
+
+社長指示「アイテムが飛ぶたびに 1 個の単価を割り出して学習していってほしい。tagdeck にもその結果を反映してほしい」への対応。反映のしかたは社長決定(2026-10-04)の B 案「既存の単価表に列を足す」。
+
+- 背景: `price_jpy` は定価(円)で、配信者が実際に受け取る whowatch のポイントと一致しない(社長報告「額に差異がある」)。erupi-commentbot(`D:/tagtech/projects/erupi-commentbot`)が https://whowatch.tv/present(配信者本人でログイン)の獲得ポイントとアイテムの個数の増え方から 1 個あたりのポイントを割り出す(観測の中央値)
+- `drizzle/0023_item_learned_point.sql`: `item_point_mapping` に `learned_point`(double precision・未学習は null)/ `learned_samples`(integer・既定 0)/ `learned_at`(timestamptz)を足す。日次同期(`sync_items_and_events.py` の `resolution=merge-duplicates`)は送った列しか更新しないので、この 3 列は上書きされない
+- **読み取りの権限**: この表は `GRANT SELECT … TO anon, authenticated`(公開の鍵で誰でも読める)。学習単価は運営者の実際の収益の比率なので、0023 で表単位の SELECT を外し、learned_* 以外の列にだけ SELECT を付け直す。TagDeck はサーバ(DATABASE_URL)、日次同期は service_role で読むので影響しない(2026-10-04 確認: anon / authenticated の鍵でこの表を読むコードは TagDeck・tagtech-OBS・mt5-trader・million-tag に無い)。公開してよいと決めたら `GRANT SELECT ON public.item_point_mapping TO anon, authenticated;` で戻る。**この後でこの表に列を足すときは**、表単位の SELECT が無いため新しい列は anon / authenticated から見えない。ブラウザから読ませるなら、その列の `GRANT SELECT (列) …` を同じ migration に入れる(TagDeck のサーバは DATABASE_URL なので影響しない)
+- **`POST /api/platforms/whowatch/items/learned`(新規)**: 本文 `{items: [{item_id: "10773", learned_point: 80, samples: 3}]}`(最大 500 件)。認証は X-Sync-Key のみ(`RANKING_SYNC_KEY`・`SYNC_ROUTES` に登録・ログイン Cookie では書けない)。learned_* の 3 列だけを更新し、行は作らない(単価表に無い item_id は `missing`)。数値の item_id の行と、同じ数値を `whowatch_id` に持つ旧シード行の両方を更新する。全件を 1 本の `UPDATE … FROM jsonb_to_recordset` で書く(件数でループしない)。応答の `updated` は RETURNING(書いた後の値)で、呼び出し側が送った値と突き合わせる。本文の検査は純関数 `src/lib/whowatch/learned-points.ts`。`${json}::jsonb` と `UPDATE … FROM jsonb_to_recordset` はこのリポジトリで初めて使う書き方で、実 DB では未検証(テストの偽 DB は execute を持たない)。0023 適用後に最初に届いた POST の応答(`updated` / `missing`)で確かめる。落ちても 502 で、この書き込み口だけが止まる
+- `GET /api/platforms/whowatch/items/export`: X-Sync-Key で呼ばれたときだけ `learned_point` / `learned_samples` / `learned_at` を付ける(ログイン Cookie の利用者には付けない)。0023 未適用で読めないときは付けずに返し、`learned_error` に理由を書く。tagtech-OBS・mt5-trader・million-tag は必要な列だけを取り出しているので影響しない
+- 呼び出し元: erupi-commentbot(8421a50)。学習のたびに学習済みの全アイテムを送る(何度送っても同じ結果)。鍵は環境変数 `TAGDECK_SYNC_KEY`(tagtech-OBS と同じ鍵)。送れなければ 30 分後に送り直し、同じ理由の通知は 1 日 1 回
+- `drizzle/meta/_journal.json`: 0022 の行が抜けていたので 0023 と一緒に足した
+- 社長作業: (1) `drizzle/0023_item_learned_point_manual.sql` を SQL Editor で適用し、最後の確認の SELECT が `learned_cols=3・anon_price=true・anon_learned=false・auth_learned=false` になることを確認 (2) PR をマージ(自動デプロイ) (3) 社長の PC で `TAGDECK_SYNC_KEY` を setx で登録
+- ロールバック: PR を revert → `drizzle/0023_item_learned_point_rollback.sql`(3 列を外し、表単位の公開読み取りを戻す)。学習結果は erupi-commentbot 側(`data/bot.db` の `unit_obs`・`data/learned_item_points.json`)にも残る
+
 ## S25: ¥160 以上は 5 秒以上の豪華なミックス・イベントアイテムと花火は段階ごとにさらに長く(実装済み・2026-09-30)
 
 社長指示: 「160円以上のアイテムの SE をもっと 5 秒以上で組み合わせて豪華にすること。これらの主要なイベントアイテムはまとめ投げごとにさらに長い豪華な音に修正してほしい。花火系ももっと花火らしい綺羅びやかな長い SE にしてほしい」(オオカミさんがやってくる！のイベント専用アイテム 6 種の画像つき)。
