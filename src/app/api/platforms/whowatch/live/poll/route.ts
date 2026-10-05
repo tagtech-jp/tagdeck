@@ -22,7 +22,7 @@ async function lookupPatterns(db: ReturnType<typeof createDbClient>, patternIds:
     itemIds.length > 0 ? db.select({ itemId: itemPointMapping.itemId, priceJpy: itemPointMapping.priceJpy }).from(itemPointMapping).where(and(eq(itemPointMapping.platform, "whowatch"), inArray(itemPointMapping.itemId, itemIds))) : Promise.resolve([]),
     // 1 個あたりの単価（2026-09-26）。0020 未適用・未同期なら空で、item_point_mapping.price_jpy に落ちる
     itemIdNums.length > 0 ? db.select({ itemId: whowatchItemPrices.itemId, unitPriceJpy: whowatchItemPrices.unitPriceJpy }).from(whowatchItemPrices).where(inArray(whowatchItemPrices.itemId, itemIdNums)).catch(() => []) : Promise.resolve([]),
-    itemIdNums.length > 0 ? db.select({ itemId: whowatchItemGroups.itemId, groupKey: whowatchItemGroups.groupKey, displayOrder: whowatchItemGroups.displayOrder }).from(whowatchItemGroups).where(inArray(whowatchItemGroups.itemId, itemIdNums)) : Promise.resolve([]),
+    itemIdNums.length > 0 ? db.select({ itemId: whowatchItemGroups.itemId, groupKey: whowatchItemGroups.groupKey, displayOrder: whowatchItemGroups.displayOrder, isFree: whowatchItemGroups.isFree }).from(whowatchItemGroups).where(inArray(whowatchItemGroups.itemId, itemIdNums)) : Promise.resolve([]),
     // まとめ投げの段階しきい値（0022・2026-09-28）。未適用なら空
     itemIdNums.length > 0 ? db.select({ itemId: whowatchItemDecorations.itemId, decorations: whowatchItemDecorations.decorations }).from(whowatchItemDecorations).where(inArray(whowatchItemDecorations.itemId, itemIdNums)).catch(() => []) : Promise.resolve([]),
   ]);
@@ -36,8 +36,9 @@ async function lookupPatterns(db: ReturnType<typeof createDbClient>, patternIds:
     if (list) list.push(g.groupKey);
     else groupsByItem.set(g.itemId, [g.groupKey]);
   }
+  const freeEventItems = new Set(groupRows.filter((g) => g.isFree).map((g) => g.itemId));
   for (const r of rows) {
-    lookupMap.set(r.patternId, { patternId: r.patternId, itemId: r.itemId, itemName: r.itemName, patternName: r.patternName, isHit: r.isHit, hitGrade: r.hitGrade, quantity: r.quantity, priceJpy: priceById.get(String(r.itemId)) ?? null, animationUrl: r.animationUrl, animationFullscreen: r.animationFullscreen, groups: groupsByItem.get(r.itemId) ?? [], decorations: decorationsByItem.get(r.itemId) ?? [] });
+    lookupMap.set(r.patternId, { patternId: r.patternId, itemId: r.itemId, itemName: r.itemName, patternName: r.patternName, isHit: r.isHit, hitGrade: r.hitGrade, quantity: r.quantity, priceJpy: priceById.get(String(r.itemId)) ?? null, animationUrl: r.animationUrl, animationFullscreen: r.animationFullscreen, groups: groupsByItem.get(r.itemId) ?? [], freeEvent: freeEventItems.has(r.itemId), decorations: decorationsByItem.get(r.itemId) ?? [] });
   }
   return lookupMap;
 }

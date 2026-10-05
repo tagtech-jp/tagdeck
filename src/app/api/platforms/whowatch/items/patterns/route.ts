@@ -78,7 +78,7 @@ export async function GET() {
     }
 
     // カテゴリは付加情報。ここで落ちてもアイテム一覧は返す（/live の SE 判定を道連れにしない）
-    let groupRows: Array<{ itemId: number; groupKey: string; groupTitle: string; subGroupTitle: string | null; badgeText: string | null; displayOrder: number | null; bannerUrl: string | null; description: string | null }> = [];
+    let groupRows: Array<{ itemId: number; groupKey: string; groupTitle: string; subGroupTitle: string | null; badgeText: string | null; displayOrder: number | null; bannerUrl: string | null; description: string | null; isFree: boolean }> = [];
     try {
       groupRows = await db
         .select({
@@ -91,6 +91,8 @@ export async function GET() {
           // 0017: バナー画像と説明文（SE タブのセクション見出し用。無ければ null）
           bannerUrl: whowatchItemGroups.bannerUrl,
           description: whowatchItemGroups.description,
+          // 0021: イベントの無料配布（/live の SE を 3 個以上のまとめ投げだけにする判定に使う・2026-10-05）
+          isFree: whowatchItemGroups.isFree,
         })
         .from(whowatchItemGroups);
     } catch (e) {
@@ -104,6 +106,8 @@ export async function GET() {
       if (list) list.push(g.groupKey);
       else groupsByItem.set(g.itemId, [g.groupKey]);
     }
+    // イベントの無料配布アイテム（どれか 1 つのカテゴリで is_free なら無料扱い）
+    const freeEventItems = new Set(groupRows.filter((g) => g.isFree).map((g) => g.itemId));
     // プルダウン用の一覧
     const groupMap = new Map<string, { groupKey: string; groupTitle: string; subGroupTitle: string | null; badgeText: string | null; displayOrder: number | null; bannerUrl: string | null; description: string | null; itemCount: number }>();
     for (const g of groupRows) {
@@ -113,7 +117,7 @@ export async function GET() {
     }
     const groups = [...groupMap.values()].sort((a, b) => (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999) || a.groupTitle.localeCompare(b.groupTitle, "ja"));
 
-    const items = new Map<number, { itemId: number; itemName: string; priceJpy: number | null; priceNote: string | null; onSale: boolean; imageUrl: string | null; groups: string[]; decorations: BulkDecoration[]; patterns: Array<{ patternId: number; patternName: string; isHit: boolean; hitGrade: string | null; isVariant: boolean; quantity: number | null; animationUrl: string | null; animationFullscreen: boolean }> }>();
+    const items = new Map<number, { itemId: number; itemName: string; priceJpy: number | null; priceNote: string | null; onSale: boolean; imageUrl: string | null; groups: string[]; freeEvent: boolean; decorations: BulkDecoration[]; patterns: Array<{ patternId: number; patternName: string; isHit: boolean; hitGrade: string | null; isVariant: boolean; quantity: number | null; animationUrl: string | null; animationFullscreen: boolean }> }>();
     // アイテムごとの代表画像を選ぶための一時保持（応答には載せない）
     const imageCandidates = new Map<number, Array<{ patternName: string; imageUrl: string | null; isHit: boolean }>>();
     for (const p of patterns) {
@@ -122,7 +126,7 @@ export async function GET() {
         const pr = priceById.get(String(p.itemId));
         // 2026-09-28: item_point_mapping にイベントの無料配布（state=FREE・price 0）も入るようになった。SE タブの表示（「無料（イベント配布）」）と
         // T0 判定は「価格なし＝null」のままにする（0 を ¥0〜 と表示しない）
-        it = { itemId: p.itemId, itemName: p.itemName, priceJpy: pr && pr.priceJpy > 0 && pr.state !== "FREE" ? pr.priceJpy : null, priceNote: priceNoteById.get(p.itemId) ?? null, onSale: pr?.state === "OPEN", imageUrl: null, groups: groupsByItem.get(p.itemId) ?? [], decorations: decorationsByItem.get(p.itemId) ?? [], patterns: [] };
+        it = { itemId: p.itemId, itemName: p.itemName, priceJpy: pr && pr.priceJpy > 0 && pr.state !== "FREE" ? pr.priceJpy : null, priceNote: priceNoteById.get(p.itemId) ?? null, onSale: pr?.state === "OPEN", imageUrl: null, groups: groupsByItem.get(p.itemId) ?? [], freeEvent: freeEventItems.has(p.itemId), decorations: decorationsByItem.get(p.itemId) ?? [], patterns: [] };
         items.set(p.itemId, it);
         imageCandidates.set(p.itemId, []);
       }
