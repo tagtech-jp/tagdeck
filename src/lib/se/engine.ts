@@ -223,6 +223,23 @@ export function synthTier(tier: SeTier, volume = 0.8): void {
   }
 }
 
+/**
+ * 順位の警告音（追い上げ・抜かれた・目標割れ。2026-10-05）。ギフトの音と聞き分けられるよう、
+ * 下がる 2 音を 2 回繰り返す短い警報にする（約 1 秒・合成なので音源のライセンスは不要）
+ */
+export function synthRankAlert(volume = 0.8): void {
+  const c = getAudioContext();
+  if (!c) return;
+  const master = c.createGain();
+  master.gain.value = Math.max(0, Math.min(1, volume));
+  master.connect(masterOutput(c));
+  const t = c.currentTime;
+  for (const d of [0, 0.5]) {
+    tone(c, master, 987.77, t + d, 0.2, 0.4, "square");
+    tone(c, master, 659.25, t + d + 0.2, 0.25, 0.4, "square");
+  }
+}
+
 /** 合成音のおおよその長さ（秒）。連続再生で次の音を待つ目安 */
 const SYNTH_DURATION_S: Record<SeTier, number> = { T0: 0.15, T1: 0.45, T2: 0.85, T3: 1.35, T4: 2.4, hit: 1.6 };
 
