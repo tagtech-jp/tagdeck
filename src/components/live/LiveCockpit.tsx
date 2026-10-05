@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { playSe } from "@/lib/se/engine";
+import { playSe, synthRankAlert } from "@/lib/se/engine";
 import { tierForGift, TIER_LABELS, type SeTier } from "@/lib/se/tiers";
 import { ACTIVE_WINDOW_MS, POLL_INTERVAL_MS, pollIntervalFor } from "@/lib/live/polling";
 import { CLIENT_BUILD_ID, useLiveConnection, type GiftSample } from "./LiveConnectionProvider";
@@ -9,6 +9,7 @@ import type { WsState } from "@/lib/live/ws-feed";
 import { retryCountdownSec } from "@/lib/live/master-retry";
 import type { NormalizedGift as Gift } from "@/lib/whowatch/gift-normalize";
 import { VolumeSlider } from "./VolumeSlider";
+import { RankAlertPanel } from "./RankAlertPanel";
 import type { BgAudioState } from "@/lib/se/background-keepalive";
 import { BULK_GRADE_LABELS, type BulkGrade } from "@/lib/se/bulk-grade";
 
@@ -271,6 +272,9 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
         </div>
       </div>
 
+      {/* 順位パネルと追い上げアラート（開催中のイベントがあるときだけ・2026-10-05） */}
+      <RankAlertPanel />
+
       {/* スマホ用バックグラウンド再生（音楽プレイヤー扱い）。2026-09-30 実機検証済みのため既定 ON */}
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="flex flex-wrap items-center gap-2">
@@ -322,6 +326,16 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
               {t.label}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={async () => {
+              await enableAudio();
+              synthRankAlert(volume / 100);
+            }}
+            className="min-h-11 rounded-full border border-destructive/40 bg-destructive/10 px-3 text-xs text-destructive hover:border-destructive"
+          >
+            順位の警告音（追い上げ・抜かれた）
+          </button>
         </div>
       </div>
 
