@@ -7,6 +7,7 @@ import { findSyncRoute } from "@/lib/sync-routes";
 import { verifySyncKey } from "@/lib/whowatch/sync-auth";
 import { describeDbError } from "@/lib/whowatch/sanitize";
 import { buildExportItems } from "@/lib/whowatch/item-export";
+import { summarizeLearnedGaps } from "@/lib/whowatch/learned-gap";
 
 const ROUTE_PATH = "/api/platforms/whowatch/items/export";
 
@@ -80,7 +81,13 @@ async function handle(request: Request): Promise<NextResponse> {
       ...(includeLearned
         ? {
             learned_definition: "learned_point = 配信者が実際に受け取った 1 個あたりのポイント（/present の増え方から学習・観測の中央値）。learned_samples = 観測回数。未学習は null / 0",
-            ...(learnedError ? { learned_error: learnedError } : {}),
+            ...(learnedError
+              ? { learned_error: learnedError }
+              : {
+                  // 学習単価と定価の答え合わせ（2026-10-05）。ポイント÷円 の中央値から 2 割以上ずれたアイテム
+                  learned_gaps_definition: "learned_gaps = learned_point ÷ price_jpy が全体の中央値から threshold_pct% 以上ずれたアイテム（観測 min_samples 回以上）。higher/lower = 見込み expected_point より多い/少ない（イベント倍率・定価の誤り・学習の誤りを疑う）。free_with_points = 無料なのにポイントが付く",
+                  learned_gaps: summarizeLearnedGaps(items),
+                }),
           }
         : {}),
       count: items.length,
