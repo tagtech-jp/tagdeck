@@ -12,7 +12,7 @@ import { idlePollInterval, INITIAL_AUTO_CONNECT_STATE, reduceAutoConnect, type A
 import { INITIAL_MASTER_STATE, masterFailed, masterSucceeded, retryCountdownSec, type MasterState } from "@/lib/live/master-retry";
 import { extractComments, isBacklogComment, parseWsMessage, WS_MAX_FAILURES_BEFORE_GIVE_UP, wsReconnectDelay, type WsState } from "@/lib/live/ws-feed";
 import { commentsFromFrame, createRefCounter, decodeFrame, heartbeatFrame, joinCandidates, joinFrame, PHOENIX_HEARTBEAT_MS, phoenixSocketUrl, replyStatus, type JoinCandidate, type PhoenixFrame } from "@/lib/live/phoenix";
-import { normalizeGift, type NormalizedGift as Gift, type PatternInfo, type PickedGiftComment } from "@/lib/whowatch/gift-normalize";
+import { normalizeGift, shouldPlayGiftSe, type NormalizedGift as Gift, type PatternInfo, type PickedGiftComment } from "@/lib/whowatch/gift-normalize";
 import type { ItemKind } from "@/lib/se/item-kind";
 import { BackgroundKeepAlive, detectBgAudioSupport, type BgAudioState, type BgAudioSupport } from "@/lib/se/background-keepalive";
 import { mergeWithDefaults } from "@/lib/se/merge-defaults";
@@ -62,6 +62,8 @@ export interface ItemsPatternsResponse {
     patterns: Array<{ patternId: number; patternName: string; isHit: boolean; hitGrade: string | null; quantity?: number | null; animationUrl: string | null; animationFullscreen: boolean }>;
     itemName: string;
     groups?: string[];
+    /** イベントの無料配布アイテム（2026-10-05）。古いサーバの応答には無い */
+    freeEvent?: boolean;
     /** まとめ投げの段階しきい値（0022・2026-09-28）。無ければ段階なし */
     decorations?: Array<{ count: number; grade: string }>;
   }>;
@@ -569,7 +571,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     for (const it of pd.items ?? []) {
       const decorations = parseDecorations(it.decorations);
       for (const p of it.patterns) {
-        map.set(p.patternId, { patternId: p.patternId, itemId: it.itemId, itemName: it.itemName, patternName: p.patternName, isHit: p.isHit, hitGrade: p.hitGrade, quantity: p.quantity ?? null, priceJpy: it.priceJpy, animationUrl: p.animationUrl, animationFullscreen: p.animationFullscreen, groups: it.groups ?? [], decorations });
+        map.set(p.patternId, { patternId: p.patternId, itemId: it.itemId, itemName: it.itemName, patternName: p.patternName, isHit: p.isHit, hitGrade: p.hitGrade, quantity: p.quantity ?? null, priceJpy: it.priceJpy, animationUrl: p.animationUrl, animationFullscreen: p.animationFullscreen, groups: it.groups ?? [], freeEvent: it.freeEvent ?? false, decorations });
       }
     }
     patternLookupRef.current = map;
@@ -740,7 +742,9 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     setLastGiftAt(receivedAt);
     setGifts((prev) => [...fresh.slice().reverse(), ...prev].slice(0, 100));
     // 一斉に鳴らすと同じ音が同位相で重なって 1 件に聞こえるため、キューで順番に鳴らす
-    if (autoPlayRef.current && toPlay.length > 0) seQueueRef.current.push(toPlay.map((gift) => ({ gift, receivedAt, skewMs, source })));
+    // イベントの無料配布アイテムは 3 個以上のまとめ投げだけ鳴らす（画面の一覧には全件出す・2026-10-05 社長指示）
+    const playable = toPlay.filter(shouldPlayGiftSe);
+    if (autoPlayRef.current && playable.length > 0) seQueueRef.current.push(playable.map((gift) => ({ gift, receivedAt, skewMs, source })));
     if (source === "poll") setWsPollGiftsSinceConnect((n) => n + fresh.length);
   }, []);
 

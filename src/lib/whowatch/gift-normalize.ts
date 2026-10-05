@@ -48,6 +48,8 @@ export interface PatternInfo {
   groups: string[];
   /** まとめ投げの段階しきい値（whowatch_item_decorations・2026-09-28）。無ければ段階なし */
   decorations?: readonly BulkDecoration[] | null;
+  /** イベントの無料配布アイテム（whowatch_item_groups.is_free・2026-10-05）。SE は 3 個以上のまとめ投げだけ鳴らす */
+  freeEvent?: boolean;
 }
 
 /** 正規化ギフト（S1 仕様: pattern_id, item_id, count, is_hit, comment_id + 表示用） */
@@ -73,6 +75,8 @@ export interface NormalizedGift {
   total_yen: number | null;
   /** このアイテムが属するカテゴリ（アイテムページの並び順）。cat:group: の解決に使う */
   groups: string[];
+  /** イベントの無料配布アイテムか（2026-10-05）。true なら SE は 3 個以上のまとめ投げだけ（shouldPlayGiftSe） */
+  free_event: boolean;
   message: string | null;
   posted_at: string | null;
   user: { id: string | null; name: string | null; user_path: string | null; anonymized: boolean };
@@ -140,6 +144,7 @@ export function normalizeGift(c: GiftCommentInput, lookup: (patternId: number) =
     price_yen: info?.priceJpy ?? null,
     total_yen: info?.priceJpy != null ? info.priceJpy * count : null,
     groups: info?.groups ?? [],
+    free_event: info?.freeEvent ?? false,
     message: typeof c.message === "string" ? c.message : null,
     posted_at: typeof c.posted_at === "number" ? new Date(c.posted_at).toISOString() : null,
     user: {
@@ -149,4 +154,15 @@ export function normalizeGift(c: GiftCommentInput, lookup: (patternId: number) =
       anonymized,
     },
   };
+}
+
+/** イベントの無料配布アイテムで SE を鳴らす最小個数（2026-10-05 社長指示「イベントの無料アイテムは 3 個まとめ投げでしか反応しない」） */
+export const FREE_EVENT_MIN_COUNT = 3;
+
+/**
+ * このギフトで SE を鳴らすか。イベントの無料配布アイテムは 1 個ずつ大量に投げられて音が埋まるため、
+ * 3 個以上のまとめ投げだけ鳴らす（個数は束パターンを含む count で見る）。それ以外のギフトは常に鳴らす
+ */
+export function shouldPlayGiftSe(g: Pick<NormalizedGift, "free_event" | "count">): boolean {
+  return !g.free_event || g.count >= FREE_EVENT_MIN_COUNT;
 }
