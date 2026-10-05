@@ -121,3 +121,36 @@ describe("createSeQueue", () => {
     expect(played).toEqual(["x", "y"]);
   });
 });
+
+describe("createSeQueue の merge（同じ人の連投をまとめる）", () => {
+  // "user:個数" の文字列で表す。同じ user ならまとめる
+  const merge = (a: string, b: string) => {
+    const [ua, na] = a.split(":");
+    const [ub, nb] = b.split(":");
+    return ua === ub ? `${ua}:${Number(na) + Number(nb)}` : null;
+  };
+
+  it("まだ鳴っていない同じ人の分は 1 件にまとめ、別の人は別に鳴らす", async () => {
+    const { queue, played } = harness({ merge });
+    queue.push(["x:1"]); // 鳴り始める（待ち行列からは出ている）
+    queue.push(["a:1", "b:1", "a:2", "a:3"]);
+    expect(queue.size).toBe(2);
+    await flush();
+    expect(played).toEqual(["x:1", "a:6", "b:1"]);
+  });
+
+  it("鳴り始めた分にはまとめない", async () => {
+    const { queue, played } = harness({ merge });
+    queue.push(["a:1"]);
+    queue.push(["a:1"]);
+    await flush();
+    expect(played).toEqual(["a:1", "a:1"]);
+  });
+
+  it("merge なしなら従来どおり全件積む", async () => {
+    const { queue, played } = harness();
+    queue.push(["a:1", "a:1"]);
+    await flush();
+    expect(played).toEqual(["a:1", "a:1"]);
+  });
+});
