@@ -27,8 +27,13 @@ export function createSeQueue<T>(opts: {
   maxWaitMs?: number;
   limit?: number;
   sleep?: (ms: number) => Promise<void>;
+  /**
+   * まだ鳴っていない待ち行列の要素に、新着をまとめられるなら合成結果を返す（まとめないなら null）。
+   * 同じ人の連投を 1 回の音にするため（2026-10-05）。鳴り始めた要素にはまとめない
+   */
+  merge?: (queued: T, incoming: T) => T | null;
 }): SeQueue<T> {
-  const { play, gapMs = SE_GAP_MS, maxWaitMs = SE_MAX_WAIT_MS, limit = SE_QUEUE_LIMIT, sleep = defaultSleep } = opts;
+  const { play, gapMs = SE_GAP_MS, maxWaitMs = SE_MAX_WAIT_MS, limit = SE_QUEUE_LIMIT, sleep = defaultSleep, merge } = opts;
   let queue: T[] = [];
   let running = false;
   /** clear() で世代を進め、走っているループを止める */
@@ -55,7 +60,20 @@ export function createSeQueue<T>(opts: {
   return {
     push(items: T[]): void {
       if (items.length === 0) return;
-      queue.push(...items);
+      for (const item of items) {
+        let merged = false;
+        if (merge) {
+          for (let i = 0; i < queue.length; i++) {
+            const m = merge(queue[i], item);
+            if (m !== null) {
+              queue[i] = m;
+              merged = true;
+              break;
+            }
+          }
+        }
+        if (!merged) queue.push(item);
+      }
       // 上限を超えた分は捨てる（音が延々と続くのを防ぐ）
       if (queue.length > limit) queue = queue.slice(0, limit);
       void drain();

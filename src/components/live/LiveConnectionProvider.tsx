@@ -12,7 +12,7 @@ import { idlePollInterval, INITIAL_AUTO_CONNECT_STATE, reduceAutoConnect, type A
 import { INITIAL_MASTER_STATE, masterFailed, masterSucceeded, retryCountdownSec, type MasterState } from "@/lib/live/master-retry";
 import { extractComments, isBacklogComment, parseWsMessage, WS_MAX_FAILURES_BEFORE_GIVE_UP, wsReconnectDelay, type WsState } from "@/lib/live/ws-feed";
 import { commentsFromFrame, createRefCounter, decodeFrame, heartbeatFrame, joinCandidates, joinFrame, PHOENIX_HEARTBEAT_MS, phoenixSocketUrl, replyStatus, type JoinCandidate, type PhoenixFrame } from "@/lib/live/phoenix";
-import { normalizeGift, shouldPlayGiftSe, type NormalizedGift as Gift, type PatternInfo, type PickedGiftComment } from "@/lib/whowatch/gift-normalize";
+import { mergeBurstGifts, normalizeGift, shouldPlayGiftSe, type NormalizedGift as Gift, type PatternInfo, type PickedGiftComment } from "@/lib/whowatch/gift-normalize";
 import type { ItemKind } from "@/lib/se/item-kind";
 import { BackgroundKeepAlive, detectBgAudioSupport, type BgAudioState, type BgAudioSupport } from "@/lib/se/background-keepalive";
 import { mergeWithDefaults } from "@/lib/se/merge-defaults";
@@ -676,7 +676,18 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     [playGift],
   );
 
-  const seQueue = useMemo(() => createSeQueue<QueuedGift>({ play: playQueued }), [playQueued]);
+  // 同じ人の連投は、まだ鳴っていない分を 1 回の音にまとめる（個数は合計・計測は先に届いた方の時刻・2026-10-05）
+  const seQueue = useMemo(
+    () =>
+      createSeQueue<QueuedGift>({
+        play: playQueued,
+        merge: (queued, incoming) => {
+          const gift = mergeBurstGifts(queued.gift, incoming.gift);
+          return gift ? { ...queued, gift } : null;
+        },
+      }),
+    [playQueued],
+  );
   const seQueueRef = useRef(seQueue);
   useEffect(() => {
     seQueueRef.current = seQueue;

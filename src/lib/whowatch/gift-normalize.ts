@@ -4,7 +4,7 @@
 // 依存を足すとクライアントバンドルにサーバ側の実装が引きずられるので、import は se/item-kind だけに保つこと。
 
 import { patternKind, type ItemKind } from "../se/item-kind";
-import { bulkGradeFor, type BulkDecoration, type BulkGrade } from "../se/bulk-grade";
+import { BULK_GRADES, bulkGradeFor, type BulkDecoration, type BulkGrade } from "../se/bulk-grade";
 
 export interface LiveComment {
   id: number | string;
@@ -165,4 +165,24 @@ export const FREE_EVENT_MIN_COUNT = 3;
  */
 export function shouldPlayGiftSe(g: Pick<NormalizedGift, "free_event" | "count">): boolean {
   return !g.free_event || g.count >= FREE_EVENT_MIN_COUNT;
+}
+
+/**
+ * 同じ人が同じアイテムを続けて投げたギフトを 1 件にまとめる（SE を 1 回にするため・2026-10-05）。
+ * まとめられないなら null。匿名・投げ主不明・アイテム不明はまとめない（別人の可能性がある）。
+ * 個数・金額は合計、当たりはどちらかが当たりなら当たり側のパターンを採る。段階は高い方（しきい値を持たないため再計算はしない）
+ */
+export function mergeBurstGifts(a: NormalizedGift, b: NormalizedGift): NormalizedGift | null {
+  if (a.user.anonymized || b.user.anonymized || !a.user.id || a.user.id !== b.user.id) return null;
+  if (a.item_id === null || a.item_id !== b.item_id) return null;
+  const base = b.is_hit && !a.is_hit ? b : a;
+  const ga = a.bulk_grade ? BULK_GRADES.indexOf(a.bulk_grade) : -1;
+  const gb = b.bulk_grade ? BULK_GRADES.indexOf(b.bulk_grade) : -1;
+  return {
+    ...base,
+    count: a.count + b.count,
+    item_count: a.item_count + b.item_count,
+    bulk_grade: ga >= gb ? a.bulk_grade : b.bulk_grade,
+    total_yen: a.total_yen !== null && b.total_yen !== null ? a.total_yen + b.total_yen : (a.total_yen ?? b.total_yen),
+  };
 }
