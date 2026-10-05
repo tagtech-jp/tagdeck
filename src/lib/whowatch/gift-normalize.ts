@@ -168,13 +168,15 @@ export function shouldPlayGiftSe(g: Pick<NormalizedGift, "free_event" | "count">
 }
 
 /**
- * 同じ人が同じアイテムを続けて投げたギフトを 1 件にまとめる（SE を 1 回にするため・2026-10-05）。
+ * 同じ人が同じ無料アイテムを続けて投げたギフトを 1 件にまとめる（SE を 1 回にするため・2026-10-05）。
  * まとめられないなら null。匿名・投げ主不明・アイテム不明はまとめない（別人の可能性がある）。
+ * 有料アイテム（単価 > 0）はまとめない（2026-10-05 社長指示「有料アイテムは連投でも 1 回ずつ全部鳴らしたい」）。
  * 個数・金額は合計、当たりはどちらかが当たりなら当たり側のパターンを採る。段階は高い方（しきい値を持たないため再計算はしない）
  */
 export function mergeBurstGifts(a: NormalizedGift, b: NormalizedGift): NormalizedGift | null {
   if (a.user.anonymized || b.user.anonymized || !a.user.id || a.user.id !== b.user.id) return null;
   if (a.item_id === null || a.item_id !== b.item_id) return null;
+  if ((a.price_yen ?? 0) > 0 || (b.price_yen ?? 0) > 0) return null;
   const base = b.is_hit && !a.is_hit ? b : a;
   const ga = a.bulk_grade ? BULK_GRADES.indexOf(a.bulk_grade) : -1;
   const gb = b.bulk_grade ? BULK_GRADES.indexOf(b.bulk_grade) : -1;

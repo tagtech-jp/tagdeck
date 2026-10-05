@@ -676,7 +676,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     [playGift],
   );
 
-  // 同じ人の連投は、まだ鳴っていない分を 1 回の音にまとめる（個数は合計・計測は先に届いた方の時刻・2026-10-05）
+  // 同じ人の無料アイテムの連投は、まだ鳴っていない分を 1 回の音にまとめる（個数は合計・計測は先に届いた方の時刻・2026-10-05）。有料は 1 回ずつ鳴らす
   const seQueue = useMemo(
     () =>
       createSeQueue<QueuedGift>({
