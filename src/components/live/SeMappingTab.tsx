@@ -46,6 +46,11 @@ interface ItemRow {
   groups: string[];
   /** まとめ投げの段階しきい値（0022・2026-09-28）。無ければ段階なし（投票券など） */
   decorations?: BulkDecoration[];
+  /** 実収の単価（運営者にだけ付く・0023・2026-10-06）。学習した 1 個の単価（pt）と観測回数。未学習は null / 0 */
+  learnedPoint?: number | null;
+  learnedSamples?: number;
+  /** 未学習のときの見込み（定価 × 学習済みの比率・pt） */
+  estimatedPoint?: number | null;
   patterns: PatternRow[];
 }
 /** アイテムページの見出し（/playitems/payments3 のカテゴリ） */
@@ -651,6 +656,13 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
                                 <p className="text-sm font-bold leading-tight text-foreground">{it.itemName}</p>
                                 <p className="mt-0.5 text-sm font-bold text-ember-pulse">{it.priceJpy !== null ? `¥${it.priceJpy.toLocaleString()}〜` : (it.groups?.length ?? 0) > 0 ? "無料（イベント配布）" : "無料 / 価格なし"}</p>
                                 {it.priceNote && <p className="text-[11px] text-muted-foreground">{it.priceNote}</p>}
+                                {it.learnedPoint != null ? (
+                                  <p className="text-[11px] text-muted-foreground">
+                                    実収 {it.learnedPoint.toLocaleString(undefined, { maximumFractionDigits: 2 })}pt/個（{it.learnedSamples ?? 0}回の観測）
+                                  </p>
+                                ) : it.estimatedPoint != null ? (
+                                  <p className="text-[11px] text-muted-foreground">実収 見込み {it.estimatedPoint.toLocaleString()}pt/個</p>
+                                ) : null}
                                 <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px]">
                                   <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{tier}</span>
                                   <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{ITEM_KIND_LABELS[kind]}</span>

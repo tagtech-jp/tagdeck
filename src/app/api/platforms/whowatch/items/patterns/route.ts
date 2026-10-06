@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
 import { itemPointMapping, whowatchItemDecorations, whowatchItemGroups, whowatchItemPatterns, whowatchItemPrices } from "@/lib/db/schema";
 import { parseDecorations, type BulkDecoration } from "@/lib/se/bulk-grade";
 import { pickItemImage } from "@/lib/se/item-image";
+import { isOwner, learnedById, learnedFieldsFor, learnedRatio } from "@/lib/whowatch/learned-display";
 
 /**
  * GET /api/platforms/whowatch/items/patterns → SE タブ用アイテム一覧（S1）
@@ -136,6 +137,24 @@ export async function GET() {
     for (const it of items.values()) it.imageUrl = pickItemImage(it.itemName, imageCandidates.get(it.itemId) ?? []);
     // 販売中（価格あり）→ 名前順に並べ、無料・非販売は後ろ
     const list = [...items.values()].sort((a, b) => Number(b.priceJpy !== null) - Number(a.priceJpy !== null) || (b.priceJpy ?? 0) - (a.priceJpy ?? 0) || a.itemName.localeCompare(b.itemName, "ja"));
+    // 実収の単価（drizzle/0023・2026-10-06）。運営者の実際の収益の比率なので、運営者（EXPORT_OWNER_USER_ID）のときだけ付ける。
+    // 読めなくても一覧は返す（/live の SE 判定を道連れにしない）。並びや既存の列は変えない
+    if (isOwner(user.id, process.env.EXPORT_OWNER_USER_ID)) {
+      try {
+        const rows = await db
+          .select({ itemId: itemPointMapping.itemId, whowatchId: itemPointMapping.whowatchId, learnedPoint: itemPointMapping.learnedPoint, learnedSamples: itemPointMapping.learnedSamples })
+          .from(itemPointMapping)
+          .where(and(eq(itemPointMapping.platform, "whowatch"), isNotNull(itemPointMapping.learnedPoint)));
+        const learned = learnedById(rows);
+        const ratio = learnedRatio(learned, (id) => {
+          const p = priceById.get(String(id));
+          return p && p.state !== "FREE" ? p.priceJpy : null;
+        });
+        for (const it of list) Object.assign(it, learnedFieldsFor(it.itemId, it.priceJpy, learned, ratio));
+      } catch (e) {
+        console.warn("[items/patterns] 学習した単価が読めないため付けずに返す", e instanceof Error ? e.message : String(e));
+      }
+    }
     const res = NextResponse.json({ items: list, groups, patternCount: patterns.length, syncedAt: patterns[0]?.syncedAt?.toISOString() ?? null });
     res.headers.set("Cache-Control", "private, max-age=300");
     return res;

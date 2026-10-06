@@ -517,7 +517,7 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - 表示(2026-09-26 追記): SE タブの「価格ありのみ」(既定 ON)がカテゴリ内の無料アイテムまで隠していたため「反映されていない」ように見えた。イベントのカテゴリに属する無料アイテムは ON でも表示し、価格欄は「無料(イベント配布)」と出す。「価格ありのみ」が隠すのは分類なしの無料アイテムだけ
 - 社長作業: (1) `drizzle/0021_free_event_items_manual.sql` を適用 (2) Actions「Whowatch item patterns sync (manual)」を 1 回実行(応答 `freeItems.rows`)
 
-## 学習単価の受け口: item_point_mapping.learned_*(実装済み・2026-10-04・本番 DB への適用待ち)
+## 学習単価の受け口: item_point_mapping.learned_*(実装済み・2026-10-04・本番 DB 適用済み・PR #80)
 
 社長指示「アイテムが飛ぶたびに 1 個の単価を割り出して学習していってほしい。tagdeck にもその結果を反映してほしい」への対応。反映のしかたは社長決定(2026-10-04)の B 案「既存の単価表に列を足す」。
 
@@ -530,6 +530,7 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - `drizzle/meta/_journal.json`: 0022 の行が抜けていたので 0023 と一緒に足した
 - 社長作業: (1) `drizzle/0023_item_learned_point_manual.sql` を SQL Editor で適用し、最後の確認の SELECT が `learned_cols=3・anon_price=true・anon_learned=false・auth_learned=false` になることを確認 (2) PR をマージ(自動デプロイ) (3) 社長の PC で `TAGDECK_SYNC_KEY` を setx で登録
 - ロールバック: PR を revert → `drizzle/0023_item_learned_point_rollback.sql`(3 列を外し、表単位の公開読み取りを戻す)。学習結果は erupi-commentbot 側(`data/bot.db` の `unit_obs`・`data/learned_item_points.json`)にも残る
+- **SE タブに実収の単価を表示(2026-10-06 社長指示「TagDeck の画面に実収の単価を表示」)**: `GET /api/platforms/whowatch/items/patterns` は、運営者(`EXPORT_OWNER_USER_ID` と一致するログイン)のときだけ、各アイテムに `learnedPoint`(学習した 1 個の単価・pt)/ `learnedSamples`(観測回数)/ `estimatedPoint`(未学習のときの見込み = 定価 × 学習済みの有料アイテムの「学習単価 ÷ 定価」の中央値)を付ける。運営者以外には付けない(実収の比率のため)。読めなくても一覧は返す(/live の SE 判定を道連れにしない)。SeMappingTab は定価の下に「実収 36pt/個(3回の観測)」または「実収 見込み 18pt/個」を既存の注記と同じ書式(11px・muted)で出す。純関数 `src/lib/whowatch/learned-display.ts`。全利用者に見せるなら、ルートの `isOwner(...)` の条件を外す
 
 ## S25: ¥160 以上は 5 秒以上の豪華なミックス・イベントアイテムと花火は段階ごとにさらに長く(実装済み・2026-09-30)
 
