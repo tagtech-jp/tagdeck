@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { ensureAudioRunning, getAudioContext, getAudioState, installAudioAutoResume, playSeUntilEnd, preloadSe, startKeepAlive, stopKeepAlive, unlockAudio, type AudioState } from "@/lib/se/engine";
-import { createSeQueue } from "@/lib/se/queue";
+import { createSeQueue, maxSecondsForBacklog } from "@/lib/se/queue";
 import { tierForGift, type SeTier } from "@/lib/se/tiers";
 import { chooseSound } from "@/lib/se/choose-sound";
 import { coreLibraryUrls, isPremiumPrice } from "@/lib/se/auto-library";
@@ -212,7 +212,7 @@ interface LiveConnectionValue {
   setAutoConnect: (on: boolean) => void;
   start: () => Promise<void>;
   stop: () => void;
-  playGift: (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[]; bulk_grade?: Gift["bulk_grade"]; item_name?: string | null }, forceTier?: SeTier, waitForEnd?: boolean) => Promise<void>;
+  playGift: (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[]; bulk_grade?: Gift["bulk_grade"]; item_name?: string | null }, forceTier?: SeTier, waitForEnd?: boolean, maxSeconds?: number | null) => Promise<void>;
   pushTestGift: (g: Gift) => void;
   /** ?debug=1 のときだけ生コメントと計測ログを集める */
   setDebug: (v: boolean) => void;
@@ -629,7 +629,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
    * ギフト 1 件の SE を鳴らす。waitForEnd=true（キューからの呼び出し）なら鳴り終わるまで待つ。
    * 連続ギフトは前の音が終わってから次を鳴らす（重ねると長い音源で 2 発目以降が埋もれる）
    */
-  const playGift = useCallback(async (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[]; bulk_grade?: Gift["bulk_grade"]; item_name?: string | null }, forceTier?: SeTier, waitForEnd = false) => {
+  const playGift = useCallback(async (g: Pick<Gift, "pattern_id" | "item_id" | "price_yen" | "count" | "is_hit" | "kind"> & { groups?: string[]; bulk_grade?: Gift["bulk_grade"]; item_name?: string | null }, forceTier?: SeTier, waitForEnd = false, maxSeconds: number | null = null) => {
     const tier = forceTier ?? tierForGift({ priceYen: g.price_yen, count: g.count, isHit: g.is_hit });
     // 2026-09-29: 個別行（変種ランダム）→ 自動ライブラリ（段階・当たり・アイテム名のテーマ）→ 一括行 → 自動の価格帯既定 → 合成音（choose-sound.ts）
     // 無料（単価 0・不明）は控えめな音（2026-09-30 社長指示「無料が派手すぎる」）。当たり・まとめ投げでも無料なら控えめ
@@ -641,7 +641,7 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
     // 音源が取れなかったときの予備も、無料なら無料の控えめな音（tier-T0）から（無料の当たりで当たりミックスに落ちないように）
     // ¥160 以上は予備も 5 秒以上の価格帯（T0・T1 → T2。S25）
     const fallbackTier: SeTier = free ? "T0" : isPremiumPrice(g.price_yen) && (tier === "T0" || tier === "T1") ? "T2" : tier;
-    await playSeUntilEnd(fallbackTier, { url: choice.url, volume: vol }, waitForEnd);
+    await playSeUntilEnd(fallbackTier, { url: choice.url, volume: vol, maxSeconds }, waitForEnd);
   }, []);
 
   const playQueued = useCallback(
@@ -650,7 +650,8 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
       // 当たり判定はパターン名からの推定。実ログで精度を確かめられるよう残す
       if (q.gift.is_hit) console.info("[tagdeck] 当たり検知", { pattern_id: q.gift.pattern_id, pattern_name: q.gift.pattern_name, item_name: q.gift.item_name, hit_grade: q.gift.hit_grade, posted_at: q.gift.posted_at });
       // 計測用の seMs は「鳴り始めまで」を測りたいので、鳴り始めた時刻を先に確定させてから終わりを待つ
-      await playGift(q.gift, undefined, true);
+      // 待ち行列がたまっていたら 1 音を短く切って時間を詰める（2026-10-06・有料は捨てずに全部鳴らすため）
+      await playGift(q.gift, undefined, true, maxSecondsForBacklog(seQueueRef.current.size));
       if (!debugRef.current) return;
       const postedAt = q.gift.posted_at ? Date.parse(q.gift.posted_at) : null;
       setGiftLog((prev) =>

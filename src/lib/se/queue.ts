@@ -12,6 +12,20 @@ export const SE_MAX_WAIT_MS = 4_000;
 /** これを超えた分は捨てる（暴発防止） */
 export const SE_QUEUE_LIMIT = 10;
 
+/**
+ * 待ち行列の残り件数から、1 音を何秒で切るか（2026-10-06 社長指示「音の鳴りすぎ対策」）。
+ * 有料は捨てずに全部鳴らすため、たまったら 1 音を短くして時間を詰める。null は切らない（最後まで鳴らす）
+ */
+export const SE_SHORTEN_STEPS: ReadonlyArray<{ backlog: number; maxSeconds: number }> = [
+  { backlog: 6, maxSeconds: 1.2 },
+  { backlog: 3, maxSeconds: 2 },
+];
+
+export function maxSecondsForBacklog(backlog: number): number | null {
+  for (const s of SE_SHORTEN_STEPS) if (backlog >= s.backlog) return s.maxSeconds;
+  return null;
+}
+
 export interface SeQueue<T> {
   push(items: T[]): void;
   /** 接続解除・画面離脱で呼ぶ。未再生分を捨て、再生中のループも止める */
