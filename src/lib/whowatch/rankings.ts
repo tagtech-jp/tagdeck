@@ -4,11 +4,13 @@
 // 読み取り専用。Origin/Referer はサーバ側で付与（ブラウザから直接叩かない）。
 
 import { resolveWhowatchDeviceId } from "../platforms/whowatch";
+import { parseLimitedItemRankingType, resolveLimitedItemRankingType } from "./limited-item";
 
 const BASE_URL = "https://api.whowatch.tv";
 const USER_AGENT = "TagDeck/0.1 (+https://tagdeck.jp)";
 const TIMEOUT_MS = 10_000;
-export const RANKING_TYPE_RE = /^[a-z0-9_]{1,200}$/i;
+// 2026-10-07: 期間限定アイテム型（limited-item-2026_10_gold_digger_1-2-20261007）はハイフンを含む
+export const RANKING_TYPE_RE = /^[a-z0-9_-]{1,200}$/i;
 
 export interface RankingEntryApi {
   rank: number;
@@ -78,11 +80,61 @@ export function normalizeRankingResponse(data: unknown, rankingType: string): Ra
   };
 }
 
+/**
+ * 期間限定アイテム型（limited-item・2026-10-07 実測）の応答を正規化する。
+ *   GET /events/limited_item_rankings?period=&event_key=&group= → { rankings: [{ user_id, user_name, user_path, rank, point, … }] }
+ * point は kg などの数値（小数で返る。6831.0）。保存先（ranking_snapshots.my_point・event_simulators.current_score）が整数列なので丸める。
+ * error_code 付き（period 省略・開始前の日付・無いグループ = Z-001）は null
+ */
+export function normalizeLimitedItemRankingResponse(data: unknown, datedRankingType: string): RankingResult | null {
+  const r = data && typeof data === "object" && !Array.isArray(data) ? (data as Record<string, unknown>) : null;
+  if (!r || ("error_code" in r && r.error_code)) return null;
+  const raw = Array.isArray(r.rankings) ? (r.rankings as Record<string, unknown>[]) : [];
+  const entries: RankingEntryApi[] = raw
+    .map((e) => ({
+      rank: Number(e.rank ?? 0),
+      point: Math.round(Number(e.point ?? 0)),
+      userId: e.user_id != null ? String(e.user_id) : null,
+      userPath: e.user_path != null ? String(e.user_path) : null,
+      name: String(e.user_name ?? ""),
+      totalViewCount: null,
+    }))
+    .filter((e) => Number.isFinite(e.rank) && e.rank > 0)
+    .sort((a, b) => a.rank - b.rank);
+  return { rankingType: datedRankingType, title: "", status: null, entries, fetchedAt: new Date().toISOString() };
+}
+
+/** 期間限定アイテム型のランキングを取得する。group は 1 始まり、period は YYYYMMDD（JST）か OVERALL */
+export async function getLimitedItemRankings(eventKey: string, group: number, period: string, datedRankingType: string): Promise<RankingResult> {
+  const params = new URLSearchParams({ period, event_key: eventKey, group: String(group) });
+  const url = `${BASE_URL}/events/limited_item_rankings?${params.toString()}`;
+  const res = await fetch(url, { headers: headers(), signal: AbortSignal.timeout(TIMEOUT_MS), cache: "no-store" });
+  if (!res.ok) throw new WhowatchRankingApiError(res.status, `whowatch limited_item_rankings ${datedRankingType} → HTTP ${res.status}`);
+  const data = (await res.json()) as unknown;
+  const normalized = normalizeLimitedItemRankingResponse(data, datedRankingType);
+  if (!normalized) {
+    const code = data && typeof data === "object" ? String((data as Record<string, unknown>).error_code ?? "") : "";
+    throw new WhowatchRankingApiError(404, `whowatch limited_item_rankings ${datedRankingType} → ${code || "unexpected response"}`);
+  }
+  return normalized;
+}
+
+/**
+ * ランキングを取得する。
+ * - 従来の種別（autumncollection_1st_overall 等）: GET /rankings/{type}
+ * - 期間限定アイテム型（limited-item-{event_key}-{group}[-{YYYYMMDD}]）: 日付なしなら now（と window）からその日の日付を決め、
+ *   GET /events/limited_item_rankings を叩く。返す rankingType は日付つき（ranking_snapshots にその日の種別として残る）
+ */
 export async function getRankings(
   rankingType: string,
-  opts: { limit?: number; publisherId?: string | null } = {},
+  opts: { limit?: number; publisherId?: string | null; now?: Date; window?: { start: Date; end: Date } | null } = {},
 ): Promise<RankingResult> {
   if (!RANKING_TYPE_RE.test(rankingType)) throw new WhowatchRankingApiError(400, `invalid ranking_type: ${rankingType}`);
+  if (parseLimitedItemRankingType(rankingType)) {
+    const dated = resolveLimitedItemRankingType(rankingType, opts.now ?? new Date(), opts.window);
+    const p = parseLimitedItemRankingType(dated)!;
+    return getLimitedItemRankings(p.eventKey, p.group === "overall" ? 1 : p.group, p.period!, dated);
+  }
   const params = new URLSearchParams({ limit: String(opts.limit ?? 100), detail: "true" });
   if (opts.publisherId) params.set("publisher_id", opts.publisherId);
   const url = `${BASE_URL}/rankings/${encodeURIComponent(rankingType)}?${params.toString()}`;

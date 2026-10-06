@@ -15,11 +15,13 @@ import {
   flattenRankingChoices,
   getEventDetail,
   getEventLists,
+  getLimitedItemRankingsInit,
   getRankingStruct,
   getRules,
   type EventListItem,
   type RankingStruct,
 } from "./events";
+import { isLimitedItemPrefix, LIMITED_ITEM_STRUCT_KEY, limitedItemInitFromStruct, parseLimitedItemSchedule } from "./limited-item";
 import { resolveEventPeriods, type EventPeriod } from "./periods";
 import { capText, DB_LARGE_COLUMN_MAX_BYTES, describeDbError, sanitizeJson, sanitizeText, slimHtml } from "./sanitize";
 import { parseRules, RULES_PARSER_VERSION, type RulesParsed } from "./rules-parser";
@@ -204,7 +206,20 @@ export async function syncEventDetail(db: Db, eventKey: string, opts: SyncEventD
   // 構造 JSON: RANKING タブが無いイベントは「区分なし」として正常。404 も区分なし扱い（他のエラーは失敗）
   let struct: RankingStruct | null = null;
   let structNote: string | null = detail.rankingPrefix ? null : "区分なし（RANKING タブ無し）";
-  if (detail.rankingPrefix) {
+  const limitedItem = isLimitedItemPrefix(detail.rankingPrefix);
+  if (detail.rankingPrefix && limitedItem) {
+    // 期間限定アイテム型（limited-item-{event_key}・黄金発掘隊など・2026-10-07）: 構造 JSON は Z-002 で取れない。
+    // ふわっち Web 版が使う初期化 JSON（グループ K24〜K10・総合の有無）を struct に包んで保存し、区分の選択肢はそこから作る
+    try {
+      struct = { [LIMITED_ITEM_STRUCT_KEY]: await getLimitedItemRankingsInit(eventKey) };
+    } catch (e) {
+      if (e instanceof WhowatchEventApiError && e.status === 404) {
+        structNote = `区分なし（期間限定アイテム型の初期化 JSON が未公開: ${detail.rankingPrefix}）`;
+      } else {
+        throw new EventDetailSyncError("struct", eventKey, e);
+      }
+    }
+  } else if (detail.rankingPrefix) {
     try {
       struct = await getRankingStruct(detail.rankingPrefix);
     } catch (e) {
@@ -232,9 +247,15 @@ export async function syncEventDetail(db: Db, eventKey: string, opts: SyncEventD
   }
   const rulesText = rulesTextParts.length > 0 ? rulesTextParts.join("\n\n") : null;
 
-  const startedAt = listed?.startedAt ? new Date(listed.startedAt) : (row?.startedAt ?? null);
-  const endedAt = listed?.endedAt ? new Date(listed.endedAt) : (row?.endedAt ?? null);
-  const kind = computeEventKind(startedAt?.getTime() ?? null, endedAt?.getTime() ?? null);
+  // 期間限定アイテム型は /event_lists に started_at / ended_at が無い（黄金発掘隊・2026-10-07 実測）。
+  // 概要本文の日程「ランキング（N日目） YYYY年M月D日 00:00 〜 24:00」から全体期間を決める。終了は ended_at の慣例（23:59:59 JST）に合わせ、
+  // endTimeFromEndedAt（+1 秒）で翌 0:00 JST になるようにする
+  const schedule = limitedItem ? parseLimitedItemSchedule(rulesText, listed?.startedAt ? new Date(listed.startedAt).getUTCFullYear() : null) : null;
+  const startedAt = listed?.startedAt ? new Date(listed.startedAt) : (schedule?.startsAt ?? row?.startedAt ?? null);
+  const endedAt = listed?.endedAt ? new Date(listed.endedAt) : schedule?.endsAt ? new Date(schedule.endsAt.getTime() - 1000) : (row?.endedAt ?? null);
+  // デイリーのグループがある期間限定アイテム型は「毎日 0:00 区切り」なので、期間の長さに関係なく daily
+  const limitedInit = limitedItem ? limitedItemInitFromStruct(struct) : null;
+  const kind = limitedInit && limitedInit.groups.length > 0 ? "daily" : computeEventKind(startedAt?.getTime() ?? null, endedAt?.getTime() ?? null);
   const periods = computePeriods(rulesText, struct, startedAt, endedAt);
   const rulesParsed = rulesText ? parseRules(rulesText, new Date()) : null;
   const now = new Date();

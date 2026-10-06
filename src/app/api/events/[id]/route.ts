@@ -12,7 +12,8 @@ const patchScoreSchema = z.object({
 // E1b: イベント設定の編集（区分変更 → ranking_type と期間を更新）
 const patchSettingsSchema = z
   .object({
-    rankingType: z.string().min(1).max(200).regex(/^[a-z0-9_]+$/i).nullable().optional(),
+    // 2026-10-07: 期間限定アイテム型（limited-item-2026_10_gold_digger_1-2）はハイフンを含む。null で「自動判定に戻す」
+    rankingType: z.string().min(1).max(200).regex(/^[a-z0-9_-]+$/i).nullable().optional(),
     startTime: z.string().datetime().optional(),
     endTime: z.string().datetime().optional(),
     name: z.string().min(1).max(100).optional(),

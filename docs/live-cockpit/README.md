@@ -327,6 +327,63 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - 自動で入るのは「総合」。キャラ別やクラス別の順位で目標を立てる場合は、「区分・期間を編集」で選び直す(選んだ区分が優先され、自動設定は空の行にしか書かない)
 - 後半(2nd)に入っても、前半に入れた区分は自動では切り替えない(区分が空の行だけが対象)。後半の順位を追う場合は、設定画面で後半を選ぶ
 
+## E7: 期間限定アイテム型(limited-item・黄金発掘隊)のデイリーランキングと、必要個数の統計(実装済み・2026-10-07)
+
+社長指示「イベント機能がまだおかしい。デイリーイベントは 0:00 の 24 時間区切りである」「黄金発掘隊がおかしい。カテゴリーごとに自動的に入れて修正して」「仕様はイベント毎に違うので何個平均で必要かなどの情報をダッシュボードに出すこと。統計を駆使して現実的な解を」への対応。
+
+### 背景(本番で観測した症状と原因)
+
+- ふわっち黄金発掘隊(`2026_10_gold_digger_1`・id 1542)のシミュレーターが「ランキング区分が未設定です」のまま。5 分同期は区分を入れられず(`auto ranking_type skipped`)、順位が取れなかった
+- 原因: RANKING タブの detail が `limited-item-2026_10_gold_digger_1`。(1) 構造 JSON `/resources/json/rankings/{prefix}` は Z-002(無い) (2) `/rankings/{type}` は空配列 (3) `RANKING_TYPE_RE` と API のバリデーションがハイフンを拒否 (4) `/event_lists` に started_at / ended_at が無く、kind も期間も出ない。TODO.md に「gingiragin の `limited-item` 型は形が未確認」として残っていた型
+- ふわっち Web 版の実測(2026-10-07・ブラウザのネットワーク一覧・認証なし): `GET /events/limited_item_rankings_init?event_key=` と `GET /events/limited_item_rankings?period=YYYYMMDD|OVERALL&event_key=&group=N`。period は JST の日付で、デイリーは毎日 0:00 に切り替わる(開始前の日付・period 省略は Z-001、未来の日付は空配列。limit / page は無視)。グループは配信者グレード(K24・K20・K18・K14・K10 = group 1〜5)で毎日 0:00 に決まり、公開 API からは本人のグレードが分からない。総合は period=OVERALL・group=1。point は kg の数値
+
+### 設計
+
+- 種別の表し方: 保存は日付なし `limited-item-{event_key}-{group}` / `…-overall`。取得・記録(ranking_snapshots)は日付つき `…-{group}-{YYYYMMDD}` / `…-1-OVERALL`(ふわっち Web 版の URL と同じ形)。日付は取得する時に「今日(JST)」をシミュレーターの期間に収めて決める(1 日だけの期間なら翌日になってもその日の順位表)
+- グループの自動設定: 5 分同期が今日の各グループの順位表を順に見て、本人(ふわっち ID か表示名)が載っているグループを入れる。載っていなければ入れない(既定を K24 にすると違う順位表を追ってしまう)。同期中に本人が今の順位表に居なければ他のグループを探して付け替える(グレードが変わる日に備える)
+- 全体期間: 概要本文の「ランキング(N日目) YYYY年M月D日 00:00 〜 24:00」から。kind は daily。終了は ended_at の慣例(23:59:59 JST)に合わせ、endTime は翌 0:00 JST
+- 画面: 残り時間・予測・スナップショットは「今日の区切り」(0:00〜翌 0:00 JST とシミュレーター期間の重なり)で見る。前日のスナップショットは混ぜない(ペース推定が壊れる)。順位パネルの「抜かれた」「目標割れ」も別の日の表とは比べない
+- 必要個数の統計: ルール本文の表(黄金発掘隊は重量表、他は倍率表)から 1 個あたりの分布を作り、「必要 pt に達するまで 1 個ずつ引く」試行をモンテカルロで回して中央値と 90% タイルを出す。平均で割るだけだと、ばらつきの大きい表で楽観的になる(黄金発掘隊: 1 個 平均 約 85 kg・標準偏差 約 94 kg。1,000 kg 足りないとき平均 12 個・90% で 19 個前後)。開いた段「500 kg〜」は 500〜999 と仮定(出現率 0.1% で平均への影響は 1 kg 未満)
+
+### 追加・変更
+
+| 種別 | パス | 内容 |
+|---|---|---|
+| lib(新規) | `src/lib/whowatch/limited-item.ts` | 種別の解釈・組み立て、JST の日付境界、初期化 JSON の正規化とグループの選択肢、概要の日程の読み取り、今日の区切り、スナップショットの絞り込み |
+| lib(新規) | `src/lib/events/item-stats.ts` | 1 個あたりの分布(重量表・倍率表)、平均・標準偏差・分位点、必要個数のモンテカルロ |
+| lib | `src/lib/whowatch/events.ts` | `getLimitedItemRankingsInit`。`flattenRankingChoices` は limited-item の struct をグループの選択肢にする |
+| lib | `src/lib/whowatch/rankings.ts` | `RANKING_TYPE_RE` にハイフン。`getRankings` の分岐、`getLimitedItemRankings` / `normalizeLimitedItemRankingResponse`(point は整数に丸める) |
+| lib | `src/lib/whowatch/event-detail-sync.ts` | limited-item は初期化 JSON を `struct.limited_item` に保存。kind = daily。全体期間は概要の日程から |
+| lib | `src/lib/whowatch/ranking-sync.ts` | 日付つきの種別で記録。本人が居るグループへの付け替え。空の順位表の文言 |
+| lib | `src/lib/whowatch/auto-ranking-type.ts` | グループの自動判定 `decideLimitedItemRankingType`(1 回の同期で 2 件まで・グループ数ぶんの順位表取得) |
+| lib | `src/lib/whowatch/rules-parser.ts` | 重量表 `valueTable` / `valueUnit`。parserVersion 2(保存済みの rules_parsed は読み直し時に再解析) |
+| lib | `src/lib/whowatch/rank-forecast.ts` | `itemValue`(分布)があれば試行ごとに個数を数える。`itemsSource` / `itemsNeededMean` / `itemValue` を返す |
+| lib | `src/lib/live/rank-alert.ts` | `itemsNeededByDistribution`(順位パネル用の統計) |
+| route | `POST /api/events`・`PATCH /api/events/[id]` | rankingType にハイフンを許可。PATCH は null で「自動判定に戻す」 |
+| route | `GET /api/live/rank-status` | 前回スナップショットは同じ種別(同じ日)のときだけ比べる。`statsToTarget` / `statsToAbove` |
+| UI | `EventCreateForm`・`EventSettingsEditor` | limited-item は「グループ(配信者グレード)」+「自動判定」。デイリーの説明 |
+| UI | `EventDashboard`・`RankForecastPanel` | 今日の区切りで残り時間・予測。その日のスナップショットだけ使う。1 個あたりの平均・ばらつきと必要個数(平均/中央値/90%) |
+| UI | `RankAlertPanel` | 「統計・1 つ上を抜くには: 中央値 N 個・90% で M 個(1 個 平均 85kg ± 94)」 |
+| test | `limited-item.test.ts`・`item-stats.test.ts`・`rules-parser.value-table.test.ts`・`events.limited.test.ts`・`rankings.limited.test.ts`・`auto-ranking-type.limited.test.ts`・`ranking-sync.limited.test.ts`・`event-detail-sync.limited.test.ts`・`route.limited.test.ts` | 実応答の縮約をフィクスチャにした新規テスト |
+
+### 社長作業
+
+1. マージ → デプロイ後、黄金発掘隊のシミュレーターの「区分・期間を編集」で終了日時を 10/12 00:00 にすると、期間中は毎日 0:00 に当日の順位表へ自動で切り替わる(1 日だけの期間のままでも当日は動く)。グループは次の 5 分同期で自動設定される(本人が今日の順位表に載っていれば)
+2. `/live` の順位パネルに「統計」の行(中央値・90%)が出ることを確認
+
+### 動作確認手順
+
+1. `./node_modules/.bin/tsc --noEmit` / `./node_modules/.bin/vitest run` / `./node_modules/.bin/next build --webpack`(node_modules をジャンクションで流用した worktree では `pnpm exec` が再インストールを試みるので実行ファイルを直接呼ぶ)
+2. `GET /api/platforms/whowatch/events/2026_10_gold_digger_1` → `rankingChoices` が K24〜K10 + 総合(`limited-item-2026_10_gold_digger_1-1`〜`-5`・`-overall`)、`kind: "daily"`、`endTime: "2026-10-11T15:00:00.000Z"`
+3. デプロイ後 `pnpm exec wrangler tail tagdeck --format pretty` で `auto ranking_type assigned=…:limited-item-2026_10_gold_digger_1-2` が出る(本人が載っていれば)。載っていなければ `skipped=…:今日のランキングにまだ載っていない`
+4. `SELECT ranking_type, captured_at, my_rank, my_point FROM ranking_snapshots WHERE simulator_id = '<id>' ORDER BY captured_at DESC LIMIT 5;` → `limited-item-…-2-20261007` のように日付つき。0:00 を跨ぐと日付が変わる
+
+### 未確定・運用
+
+- 開いた段(500 kg〜)の上限は 999 と仮定(本文に無い)
+- グループの自動判定は本人が今日の順位表に載ってから。1 個も使われていない日は判定できない(前日の判定が残っていればそのまま使い、居なければ付け替えを試みる)。順位表の件数上限は未確認(実測 6〜59 件)
+- `WGP_RANKING` 型(whowatchgrandprix)は引き続き未対応(TODO.md)
+
 ## S2: SE プリセット(保存・共有・取り込み)(実装済み・2026-09-25 → **2026-09-26 廃止**)
 
 > 2026-09-26 社長指示「SE プリセットは不要。社長が SE を入れるたびに他の人にも同期する仕組みに」により、UI(SePresetPanel)・API(/api/se/presets*)・lib(presets*.ts)を削除した。同期は S4 の仕組み(運営アカウント = SE_DEFAULT_SOURCE_USER_ID の現在の割り当てを全員の既定にする)。読み直しは 開いたとき・5 分ごと・タブに戻ったとき(**2026-09-30 社長指示で同期状況のカードと「今すぐ同期」は外し、表示なしで自動同期**。S19)。se_presets テーブルは残置。以下は記録として残す。

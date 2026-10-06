@@ -5,14 +5,19 @@
 //      （event-detail-sync.ts の isDetailFresh: 構造が欠けている行は 10 分で古い扱い）
 //   2. シミュレーターの開始日時を含む区分（前半/後半）の「総合」を入れる（ranking-choice.ts pickDefaultRankingType。
 //      作成フォームの既定と同じ規則）。区分を入れた次の瞬間から、同じ回の同期の対象になる
+//   3. 期間限定アイテム型（limited-item・黄金発掘隊・2026-10-07 社長指示「カテゴリーごとに自動的に入れて」）: グループは配信者グレード
+//      （K24〜K10）で決まり、公開 API からは本人のグレードが分からない。今日の各グループの順位表を順に見て、本人が載っているグループを入れる。
+//      まだどこにも載っていなければ入れずに次回へ回す（既定を K24 にすると違うグループの順位を追ってしまう）
 // 利用者が後から別の区分を選べば、そちらが優先（ranking_type が空のものだけを書き換える）。
 
 import { and, asc, eq, gte, inArray, isNotNull, isNull, lte, ne, or } from "drizzle-orm";
 import type { createDbClient } from "@/lib/db/client";
-import { eventSimulators, whowatchEvents } from "@/lib/db/schema";
+import { eventSimulators, streamerProfiles, whowatchEvents } from "@/lib/db/schema";
 import { isUsableStruct, syncEventDetail, viewFromRow } from "./event-detail-sync";
 import { flattenRankingChoices } from "./events";
+import { buildLimitedItemRankingType, eventKeyFromLimitedItemPrefix, isLimitedItemPrefix, limitedItemInitFromStruct, type LimitedItemInit } from "./limited-item";
 import { pickDefaultRankingType, type PeriodLike } from "./ranking-choice";
+import { findMyEntry, getRankings, type RankingEntryApi } from "./rankings";
 
 type Db = ReturnType<typeof createDbClient>;
 
@@ -22,11 +27,21 @@ export const RANKING_EVENT_TYPES = ["ranking", "nice", "viewer"] as const;
 export const AUTO_ASSIGN_MAX_PER_RUN = 10;
 /** 1 回の 5 分同期で詳細を取り直すイベントの上限（1 件あたり外部 API 最大 5・DB 最大 4。Workers のサブリクエスト上限に余裕を残す） */
 export const AUTO_REPAIR_MAX_PER_RUN = 1;
+/** 1 回の 5 分同期で、期間限定アイテム型のグループ判定（グループ数ぶんの順位表取得）を行うシミュレーターの上限 */
+export const AUTO_LIMITED_SCAN_MAX_PER_RUN = 2;
 
 export interface AutoAssignTarget {
   id: string;
   startTime: Date;
   whowatchEventId: number;
+}
+
+/** 期間限定アイテム型のグループ判定に要る追加情報 */
+export interface AutoAssignLimitedTarget extends AutoAssignTarget {
+  endTime: Date;
+  /** 自分の特定（streamer_profiles.whowatch_user_id・event_simulators.my_entry_name） */
+  whowatchUserId: string | null;
+  myEntryName: string | null;
 }
 
 /** 区分を決めるのに使うイベントの詳細 */
@@ -46,7 +61,7 @@ export function needsDetailRepair(d: Pick<AssignDetail, "rankingPrefix" | "struc
   return !d.fetched || (Boolean(d.rankingPrefix) && !isUsableStruct(d.struct));
 }
 
-/** 純関数: シミュレーター 1 件とイベントの詳細から、入れる区分を決める */
+/** 純関数: シミュレーター 1 件とイベントの詳細から、入れる区分を決める（期間限定アイテム型は decideLimitedItemRankingType） */
 export function decideRankingType(sim: AutoAssignTarget, d: AssignDetail | null): AutoAssignDecision {
   if (!d || !d.fetched) return { id: sim.id, skip: "イベントの詳細が未取得" };
   if (!d.rankingPrefix) return { id: sim.id, skip: "このイベントにはランキング区分が無い" };
@@ -55,6 +70,31 @@ export function decideRankingType(sim: AutoAssignTarget, d: AssignDetail | null)
   const pick = pickDefaultRankingType(choices, d.periods, sim.startTime);
   if (!pick) return { id: sim.id, skip: "区分の選択肢が 0 件" };
   return { id: sim.id, rankingType: pick.rankingType, optionKey: pick.optionKey };
+}
+
+/** 種別（保存形）→ その日の順位表。テストで差し替えるため関数で受ける */
+export type LimitedItemLookup = (rankingType: string) => Promise<RankingEntryApi[]>;
+
+/**
+ * 期間限定アイテム型: 今日の各グループの順位表に本人が載っているかで区分を決める。
+ * ふわっち ID も表示名も無ければ判定できない。グループが無く総合だけのイベントは総合を入れる
+ */
+export async function decideLimitedItemRankingType(sim: AutoAssignLimitedTarget, rankingPrefix: string, init: LimitedItemInit, lookup: LimitedItemLookup): Promise<AutoAssignDecision> {
+  const eventKey = eventKeyFromLimitedItemPrefix(rankingPrefix);
+  if (init.groups.length === 0) {
+    return init.hasOverall
+      ? { id: sim.id, rankingType: buildLimitedItemRankingType(eventKey, "overall"), optionKey: "overall" }
+      : { id: sim.id, skip: "グループの選択肢が 0 件" };
+  }
+  if (!sim.whowatchUserId && !sim.myEntryName) return { id: sim.id, skip: "ふわっち ID が未設定のためグループを判定できない（設定 → プラットフォーム）" };
+  for (const g of init.groups) {
+    const type = buildLimitedItemRankingType(eventKey, g.id);
+    const entries = await lookup(type);
+    if (findMyEntry(entries, { whowatchUserId: sim.whowatchUserId, myEntryName: sim.myEntryName })) {
+      return { id: sim.id, rankingType: type, optionKey: String(g.id) };
+    }
+  }
+  return { id: sim.id, skip: "今日のランキングにまだ載っていない（載った時点でグループを自動設定）" };
 }
 
 export interface AutoAssignResult {
@@ -68,7 +108,14 @@ export interface AutoAssignResult {
 export async function autoAssignRankingTypes(db: Db, now: Date): Promise<AutoAssignResult> {
   const result: AutoAssignResult = { assigned: [], repaired: [], skipped: [] };
   const sims = await db
-    .select({ id: eventSimulators.id, startTime: eventSimulators.startTime, whowatchEventId: eventSimulators.whowatchEventId })
+    .select({
+      id: eventSimulators.id,
+      startTime: eventSimulators.startTime,
+      endTime: eventSimulators.endTime,
+      whowatchEventId: eventSimulators.whowatchEventId,
+      userId: eventSimulators.userId,
+      myEntryName: eventSimulators.myEntryName,
+    })
     .from(eventSimulators)
     .innerJoin(whowatchEvents, eq(whowatchEvents.id, eventSimulators.whowatchEventId))
     .where(
@@ -97,7 +144,18 @@ export async function autoAssignRankingTypes(db: Db, now: Date): Promise<AutoAss
     ]),
   );
 
+  // 本人のふわっち ID（利用者ごとに 1 回だけ読む）
+  const profileCache = new Map<string, string | null>();
+  const whowatchUserIdOf = async (userId: string): Promise<string | null> => {
+    if (profileCache.has(userId)) return profileCache.get(userId) ?? null;
+    const [p] = await db.select({ whowatchUserId: streamerProfiles.whowatchUserId }).from(streamerProfiles).where(eq(streamerProfiles.userId, userId)).limit(1);
+    const v = p?.whowatchUserId ?? null;
+    profileCache.set(userId, v);
+    return v;
+  };
+
   let repairAttempts = 0;
+  let limitedScans = 0;
   for (const sim of sims) {
     if (sim.whowatchEventId === null) continue;
     const entry = details.get(sim.whowatchEventId) ?? null;
@@ -113,7 +171,33 @@ export async function autoAssignRankingTypes(db: Db, now: Date): Promise<AutoAss
         console.warn("[auto-ranking-type] detail re-fetch failed", entry.eventKey, e instanceof Error ? e.message : String(e));
       }
     }
-    const d = decideRankingType({ id: sim.id, startTime: sim.startTime, whowatchEventId: sim.whowatchEventId }, entry?.detail ?? null);
+    const target: AutoAssignTarget = { id: sim.id, startTime: sim.startTime, whowatchEventId: sim.whowatchEventId };
+    let d: AutoAssignDecision;
+    const init = entry && entry.detail.fetched && isLimitedItemPrefix(entry.detail.rankingPrefix) ? limitedItemInitFromStruct(entry.detail.struct) : null;
+    if (entry && entry.detail.fetched && isLimitedItemPrefix(entry.detail.rankingPrefix)) {
+      if (!init) d = { id: sim.id, skip: "区分の構造がまだ取れていない" };
+      else if (limitedScans >= AUTO_LIMITED_SCAN_MAX_PER_RUN) d = { id: sim.id, skip: "今回のグループ判定の上限（次回の同期で判定）" };
+      else {
+        limitedScans++;
+        const window = { start: sim.startTime, end: sim.endTime };
+        const lookup: LimitedItemLookup = async (type) => {
+          try {
+            return (await getRankings(type, { limit: 100, now, window })).entries;
+          } catch (e) {
+            console.warn("[auto-ranking-type] limited-item lookup failed", type, e instanceof Error ? e.message : String(e));
+            return [];
+          }
+        };
+        d = await decideLimitedItemRankingType(
+          { ...target, endTime: sim.endTime, whowatchUserId: await whowatchUserIdOf(sim.userId), myEntryName: sim.myEntryName },
+          entry.detail.rankingPrefix as string,
+          init,
+          lookup,
+        );
+      }
+    } else {
+      d = decideRankingType(target, entry?.detail ?? null);
+    }
     if ("skip" in d) {
       result.skipped.push({ id: sim.id, reason: d.skip });
       continue;

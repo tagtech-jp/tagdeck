@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { estimatePaceParameters } from "@/lib/events/monte-carlo";
+// 1 個あたりの獲得量の分布（重量表・倍率表）から「あと何個」を統計で出す（2026-10-07）
+import { distributionFromMultiplierTable, distributionFromValueTable, summarizeItemValue } from "@/lib/events/item-stats";
 import { forecastRank, rivalKey, type RankForecastOutput, type SnapshotLike } from "@/lib/whowatch/rank-forecast";
 import type { RankingSnapshotRow } from "@/hooks/useRankingSnapshots";
 
@@ -24,6 +26,9 @@ interface RulesParsed {
   expectedMultiplier: number | null;
   multiplierTable: Array<{ probability: number; multiplier: number }> | null;
   freeItem: { perDay: number; perGroup: boolean; hit: { probability: number; multiplier: number } | null } | null;
+  /** 獲得量の表（重量表・2026-10-07・黄金発掘隊「0.1% で 500 kg〜」）。倍率表型のイベントは null */
+  valueTable?: Array<{ label: string | null; probability: number; min: number; max: number | null; bonusPoint: number | null }> | null;
+  valueUnit?: string | null;
 }
 
 interface Props {
@@ -90,6 +95,14 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
   const expectedMultiplier = rules?.expectedMultiplier ?? null;
   const knownBase = itemPoints.find((p) => p.itemId === selectedItem)?.basePoint ?? null;
   const basePoint = basePointInput !== "" ? Number(basePointInput) : knownBase;
+  // 1 個あたりの獲得量の分布（2026-10-07）: 重量表（黄金発掘隊）があればそれ。無ければ倍率表 × 基礎 pt（基礎 pt が要る）
+  const itemValue = useMemo(
+    () =>
+      distributionFromValueTable(rules?.valueTable ?? null, rules?.valueUnit ?? null) ??
+      distributionFromMultiplierTable(rules?.multiplierTable ?? null, basePoint && basePoint > 0 ? basePoint : null),
+    [rules, basePoint],
+  );
+  const itemValueSummary = useMemo(() => (itemValue ? summarizeItemValue(itemValue) : null), [itemValue]);
 
   const forecast: RankForecastOutput | null = useMemo(() => {
     if (!snapshots || snapshots.length === 0) return null;
@@ -111,11 +124,13 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
       eventStart: new Date(startTime),
       itemBasePoint: basePoint && basePoint > 0 ? basePoint : null,
       expectedMultiplier: expectedMultiplier ?? 1,
+      // 分布があれば試行ごとに「必要 pt に達するまで引く」個数を数える（ばらつき込みの中央値・90%）
+      itemValue,
       myKey,
     });
     // tick で 5 分毎に再計算（残り時間の更新）
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [snapshots, targetRank, startTime, endTime, basePoint, expectedMultiplier, tick]);
+  }, [snapshots, targetRank, startTime, endTime, basePoint, expectedMultiplier, itemValue, tick]);
 
   const handleTargetRank = async (rank: number) => {
     setTargetRank(rank);
@@ -231,6 +246,7 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
               <div className="font-mono text-foreground">
                 {forecast.itemsNeeded ? `${fmt(forecast.itemsNeeded.p50)} / ${fmt(forecast.itemsNeeded.p90)} 個` : "基礎 pt 未設定"}
               </div>
+              {forecast.itemsNeededMean !== null && <div className="text-muted-foreground">平均で割ると {forecast.itemsNeededMean.toLocaleString(undefined, { maximumFractionDigits: 1 })} 個</div>}
             </div>
             <div className="rounded-lg bg-muted px-3 py-2">
               <div className="text-muted-foreground">1 日あたり（中央値 / 90%）</div>
@@ -239,6 +255,17 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
               </div>
             </div>
           </div>
+          {itemValueSummary && (
+            // 2026-10-07: 1 個あたりの獲得量の統計（ルール本文の表から）。必要個数はこの分布で「足りるまで引く」試行の中央値・90%
+            <p className="text-xs text-muted-foreground">
+              1 個あたり: 平均 {fmt(itemValueSummary.mean)}
+              {itemValueSummary.unit ?? ""}・中央値 {fmt(itemValueSummary.median)}
+              {itemValueSummary.unit ?? ""}・ばらつき（標準偏差）{fmt(itemValueSummary.sd)}
+              {itemValueSummary.unit ?? ""}・上位 10% は {fmt(itemValueSummary.p90)}
+              {itemValueSummary.unit ?? ""} 以上。必要個数はこの表で「足りるまで 1 個ずつ引く」試行の中央値と 90% タイル（平均で割るだけより現実的）
+              {itemValue?.kind === "range" && "。範囲内は一様、上限の無い段は下限の 2 倍までと仮定"}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground">
             {forecast.note}
             {forecast.usedFinalDayCoefficient && `。最終日はペース ×${forecast.finalDayCoefficient}（仮置き・要確認）`}
@@ -314,7 +341,9 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
         </div>
         {msg && <p className="text-xs text-muted-foreground">{msg}</p>}
         <p className="text-xs text-muted-foreground">
-          必要個数 = ceil(必要 pt ÷ (基礎 pt × 期待倍率))。基礎 pt は公式本文に無いため手入力（全ユーザー共有）。「実測から推定」は自分のスナップショット間の pt 増分 ÷ その間のギフト個数（ギフト保存は S1 以降）
+          {itemValue?.kind === "range"
+            ? `このイベントはルール本文の表（1 個あたりの獲得量 ${itemValue.unit ?? ""}）から必要個数を出すため、基礎 pt の入力は要りません。`
+            : "必要個数は、基礎 pt × 当たり倍率表の分布で「足りるまで引く」試行の中央値・90%（倍率表が無ければ ×1）。基礎 pt は公式本文に無いため手入力（全ユーザー共有）。「実測から推定」は自分のスナップショット間の pt 増分 ÷ その間のギフト個数（ギフト保存は S1 以降）"}
         </p>
       </div>
     </div>
