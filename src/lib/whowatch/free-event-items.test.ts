@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildFreeItemGroupRows, eventKeyFromImageUrl } from "./free-event-items";
+import { buildFreeItemGroupRows, eventKeyFromImageUrl, eventSuffix } from "./free-event-items";
 import type { RawCategory } from "./item-groups-sync";
 
 const NOW = new Date("2026-09-26T00:00:00Z");
@@ -43,6 +43,20 @@ describe("buildFreeItemGroupRows", () => {
       [13097, "wolfcoming", true, "2026_09_wolfcoming"],
     ]);
     expect(rows[0]).toMatchObject({ groupTitle: "オータムグッズ", displayOrder: 2 });
+  });
+  it("毎年のイベントが前の年の画像を使い回しても、開催中のイベントに付ける（2026-10-07 実例 2026_10_art）", () => {
+    const art: RawCategory[] = [...categories, { group: "art2026", title: "芸術の秋", display_order: 3, play_item: [{ id: 13200 }] }];
+    const byKey = new Map([...eventGroupByKey, ["2026_10_art", "art2026"]]);
+    const old = [{ itemId: 10122, imageUrl: "https://img.whowatch.tv/events/2022/10_art/item_brush.png" }];
+    const rows = buildFreeItemGroupRows({ patterns: old, pricedItemIds: new Set(), eventGroupByKey: byKey, categories: art }, NOW);
+    expect(rows.map((r) => [r.itemId, r.groupKey, r.eventKey])).toEqual([[10122, "art2026", "2026_10_art"]]);
+    // 同じ MM_key のイベントが無ければ付けない
+    expect(buildFreeItemGroupRows({ patterns: old, pricedItemIds: new Set(), eventGroupByKey, categories }, NOW)).toEqual([]);
+  });
+  it("eventSuffix は年を外した MM_key を返す", () => {
+    expect(eventSuffix("2026_10_art")).toBe("10_art");
+    expect(eventSuffix("whowatch_dojo")).toBeNull();
+    expect(eventSuffix(null)).toBeNull();
   });
   it("カテゴリが payments3 に無い（終了）イベントには付けない", () => {
     const rows = buildFreeItemGroupRows({ patterns, pricedItemIds: new Set(), eventGroupByKey: new Map([["2024_03_gotochi2024", "gotochi2024"]]), categories }, NOW);

@@ -390,6 +390,23 @@ class TestBuildItemRows:
         rows = sut.build_item_rows(self._payments3(), self._master(), set(), "t")
         assert "10863" not in {r["item_id"] for r in rows}
 
+    def test_free_items_of_yearly_event_reusing_old_images(self):
+        # 2026-10-07 実例: 開催中の 2026_10_art の無料アイテムの画像が events/2022/10_art/ にあった（毎年のイベントの使い回し）
+        brush = {"id": 10122, "name": "ブラシ", "play_item_pattern": [{"image_url": "https://img.whowatch.tv/events/2022/10_art/item_brush.png"}]}
+        rows = sut.build_item_rows(self._payments3(), self._master() + [brush], {"2026_10_art"}, "t")
+        by_id = {r["item_id"]: r for r in rows}
+        assert by_id["10122"]["state"] == "FREE" and by_id["10122"]["price_jpy"] == 0
+        # 開催中に同じ MM_key のイベントが無ければ、これまでどおり作らない（過去イベントの無料アイテムは価格不明）
+        rows = sut.build_item_rows(self._payments3(), self._master() + [brush], {"2026_09_wolfcoming"}, "t")
+        assert "10122" not in {r["item_id"] for r in rows}
+        assert "13083" not in {r["item_id"] for r in rows}   # 08_autumn は 09_wolfcoming と別のイベント
+
+    def test_event_suffix(self):
+        assert sut.event_suffix("2026_10_art") == "10_art"
+        assert sut.event_suffix("2022_10_art") == "10_art"
+        assert sut.event_suffix("whowatch_dojo") is None
+        assert sut.event_suffix(None) is None
+
     def test_other_items_in_undated_event_folders_stay_out(self):
         other = {"id": 10864, "name": "別のメガホン", "play_item_pattern": [{"image_url": "https://img.whowatch.tv/events/whowatch_megaphone/other.png"}]}
         rows = sut.build_item_rows(self._payments3(), [self.MEGAPHONE, other], {"2026_09_wolfcoming"}, "t")
