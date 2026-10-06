@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 // 区分の絞り込みと既定（総合 → 先頭）は 5 分同期の自動設定と共通（2026-10-01）
 import { choicesForOption, defaultChoice } from "@/lib/whowatch/ranking-choice";
 // 期間限定アイテム型（limited-item・黄金発掘隊）: グループは配信者グレードで決まり、既定は置かない（空 = 自動判定・2026-10-07）
-import { isLimitedItemPrefix } from "@/lib/whowatch/limited-item";
+import { dailySimulatorWindow, isLimitedItemPrefix } from "@/lib/whowatch/limited-item";
 import { Check } from "lucide-react";
 
 type EventType = "score" | "ranking" | "nice" | "viewer";
@@ -40,6 +40,8 @@ interface EventPeriod {
 interface WhowatchEventDetail {
   name: string;
   kind: "daily" | "long" | null;
+  /** 全体の開始（/event_lists に無いイベントは概要の日程から。無ければ null） */
+  startedAt: string | null;
   endTime: string | null; // ended_at + 1 秒（翌日 00:00:00 JST）
   rankingPrefix: string | null;
   rankingChoices: RankingChoice[];
@@ -101,6 +103,24 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
   // E1b: 選択中の区分（periods がある時のみ）
   const [periodKey, setPeriodKey] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
+  // デイリー（毎日 0:00 区切り・期間限定アイテム型など）の期間の入れ方（2026-10-07 社長指示「開始時間と終了時間も自動的に修正して 24 時間で」）:
+  //   "day" = 今日の 0:00〜翌 0:00 JST（既定・イベント期間に収める）、"full" = イベント全期間
+  const [periodMode, setPeriodMode] = useState<"day" | "full">("day");
+  const isDailyEvent = Boolean(eventDetail && eventDetail.kind === "daily" && eventDetail.periods.length === 0);
+  const applyDailyWindow = (d: WhowatchEventDetail, mode: "day" | "full", fallbackStart: string | null) => {
+    setPeriodMode(mode);
+    const boundsStart = d.startedAt ?? fallbackStart;
+    const start = boundsStart ? new Date(boundsStart) : null;
+    const end = d.endTime ? new Date(d.endTime) : null;
+    if (mode === "full") {
+      if (start && !isNaN(start.getTime())) setStartTime(toLocalDatetimeValue(start.toISOString()));
+      if (end && !isNaN(end.getTime())) setEndTime(toLocalDatetimeValue(end.toISOString()));
+      return;
+    }
+    const w = dailySimulatorWindow(new Date(), { start, end });
+    setStartTime(toLocalDatetimeValue(w.start.toISOString()));
+    setEndTime(toLocalDatetimeValue(w.end.toISOString()));
+  };
 
   const applyPeriod = (d: WhowatchEventDetail, key: string | null) => {
     setPeriodKey(key);
@@ -170,6 +190,8 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
         const detail: WhowatchEventDetail = { ...d, periods: d.periods ?? [], rankingChoices: d.rankingChoices ?? [] };
         setEventDetail(detail);
         if (detail.name) setEventName(detail.name);
+        // /event_lists に日付が無いイベント（黄金発掘隊）は詳細側（概要の日程）の開始・終了を使う
+        if (detail.startedAt && !autoStart) setStartTime(toLocalDatetimeValue(detail.startedAt));
         if (detail.endTime) setEndTime(toLocalDatetimeValue(detail.endTime));
         if (detail.rankingChoices.length > 0) setEventType("ranking");
         if (detail.periods.length > 0) {
@@ -180,6 +202,8 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
           applyPeriod(detail, (current ?? upcoming ?? detail.periods[0]).option_key);
         } else {
           applyPeriod(detail, null);
+          // デイリー（毎日 0:00 区切り）は「今日の 24 時間」を既定にする（ボタンでイベント全期間にも切り替えられる）
+          if (detail.kind === "daily") applyDailyWindow(detail, "day", ev.startedAt);
         }
       })
       .catch(() => {
@@ -524,12 +548,39 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
         </>
       )}
 
+      {/* デイリー（毎日 0:00 区切り）: 期間を「今日の 24 時間」か「イベント全期間」でワンタップ切り替え（2026-10-07） */}
+      {isDailyEvent && eventDetail && (
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-muted-foreground">デイリー（毎日 0:00 区切り）の期間:</span>
+          <button
+            type="button"
+            onClick={() => applyDailyWindow(eventDetail, "day", selectedWhowatchEvent?.startedAt ?? null)}
+            aria-pressed={periodMode === "day"}
+            className={`min-h-8 rounded-full border px-3 ${periodMode === "day" ? "border-primary bg-primary/10 text-primary" : "border-border bg-muted text-foreground"}`}
+          >
+            今日の 24 時間（0:00〜翌 0:00）
+          </button>
+          {(eventDetail.startedAt ?? selectedWhowatchEvent?.startedAt) && eventDetail.endTime && (
+            <button
+              type="button"
+              onClick={() => applyDailyWindow(eventDetail, "full", selectedWhowatchEvent?.startedAt ?? null)}
+              aria-pressed={periodMode === "full"}
+              className={`min-h-8 rounded-full border px-3 ${periodMode === "full" ? "border-primary bg-primary/10 text-primary" : "border-border bg-muted text-foreground"}`}
+            >
+              イベント全期間（{new Date((eventDetail.startedAt ?? selectedWhowatchEvent?.startedAt) as string).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}〜
+              {new Date(eventDetail.endTime).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}）
+            </button>
+          )}
+        </div>
+      )}
+
       {/* 期間（R6: whowatchの実測値がある場合は入力欄を隠し自動設定。無い場合のみ手動入力） */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-xs text-muted-foreground">
             開始日時
             {autoPeriodApplied && <span className="ml-1 text-primary">（区分から自動設定・手修正可）</span>}
+            {isDailyEvent && <span className="ml-1 text-primary">（{periodMode === "day" ? "今日の 0:00 に自動設定" : "イベント開始に自動設定"}・手修正可）</span>}
           </label>
           {autoStartAvailable ? (
             <div className="min-h-11 w-full content-center rounded-sm bg-muted px-3 py-2 text-sm text-foreground">
@@ -550,6 +601,7 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
           <label className="mb-1 block text-xs text-muted-foreground">
             終了日時
             {autoPeriodApplied && <span className="ml-1 text-primary">（区分から自動設定・手修正可）</span>}
+            {isDailyEvent && <span className="ml-1 text-primary">（{periodMode === "day" ? "翌 0:00 に自動設定" : "イベント終了に自動設定"}・手修正可）</span>}
           </label>
           {autoEndAvailable ? (
             <div className="min-h-11 w-full content-center rounded-sm bg-muted px-3 py-2 text-sm text-foreground">
@@ -565,7 +617,7 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
                 required
                 className="min-h-11 w-full rounded-sm bg-muted px-3 py-2 text-sm text-foreground"
               />
-              {platform === "whowatch" && selectedWhowatchEventId && (
+              {platform === "whowatch" && selectedWhowatchEventId && !autoPeriodApplied && !isDailyEvent && !eventDetail?.endTime && (
                 <p className="mt-1 text-xs text-status-warning">
                   whowatchが終了時刻を公開していないため手動設定です(要確認)
                 </p>
