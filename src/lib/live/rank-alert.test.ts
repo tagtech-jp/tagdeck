@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeRankStatus, type RankEntryLite, type RankSnapshotLite } from "./rank-alert";
+import { computeRankStatus, itemsNeeded, type RankEntryLite, type RankSnapshotLite } from "./rank-alert";
 
 const e = (rank: number, point: number, name: string): RankEntryLite => ({ rank, point, user_id: name, user_path: null, name });
 const snap = (min: number, myRank: number | null, myPoint: number | null, entries: RankEntryLite[]): RankSnapshotLite => ({ capturedAt: new Date(Date.UTC(2026, 9, 5, 12, min)), myRank, myPoint, entries });
@@ -47,5 +47,29 @@ describe("computeRankStatus", () => {
 
   it("自分の順位が取れていなければ null", () => {
     expect(computeRankStatus(snap(0, null, null, [e(1, 100, "A")]), null, 1)).toBeNull();
+  });
+});
+
+describe("itemsNeeded（足りない pt をアイテムの個数に換算）", () => {
+  const items = [
+    { name: "どんぐり", basePoint: 10 },
+    { name: "花火", basePoint: 1000 },
+    { name: "ぶたさん", basePoint: 160 },
+    { name: "風船", basePoint: 100 },
+    { name: "不明", basePoint: 0 },
+  ];
+  it("pt が大きい順に 3 つ、切り上げで個数を出す", () => {
+    expect(itemsNeeded(1500, items, null)).toEqual([
+      { name: "花火", count: 2 },
+      { name: "ぶたさん", count: 10 },
+      { name: "風船", count: 15 },
+    ]);
+  });
+  it("当たり倍率の期待値で割る", () => {
+    expect(itemsNeeded(1500, [{ name: "花火", basePoint: 1000 }], 1.5)).toEqual([{ name: "花火", count: 1 }]);
+  });
+  it("足りていない pt が 0 以下なら空", () => {
+    expect(itemsNeeded(0, items, null)).toEqual([]);
+    expect(itemsNeeded(-100, items, null)).toEqual([]);
   });
 });

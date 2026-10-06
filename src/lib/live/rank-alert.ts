@@ -103,3 +103,31 @@ export function computeRankStatus(latest: RankSnapshotLite, prev: RankSnapshotLi
 
   return { capturedAt: latest.capturedAt.toISOString(), myRank, myPoint, above, below, target, alerts };
 }
+
+/** 順位パネルに出す「あと◯個」の換算に使うアイテム数（1 個あたりの pt が大きい順） */
+export const ITEMS_NEEDED_LIMIT = 3;
+
+export interface ItemPointLite {
+  name: string;
+  /** そのイベントでの 1 個あたりの基礎 pt（event_item_points.base_point） */
+  basePoint: number;
+}
+
+export interface ItemsNeeded {
+  name: string;
+  count: number;
+}
+
+/**
+ * 足りない pt を「アイテムあと◯個」に換算する（2026-10-06 社長指示）。
+ * 1 個あたり = 基礎 pt × 当たり倍率の期待値（ルールから。無ければ 1）。pt が大きい順に ITEMS_NEEDED_LIMIT 個まで
+ */
+export function itemsNeeded(gap: number, items: readonly ItemPointLite[], multiplier: number | null): ItemsNeeded[] {
+  if (!(gap > 0)) return [];
+  const mult = multiplier !== null && multiplier > 0 ? multiplier : 1;
+  return items
+    .filter((it) => it.basePoint > 0)
+    .sort((a, b) => b.basePoint - a.basePoint)
+    .slice(0, ITEMS_NEEDED_LIMIT)
+    .map((it) => ({ name: it.name, count: Math.ceil(gap / (it.basePoint * mult)) }));
+}
