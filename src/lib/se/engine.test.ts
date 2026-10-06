@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createMasterOutput, MASTER_BOOST, resumeWithTimeout } from "./engine";
+import { createMasterOutput, MASTER_BOOST, resumeWithTimeout, scheduleCut, SE_FADE_OUT_S } from "./engine";
 
 describe("resumeWithTimeout（無音後の復帰）", () => {
   it("running ならそのまま true", async () => {
@@ -53,5 +53,30 @@ describe("全体の音量（2026-09-30 社長指示「音を全体的に3倍に�
     const destination = node("destination");
     const out = createMasterOutput({ destination, createGain: () => node("gain", { gain: param() }) } as never) as unknown as FakeNode;
     expect(out.to[0]).toBe(destination);
+  });
+});
+
+describe("scheduleCut（待ち行列が詰まったら長い音を短く切る）", () => {
+  const fakes = () => {
+    const calls: string[] = [];
+    const src = { stop: (t?: number) => void calls.push(`stop@${t}`) };
+    const gain = {
+      setValueAtTime: (v: number, t: number) => (calls.push(`set ${v}@${t}`), gain),
+      linearRampToValueAtTime: (v: number, t: number) => (calls.push(`ramp ${v}@${t}`), gain),
+    };
+    return { calls, src, gain };
+  };
+
+  it("音源が上限より長ければ、上限の手前からフェードアウトして止める", () => {
+    const { calls, src, gain } = fakes();
+    expect(scheduleCut(src as never, gain as never, 10, 0.8, 9.5, 2)).toBe(2);
+    expect(calls).toEqual([`set 0.8@${10 + 2 - SE_FADE_OUT_S}`, "ramp 0@12", "stop@12.02"]);
+  });
+
+  it("上限なし・上限より短い音源は何もしない", () => {
+    const { calls, src, gain } = fakes();
+    expect(scheduleCut(src as never, gain as never, 0, 0.8, 9.5, null)).toBe(9.5);
+    expect(scheduleCut(src as never, gain as never, 0, 0.8, 1.5, 2)).toBe(1.5);
+    expect(calls).toEqual([]);
   });
 });

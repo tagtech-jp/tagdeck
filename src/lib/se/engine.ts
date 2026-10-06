@@ -12,6 +12,30 @@ export interface SePlayOptions {
   volume?: number;
   /** カスタム音源 URL（mp3/ogg/wav）。無ければ合成 */
   url?: string | null;
+  /** これより長い音源は、この秒数でフェードアウトして止める（待ち行列が詰まったとき・2026-10-06）。無ければ最後まで */
+  maxSeconds?: number | null;
+}
+
+/** maxSeconds で切るときのフェードアウトの長さ（秒） */
+export const SE_FADE_OUT_S = 0.25;
+
+/**
+ * 待ち行列が詰まっているとき、長い音源を maxSeconds でフェードアウトして止める予約をする（2026-10-06）。
+ * 返り値は実際に鳴る秒数（切らないなら音源の長さ）
+ */
+export function scheduleCut(
+  src: Pick<AudioBufferSourceNode, "stop">,
+  gain: Pick<AudioParam, "setValueAtTime" | "linearRampToValueAtTime">,
+  startAt: number,
+  volume: number,
+  duration: number,
+  maxSeconds: number | null,
+): number {
+  if (maxSeconds === null || maxSeconds <= 0 || duration <= maxSeconds) return duration;
+  gain.setValueAtTime(volume, startAt + Math.max(0, maxSeconds - SE_FADE_OUT_S));
+  gain.linearRampToValueAtTime(0, startAt + maxSeconds);
+  src.stop(startAt + maxSeconds + 0.02);
+  return maxSeconds;
 }
 
 let ctx: AudioContext | null = null;
@@ -290,7 +314,7 @@ export async function preloadSe(urls: Array<string | null | undefined>): Promise
  * （連続ギフトで前の音が終わってから次を鳴らすため。2026-09-25: 200ms ずらしで重ねると
  *  長めの音源では 2 発目以降が 1 発目に埋もれて「連続で鳴らない」ように聞こえた）
  */
-export async function playUrl(url: string, volume = 0.8): Promise<{ ended: Promise<void> } | null> {
+export async function playUrl(url: string, volume = 0.8, maxSeconds: number | null = null): Promise<{ ended: Promise<void> } | null> {
   const c = getAudioContext();
   if (!c) return null;
   await ensureAudioRunning();
@@ -300,14 +324,18 @@ export async function playUrl(url: string, volume = 0.8): Promise<{ ended: Promi
     const src = c.createBufferSource();
     src.buffer = buf;
     const g = c.createGain();
-    g.gain.value = Math.max(0, Math.min(1, volume));
+    const v = Math.max(0, Math.min(1, volume));
+    g.gain.value = v;
     src.connect(g).connect(masterOutput(c));
+    const t = c.currentTime;
+    src.start(t);
+    const playSeconds = scheduleCut(src, g.gain, t, v, buf.duration, maxSeconds);
     const ended = new Promise<void>((resolve) => {
       src.onended = () => resolve();
       // onended が来ない環境の保険（長さ + 少し）
-      setTimeout(resolve, Math.ceil((buf.duration + 0.1) * 1000));
+      setTimeout(resolve, Math.ceil((playSeconds + 0.1) * 1000));
     });
-    src.start();
+
     // await で入れ子の Promise が潰れないようオブジェクトで包む
     return { ended };
   } catch {
@@ -369,13 +397,14 @@ export async function playSeUntilEnd(tier: SeTier, opts: SePlayOptions = {}, wai
   // 無音が続いて suspended / interrupted になっていたら鳴らす前に戻す
   await ensureAudioRunning();
   let ended: Promise<void> | null = null;
-  if (opts.url) ended = (await playUrl(opts.url, vol))?.ended ?? null;
+  const max = opts.maxSeconds ?? null;
+  if (opts.url) ended = (await playUrl(opts.url, vol, max))?.ended ?? null;
   // 2026-09-29 社長指示「既定の SE も Web Audio を使わず素材から」: 音源が無い・取れないときは素材ライブラリの
   // 価格帯セット（public/se/lib/tier-*・hit のミックス）から鳴らす。取れなければ同じセットの別の 1 本を試す
   for (let i = 0; !ended && i < 2; i++) {
     const fb = libraryFallbackUrl(tier);
     if (!fb || fb === opts.url) continue;
-    ended = (await playUrl(fb, vol))?.ended ?? null;
+    ended = (await playUrl(fb, vol, max))?.ended ?? null;
   }
   if (!ended) {
     // 非常用: 素材が 1 本も取得できない（オフライン等）ときだけ合成音。無音よりは気付けるため残す

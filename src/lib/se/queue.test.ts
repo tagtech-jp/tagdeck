@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createSeQueue, SE_QUEUE_LIMIT } from "./queue";
+import { createSeQueue, maxSecondsForBacklog, SE_QUEUE_LIMIT } from "./queue";
 
 /** 待ち時間は即解決にして順序と回数だけを見る */
 const noSleep = async () => {};
@@ -170,5 +170,16 @@ describe("createSeQueue の keep（上限を超えても捨てない要素）", 
     queue.push(["a", "b", "c", "d"]);
     await flush();
     expect(played).toEqual(["a", "b"]);
+  });
+});
+
+describe("maxSecondsForBacklog（待ち行列がたまったら 1 音を短くする）", () => {
+  it("2 件までは切らず、3〜5 件は 2 秒、6 件以上は 1.2 秒", () => {
+    expect(maxSecondsForBacklog(0)).toBeNull();
+    expect(maxSecondsForBacklog(2)).toBeNull();
+    expect(maxSecondsForBacklog(3)).toBe(2);
+    expect(maxSecondsForBacklog(5)).toBe(2);
+    expect(maxSecondsForBacklog(6)).toBe(1.2);
+    expect(maxSecondsForBacklog(40)).toBe(1.2);
   });
 });
