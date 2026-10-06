@@ -404,7 +404,8 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
   - WGP: `wgp-daily` → `wgp-daily-YYYYMMDD`、`wgp-overall` → `wgp-overall-YYYYMM`
   - N-1: `n1-male` / `n1-female` / `n1-rookie` → `n1-{部門}-YYYYMM-{1st|2nd|3rd}`、`n1-total` → `n1-total-YYYYMM`
   - 期間は `src/lib/whowatch/periodic-ranking.ts` の**切り替え方(scheme)**で決める: `daily`(毎日 0:00 JST)・`n1round`(1 日/11 日/21 日の 0:00)・`monthly`(月初 0:00)・`whole`(切り替えなし。limited-item の総合)。E7 の limited-item も同じ層から扱う(`parsePeriodicRankingType` が 3 家族を解釈)
-- **区分の既定と自動判定**: WGP は選択肢が固定(デイリー / 月間総合)で既定はデイリー(5 分同期の自動設定も同じ)。N-1 は部門が属性で決まるので limited-item と同じく既定を置かず(空 = 自動判定)、5 分同期が今の回の男性 → 女性 → ルーキーの順位表を見て本人が載っている部門を入れる。全期間は自動では入れない(利用者が選ぶ)。同期中に本人が今の部門に居なければ他の部門を探して付け替える(limited-item のグループ付け替えと同じ経路 `findMySiblingDivision`)。WGP は付け替えない
+- **区分の既定と自動判定**: WGP は選択肢が固定(デイリー / 月間総合)で既定はデイリー(5 分同期の自動設定も同じ)。N-1 は部門が属性で決まるので limited-item と同じく既定を置かず(空 = 自動判定)、5 分同期が **(1) ルーキー部門の順位表に本人の行があればルーキー → (2) 公開プロフィールの性別(男性 / 女性)があればその部門 → (3) 性別が未設定なら男女の順位表に本人の行があるか** の順で入れる(同日の社長報告「部門が自動判定のままで入らない」= 本人が上位 100 名の外で、順位表だけでは判定できなかった。下記「publisher_id」も参照)。全期間は自動では入れない(利用者が選ぶ)。同期中に本人が今の部門に居なければ他の部門を探して付け替える(limited-item のグループ付け替えと同じ経路 `findMySiblingDivision`)。WGP は付け替えない
+- **publisher_id と公開プロフィール(2026-10-07 同日追記)**: `/rankings/{type}[/{YYYYMM}]` と `/events/limited_item_rankings` に `publisher_id=<本人の数値 ID>` を付けると、本人が一覧(上位 100 名)の外でも応答の `publisher_ranking` に本人の行(rank・point・next_rank・ranking_up_point)が返る(実測: 男性部門 570 位・4 pt。本人の記録が無い部門では `publisher_ranking` 自体が無い。WGP は非対応)。数値 ID と性別は公開プロフィール `GET /users/{path}/profile`(`user_id`・`gender` = "男性" / "女性" / "未設定"。prefix 無しの ID は `w:` → `t:` の候補を試す)から取る(`src/lib/whowatch/profile.ts`・10 分キャッシュ)。5 分同期は publisher_id 付きで取得し、`findMyEntry` が一覧に居ない本人を `publisher` で見つけて my_rank / my_point を記録する(E2 からの要確認「圏外で順位が取れない」の解消)。プロフィールが取れないときは従来どおり一覧だけで判定する
 - **期間の自動進行**(`daily-roll.ts`。関数名は日替わり時代のまま): 種別(空なら紐付けイベントの prefix)から切り替え方を決め、1 期間ぶん(日替わり 36 時間・回 12 日・月 32 日以下)のシミュレーターが終了日時を過ぎていたら今の期間へ進める。WGP デイリーはイベントが long(1 か月)でも日替わりで進む。N-1 は常設なのでイベントの終了(whowatch_events には「今月」が入るだけ)を見ず、3 回目の後は翌月の 1 回目へ、全期間は翌月へ進む。見る範囲は終了から 7 日以内
 - **イベントの期間**: WGP は event_key の開催月(1 日 0:00 〜 翌月 1 日 0:00 JST)、N-1 は今月。`viewFromRow` でも規則を優先する(一覧同期が日付を持たない・DB に前の月が残っていても正しい)。kind は長さどおり long(デイリーの動きは種別で決まる)。struct は固定の `{ wgp: {eventKey, month} }` / `{ n1: {eventKey} }` を保存し、構造 JSON は取りに行かない(10 分ごとの取り直しの対象から外れる)
 - **画面**: 作成フォーム・「区分・期間を編集」は選んだ種別の切り替え方で「今の 1 期間(今日 / 今の回 / 今月)」と「イベント全期間」を切り替え、開始を手で変えると終了が期間の終わりに追従する。種別を変えると(デイリー ⇄ 月間総合、期間別 ⇄ 全期間)期間を入れ直す。ダッシュボードの残り時間・予測・スナップショットは「今の区切り」で見る。順位パネルの比較は同じ期間つき種別どうしだけ(E7 の仕組みがそのまま効く)
@@ -414,20 +415,22 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 | 種別 | パス | 内容 |
 |---|---|---|
 | lib(新規) | `src/lib/whowatch/periodic-ranking.ts` | 切り替え方(scheme)・JST の月と N-1 の回・種別の解釈と期間つき種別の組み立て・今の区切り・既定の期間・選択肢・兄弟の区分・イベントの期間・画面の文言 |
-| lib | `src/lib/whowatch/rankings.ts` | `getWgpRankings`(`/wgp/ranking/…`)・`getN1Rankings`(`/rankings/nice_one_…/{YYYYMM}`)。`getRankings` の分岐。記録は期間つきの種別 |
+| lib | `src/lib/whowatch/rankings.ts` | `getWgpRankings`(`/wgp/ranking/…`)・`getN1Rankings`(`/rankings/nice_one_…/{YYYYMM}`)。`getRankings` の分岐。記録は期間つきの種別。`publisher_ranking` → `RankingResult.publisher`、`findMyEntry(entries, me, publisher)`・`entriesWithPublisher`。limited-item / N-1 / 従来の種別に `publisher_id` を付ける |
+| lib(新規) | `src/lib/whowatch/profile.ts` | 公開プロフィール(数値 ID・性別・グレード)。`getPublicProfile` は `w:` → `t:` の候補を試して 10 分キャッシュ |
 | lib | `src/lib/whowatch/events.ts` | `WGP_RANKING` タブ → prefix `wgp`。`flattenRankingChoices` は wgp / n1 の固定の選択肢(struct が無くても返す) |
 | lib | `src/lib/whowatch/event-detail-sync.ts` | wgp / n1 は固定の struct を保存。期間は開催月 / 今月。`viewFromRow` も規則を優先 |
-| lib | `src/lib/whowatch/auto-ranking-type.ts` | `decideN1RankingType`(部門の自動判定)。WGP は既定のデイリー |
-| lib | `src/lib/whowatch/ranking-sync.ts` | `findMySiblingDivision`(limited-item のグループと N-1 の部門の付け替えを統合)。空の順位表の文言(WGP 総合は 21 日公開、N-1 は回の切り替わり) |
+| lib | `src/lib/whowatch/auto-ranking-type.ts` | `decideN1RankingType`(部門の自動判定: ルーキーの本人の行 → プロフィールの性別 → 男女の本人の行)。区分の判定は publisher_id 付きで取得し、本人の行を一覧に足して見る。WGP は既定のデイリー |
+| lib | `src/lib/whowatch/ranking-sync.ts` | `findMySiblingDivision`(limited-item のグループと N-1 の部門の付け替えを統合)。publisher_id 付きで取得し圏外でも本人の順位・pt を記録。空の順位表の文言(WGP 総合は 21 日公開、N-1 は回の切り替わり) |
 | lib | `src/lib/whowatch/daily-roll.ts` | 切り替え方ごとの自動進行(日替わり・回・月)。N-1 は常設扱い。7 日以内の終了だけ見る |
 | UI | `EventCreateForm`・`EventSettingsEditor` | 「部門」(N-1)・「自動判定」の文言・WGP / N-1 の説明。期間ボタンと注記は切り替え方ごと。種別の変更で期間を入れ直す |
 | UI | `EventDashboard` | 今の区切り(日 / 回 / 月)で残り時間・予測・スナップショット |
 | test | `periodic-ranking.test.ts`・`rankings.periodic.test.ts`・`events.periodic.test.ts`・`event-detail-sync.periodic.test.ts`・`auto-ranking-type.periodic.test.ts`・`ranking-sync.periodic.test.ts`・`daily-roll.test.ts` | 実応答の縮約をフィクスチャにした新規テスト。daily-roll は候補に種別と prefix を持たせる形に更新 |
+| test | `profile.test.ts`・`rankings.publisher.test.ts` | 公開プロフィールの正規化と候補の順、`publisher_ranking` の正規化・`findMyEntry` の圏外照合・`publisher_id` を付ける種別と付けない種別(WGP) |
 
 ### 社長作業
 
 1. マージ → デプロイ後、イベント作成で「WhoWatch GRAND PRIX」を選ぶと「ランキング種別」にデイリー(既定)と月間総合が出て、期間が今日の 0:00〜翌 0:00 になる。日が変わると自動で翌日へ進む
-2. 「N-1 グランプリ」を選ぶと「部門」に自動判定(既定)・男性・女性・ルーキー・全期間が出て、期間が今の回(10/1〜10/11 0:00 など)になる。部門は本人が今の回の順位表(上位 100 名)に載った時点で 5 分同期が入れる。載っていない間は `skipped=…:今の回の順位表にまだ載っていない`
+2. 「N-1 グランプリ」を選ぶと「部門」に自動判定(既定)・男性・女性・ルーキー・全期間が出て、期間が今の回(10/1〜10/11 0:00 など)になる。部門は次の 5 分同期が、ルーキー部門に本人の行があればルーキー、無ければふわっちのプロフィールの性別で入れる(上位 100 名に居なくてもよい)。性別が未設定で本人の行もどこにも無いときだけ `skipped=…:…性別が設定されていないため部門を判定できない`(ふわっちで性別を設定するか、「区分・期間を編集」で部門を選ぶ)
 3. 既存の WGP / N-1 のイベント行は、デプロイ後の最初の詳細同期(作成フォームで選んだとき、または日次同期)で prefix と struct が入る
 
 ### 動作確認手順
@@ -439,8 +442,9 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 
 ### 未確定・運用
 
-- WGP の順位表は最大 200 件、N-1 は 100 件(limit は無視される)。圏外のときは順位が取れない(`publisher_id` の挙動は E2 からの要確認のまま)
-- N-1 の部門の自動判定は、本人が今の回の順位表に載ってから。回の切り替わり直後(1 日・11 日・21 日の 0:00)は誰も載っていないので、しばらく「まだ載っていない」になる
+- WGP の順位表は最大 200 件(limit は無視される)で、`publisher_id` も効かないので圏外のときは順位が取れない。N-1・limited-item・従来の種別は `publisher_id` で圏外でも本人の順位・pt が取れる(一覧は上位 100 件のまま。ライバル候補は一覧に居る人だけ)
+- N-1 のルーキー判定は、本人がルーキー部門に記録(1 Nice 以上)を持ってから。回の切り替わり直後(1 日・11 日・21 日の 0:00)はまだ無いので、その時点で区分を入れると性別の部門になる(ルーキー対象の人は「区分・期間を編集」でルーキーを選べる。付け替えは本人が今の部門に居ないときだけ起きる)
+- 性別は本人がふわっちのプロフィールで設定している値。未設定("未設定")だと男女の部門は決められない
 - WGP 月間総合は 21 日 0:00 まで空。それまでシミュレーターを作っても順位は出ない(文言で案内)。デイリー 1 位を一度取ると以降のデイリー集計から除外される(順位表から消える)が、その検知は未実装
 - `WGP_AWARD`(デイリー受賞者のカレンダー)は未対応(順位の追跡には不要)
 - 外部ツール許諾依頼(tagtech-internal `docs/streaming/whowatch-permission-request-email_20261006.md`)の別紙に、今回の取得先(`/wgp/ranking/*`・`/rankings/nice_one_*`)を追記すること(送付前)

@@ -6,6 +6,8 @@ vi.mock("./rankings", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./rankings")>();
   return { ...actual, getRankings: (...args: unknown[]) => getRankingsMock(...args) };
 });
+// 公開プロフィール（publisher_id 用の数値 ID）は取れない前提。取れる場合は ranking-sync.periodic.test.ts
+vi.mock("./profile", () => ({ getPublicProfile: vi.fn(async () => null) }));
 
 import { eventSimulators, streamerProfiles, whowatchEvents } from "@/lib/db/schema";
 import { LIMITED_ITEM_STRUCT_KEY, resolveLimitedItemRankingType } from "./limited-item";
