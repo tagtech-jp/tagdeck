@@ -105,6 +105,14 @@ export function jstDayWindow(d: Date): { start: Date; end: Date; dateKey: string
   return { start, end: new Date(start.getTime() + DAY_MS), dateKey };
 }
 
+/**
+ * d の次の 0:00 JST（d がちょうど 0:00 なら翌日の 0:00）。デイリーのシミュレーターの終了 = 開始日の翌日 0:00 に使う
+ * （2026-10-07 社長指示「終了日時は開始日の翌日の 0:00 に自動的になるように」）
+ */
+export function nextJstMidnightAfter(d: Date): Date {
+  return jstDayWindow(d).end;
+}
+
 /** t を [start, end) に収める（end 以降なら end の直前） */
 export function clampTime(t: Date, window: { start: Date; end: Date } | null | undefined): Date {
   if (!window) return t;

@@ -15,6 +15,7 @@ import {
   limitedItemChoiceLabel,
   limitedItemChoices,
   limitedItemInitFromStruct,
+  nextJstMidnightAfter,
   normalizeLimitedItemInit,
   OVERALL_PERIOD,
   parseLimitedItemRankingType,
@@ -243,5 +244,11 @@ describe("dailySimulatorWindow（作成フォームの 24 時間の既定）", (
     expect(dailySimulatorWindow(new Date("2026-10-07T03:00:00.000Z"))).toEqual(jstDayWindow(new Date("2026-10-07T03:00:00.000Z")));
     const half = dailySimulatorWindow(new Date("2026-10-07T03:00:00.000Z"), { start: new Date("2026-10-07T00:00:00.000Z"), end: new Date("2026-10-07T06:00:00.000Z") });
     expect(half).toEqual({ start: new Date("2026-10-07T00:00:00.000Z"), end: new Date("2026-10-07T06:00:00.000Z"), dateKey: "20261007" });
+  });
+
+  it("終了 = 開始日の翌日 0:00 JST（開始がちょうど 0:00 なら +24h、日中なら次の 0:00）", () => {
+    expect(nextJstMidnightAfter(new Date("2026-10-06T15:00:00.000Z")).toISOString()).toBe("2026-10-07T15:00:00.000Z"); // 10/7 00:00 → 10/8 00:00
+    expect(nextJstMidnightAfter(new Date("2026-10-07T04:00:00.000Z")).toISOString()).toBe("2026-10-07T15:00:00.000Z"); // 10/7 13:00 → 10/8 00:00
+    expect(nextJstMidnightAfter(new Date("2026-10-07T14:59:59.000Z")).toISOString()).toBe("2026-10-07T15:00:00.000Z"); // 10/7 23:59:59 → 10/8 00:00
   });
 });

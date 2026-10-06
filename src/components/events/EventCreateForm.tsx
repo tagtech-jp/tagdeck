@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 // 区分の絞り込みと既定（総合 → 先頭）は 5 分同期の自動設定と共通（2026-10-01）
 import { choicesForOption, defaultChoice } from "@/lib/whowatch/ranking-choice";
 // 期間限定アイテム型（limited-item・黄金発掘隊）: グループは配信者グレードで決まり、既定は置かない（空 = 自動判定・2026-10-07）
-import { dailySimulatorWindow, isLimitedItemPrefix } from "@/lib/whowatch/limited-item";
+import { dailySimulatorWindow, isLimitedItemPrefix, nextJstMidnightAfter } from "@/lib/whowatch/limited-item";
 import { Check } from "lucide-react";
 
 type EventType = "score" | "ranking" | "nice" | "viewer";
@@ -120,6 +120,15 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
     const w = dailySimulatorWindow(new Date(), { start, end });
     setStartTime(toLocalDatetimeValue(w.start.toISOString()));
     setEndTime(toLocalDatetimeValue(w.end.toISOString()));
+  };
+  // 開始日時を手で変えたとき: デイリーの「今日の 24 時間」なら終了を開始日の翌日 0:00 JST に追従させる
+  // （2026-10-07 社長指示「終了日時は開始日の翌日の 0:00 に自動的になるように」）
+  const handleStartChange = (value: string) => {
+    setStartTime(value);
+    if (!isDailyEvent || periodMode !== "day") return;
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return;
+    setEndTime(toLocalDatetimeValue(nextJstMidnightAfter(d).toISOString()));
   };
 
   const applyPeriod = (d: WhowatchEventDetail, key: string | null) => {
@@ -591,7 +600,7 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
               name="startTime"
               type="datetime-local"
               value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
+              onChange={(e) => handleStartChange(e.target.value)}
               required
               className="min-h-11 w-full rounded-sm bg-muted px-3 py-2 text-sm text-foreground"
             />
@@ -601,7 +610,7 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
           <label className="mb-1 block text-xs text-muted-foreground">
             終了日時
             {autoPeriodApplied && <span className="ml-1 text-primary">（区分から自動設定・手修正可）</span>}
-            {isDailyEvent && <span className="ml-1 text-primary">（{periodMode === "day" ? "翌 0:00 に自動設定" : "イベント終了に自動設定"}・手修正可）</span>}
+            {isDailyEvent && <span className="ml-1 text-primary">（{periodMode === "day" ? "開始日の翌日 0:00 に自動で追従" : "イベント終了に自動設定"}・手修正可）</span>}
           </label>
           {autoEndAvailable ? (
             <div className="min-h-11 w-full content-center rounded-sm bg-muted px-3 py-2 text-sm text-foreground">
