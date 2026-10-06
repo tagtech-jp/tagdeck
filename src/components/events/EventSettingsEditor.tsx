@@ -4,7 +4,21 @@ import { useEffect, useState } from "react";
 // 区分の絞り込みと既定（総合 → 先頭）は 5 分同期の自動設定と共通（2026-10-01）
 import { choicesForOption, defaultChoice } from "@/lib/whowatch/ranking-choice";
 // 期間限定アイテム型（limited-item・黄金発掘隊）: グループ（配信者グレード）は自動判定が既定。空で保存すると「自動判定に戻す」（2026-10-07）
-import { dailySimulatorWindow, isLimitedItemPrefix, nextJstMidnightAfter } from "@/lib/whowatch/limited-item";
+import { isLimitedItemPrefix } from "@/lib/whowatch/limited-item";
+// 期間が切り替わるランキング（limited-item のデイリー・WGP・N-1）の期間の入れ方と文言（2026-10-07）
+import {
+  defaultPeriodWindow,
+  hasAutoDivision,
+  isN1Prefix,
+  periodButtonLabel,
+  periodEndAfter,
+  periodEndHint,
+  periodicSchemeFor,
+  periodMaxSpanMs,
+  periodSchemeLabel,
+  periodStartHint,
+  type PeriodScheme,
+} from "@/lib/whowatch/periodic-ranking";
 
 // E1b: 作成済みシミュレーターの区分（前半/後半）・ランキング種別・期間を後から変更する編集導線。
 // 例: オータムグッズコレクションを「後半（2nd, 9/23 00:00〜9/28 00:00 JST, autumncollection_2nd_overall）」へ更新する。
@@ -72,18 +86,45 @@ export function EventSettingsEditor({ eventId, whowatchEventId, currentRankingTy
   const [rankingType, setRankingType] = useState<string>(currentRankingType ?? "");
   const [startTime, setStartTime] = useState(() => toLocal(currentStartTime));
   const [endTime, setEndTime] = useState(() => toLocal(currentEndTime));
-  // デイリーの期間の入れ方（2026-10-07）: "day" = 1 日ぶん（開始を変えると終了が開始日の翌日 0:00 JST に追従）、"full" = イベント全期間。
-  // 既定は今の期間の長さから（36 時間以下なら day）
-  const [periodMode, setPeriodMode] = useState<"day" | "full">(() =>
-    new Date(currentEndTime).getTime() - new Date(currentStartTime).getTime() <= 36 * 60 * 60 * 1000 ? "day" : "full",
-  );
-  const isDailyEvent = Boolean(detail && detail.kind === "daily" && detail.periods.length === 0);
+  // 期間の切り替え方: limited-item / WGP / N-1 は選んだ種別（空 = 自動判定なら家族の既定）から。それ以外は kind = daily（区分なし）なら日替わり
+  const schemeFor = (d: Detail, type: string): PeriodScheme | null =>
+    periodicSchemeFor(d.rankingPrefix, type) ?? (d.kind === "daily" && d.periods.length === 0 ? "daily" : null);
+  const periodScheme = detail ? schemeFor(detail, rankingType) : null;
+  const isDailyEvent = periodScheme !== null && periodScheme !== "whole";
+  // 期間の入れ方（2026-10-07）: "day" = 1 期間ぶん（開始を変えると終了が期間の終わりに追従。日替わりなら開始日の翌日 0:00 JST）、"full" = イベント全期間。
+  // 既定は今の期間の長さから（その切り替え方の 1 期間ぶん以下なら day）
+  const [periodModeOverride, setPeriodModeOverride] = useState<"day" | "full" | null>(null);
+  const currentSpanMs = new Date(currentEndTime).getTime() - new Date(currentStartTime).getTime();
+  const periodMode: "day" | "full" = periodModeOverride ?? (currentSpanMs <= periodMaxSpanMs(periodScheme ?? "daily") ? "day" : "full");
+  const applyWindow = (mode: "day" | "full", scheme: PeriodScheme | null = periodScheme) => {
+    if (!detail) return;
+    setPeriodModeOverride(mode);
+    const start = detail.startedAt ? new Date(detail.startedAt) : null;
+    const end = detail.endTime ? new Date(detail.endTime) : null;
+    if (mode === "full") {
+      if (start && !isNaN(start.getTime())) setStartTime(toLocal(start.toISOString()));
+      if (end && !isNaN(end.getTime())) setEndTime(toLocal(end.toISOString()));
+      return;
+    }
+    if (!scheme || scheme === "whole") return;
+    const w = defaultPeriodWindow(scheme, new Date(), { start, end });
+    setStartTime(toLocal(w.start.toISOString()));
+    setEndTime(toLocal(w.end.toISOString()));
+  };
   const handleStartChange = (value: string) => {
     setStartTime(value);
-    if (!isDailyEvent || periodMode !== "day") return;
+    if (!isDailyEvent || periodMode !== "day" || !periodScheme) return;
     const d = new Date(value);
     if (isNaN(d.getTime())) return;
-    setEndTime(toLocal(nextJstMidnightAfter(d).toISOString()));
+    const end = periodEndAfter(periodScheme, d);
+    if (end) setEndTime(toLocal(end.toISOString()));
+  };
+  // 種別を変えたとき（WGP: デイリー ⇄ 月間総合、N-1: 期間別 ⇄ 全期間）: 1 期間の入れ方なら期間をその種別の区切りに入れ直す
+  const handleRankingTypeChange = (value: string) => {
+    setRankingType(value);
+    if (!detail || periodMode !== "day") return;
+    const scheme = schemeFor(detail, value);
+    if (scheme && scheme !== "whole") applyWindow("day", scheme);
   };
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,8 +167,8 @@ export function EventSettingsEditor({ eventId, whowatchEventId, currentRankingTy
         const cur = det.rankingChoices.find((c) => c.rankingType === currentRankingType);
         const key = cur?.parts[0] ?? det.periods[0]?.option_key ?? null;
         setPeriodKey(det.periods.length > 0 ? key : null);
-        // 期間限定アイテム型は既定を置かない（空 = 自動判定）。それ以外は従来どおり「総合 → 先頭」
-        if (!cur) setRankingType(isLimitedItemPrefix(det.rankingPrefix) ? (currentRankingType ?? "") : defaultChoice(choicesForOption(det.rankingChoices, det.periods.length > 0 ? key : null))?.rankingType ?? "");
+        // 期間限定アイテム型のグループと N-1 の部門は既定を置かない（空 = 自動判定）。それ以外は従来どおり「総合 → 先頭」
+        if (!cur) setRankingType(hasAutoDivision(det.rankingPrefix) ? (currentRankingType ?? "") : defaultChoice(choicesForOption(det.rankingChoices, det.periods.length > 0 ? key : null))?.rankingType ?? "");
       })
       .catch(() => {
         if (!cancelled) setDetailState({ key: eventKey, detail: null });
@@ -154,8 +195,8 @@ export function EventSettingsEditor({ eventId, whowatchEventId, currentRankingTy
     try {
       const body: Record<string, unknown> = {};
       if (rankingType) body.rankingType = rankingType;
-      // 期間限定アイテム型で「自動判定」を選んだら区分を空に戻す（5 分同期が今日の順位表からグループを判定し直す）
-      else if (detail && isLimitedItemPrefix(detail.rankingPrefix) && currentRankingType) body.rankingType = null;
+      // 期間限定アイテム型・N-1 で「自動判定」を選んだら区分を空に戻す（5 分同期が今の順位表からグループ / 部門を判定し直す）
+      else if (detail && hasAutoDivision(detail.rankingPrefix) && currentRankingType) body.rankingType = null;
       if (startTime) body.startTime = new Date(startTime).toISOString();
       if (endTime) body.endTime = new Date(endTime).toISOString();
       const res = await fetch(`/api/events/${eventId}`, {
@@ -227,13 +268,20 @@ export function EventSettingsEditor({ eventId, whowatchEventId, currentRankingTy
           )}
           {choices.length > 0 ? (
             <div>
-              <label className="mb-1 block text-xs text-muted-foreground">{isLimitedItemPrefix(detail.rankingPrefix) ? "グループ（配信者グレード）" : "ランキング種別"}</label>
+              <label className="mb-1 block text-xs text-muted-foreground">
+                {isLimitedItemPrefix(detail.rankingPrefix) ? "グループ（配信者グレード）" : isN1Prefix(detail.rankingPrefix) ? "部門" : "ランキング種別"}
+                {isDailyEvent && periodScheme && <span className="ml-1 text-primary">（{periodSchemeLabel(periodScheme)}）</span>}
+              </label>
               <select
                 value={rankingType}
-                onChange={(e) => setRankingType(e.target.value)}
+                onChange={(e) => handleRankingTypeChange(e.target.value)}
                 className="min-h-11 w-full rounded-sm bg-muted px-3 py-2 text-sm text-foreground"
               >
-                {isLimitedItemPrefix(detail.rankingPrefix) && <option value="">自動判定（今日の順位表に載った時点で 5 分同期が設定）</option>}
+                {hasAutoDivision(detail.rankingPrefix) && (
+                  <option value="">
+                    {isN1Prefix(detail.rankingPrefix) ? "自動判定（今の回の男性・女性・ルーキー部門を順に見て、載っている部門を 5 分同期が設定）" : "自動判定（今日の順位表に載った時点で 5 分同期が設定）"}
+                  </option>
+                )}
                 {choices.map((c) => (
                   <option key={c.rankingType} value={c.rankingType}>
                     {detail.periods.length > 0 ? stripOptionLabel(c.label) : c.label}
@@ -253,31 +301,22 @@ export function EventSettingsEditor({ eventId, whowatchEventId, currentRankingTy
         </>
       ) : null}
 
-      {detail && detail.kind === "daily" && detail.periods.length === 0 && (
-        // デイリー（毎日 0:00 区切り）: 期間を「今日の 24 時間」か「イベント全期間」にワンタップで入れる（2026-10-07）
+      {detail && isDailyEvent && periodScheme && (
+        // 期間が切り替わるランキング: 期間を「今の 1 期間（今日 / 今の回 / 今月）」か「イベント全期間」にワンタップで入れる（2026-10-07）
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-muted-foreground">デイリー（毎日 0:00 区切り）の期間:</span>
+          <span className="text-muted-foreground">期間（{periodSchemeLabel(periodScheme)}）:</span>
           <button
             type="button"
-            onClick={() => {
-              setPeriodMode("day");
-              const w = dailySimulatorWindow(new Date(), { start: detail.startedAt ? new Date(detail.startedAt) : null, end: detail.endTime ? new Date(detail.endTime) : null });
-              setStartTime(toLocal(w.start.toISOString()));
-              setEndTime(toLocal(w.end.toISOString()));
-            }}
+            onClick={() => applyWindow("day")}
             aria-pressed={periodMode === "day"}
             className={`min-h-8 rounded-full border px-3 ${periodMode === "day" ? "border-primary bg-primary/10 text-primary" : "border-border bg-muted text-foreground"}`}
           >
-            今日の 24 時間（0:00〜翌 0:00）
+            {periodButtonLabel(periodScheme)}
           </button>
-          {detail.startedAt && detail.endTime && (
+          {periodScheme !== "monthly" && detail.startedAt && detail.endTime && (
             <button
               type="button"
-              onClick={() => {
-                setPeriodMode("full");
-                setStartTime(toLocal(detail.startedAt as string));
-                setEndTime(toLocal(detail.endTime as string));
-              }}
+              onClick={() => applyWindow("full")}
               aria-pressed={periodMode === "full"}
               className={`min-h-8 rounded-full border px-3 ${periodMode === "full" ? "border-primary bg-primary/10 text-primary" : "border-border bg-muted text-foreground"}`}
             >
@@ -285,6 +324,7 @@ export function EventSettingsEditor({ eventId, whowatchEventId, currentRankingTy
               {new Date(detail.endTime).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}）
             </button>
           )}
+          {periodMode === "day" && <span className="text-muted-foreground">開始日時: {periodStartHint(periodScheme)} / 終了日時: {periodEndHint(periodScheme)}</span>}
         </div>
       )}
 

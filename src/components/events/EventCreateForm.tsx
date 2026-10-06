@@ -4,7 +4,21 @@ import { useEffect, useState } from "react";
 // 区分の絞り込みと既定（総合 → 先頭）は 5 分同期の自動設定と共通（2026-10-01）
 import { choicesForOption, defaultChoice } from "@/lib/whowatch/ranking-choice";
 // 期間限定アイテム型（limited-item・黄金発掘隊）: グループは配信者グレードで決まり、既定は置かない（空 = 自動判定・2026-10-07）
-import { dailySimulatorWindow, isLimitedItemPrefix, nextJstMidnightAfter } from "@/lib/whowatch/limited-item";
+import { isLimitedItemPrefix } from "@/lib/whowatch/limited-item";
+// 期間が切り替わるランキング（limited-item のデイリー・WGP のデイリー/月間総合・N-1 の回/全期間）の期間の入れ方と文言（2026-10-07）
+import {
+  defaultPeriodWindow,
+  hasAutoDivision,
+  isN1Prefix,
+  isWgpPrefix,
+  periodButtonLabel,
+  periodEndAfter,
+  periodEndHint,
+  periodicSchemeFor,
+  periodSchemeLabel,
+  periodStartHint,
+  type PeriodScheme,
+} from "@/lib/whowatch/periodic-ranking";
 import { Check } from "lucide-react";
 
 type EventType = "score" | "ranking" | "nice" | "viewer";
@@ -103,11 +117,19 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
   // E1b: 選択中の区分（periods がある時のみ）
   const [periodKey, setPeriodKey] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
-  // デイリー（毎日 0:00 区切り・期間限定アイテム型など）の期間の入れ方（2026-10-07 社長指示「開始時間と終了時間も自動的に修正して 24 時間で」）:
-  //   "day" = 今日の 0:00〜翌 0:00 JST（既定・イベント期間に収める）、"full" = イベント全期間
+  const selectedWhowatchEvent =
+    platform === "whowatch"
+      ? whowatchEvents.find((e) => e.id === selectedWhowatchEventId) ?? null
+      : null;
+  // 期間が切り替わるランキングの期間の入れ方（2026-10-07 社長指示「開始時間と終了時間も自動的に修正して 24 時間で」）:
+  //   "day" = 今を含む 1 期間（既定・イベント期間に収める。日替わりなら今日の 0:00〜翌 0:00 JST、N-1 の期間別なら今の回、月間なら今月）、"full" = イベント全期間
   const [periodMode, setPeriodMode] = useState<"day" | "full">("day");
-  const isDailyEvent = Boolean(eventDetail && eventDetail.kind === "daily" && eventDetail.periods.length === 0);
-  const applyDailyWindow = (d: WhowatchEventDetail, mode: "day" | "full", fallbackStart: string | null) => {
+  // 期間の切り替え方: limited-item / WGP / N-1 は選んだ種別（空 = 自動判定なら家族の既定）から。それ以外は kind = daily（区分なし）なら日替わり
+  const schemeFor = (d: WhowatchEventDetail, type: string): PeriodScheme | null =>
+    periodicSchemeFor(d.rankingPrefix, type) ?? (d.kind === "daily" && d.periods.length === 0 ? "daily" : null);
+  const periodScheme = eventDetail ? schemeFor(eventDetail, rankingType) : null;
+  const isDailyEvent = periodScheme !== null && periodScheme !== "whole";
+  const applyDailyWindow = (d: WhowatchEventDetail, mode: "day" | "full", fallbackStart: string | null, scheme: PeriodScheme | null = periodScheme) => {
     setPeriodMode(mode);
     const boundsStart = d.startedAt ?? fallbackStart;
     const start = boundsStart ? new Date(boundsStart) : null;
@@ -117,18 +139,27 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
       if (end && !isNaN(end.getTime())) setEndTime(toLocalDatetimeValue(end.toISOString()));
       return;
     }
-    const w = dailySimulatorWindow(new Date(), { start, end });
+    if (!scheme || scheme === "whole") return;
+    const w = defaultPeriodWindow(scheme, new Date(), { start, end });
     setStartTime(toLocalDatetimeValue(w.start.toISOString()));
     setEndTime(toLocalDatetimeValue(w.end.toISOString()));
   };
-  // 開始日時を手で変えたとき: デイリーの「今日の 24 時間」なら終了を開始日の翌日 0:00 JST に追従させる
+  // 開始日時を手で変えたとき: 1 期間の入れ方なら終了を期間の終わり（日替わりは開始日の翌日 0:00 JST・N-1 は回の終わり・月間は翌月 1 日）に追従させる
   // （2026-10-07 社長指示「終了日時は開始日の翌日の 0:00 に自動的になるように」）
   const handleStartChange = (value: string) => {
     setStartTime(value);
-    if (!isDailyEvent || periodMode !== "day") return;
+    if (!isDailyEvent || periodMode !== "day" || !periodScheme) return;
     const d = new Date(value);
     if (isNaN(d.getTime())) return;
-    setEndTime(toLocalDatetimeValue(nextJstMidnightAfter(d).toISOString()));
+    const end = periodEndAfter(periodScheme, d);
+    if (end) setEndTime(toLocalDatetimeValue(end.toISOString()));
+  };
+  // 種別を変えたとき（WGP: デイリー ⇄ 月間総合、N-1: 期間別 ⇄ 全期間）: 1 期間の入れ方なら期間をその種別の区切りに入れ直す
+  const handleRankingTypeChange = (value: string) => {
+    setRankingType(value);
+    if (!eventDetail || periodMode !== "day") return;
+    const scheme = schemeFor(eventDetail, value);
+    if (scheme && scheme !== "whole") applyDailyWindow(eventDetail, "day", selectedWhowatchEvent?.startedAt ?? null, scheme);
   };
 
   const applyPeriod = (d: WhowatchEventDetail, key: string | null) => {
@@ -139,14 +170,11 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
       setEndTime(toLocalDatetimeValue(period.ends_at));
     }
     const dc = defaultChoice(choicesForOption(d.rankingChoices, key));
-    // 期間限定アイテム型はグループ（配信者グレード K24〜K10）が本人ごとに違うので既定を置かない。空のまま作れば 5 分同期が今日の順位表から自動判定する
-    setRankingType(isLimitedItemPrefix(d.rankingPrefix) ? "" : dc?.rankingType ?? "");
+    // 期間限定アイテム型のグループ（配信者グレード K24〜K10）と N-1 の部門（男性・女性・ルーキー）は本人ごとに違うので既定を置かない。
+    // 空のまま作れば 5 分同期が今の順位表から自動判定する
+    setRankingType(hasAutoDivision(d.rankingPrefix) ? "" : dc?.rankingType ?? "");
   };
 
-  const selectedWhowatchEvent =
-    platform === "whowatch"
-      ? whowatchEvents.find((e) => e.id === selectedWhowatchEventId) ?? null
-      : null;
   // E1b: 区分から自動設定した日時も手修正できるよう、入力欄は常に表示し「自動設定」ラベルだけ付ける
   const autoStartAvailable = false;
   const autoEndAvailable = false;
@@ -211,8 +239,11 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
           applyPeriod(detail, (current ?? upcoming ?? detail.periods[0]).option_key);
         } else {
           applyPeriod(detail, null);
-          // デイリー（毎日 0:00 区切り）は「今日の 24 時間」を既定にする（ボタンでイベント全期間にも切り替えられる）
-          if (detail.kind === "daily") applyDailyWindow(detail, "day", ev.startedAt);
+          // 期間が切り替わるイベント（日替わり・N-1 の回・WGP）は「今の 1 期間」を既定にする（ボタンでイベント全期間にも切り替えられる）。
+          // applyPeriod が入れる種別（自動判定なら空）と同じ前提で切り替え方を決める
+          const initialType = hasAutoDivision(detail.rankingPrefix) ? "" : (defaultChoice(choicesForOption(detail.rankingChoices, null))?.rankingType ?? "");
+          const scheme = schemeFor(detail, initialType);
+          if (scheme && scheme !== "whole") applyDailyWindow(detail, "day", ev.startedAt, scheme);
         }
       })
       .catch(() => {
@@ -448,11 +479,14 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
           {!detailLoading && eventDetail && (
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">
-                {isLimitedItemPrefix(eventDetail.rankingPrefix) ? "グループ（配信者グレード）" : "ランキング種別"}
-                {eventDetail.periods.length === 0 && eventDetail.kind === "daily" && <span className="ml-1 text-primary">（デイリー・毎日 0:00 区切り）</span>}
+                {isLimitedItemPrefix(eventDetail.rankingPrefix) ? "グループ（配信者グレード）" : isN1Prefix(eventDetail.rankingPrefix) ? "部門" : "ランキング種別"}
+                {isDailyEvent && periodScheme && <span className="ml-1 text-primary">（{periodSchemeLabel(periodScheme)}）</span>}
               </label>
               {(() => {
                 const limited = isLimitedItemPrefix(eventDetail.rankingPrefix);
+                const n1 = isN1Prefix(eventDetail.rankingPrefix);
+                const wgp = isWgpPrefix(eventDetail.rankingPrefix);
+                const auto = hasAutoDivision(eventDetail.rankingPrefix);
                 const list = choicesForOption(eventDetail.rankingChoices, eventDetail.periods.length > 0 ? periodKey : null);
                 if (list.length === 0) {
                   // RANKING タブはあるのに区分の構造が取れていない（2026_10_magicfantasy で発生）。期間中は 5 分同期が取り直して入れる
@@ -469,10 +503,14 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
                   <>
                     <select
                       value={rankingType}
-                      onChange={(e) => setRankingType(e.target.value)}
+                      onChange={(e) => handleRankingTypeChange(e.target.value)}
                       className="min-h-11 w-full rounded-sm bg-muted px-3 py-2 text-sm text-foreground"
                     >
-                      {limited && <option value="">自動判定（今日の順位表に載った時点で 5 分同期が設定）</option>}
+                      {auto && (
+                        <option value="">
+                          {n1 ? "自動判定（今の回の男性・女性・ルーキー部門を順に見て、載っている部門を 5 分同期が設定）" : "自動判定（今日の順位表に載った時点で 5 分同期が設定）"}
+                        </option>
+                      )}
                       {list.map((c) => (
                         <option key={c.rankingType} value={c.rankingType}>
                           {eventDetail.periods.length > 0 ? stripOptionLabel(c.label) : c.label}
@@ -480,10 +518,20 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
                         </option>
                       ))}
                     </select>
-                    <p className="mt-1 text-xs text-muted-foreground">ranking_type: {rankingType || (limited ? "（自動判定）" : "")}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">ranking_type: {rankingType || (auto ? "（自動判定）" : "")}</p>
                     {limited && (
                       <p className="mt-1 text-xs text-muted-foreground">
                         デイリーのイベントです。順位表は毎日 0:00 に切り替わり、期間を「今日の 24 時間」にしておくと日が変わるたびに翌日の区切りへ自動で進みます。グループは配信者グレードで毎日決まるため、分かっていれば選び、不明なら「自動判定」のまま作成してください（ふわっち ID の設定が要ります）
+                      </p>
+                    )}
+                    {n1 && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        N-1 グランプリは Nice 数のランキングです。期間別（男性・女性・ルーキー部門）は 1 日・11 日・21 日の 0:00 に切り替わり、期間を「今の回」にしておくと回が変わるたびに次の回へ自動で進みます。部門は性別とルーキー条件（開催月 1 日時点で累計配信 100 時間未満）で決まるため、分かっていれば選び、不明なら「自動判定」のまま作成してください（ふわっち ID の設定が要ります）。1 か月の総 Nice 数を追う場合は「全期間」を選んでください
+                      </p>
+                    )}
+                    {wgp && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        WGP は投票券アイテムの得票数のランキングです。デイリーは毎日 0:00 に切り替わり、期間を「今日の 24 時間」にしておくと日が変わるたびに翌日へ自動で進みます（デイリー 1 位 5 万 pt は月に一度だけ）。月間総合は 21 日 0:00 から公開され、それまでは順位が出ません
                       </p>
                     )}
                   </>
@@ -557,19 +605,19 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
         </>
       )}
 
-      {/* デイリー（毎日 0:00 区切り）: 期間を「今日の 24 時間」か「イベント全期間」でワンタップ切り替え（2026-10-07） */}
-      {isDailyEvent && eventDetail && (
+      {/* 期間が切り替わるランキング: 期間を「今の 1 期間（今日 / 今の回 / 今月）」か「イベント全期間」でワンタップ切り替え（2026-10-07） */}
+      {isDailyEvent && eventDetail && periodScheme && (
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-muted-foreground">デイリー（毎日 0:00 区切り）の期間:</span>
+          <span className="text-muted-foreground">期間（{periodSchemeLabel(periodScheme)}）:</span>
           <button
             type="button"
             onClick={() => applyDailyWindow(eventDetail, "day", selectedWhowatchEvent?.startedAt ?? null)}
             aria-pressed={periodMode === "day"}
             className={`min-h-8 rounded-full border px-3 ${periodMode === "day" ? "border-primary bg-primary/10 text-primary" : "border-border bg-muted text-foreground"}`}
           >
-            今日の 24 時間（0:00〜翌 0:00）
+            {periodButtonLabel(periodScheme)}
           </button>
-          {(eventDetail.startedAt ?? selectedWhowatchEvent?.startedAt) && eventDetail.endTime && (
+          {periodScheme !== "monthly" && (eventDetail.startedAt ?? selectedWhowatchEvent?.startedAt) && eventDetail.endTime && (
             <button
               type="button"
               onClick={() => applyDailyWindow(eventDetail, "full", selectedWhowatchEvent?.startedAt ?? null)}
@@ -589,7 +637,7 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
           <label className="mb-1 block text-xs text-muted-foreground">
             開始日時
             {autoPeriodApplied && <span className="ml-1 text-primary">（区分から自動設定・手修正可）</span>}
-            {isDailyEvent && <span className="ml-1 text-primary">（{periodMode === "day" ? "今日の 0:00 に自動設定" : "イベント開始に自動設定"}・手修正可）</span>}
+            {isDailyEvent && periodScheme && <span className="ml-1 text-primary">（{periodMode === "day" ? periodStartHint(periodScheme) : "イベント開始に自動設定"}・手修正可）</span>}
           </label>
           {autoStartAvailable ? (
             <div className="min-h-11 w-full content-center rounded-sm bg-muted px-3 py-2 text-sm text-foreground">
@@ -610,7 +658,7 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
           <label className="mb-1 block text-xs text-muted-foreground">
             終了日時
             {autoPeriodApplied && <span className="ml-1 text-primary">（区分から自動設定・手修正可）</span>}
-            {isDailyEvent && <span className="ml-1 text-primary">（{periodMode === "day" ? "開始日の翌日 0:00 に自動で追従" : "イベント終了に自動設定"}・手修正可）</span>}
+            {isDailyEvent && periodScheme && <span className="ml-1 text-primary">（{periodMode === "day" ? periodEndHint(periodScheme) : "イベント終了に自動設定"}・手修正可）</span>}
           </label>
           {autoEndAvailable ? (
             <div className="min-h-11 w-full content-center rounded-sm bg-muted px-3 py-2 text-sm text-foreground">

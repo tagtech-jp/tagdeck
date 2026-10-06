@@ -1,10 +1,15 @@
 // ふわっち ランキング公開 API クライアント（E2）
 // GET /rankings/{ranking_type}?limit=N&detail=true[&publisher_id=]
 //   → [{title, status(1=開催中,3=終了), ranking_type, rankings:[{rank, point, total_view_count, user{id,user_path,name,icon_url}}]}]
+// 2026-10-07 追加（E7・E8。ふわっち Web 版が使う公開 API・認証なし）:
+//   GET /events/limited_item_rankings?period=&event_key=&group=   … 期間限定アイテム型（limited-item.ts）
+//   GET /wgp/ranking/{YYYYMMDD} / GET /wgp/ranking/overall/{YYYYMM} … WGP（periodic-ranking.ts）。1 オブジェクト {title, status, is_fixed, rankings}
+//   GET /rankings/nice_one_{1st|2nd|3rd}_{male|female|rookie}/{YYYYMM}?detail=true / GET /rankings/nice_one_total/{YYYYMM}?detail=true … N-1 グランプリ
 // 読み取り専用。Origin/Referer はサーバ側で付与（ブラウザから直接叩かない）。
 
 import { resolveWhowatchDeviceId } from "../platforms/whowatch";
 import { parseLimitedItemRankingType, resolveLimitedItemRankingType } from "./limited-item";
+import { n1ApiRankingType, parsePeriodicRankingType, resolvePeriodicRankingType, wgpRankingPath, type N1Division, type WgpDivision } from "./periodic-ranking";
 
 const BASE_URL = "https://api.whowatch.tv";
 const USER_AGENT = "TagDeck/0.1 (+https://tagdeck.jp)";
@@ -119,11 +124,55 @@ export async function getLimitedItemRankings(eventKey: string, group: number, pe
   return normalized;
 }
 
+function errorCodeOf(data: unknown): string {
+  return data && typeof data === "object" && !Array.isArray(data) ? String((data as Record<string, unknown>).error_code ?? "") : "";
+}
+
+/**
+ * WGP（WhoWatch GRAND PRIX・2026-10-07 実測）: デイリーは GET /wgp/ranking/YYYYMMDD、月間総合は GET /wgp/ranking/overall/YYYYMM。
+ * 応答は /rankings/{type} の 1 要素と同じ形の 1 オブジェクト（status 0=開催前・1=リアルタイム更新中・3=最終結果、is_fixed、rankings は最大 200 件）。
+ * 総合は 21 日 0:00 まで rankings が空。無いパス（/wgp/ranking/total 等）は HTTP 200 の error_code（Z-001）。
+ * 応答に ranking_type は無いので、記録は期間つきの種別（wgp-daily-20261007 / wgp-overall-202610）で揃える
+ */
+export async function getWgpRankings(datedRankingType: string): Promise<RankingResult> {
+  const p = parsePeriodicRankingType(datedRankingType);
+  if (!p || p.family !== "wgp" || !p.periodKey) throw new WhowatchRankingApiError(400, `invalid wgp ranking_type: ${datedRankingType}`);
+  const url = `${BASE_URL}${wgpRankingPath(p.division as WgpDivision, p.periodKey)}`;
+  const res = await fetch(url, { headers: headers(), signal: AbortSignal.timeout(TIMEOUT_MS), cache: "no-store" });
+  if (!res.ok) throw new WhowatchRankingApiError(res.status, `whowatch wgp ranking ${datedRankingType} → HTTP ${res.status}`);
+  const data = (await res.json()) as unknown;
+  const code = errorCodeOf(data);
+  if (code) throw new WhowatchRankingApiError(404, `whowatch wgp ranking ${datedRankingType} → ${code}`);
+  const normalized = normalizeRankingResponse(data, datedRankingType);
+  if (!normalized) throw new WhowatchRankingApiError(502, "empty ranking response");
+  return { ...normalized, rankingType: datedRankingType };
+}
+
+/**
+ * N-1 グランプリ（2026-10-07 実測）: GET /rankings/nice_one_{1st|2nd|3rd}_{male|female|rookie}/YYYYMM?detail=true と
+ * GET /rankings/nice_one_total/YYYYMM?detail=true。応答は従来の /rankings/{type} と同じ配列（ranking_type は NICE_ONE_1ST_MALE のような大文字・
+ * 回が始まる前は status 0 で rankings 空・確定後は status 3）。記録は期間つきの種別（n1-male-202610-1st / n1-total-202610）で揃える
+ */
+export async function getN1Rankings(datedRankingType: string, limit = 100): Promise<RankingResult> {
+  const p = parsePeriodicRankingType(datedRankingType);
+  const api = p && p.family === "n1" && p.periodKey ? n1ApiRankingType(p.division as N1Division, p.periodKey) : null;
+  if (!api) throw new WhowatchRankingApiError(400, `invalid n1 ranking_type: ${datedRankingType}`);
+  const params = new URLSearchParams({ limit: String(limit), detail: "true" });
+  const url = `${BASE_URL}/rankings/${api.apiType}/${api.monthKey}?${params.toString()}`;
+  const res = await fetch(url, { headers: headers(), signal: AbortSignal.timeout(TIMEOUT_MS), cache: "no-store" });
+  if (!res.ok) throw new WhowatchRankingApiError(res.status, `whowatch rankings ${datedRankingType} → HTTP ${res.status}`);
+  const data = (await res.json()) as unknown;
+  const normalized = normalizeRankingResponse(data, api.apiType);
+  if (!normalized) throw new WhowatchRankingApiError(502, "empty ranking response");
+  return { ...normalized, rankingType: datedRankingType };
+}
+
 /**
  * ランキングを取得する。
  * - 従来の種別（autumncollection_1st_overall 等）: GET /rankings/{type}
  * - 期間限定アイテム型（limited-item-{event_key}-{group}[-{YYYYMMDD}]）: 日付なしなら now（と window）からその日の日付を決め、
  *   GET /events/limited_item_rankings を叩く。返す rankingType は日付つき（ranking_snapshots にその日の種別として残る）
+ * - WGP（wgp-daily / wgp-overall）・N-1（n1-male 等）: 同じく期間なしなら now（と window）から期間を決める（periodic-ranking.ts）
  */
 export async function getRankings(
   rankingType: string,
@@ -135,6 +184,9 @@ export async function getRankings(
     const p = parseLimitedItemRankingType(dated)!;
     return getLimitedItemRankings(p.eventKey, p.group === "overall" ? 1 : p.group, p.period!, dated);
   }
+  const periodic = parsePeriodicRankingType(rankingType);
+  if (periodic?.family === "wgp") return getWgpRankings(resolvePeriodicRankingType(rankingType, opts.now ?? new Date(), opts.window));
+  if (periodic?.family === "n1") return getN1Rankings(resolvePeriodicRankingType(rankingType, opts.now ?? new Date(), opts.window), opts.limit ?? 100);
   const params = new URLSearchParams({ limit: String(opts.limit ?? 100), detail: "true" });
   if (opts.publisherId) params.set("publisher_id", opts.publisherId);
   const url = `${BASE_URL}/rankings/${encodeURIComponent(rankingType)}?${params.toString()}`;

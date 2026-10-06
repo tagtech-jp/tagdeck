@@ -22,6 +22,7 @@ import {
   type RankingStruct,
 } from "./events";
 import { isLimitedItemPrefix, LIMITED_ITEM_STRUCT_KEY, limitedItemInitFromStruct, parseLimitedItemSchedule } from "./limited-item";
+import { isN1Prefix, isWgpPrefix, N1_STRUCT_KEY, periodicEventSchedule, WGP_STRUCT_KEY, wgpMonthKeyFromEventKey } from "./periodic-ranking";
 import { resolveEventPeriods, type EventPeriod } from "./periods";
 import { capText, DB_LARGE_COLUMN_MAX_BYTES, describeDbError, sanitizeJson, sanitizeText, slimHtml } from "./sanitize";
 import { parseRules, RULES_PARSER_VERSION, type RulesParsed } from "./rules-parser";
@@ -131,8 +132,10 @@ export function viewFromRow(row: EventRow): EventDetailView {
   const struct = (row.struct ?? null) as RankingStruct | null;
   // 期間限定アイテム型で DB の日付が無ければ（一覧同期が NULL で上書きした等・2026-10-07 本番の実害）、概要の日程から補う
   const schedule = isLimitedItemPrefix(row.rankingPrefix) && (!row.startedAt || !row.endedAt) ? parseLimitedItemSchedule(row.rulesText) : null;
-  const startedAt = row.startedAt ?? schedule?.startsAt ?? null;
-  const endedAt = row.endedAt ?? (schedule?.endsAt ? new Date(schedule.endsAt.getTime() - 1000) : null);
+  // WGP（開催月）と N-1（常設 = 今月）は /event_lists に日付が無く、期間は規則で決まる。DB の値（前の月の同期で入ったもの等）より規則を優先する
+  const periodic = periodicEventSchedule(row.rankingPrefix, row.eventKey, new Date());
+  const startedAt = periodic?.startsAt ?? row.startedAt ?? schedule?.startsAt ?? null;
+  const endedAt = periodic ? new Date(periodic.endsAt.getTime() - 1000) : (row.endedAt ?? (schedule?.endsAt ? new Date(schedule.endsAt.getTime() - 1000) : null));
   return {
     id: row.id,
     eventKey: row.eventKey,
@@ -223,6 +226,13 @@ export async function syncEventDetail(db: Db, eventKey: string, opts: SyncEventD
         throw new EventDetailSyncError("struct", eventKey, e);
       }
     }
+  } else if (detail.rankingPrefix && isWgpPrefix(detail.rankingPrefix)) {
+    // WGP（WhoWatch GRAND PRIX・2026-10-07）: タブ type WGP_RANKING・detail 空で構造 JSON は無い。選択肢（デイリー / 月間総合）は固定なので、
+    // 開催月だけを struct に残す（区分の構造が「使える」状態にして、10 分ごとの取り直しの対象から外す）
+    struct = { [WGP_STRUCT_KEY]: { eventKey, month: wgpMonthKeyFromEventKey(eventKey) } };
+  } else if (detail.rankingPrefix && isN1Prefix(detail.rankingPrefix)) {
+    // N-1 グランプリ（RANKING タブ detail "n1"・2026-10-07）: 構造 JSON は Z-002。部門（男性・女性・ルーキー・全期間）は固定
+    struct = { [N1_STRUCT_KEY]: { eventKey } };
   } else if (detail.rankingPrefix) {
     try {
       struct = await getRankingStruct(detail.rankingPrefix);
@@ -255,10 +265,18 @@ export async function syncEventDetail(db: Db, eventKey: string, opts: SyncEventD
   // 概要本文の日程「ランキング（N日目） YYYY年M月D日 00:00 〜 24:00」から全体期間を決める。終了は ended_at の慣例（23:59:59 JST）に合わせ、
   // endTimeFromEndedAt（+1 秒）で翌 0:00 JST になるようにする
   const schedule = limitedItem ? parseLimitedItemSchedule(rulesText, listed?.startedAt ? new Date(listed.startedAt).getUTCFullYear() : null) : null;
+  // WGP は event_key の開催月、N-1 は常設なので今月（どちらも /event_lists に日付が無い・2026-10-07）
+  const periodicSchedule = periodicEventSchedule(detail.rankingPrefix, eventKey, new Date());
   // 期間限定アイテム型は、一覧や DB の日付（イベントの公開日など）より概要の日程（ランキングの 1 日目〜最終日）を優先する。
   // 2026-10-07 本番: 作成フォームの開始が 10/6 00:00（公開日）になり、ランキング 1 日目の 10/7 とずれた
-  const startedAt = schedule?.startsAt ?? (listed?.startedAt ? new Date(listed.startedAt) : (row?.startedAt ?? null));
-  const endedAt = schedule?.endsAt ? new Date(schedule.endsAt.getTime() - 1000) : listed?.endedAt ? new Date(listed.endedAt) : (row?.endedAt ?? null);
+  const startedAt = schedule?.startsAt ?? periodicSchedule?.startsAt ?? (listed?.startedAt ? new Date(listed.startedAt) : (row?.startedAt ?? null));
+  const endedAt = schedule?.endsAt
+    ? new Date(schedule.endsAt.getTime() - 1000)
+    : periodicSchedule
+      ? new Date(periodicSchedule.endsAt.getTime() - 1000)
+      : listed?.endedAt
+        ? new Date(listed.endedAt)
+        : (row?.endedAt ?? null);
   // デイリーのグループがある期間限定アイテム型は「毎日 0:00 区切り」なので、期間の長さに関係なく daily
   const limitedInit = limitedItem ? limitedItemInitFromStruct(struct) : null;
   const kind = limitedInit && limitedInit.groups.length > 0 ? "daily" : computeEventKind(startedAt?.getTime() ?? null, endedAt?.getTime() ?? null);
