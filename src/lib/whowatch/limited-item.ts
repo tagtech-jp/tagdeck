@@ -145,6 +145,23 @@ export function currentLimitedItemWindow(
   };
 }
 
+/**
+ * デイリーのシミュレーターの既定の期間 = now を含む JST の 1 日（0:00〜翌 0:00）。イベントの期間（bounds）があればその中に収める:
+ *   開始前なら 1 日目、終了後なら最終日、途中なら今日。日の境界がイベントの期間をはみ出す分は切る
+ * （2026-10-07 社長指示「開始時間と終了時間も自動的に修正して 24 時間で設定できるように」）
+ */
+export function dailySimulatorWindow(now: Date, bounds: { start?: Date | null; end?: Date | null } = {}): { start: Date; end: Date; dateKey: string } {
+  const s = bounds.start && Number.isFinite(bounds.start.getTime()) ? bounds.start : null;
+  const e = bounds.end && Number.isFinite(bounds.end.getTime()) ? bounds.end : null;
+  let t = now.getTime();
+  if (s && t < s.getTime()) t = s.getTime();
+  if (e && t >= e.getTime()) t = e.getTime() - 1;
+  const day = jstDayWindow(new Date(t));
+  const start = s ? new Date(Math.max(day.start.getTime(), s.getTime())) : day.start;
+  const end = e ? new Date(Math.min(day.end.getTime(), e.getTime())) : day.end;
+  return { start, end: end.getTime() > start.getTime() ? end : day.end, dateKey: day.dateKey };
+}
+
 /** ranking_snapshots を「その日の種別」の行だけにする（前日の順位表が混ざるとペース推定が壊れる） */
 export function filterSnapshotsForDatedType<T extends { rankingType?: string | null }>(snapshots: readonly T[] | null, datedType: string | null): T[] | null {
   if (snapshots === null) return null;

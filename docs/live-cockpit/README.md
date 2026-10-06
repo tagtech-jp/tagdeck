@@ -361,7 +361,7 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 | lib | `src/lib/live/rank-alert.ts` | `itemsNeededByDistribution`(順位パネル用の統計) |
 | route | `POST /api/events`・`PATCH /api/events/[id]` | rankingType にハイフンを許可。PATCH は null で「自動判定に戻す」 |
 | route | `GET /api/live/rank-status` | 前回スナップショットは同じ種別(同じ日)のときだけ比べる。`statsToTarget` / `statsToAbove` |
-| UI | `EventCreateForm`・`EventSettingsEditor` | limited-item は「グループ(配信者グレード)」+「自動判定」。デイリーの説明 |
+| UI | `EventCreateForm`・`EventSettingsEditor` | limited-item は「グループ(配信者グレード)」+「自動判定」。デイリーの説明。デイリー(kind=daily・区分なし)は開始・終了を**今日の 0:00〜翌 0:00 JST**に自動設定し、「今日の 24 時間」「イベント全期間」の切り替えボタンを出す(`dailySimulatorWindow`・社長指示「開始時間と終了時間も自動的に修正して 24 時間で設定できるように」) |
 | UI | `EventDashboard`・`RankForecastPanel` | 今日の区切りで残り時間・予測。その日のスナップショットだけ使う。1 個あたりの平均・ばらつきと必要個数(平均/中央値/90%) |
 | UI | `RankAlertPanel` | 「統計・1 つ上を抜くには: 中央値 N 個・90% で M 個(1 個 平均 85kg ± 94)」 |
 | test | `limited-item.test.ts`・`item-stats.test.ts`・`rules-parser.value-table.test.ts`・`events.limited.test.ts`・`rankings.limited.test.ts`・`auto-ranking-type.limited.test.ts`・`ranking-sync.limited.test.ts`・`event-detail-sync.limited.test.ts`・`route.limited.test.ts` | 実応答の縮約をフィクスチャにした新規テスト |
