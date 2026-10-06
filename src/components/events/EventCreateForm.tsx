@@ -474,7 +474,7 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
                     <p className="mt-1 text-xs text-muted-foreground">ranking_type: {rankingType || (limited ? "（自動判定）" : "")}</p>
                     {limited && (
                       <p className="mt-1 text-xs text-muted-foreground">
-                        デイリーのイベントです。順位表は毎日 0:00 に切り替わり、期間中は当日の順位表を自動で追います。グループは配信者グレードで毎日決まるため、分かっていれば選び、不明なら「自動判定」のまま作成してください（ふわっち ID の設定が要ります）
+                        デイリーのイベントです。順位表は毎日 0:00 に切り替わり、期間を「今日の 24 時間」にしておくと日が変わるたびに翌日の区切りへ自動で進みます。グループは配信者グレードで毎日決まるため、分かっていれば選び、不明なら「自動判定」のまま作成してください（ふわっち ID の設定が要ります）
                       </p>
                     )}
                   </>

@@ -26,9 +26,10 @@ vi.mock("./events", async (importOriginal) => {
   return {
     ...actual,
     getEventDetail: getEventDetailMock,
-    // /event_lists には黄金発掘隊の日付が無い（2026-10-07 実測）
+    // /event_lists の日付（ここではイベントの公開日 10/6 00:00 JST）は使わず、概要の日程（ランキング 1 日目 10/7）を優先する。
+    // 2026-10-07 本番で作成フォームの開始が 10/6 00:00 になった実害
     getEventLists: vi.fn(async () => ({
-      open: [{ id: 1542, eventKey: "2026_10_gold_digger_1", bannerUrl: "", status: "open", badgeText: null, canEntry: null, participants: null, startedAt: null, endedAt: null }],
+      open: [{ id: 1542, eventKey: "2026_10_gold_digger_1", bannerUrl: "", status: "open", badgeText: null, canEntry: null, participants: null, startedAt: Date.parse("2026-10-05T15:00:00.000Z"), endedAt: null }],
       pre: [],
       closed: [],
     })),

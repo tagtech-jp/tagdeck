@@ -251,8 +251,10 @@ export async function syncEventDetail(db: Db, eventKey: string, opts: SyncEventD
   // 概要本文の日程「ランキング（N日目） YYYY年M月D日 00:00 〜 24:00」から全体期間を決める。終了は ended_at の慣例（23:59:59 JST）に合わせ、
   // endTimeFromEndedAt（+1 秒）で翌 0:00 JST になるようにする
   const schedule = limitedItem ? parseLimitedItemSchedule(rulesText, listed?.startedAt ? new Date(listed.startedAt).getUTCFullYear() : null) : null;
-  const startedAt = listed?.startedAt ? new Date(listed.startedAt) : (schedule?.startsAt ?? row?.startedAt ?? null);
-  const endedAt = listed?.endedAt ? new Date(listed.endedAt) : schedule?.endsAt ? new Date(schedule.endsAt.getTime() - 1000) : (row?.endedAt ?? null);
+  // 期間限定アイテム型は、一覧や DB の日付（イベントの公開日など）より概要の日程（ランキングの 1 日目〜最終日）を優先する。
+  // 2026-10-07 本番: 作成フォームの開始が 10/6 00:00（公開日）になり、ランキング 1 日目の 10/7 とずれた
+  const startedAt = schedule?.startsAt ?? (listed?.startedAt ? new Date(listed.startedAt) : (row?.startedAt ?? null));
+  const endedAt = schedule?.endsAt ? new Date(schedule.endsAt.getTime() - 1000) : listed?.endedAt ? new Date(listed.endedAt) : (row?.endedAt ?? null);
   // デイリーのグループがある期間限定アイテム型は「毎日 0:00 区切り」なので、期間の長さに関係なく daily
   const limitedInit = limitedItem ? limitedItemInitFromStruct(struct) : null;
   const kind = limitedInit && limitedInit.groups.length > 0 ? "daily" : computeEventKind(startedAt?.getTime() ?? null, endedAt?.getTime() ?? null);

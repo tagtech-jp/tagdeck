@@ -9,6 +9,7 @@ import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { createDbClient } from "@/lib/db/client";
 import { eventSimulators } from "@/lib/db/schema";
 import { autoAssignRankingTypes, RANKING_EVENT_TYPES as RANKING_EVENT_TYPE_LIST } from "@/lib/whowatch/auto-ranking-type";
+import { rollDailySimulators } from "@/lib/whowatch/daily-roll";
 import { syncSimulatorRanking } from "@/lib/whowatch/ranking-sync";
 import { describeDbError } from "@/lib/whowatch/sanitize";
 
@@ -36,6 +37,17 @@ export async function runRankingSync(env: Record<string, unknown>) {
   }
 
   const db = createDbClient();
+
+  // 日替わり（デイリー）のシミュレーターの期間を、日が変わっていれば今日の 0:00〜翌 0:00 JST へ進める（2026-10-07 社長指示
+  // 「1 日ごとに区切って開始終了を自動設定」）。区分の自動設定と順位の同期より前に行い、進めた行を同じ回で同期する。失敗しても続ける
+  try {
+    const roll = await rollDailySimulators(db, new Date());
+    if (roll.rolled.length > 0) {
+      console.log(`[ranking-sync/scheduled] daily roll: ${roll.rolled.map((r) => `${r.id.slice(0, 8)}:${r.start.toISOString()}~${r.end.toISOString()}`).join(",")}`);
+    }
+  } catch (e) {
+    console.warn("[ranking-sync/scheduled] daily roll failed", describeDbError(e));
+  }
 
   // 区分（ranking_type）が空のシミュレーターに既定の区分を入れる（2026-10-01 社長指示「今後自動で取ってくるように」）。
   // 区分の構造が保存されていないイベントは先に取り直す。ここが失敗しても順位の同期は続ける（トランザクションの外で行う）
