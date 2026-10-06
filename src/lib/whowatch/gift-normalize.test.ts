@@ -5,7 +5,9 @@ import { mergeBurstGifts, normalizeGift, shouldPlayGiftSe, type PatternInfo } fr
 const acorn: PatternInfo = { patternId: 1, itemId: 10, itemName: "どんぐり", patternName: "どんぐり", isHit: false, hitGrade: null, quantity: null, priceJpy: null, animationUrl: null, animationFullscreen: false, groups: ["autumncollection"], freeEvent: true };
 const acornBundle: PatternInfo = { ...acorn, patternId: 2, patternName: "どんぐり × 3", quantity: 3 };
 const fireworks: PatternInfo = { patternId: 3, itemId: 20, itemName: "花火", patternName: "花火", isHit: false, hitGrade: null, quantity: null, priceJpy: 1000, animationUrl: null, animationFullscreen: false, groups: [] };
-const lookup = (id: number) => [acorn, acornBundle, fireworks].find((p) => p.patternId === id) ?? null;
+// 常設の無料アイテム（イベント配布ではない）
+const megaphone: PatternInfo = { patternId: 4, itemId: 40, itemName: "メガホン", patternName: "メガホン", isHit: false, hitGrade: null, quantity: null, priceJpy: null, animationUrl: null, animationFullscreen: false, groups: [] };
+const lookup = (id: number) => [acorn, acornBundle, fireworks, megaphone].find((p) => p.patternId === id) ?? null;
 const gift = (patternId: number, itemCount: number) => normalizeGift({ id: `${patternId}-${itemCount}`, play_item_pattern_id: patternId, item_count: itemCount }, lookup);
 
 describe("shouldPlayGiftSe（イベントの無料アイテムは 3 個まとめ投げだけ鳴らす）", () => {
@@ -28,25 +30,28 @@ describe("shouldPlayGiftSe（イベントの無料アイテムは 3 個まとめ
   });
 });
 
-describe("mergeBurstGifts（同じ人の連投をまとめる）", () => {
+describe("mergeBurstGifts（同じ人の無料アイテムの連投をまとめる）", () => {
   const user = (id: string | null, anonymized = false) => ({ id, name: id, user_path: null, anonymized });
   const g = (patternId: number, itemCount: number, u = user("u1")) => ({ ...gift(patternId, itemCount), user: u });
 
-  it("同じ人・同じアイテムは個数と金額を合計する", () => {
-    const m = mergeBurstGifts(g(3, 1), g(3, 2));
-    expect(m).toMatchObject({ item_id: 20, count: 3, item_count: 3, total_yen: 3000 });
+  it("同じ人・同じ無料アイテムは個数を合計する", () => {
+    expect(mergeBurstGifts(g(4, 1), g(4, 2))).toMatchObject({ item_id: 40, count: 3, item_count: 3, total_yen: null });
+    expect(mergeBurstGifts(g(1, 3), g(1, 5))).toMatchObject({ item_id: 10, count: 8, free_event: true });
+  });
+  it("有料アイテムは同じ人の連投でもまとめない（1 回ずつ鳴らす）", () => {
+    expect(mergeBurstGifts(g(3, 1), g(3, 2))).toBeNull();
   });
   it("別の人・別のアイテム・匿名はまとめない", () => {
-    expect(mergeBurstGifts(g(3, 1), g(3, 1, user("u2")))).toBeNull();
-    expect(mergeBurstGifts(g(3, 1), g(1, 3))).toBeNull();
-    expect(mergeBurstGifts(g(3, 1, user(null, true)), g(3, 1, user(null, true)))).toBeNull();
+    expect(mergeBurstGifts(g(4, 1), g(4, 1, user("u2")))).toBeNull();
+    expect(mergeBurstGifts(g(4, 1), g(1, 3))).toBeNull();
+    expect(mergeBurstGifts(g(4, 1, user(null, true)), g(4, 1, user(null, true)))).toBeNull();
   });
   it("アイテム不明（未知パターン）はまとめない", () => {
     expect(mergeBurstGifts(g(999, 1), g(999, 1))).toBeNull();
   });
   it("当たりが混ざれば当たりのパターンを採り、段階は高い方", () => {
-    const hit = { ...g(3, 1), is_hit: true, pattern_id: 30, bulk_grade: "COOL" as const };
-    const m = mergeBurstGifts({ ...g(3, 5), bulk_grade: "GREAT" }, hit);
-    expect(m).toMatchObject({ is_hit: true, pattern_id: 30, bulk_grade: "GREAT", count: 6 });
+    const hit = { ...g(4, 1), is_hit: true, pattern_id: 41, bulk_grade: "COOL" as const };
+    const m = mergeBurstGifts({ ...g(4, 5), bulk_grade: "GREAT" }, hit);
+    expect(m).toMatchObject({ is_hit: true, pattern_id: 41, bulk_grade: "GREAT", count: 6 });
   });
 });
