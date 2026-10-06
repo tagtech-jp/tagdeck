@@ -21,7 +21,33 @@ vi.mock("@/lib/whowatch/event-detail-sync", () => ({
 vi.mock("@/lib/whowatch/item-patterns-sync", () => ({
   syncItemPatterns: vi.fn(async () => ({ items: 0, patterns: 0, hits: 0, chunks: 0 })),
 }));
+// items/sync が初回バッチ（cursor 無し）で呼ぶ下位同期。差し替えないとふわっちの本物の API
+// （/playitems/payments3・/lives/{id}/playitems3 等）へ通信し、フェイク DB に insert が無いため失敗ログも出る（2026-10-07）
+vi.mock("@/lib/whowatch/item-groups-sync", () => ({
+  fetchPaymentCategories: vi.fn(async () => []),
+  syncItemGroups: vi.fn(async () => ({ categories: 0, rows: 0, inserted: 0, updated: 0, deleted: 0 })),
+}));
+vi.mock("@/lib/whowatch/item-prices", () => ({ syncItemPrices: vi.fn(async () => ({ rows: 0, inserted: 0, updated: 0, fromPacks: 0 })) }));
+vi.mock("@/lib/whowatch/free-event-items", () => ({
+  syncFreeEventItems: vi.fn(async () => ({ eventsResolved: 0, eventsFetched: 0, rows: 0, inserted: 0, updated: 0, deleted: 0 })),
+}));
+vi.mock("@/lib/whowatch/item-decorations", () => ({ syncItemDecorations: vi.fn(async () => ({ liveId: null, rows: 0, withGrades: 0, inserted: 0, updated: 0 })) }));
+vi.mock("@/lib/whowatch/pack-prices", () => ({ resolvePackItems: vi.fn(async () => ({ packs: 0, items: [], unresolved: [] })) }));
 vi.mock("@/lib/notify-gw", () => ({ sendNotifyGw: vi.fn(async () => ({ sent: false })) }));
+
+// 番人: モック漏れで外部へ通信したら、テストを失敗させて気づけるようにする（各ルートは通信失敗を握りつぶして 200 を返し得るため）
+const fetchSpy = vi.fn(async (input: unknown) => {
+  throw new Error(`sync-routes.test: 外部通信は禁止（モック漏れ）: ${String(input)}`);
+});
+beforeAll(() => {
+  vi.stubGlobal("fetch", fetchSpy);
+});
+afterEach(() => {
+  // 先に記録を消してから判定する（判定で失敗しても、後続テストへ呼び出し記録を持ち越さない）
+  const calls = fetchSpy.mock.calls.map(([input]) => String(input));
+  fetchSpy.mockClear();
+  expect(calls, "テスト中に fetch が呼ばれた（下位同期のモック漏れ）").toEqual([]);
+});
 
 const KEY = "test-sync-key-0123456789";
 // ルートと middleware の初回読み込みは全体実行時に数秒かかる。テスト本体（既定 5 秒枠）の中で読むと時間切れになるため、
