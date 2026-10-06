@@ -6,12 +6,14 @@
 // 2026-10-07: 期間限定アイテム型（limited-item・黄金発掘隊）のデイリーは毎日 0:00 JST に順位表が切り替わる。
 //   ranking_type は日付なしで保存し、取得する時にその日の日付を付ける（limited-item.ts）。スナップショットには日付つきの種別を記録する。
 //   自分が今日の順位表に居なければ、他のグループ（配信者グレード K24〜K10。毎日 0:00 の判定で変わりうる）を探して ranking_type を付け替える。
+// 2026-10-07: WGP（wgp-daily / wgp-overall）と N-1 グランプリ（n1-male 等）も同じ考え方（periodic-ranking.ts）。N-1 は今の回の順位表に
+//   自分が居なければ他の部門（男性・女性・ルーキー）を探して付け替える。WGP は区分が属性で決まらないので付け替えない。
 
 import { and, eq } from "drizzle-orm";
 import type { createDbClient } from "@/lib/db/client";
 import { eventSimulators, rankingSnapshots, streamerProfiles, whowatchEvents } from "@/lib/db/schema";
 import { fetchEventRanking, extractRivals, type RankingEntry } from "@/lib/platforms/whowatch-ranking";
-import { buildLimitedItemRankingType, limitedItemInitFromStruct, parseLimitedItemRankingType, type LimitedItemRankingType } from "./limited-item";
+import { parsePeriodicRankingType, periodicSiblingTypes, type PeriodicRankingType } from "./periodic-ranking";
 import { findMyEntry, getRankings, selectAutoRivals, type RankingEntryApi, type RankingResult } from "./rankings";
 
 type Db = ReturnType<typeof createDbClient>;
@@ -50,31 +52,53 @@ async function loadWhowatchUserId(db: DbOrTx, userId: string): Promise<string | 
 }
 
 /**
- * 期間限定アイテム型のデイリーで、自分が居るグループを探す（今の種別のグループ以外を順に見る）。
- * 見つかれば {種別, 取得結果, 自分}。グループの一覧は whowatch_events.struct（初期化 JSON）から。無ければ null
+ * 区分が本人の属性で決まる種別（limited-item のグループ・N-1 の部門）で、自分が居る区分（兄弟）を探す（今の種別以外を順に見る）。
+ * 見つかれば {種別, 取得結果, 自分}。limited-item のグループ一覧は whowatch_events.struct（初期化 JSON）から、N-1 の部門は固定。無ければ null
  */
-async function findMyLimitedItemGroup(
+async function findMySiblingDivision(
   db: DbOrTx,
   event: SimulatorRow,
-  li: LimitedItemRankingType,
+  periodic: PeriodicRankingType,
   ctx: { now: Date; window: { start: Date; end: Date }; whowatchUserId: string | null },
 ): Promise<{ rankingType: string; result: RankingResult; me: RankingEntryApi } | null> {
-  if (event.whowatchEventId === null) return null;
-  const [row] = await db.select({ struct: whowatchEvents.struct }).from(whowatchEvents).where(eq(whowatchEvents.id, event.whowatchEventId)).limit(1);
-  const init = limitedItemInitFromStruct(row?.struct ?? null);
-  if (!init) return null;
-  for (const g of init.groups) {
-    if (g.id === li.group) continue;
-    const type = buildLimitedItemRankingType(li.eventKey, g.id);
+  if (!event.rankingType) return null;
+  let struct: unknown = null;
+  if (periodic.family === "limited-item") {
+    if (event.whowatchEventId === null) return null;
+    const [row] = await db.select({ struct: whowatchEvents.struct }).from(whowatchEvents).where(eq(whowatchEvents.id, event.whowatchEventId)).limit(1);
+    struct = row?.struct ?? null;
+  }
+  for (const type of periodicSiblingTypes(event.rankingType, struct)) {
     try {
       const r = await getRankings(type, { limit: 100, now: ctx.now, window: ctx.window });
       const me = findMyEntry(r.entries, { whowatchUserId: ctx.whowatchUserId, myEntryName: event.myEntryName });
       if (me) return { rankingType: type, result: r, me };
     } catch (e) {
-      console.warn("[ranking-sync] limited-item group lookup failed", type, e instanceof Error ? e.message : String(e));
+      console.warn("[ranking-sync] sibling division lookup failed", type, e instanceof Error ? e.message : String(e));
     }
   }
   return null;
+}
+
+/** 区分を付け替える対象か: 期間が切り替わり、かつ区分が本人の属性で決まる種別（limited-item のデイリーのグループ・N-1 の期間別の部門） */
+function canSwitchDivision(p: PeriodicRankingType | null): boolean {
+  return Boolean(p && (p.family === "limited-item" || p.family === "n1") && (p.scheme === "daily" || p.scheme === "n1round"));
+}
+
+/** 順位表が空のときの説明（期間の切り替わりを伝える） */
+function emptyRankingMessage(p: PeriodicRankingType | null): string {
+  if (!p) return "ランキングデータが取得できませんでした。手動入力をご利用ください。";
+  if (p.family === "wgp") {
+    return p.division === "overall"
+      ? "WGP 月間総合ランキングは 21 日 0:00 から公開されます（それまでは空です）。"
+      : "今日の WGP デイリーランキングにはまだ誰も載っていません（毎日 0:00 に切り替わります）。投票券アイテムが使われると順位が出ます。";
+  }
+  if (p.family === "n1") {
+    return p.division === "total"
+      ? "今月の N-1 全期間ランキングにはまだ誰も載っていません。"
+      : "今の回の N-1 ランキングにはまだ誰も載っていません（期間別は 1 日・11 日・21 日の 0:00 に切り替わります）。";
+  }
+  return "今日の順位表にはまだ誰も載っていません（デイリーは毎日 0:00 に切り替わります）。アイテムが使われると順位が出ます。";
 }
 
 /**
@@ -92,7 +116,7 @@ export async function syncSimulatorRanking(db: DbOrTx, event: SimulatorRow, opts
   let source: RankingSyncResult["source"] = "none";
   let me: RankingEntryApi | null = null;
   let switchedRankingType: string | undefined;
-  const limited = parseLimitedItemRankingType(event.rankingType);
+  const periodic = parsePeriodicRankingType(event.rankingType);
 
   if (event.rankingType) {
     apiResult = await getRankings(event.rankingType, { limit: 100, now, window });
@@ -100,9 +124,9 @@ export async function syncSimulatorRanking(db: DbOrTx, event: SimulatorRow, opts
     source = "api";
     const whowatchUserId = await loadWhowatchUserId(db, event.userId);
     me = findMyEntry(apiEntries, { whowatchUserId, myEntryName: event.myEntryName });
-    // 期間限定アイテム型のデイリー: 自分が今日の順位表に居なければ、他のグループ（配信者グレード）を探して付け替える
-    if (!me && limited && limited.group !== "overall" && (whowatchUserId || event.myEntryName)) {
-      const found = await findMyLimitedItemGroup(db, event, limited, { now, window, whowatchUserId });
+    // limited-item のデイリー・N-1 の期間別: 自分が今の順位表に居なければ、他の区分（グループ / 部門）を探して付け替える
+    if (!me && periodic && canSwitchDivision(periodic) && (whowatchUserId || event.myEntryName)) {
+      const found = await findMySiblingDivision(db, event, periodic, { now, window, whowatchUserId });
       if (found) {
         apiResult = found.result;
         apiEntries = found.result.entries;
@@ -113,7 +137,7 @@ export async function syncSimulatorRanking(db: DbOrTx, event: SimulatorRow, opts
           .update(eventSimulators)
           .set({ rankingType: found.rankingType, updatedAt: now })
           .where(and(eq(eventSimulators.id, event.id), eq(eventSimulators.rankingType, event.rankingType)));
-        console.log(`[ranking-sync] limited-item group switched ${event.id.slice(0, 8)}: ${event.rankingType} -> ${found.rankingType}`);
+        console.log(`[ranking-sync] division switched ${event.id.slice(0, 8)}: ${event.rankingType} -> ${found.rankingType}`);
       }
     }
     entries = apiEntries.map(toLegacy);
@@ -123,10 +147,7 @@ export async function syncSimulatorRanking(db: DbOrTx, event: SimulatorRow, opts
   }
 
   if (entries.length === 0) {
-    const message = limited
-      ? "今日の順位表にはまだ誰も載っていません（デイリーは毎日 0:00 に切り替わります）。アイテムが使われると順位が出ます。"
-      : "ランキングデータが取得できませんでした。手動入力をご利用ください。";
-    return { source, myEntry: null, rivals: [], snapshotId: null, status: apiResult?.status ?? null, message, switchedRankingType };
+    return { source, myEntry: null, rivals: [], snapshotId: null, status: apiResult?.status ?? null, message: emptyRankingMessage(periodic), switchedRankingType };
   }
 
   // ── 自分の特定とライバル選定 ──

@@ -5,6 +5,7 @@
 
 import { resolveWhowatchDeviceId } from "../platforms/whowatch"; // vitest は @/ エイリアス未設定のため相対パス
 import { limitedItemChoices, limitedItemInitFromStruct } from "./limited-item";
+import { periodicChoices, WGP_PREFIX, WGP_TAB_TYPE } from "./periodic-ranking";
 
 const BASE_URL = "https://api.whowatch.tv";
 const USER_AGENT = "TagDeck/0.1 (+https://tagdeck.jp)";
@@ -37,7 +38,8 @@ export interface EventLists {
   closed: EventListItem[];
 }
 
-export type EventTabType = "NOTIFICATION" | "RANKING" | "ITEM" | string;
+/** WGP_RANKING は WhoWatch GRAND PRIX のランキングタブ（detail 空・2026-10-07 実測） */
+export type EventTabType = "NOTIFICATION" | "RANKING" | "WGP_RANKING" | "ITEM" | string;
 
 export interface EventTab {
   title: string;
@@ -222,6 +224,9 @@ export function buildRankingType(prefix: string, parts: string[]): string {
  */
 export function flattenRankingChoices(prefix: string, struct: RankingStruct | null | undefined): RankingChoice[] {
   const out: RankingChoice[] = [];
+  // WGP（prefix "wgp"）・N-1 グランプリ（prefix "n1"）は選択肢が固定（デイリー/月間総合・男性/女性/ルーキー/全期間）で、構造 JSON は無い（2026-10-07）
+  const periodic = periodicChoices(prefix);
+  if (periodic) return periodic;
   if (!struct) return out;
   // 期間限定アイテム型（limited-item・黄金発掘隊など）は構造 JSON の代わりに初期化 JSON を包んで保存している（2026-10-07）。
   // グループ（配信者グレード K24〜K10）と総合を、日付なしの保存形の種別で返す
@@ -325,13 +330,16 @@ export async function getEventDetail(eventKey: string): Promise<EventDetail> {
       detail: String(t.detail ?? ""),
     }));
     const ranking = tabs.find((t) => t.type === "RANKING" && t.detail);
+    // WGP（WhoWatch GRAND PRIX）はタブの type が WGP_RANKING で detail が空（2026-10 実測。2026-09 は "202609overall"）。
+    // 構造 JSON も無いので、擬似 prefix "wgp" を付けて periodic-ranking.ts で扱う
+    const wgp = !ranking && tabs.some((t) => t.type === WGP_TAB_TYPE);
     const itemTab = tabs.find((t) => t.type === "ITEM" && t.detail);
     return {
       eventKey: String(d.event_key ?? eventKey),
       name: String(d.name ?? ""),
       shortName: String(d.short_name ?? d.name ?? ""),
       tabs,
-      rankingPrefix: ranking ? ranking.detail : null,
+      rankingPrefix: ranking ? ranking.detail : wgp ? WGP_PREFIX : null,
       itemGroupKey: itemTab ? itemTab.detail : null,
       notificationIds: tabs.filter((t) => t.type === "NOTIFICATION" && t.detail).map((t) => t.detail),
     };

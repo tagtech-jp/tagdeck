@@ -39,7 +39,8 @@
 
 - [ ] **pre 状態のランキング型イベント(rookie_2, toryumon_2 等)が「RANKING タブ無し」と判定される件**: 開始前は `/event_lists/{key}` の tabs に RANKING が無い可能性。開始後(9/23〜)に `event-detail-sync` を再実行して periods / ranking_prefix が入るか再確認する
 - [ ] **gingiragin の `limited-item-2026_09_gingiragin` 型と whowatchgrandprix の `WGP_RANKING` 型への対応**: 前者は RANKING タブだが prefix にハイフンを含み `/resources/json/rankings/{prefix}` の形が未確認、後者はタブ type が `WGP_RANKING`(detail `202609overall`)で現状は「区分なし」扱い。取得 URL と構造を実測してから対応
-  → **前者は 2026-10-07 に対応済み（E7）**: `limited-item-*` は構造 JSON が無く、ふわっち Web 版と同じ `GET /events/limited_item_rankings_init` / `GET /events/limited_item_rankings?period=YYYYMMDD&event_key=&group=` を使う（黄金発掘隊で実測）。デイリーは 0:00 JST 区切り。`WGP_RANKING` は未対応のまま
+  → **前者は 2026-10-07 に対応済み（E7）**: `limited-item-*` は構造 JSON が無く、ふわっち Web 版と同じ `GET /events/limited_item_rankings_init` / `GET /events/limited_item_rankings?period=YYYYMMDD&event_key=&group=` を使う（黄金発掘隊で実測）。デイリーは 0:00 JST 区切り
+  → **後者も 2026-10-07 に対応済み（E8）**: `WGP_RANKING` タブ（2026-10 は detail 空）は擬似 prefix `wgp` にし、`GET /wgp/ranking/{YYYYMMDD}`（デイリー）/ `GET /wgp/ranking/overall/{YYYYMM}`（月間総合・21 日から公開）を使う。N-1 グランプリ（RANKING タブ detail `n1`・構造 JSON は Z-002）も `GET /rankings/nice_one_{1st|2nd|3rd}_{male|female|rookie}/{YYYYMM}` / `nice_one_total/{YYYYMM}` で対応。残る未対応は `WGP_AWARD`（デイリー受賞者の一覧・順位追跡には不要）
 - [ ] E3 の基礎 pt(アイテム 1 個あたりのランキングポイント)は公式本文に無い → 手入力運用。S1 のギフト保存後に「実測から推定」で置換
 - [ ] E3 の最終日係数 1.5 は仮置き。過去 closed イベントの伸び率係数(最終日 24h の pt 増分 ÷ 通常日平均)を求める処理を追加する
 - [ ] `event_item_points` は全ユーザー共有(認証ユーザーなら誰でも上書き可)。荒らし対策が必要なら user 別に分ける

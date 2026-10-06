@@ -7,8 +7,9 @@ import { useEventForecast, type EventSimulatorRow } from "@/hooks/useEventSimula
 import { useHistoricalPace } from "@/hooks/useHistoricalPace";
 import { useRankingSnapshots } from "@/hooks/useRankingSnapshots";
 import { forecastRank, rivalKey, type RankForecastOutput } from "@/lib/whowatch/rank-forecast";
-// 期間限定アイテム型（limited-item・黄金発掘隊）: 毎日 0:00 JST に順位表が切り替わる。残り時間・予測・スナップショットは「今日の区切り」で見る（2026-10-07）
-import { currentLimitedItemWindow, filterSnapshotsForDatedType, parseLimitedItemRankingType, resolveLimitedItemRankingType } from "@/lib/whowatch/limited-item";
+// 期間が切り替わるランキング（limited-item のデイリー・WGP のデイリー/月間総合・N-1 の回/全期間）: 残り時間・予測・スナップショットは「今の区切り」で見る（2026-10-07）
+import { filterSnapshotsForDatedType } from "@/lib/whowatch/limited-item";
+import { currentPeriodicWindow, parsePeriodicRankingType, periodSchemeLabel, resolvePeriodicRankingType } from "@/lib/whowatch/periodic-ranking";
 import { useEventStrategy, type ItemMasterEntry } from "@/hooks/useEventStrategy";
 import { RankDistributionChart } from "./RankDistributionChart";
 import { RivalsList } from "./RivalsList";
@@ -96,15 +97,15 @@ function formatTime(minutes: number): string {
 }
 
 export function EventDashboard({ event, onDeleted }: Props) {
-  // 期間限定アイテム型（limited-item・黄金発掘隊・2026-10-07）: 順位表は毎日 0:00 JST に切り替わる。
-  // 残り時間・予測は「今日の区切り」で見るため、期間を今日に差し替えたイベントを予測フックに渡す（表示する期間はシミュレーターの設定のまま）
-  const limited = event.platform === "whowatch" ? parseLimitedItemRankingType(event.rankingType) : null;
-  const limitedGroup = limited?.group ?? null;
+  // 期間が切り替わるランキング（limited-item のデイリー・WGP・N-1・2026-10-07）: 順位表は 0:00 JST の区切り（毎日 / 1 日・11 日・21 日 / 月初）で切り替わる。
+  // 残り時間・予測は「今の区切り」で見るため、期間を今の区切りに差し替えたイベントを予測フックに渡す（表示する期間はシミュレーターの設定のまま）
+  const periodic = event.platform === "whowatch" ? parsePeriodicRankingType(event.rankingType) : null;
+  const periodScheme = periodic && periodic.scheme !== "whole" ? periodic.scheme : null;
   const minuteKey = Math.floor(Date.now() / 60_000);
   const dayWindow = useMemo(() => {
-    if (limitedGroup === null) return null;
-    return currentLimitedItemWindow(new Date(minuteKey * 60_000), { startTime: new Date(event.startTime), endTime: new Date(event.endTime) }, limitedGroup);
-  }, [limitedGroup, minuteKey, event.startTime, event.endTime]);
+    if (!periodScheme || !event.rankingType) return null;
+    return currentPeriodicWindow(new Date(minuteKey * 60_000), { startTime: new Date(event.startTime), endTime: new Date(event.endTime) }, event.rankingType);
+  }, [periodScheme, event.rankingType, minuteKey, event.startTime, event.endTime]);
   const forecastEvent = useMemo<EventSimulatorRow>(
     () => (dayWindow ? { ...event, startTime: dayWindow.start.toISOString(), endTime: dayWindow.end.toISOString() } : event),
     [event, dayWindow],
@@ -121,10 +122,11 @@ export function EventDashboard({ event, onDeleted }: Props) {
   const isOpenNow =
     now.getTime() >= new Date(event.startTime).getTime() && now.getTime() <= new Date(event.endTime).getTime();
   const snaps = useRankingSnapshots(event.id, { enabled: usesSnapshots, autoRefresh: usesSnapshots && isOpenNow });
-  // 期間限定アイテム型は「その日の種別」（limited-item-…-2-20261007）のスナップショットだけを使う（前日の順位表が混ざるとペース推定が壊れる）
+  // 期間が切り替わる種別は「今の期間の種別」（limited-item-…-2-20261007 / wgp-daily-20261007 / n1-male-202610-1st）のスナップショットだけを使う
+  // （前の期間の順位表が混ざるとペース推定が壊れる）
   const datedRankingType =
-    limitedGroup !== null && event.rankingType
-      ? resolveLimitedItemRankingType(event.rankingType, new Date(minuteKey * 60_000), { start: new Date(event.startTime), end: new Date(event.endTime) })
+    periodScheme && event.rankingType
+      ? resolvePeriodicRankingType(event.rankingType, new Date(minuteKey * 60_000), { start: new Date(event.startTime), end: new Date(event.endTime) })
       : null;
   const windowSnapshots = useMemo(
     () => (datedRankingType ? filterSnapshotsForDatedType(snaps.snapshots, datedRankingType) : snaps.snapshots),
@@ -167,7 +169,9 @@ export function EventDashboard({ event, onDeleted }: Props) {
               ? "ランキングを読み込み中"
               : windowSnapshots.length === 0
                 ? dayWindow
-                  ? "今日の順位表をまだ取得していません（毎日 0:00 に切り替わります）。「ランキング更新」で取得します"
+                  ? periodScheme === "daily"
+                    ? "今日の順位表をまだ取得していません（毎日 0:00 に切り替わります）。「ランキング更新」で取得します"
+                    : "今の期間の順位表をまだ取得していません（期間が切り替わると前の期間の表は使いません）。「ランキング更新」で取得します"
                   : "ランキング未取得のため確率を計算できません。「ランキング更新」で取得します"
                 : snapshotForecast?.note ?? "ランキング未取得",
           probability: null,
@@ -524,12 +528,12 @@ export function EventDashboard({ event, onDeleted }: Props) {
               {" 〜 "}
               {new Date(event.endTime).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
             </span>
-            {dayWindow && dayWindow.dateKey && (
-              // 期間限定アイテム型のデイリー: 残り時間・予測・順位表はこの区切りで見ている
+            {dayWindow && dayWindow.key && periodScheme && (
+              // 期間が切り替わるランキング: 残り時間・予測・順位表はこの区切りで見ている
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">
-                今日の区切り {dayWindow.start.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                {periodScheme === "daily" ? "今日の区切り" : "今の区切り"} {dayWindow.start.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                 {" 〜 "}
-                {dayWindow.end.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}（毎日 0:00 に切り替わり）
+                {dayWindow.end.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}（{periodSchemeLabel(periodScheme)}）
               </span>
             )}
             {!editingSettings && (

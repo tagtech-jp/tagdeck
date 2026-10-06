@@ -8,6 +8,9 @@
 //   3. 期間限定アイテム型（limited-item・黄金発掘隊・2026-10-07 社長指示「カテゴリーごとに自動的に入れて」）: グループは配信者グレード
 //      （K24〜K10）で決まり、公開 API からは本人のグレードが分からない。今日の各グループの順位表を順に見て、本人が載っているグループを入れる。
 //      まだどこにも載っていなければ入れずに次回へ回す（既定を K24 にすると違うグループの順位を追ってしまう）
+//   4. N-1 グランプリ（prefix "n1"・2026-10-07 社長指示「ナイスも対応して」）: 部門（男性・女性・ルーキー）は本人の属性で決まる。今の回の
+//      3 部門の順位表を順に見て、本人が載っている部門を入れる。全期間（n1-total）は属性に依らないので自動では入れない（利用者が選ぶ）。
+//      WGP（prefix "wgp"）は選択肢が固定（デイリー / 月間総合）なので 2. の規則で先頭のデイリーが入る
 // 利用者が後から別の区分を選べば、そちらが優先（ranking_type が空のものだけを書き換える）。
 
 import { and, asc, eq, gte, inArray, isNotNull, isNull, lte, ne, or } from "drizzle-orm";
@@ -16,6 +19,7 @@ import { eventSimulators, streamerProfiles, whowatchEvents } from "@/lib/db/sche
 import { isUsableStruct, syncEventDetail, viewFromRow } from "./event-detail-sync";
 import { flattenRankingChoices } from "./events";
 import { buildLimitedItemRankingType, eventKeyFromLimitedItemPrefix, isLimitedItemPrefix, limitedItemInitFromStruct, type LimitedItemInit } from "./limited-item";
+import { buildN1RankingType, isN1Prefix, N1_SCAN_DIVISIONS } from "./periodic-ranking";
 import { pickDefaultRankingType, type PeriodLike } from "./ranking-choice";
 import { findMyEntry, getRankings, type RankingEntryApi } from "./rankings";
 
@@ -97,6 +101,22 @@ export async function decideLimitedItemRankingType(sim: AutoAssignLimitedTarget,
   return { id: sim.id, skip: "今日のランキングにまだ載っていない（載った時点でグループを自動設定）" };
 }
 
+/**
+ * N-1 グランプリ: 今の回の男性・女性・ルーキー部門の順位表を順に見て、本人が載っている部門を入れる。
+ * ふわっち ID も表示名も無ければ判定できない。全期間（n1-total）は本人の属性に依らないので候補にしない
+ */
+export async function decideN1RankingType(sim: AutoAssignLimitedTarget, lookup: LimitedItemLookup): Promise<AutoAssignDecision> {
+  if (!sim.whowatchUserId && !sim.myEntryName) return { id: sim.id, skip: "ふわっち ID が未設定のため部門を判定できない（設定 → プラットフォーム）" };
+  for (const division of N1_SCAN_DIVISIONS) {
+    const type = buildN1RankingType(division);
+    const entries = await lookup(type);
+    if (findMyEntry(entries, { whowatchUserId: sim.whowatchUserId, myEntryName: sim.myEntryName })) {
+      return { id: sim.id, rankingType: type, optionKey: division };
+    }
+  }
+  return { id: sim.id, skip: "今の回の順位表にまだ載っていない（載った時点で部門を自動設定）" };
+}
+
 export interface AutoAssignResult {
   assigned: Array<{ id: string; rankingType: string }>;
   /** 詳細を API から取り直したイベント（event_key） */
@@ -173,27 +193,36 @@ export async function autoAssignRankingTypes(db: Db, now: Date): Promise<AutoAss
     }
     const target: AutoAssignTarget = { id: sim.id, startTime: sim.startTime, whowatchEventId: sim.whowatchEventId };
     let d: AutoAssignDecision;
-    const init = entry && entry.detail.fetched && isLimitedItemPrefix(entry.detail.rankingPrefix) ? limitedItemInitFromStruct(entry.detail.struct) : null;
-    if (entry && entry.detail.fetched && isLimitedItemPrefix(entry.detail.rankingPrefix)) {
+    const fetched = Boolean(entry && entry.detail.fetched);
+    const prefix = entry?.detail.rankingPrefix ?? null;
+    // 本人が載っている区分を順位表から探す家族（limited-item のグループ・N-1 の部門）で使う。期間はシミュレーターの期間に収めて決める
+    const window = { start: sim.startTime, end: sim.endTime };
+    const lookup: LimitedItemLookup = async (type) => {
+      try {
+        return (await getRankings(type, { limit: 100, now, window })).entries;
+      } catch (e) {
+        console.warn("[auto-ranking-type] division lookup failed", type, e instanceof Error ? e.message : String(e));
+        return [];
+      }
+    };
+    if (fetched && isLimitedItemPrefix(prefix)) {
+      const init = limitedItemInitFromStruct(entry!.detail.struct);
       if (!init) d = { id: sim.id, skip: "区分の構造がまだ取れていない" };
       else if (limitedScans >= AUTO_LIMITED_SCAN_MAX_PER_RUN) d = { id: sim.id, skip: "今回のグループ判定の上限（次回の同期で判定）" };
       else {
         limitedScans++;
-        const window = { start: sim.startTime, end: sim.endTime };
-        const lookup: LimitedItemLookup = async (type) => {
-          try {
-            return (await getRankings(type, { limit: 100, now, window })).entries;
-          } catch (e) {
-            console.warn("[auto-ranking-type] limited-item lookup failed", type, e instanceof Error ? e.message : String(e));
-            return [];
-          }
-        };
         d = await decideLimitedItemRankingType(
           { ...target, endTime: sim.endTime, whowatchUserId: await whowatchUserIdOf(sim.userId), myEntryName: sim.myEntryName },
-          entry.detail.rankingPrefix as string,
+          prefix as string,
           init,
           lookup,
         );
+      }
+    } else if (fetched && isN1Prefix(prefix)) {
+      if (limitedScans >= AUTO_LIMITED_SCAN_MAX_PER_RUN) d = { id: sim.id, skip: "今回の部門判定の上限（次回の同期で判定）" };
+      else {
+        limitedScans++;
+        d = await decideN1RankingType({ ...target, endTime: sim.endTime, whowatchUserId: await whowatchUserIdOf(sim.userId), myEntryName: sim.myEntryName }, lookup);
       }
     } else {
       d = decideRankingType(target, entry?.detail ?? null);
