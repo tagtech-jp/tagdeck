@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { synthRankAlert } from "@/lib/se/engine";
-import type { RankStatus } from "@/lib/live/rank-alert";
+import type { ItemsNeeded, RankStatus } from "@/lib/live/rank-alert";
 import { useLiveConnection } from "./LiveConnectionProvider";
 
 const REFRESH_MS = 60_000;
@@ -15,7 +15,12 @@ interface RankEvent {
   simulatorId: string;
   name: string;
   status: RankStatus;
+  /** 目標まで・1 つ上まで の「あと◯個」（2026-10-06。イベントの基礎 pt が未登録なら空） */
+  itemsToTarget?: ItemsNeeded[];
+  itemsToAbove?: ItemsNeeded[];
 }
+
+const itemsText = (items: ItemsNeeded[] | undefined) => (items && items.length > 0 ? items.map((i) => `${i.name} ${i.count.toLocaleString("ja-JP")}個`).join("・") : null);
 
 const pt = (n: number) => `${n.toLocaleString("ja-JP")}pt`;
 
@@ -62,7 +67,7 @@ export function RankAlertPanel() {
   if (events.length === 0) return null;
   return (
     <div className="space-y-2">
-      {events.map(({ simulatorId, name, status: s }) => {
+      {events.map(({ simulatorId, name, status: s, itemsToTarget, itemsToAbove }) => {
         const alerting = s.alerts.length > 0;
         return (
           <div key={simulatorId} className={`rounded-xl border p-4 ${alerting ? "border-destructive bg-destructive/10" : "border-border bg-card"}`}>
@@ -80,6 +85,12 @@ export function RankAlertPanel() {
               {s.target && <span className="text-sm">{s.target.gap > 0 ? `目標 ${s.target.rank} 位まで ${pt(s.target.gap)}` : `目標 ${s.target.rank} 位圏内（余裕 ${pt(-s.target.gap)}）`}</span>}
               <span className="ml-auto text-xs text-muted-foreground">{new Date(s.capturedAt).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })} 時点</span>
             </div>
+            {(itemsText(itemsToAbove) || (s.target && s.target.gap > 0 && itemsText(itemsToTarget))) && (
+              <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                {itemsText(itemsToAbove) && <span>1 つ上を抜くには: {itemsText(itemsToAbove)}</span>}
+                {s.target && s.target.gap > 0 && itemsText(itemsToTarget) && <span>目標 {s.target.rank} 位まで: {itemsText(itemsToTarget)}</span>}
+              </div>
+            )}
             {alerting && (
               <ul className="mt-2 space-y-1">
                 {s.alerts.map((a) => (
