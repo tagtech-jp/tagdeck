@@ -9,6 +9,7 @@ import type { WsState } from "@/lib/live/ws-feed";
 import { retryCountdownSec } from "@/lib/live/master-retry";
 import type { NormalizedGift as Gift } from "@/lib/whowatch/gift-normalize";
 import { VolumeSlider } from "./VolumeSlider";
+import { StreamReportPanel } from "./StreamReportPanel";
 import { RankAlertPanel } from "./RankAlertPanel";
 import type { BgAudioState } from "@/lib/se/background-keepalive";
 import { BULK_GRADE_LABELS, type BulkGrade } from "@/lib/se/bulk-grade";
@@ -338,6 +339,9 @@ export function LiveCockpit({ debug = false }: { debug?: boolean }) {
           </button>
         </div>
       </div>
+
+      {/* 配信の振り返りレポート（2026-10-06） */}
+      <StreamReportPanel />
 
       {/* 直近のギフト */}
       <div className="rounded-xl border border-border bg-card p-4">
