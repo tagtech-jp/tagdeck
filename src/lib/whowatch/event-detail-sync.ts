@@ -129,20 +129,24 @@ export function computePeriods(rulesText: string | null, struct: RankingStruct |
 
 export function viewFromRow(row: EventRow): EventDetailView {
   const struct = (row.struct ?? null) as RankingStruct | null;
+  // 期間限定アイテム型で DB の日付が無ければ（一覧同期が NULL で上書きした等・2026-10-07 本番の実害）、概要の日程から補う
+  const schedule = isLimitedItemPrefix(row.rankingPrefix) && (!row.startedAt || !row.endedAt) ? parseLimitedItemSchedule(row.rulesText) : null;
+  const startedAt = row.startedAt ?? schedule?.startsAt ?? null;
+  const endedAt = row.endedAt ?? (schedule?.endsAt ? new Date(schedule.endsAt.getTime() - 1000) : null);
   return {
     id: row.id,
     eventKey: row.eventKey,
     name: row.name ?? row.titleJa ?? row.eventKey,
     shortName: row.shortName ?? row.name ?? row.eventKey,
     status: row.status,
-    startedAt: row.startedAt,
-    endedAt: row.endedAt,
+    startedAt,
+    endedAt,
     kind: row.kind,
     rankingPrefix: row.rankingPrefix,
     struct,
     rulesText: row.rulesText,
     rulesHtml: row.rulesHtml,
-    periods: (row.periods as EventPeriod[] | null) ?? computePeriods(row.rulesText, struct, row.startedAt, row.endedAt),
+    periods: (row.periods as EventPeriod[] | null) ?? computePeriods(row.rulesText, struct, startedAt, endedAt),
     rulesParsed: pickRulesParsed(row.rulesParsed, row.rulesText),
     source: "db",
   };
