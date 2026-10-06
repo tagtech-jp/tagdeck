@@ -685,6 +685,8 @@ export function LiveConnectionProvider({ children }: { children: React.ReactNode
           const gift = mergeBurstGifts(queued.gift, incoming.gift);
           return gift ? { ...queued, gift } : null;
         },
+        // 有料ギフトは上限（10 件）を超えても捨てず全部鳴らす（2026-10-05 社長指示）。捨てるのは無料だけ
+        keep: (q) => (q.gift.price_yen ?? 0) > 0,
       }),
     [playQueued],
   );

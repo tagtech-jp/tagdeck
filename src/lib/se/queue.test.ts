@@ -154,3 +154,21 @@ describe("createSeQueue の merge（同じ人の連投をまとめる）", () =>
     expect(played).toEqual(["a:1", "a:1"]);
   });
 });
+
+describe("createSeQueue の keep（上限を超えても捨てない要素）", () => {
+  it("上限を超えたら捨ててよい要素を新しい方から捨て、keep の要素は全部残す", async () => {
+    const { queue, played } = harness({ limit: 3, keep: (s) => s.startsWith("paid") });
+    queue.push(["x"]); // 鳴り始める（待ち行列からは出ている）
+    queue.push(["free1", "paid1", "free2", "paid2", "free3", "paid3", "paid4"]);
+    expect(queue.size).toBe(4); // 上限 3 を超えるが、有料 4 件は捨てない
+    await flush();
+    expect(played).toEqual(["x", "paid1", "paid2", "paid3", "paid4"]);
+  });
+
+  it("keep なしなら従来どおり上限で切る", async () => {
+    const { queue, played } = harness({ limit: 2 });
+    queue.push(["a", "b", "c", "d"]);
+    await flush();
+    expect(played).toEqual(["a", "b"]);
+  });
+});

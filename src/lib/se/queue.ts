@@ -32,8 +32,13 @@ export function createSeQueue<T>(opts: {
    * 同じ人の連投を 1 回の音にするため（2026-10-05）。鳴り始めた要素にはまとめない
    */
   merge?: (queued: T, incoming: T) => T | null;
+  /**
+   * 上限を超えても捨てない要素（有料ギフト・2026-10-05 社長指示「有料アイテムは捨てずに全部鳴らす」）。
+   * 上限を超えたら、捨ててよい要素を新しい方から捨てる。捨てない要素だけで上限を超えるのは許す
+   */
+  keep?: (item: T) => boolean;
 }): SeQueue<T> {
-  const { play, gapMs = SE_GAP_MS, maxWaitMs = SE_MAX_WAIT_MS, limit = SE_QUEUE_LIMIT, sleep = defaultSleep, merge } = opts;
+  const { play, gapMs = SE_GAP_MS, maxWaitMs = SE_MAX_WAIT_MS, limit = SE_QUEUE_LIMIT, sleep = defaultSleep, merge, keep } = opts;
   let queue: T[] = [];
   let running = false;
   /** clear() で世代を進め、走っているループを止める */
@@ -75,7 +80,14 @@ export function createSeQueue<T>(opts: {
         if (!merged) queue.push(item);
       }
       // 上限を超えた分は捨てる（音が延々と続くのを防ぐ）
-      if (queue.length > limit) queue = queue.slice(0, limit);
+      if (queue.length > limit) {
+        if (!keep) queue = queue.slice(0, limit);
+        else {
+          for (let i = queue.length - 1; i >= 0 && queue.length > limit; i--) {
+            if (!keep(queue[i])) queue.splice(i, 1);
+          }
+        }
+      }
       void drain();
     },
     clear(): void {
