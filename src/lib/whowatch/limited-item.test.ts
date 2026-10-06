@@ -3,6 +3,7 @@ import {
   buildLimitedItemRankingType,
   clampTime,
   currentLimitedItemWindow,
+  dailySimulatorWindow,
   eventKeyFromLimitedItemPrefix,
   filterSnapshotsForDatedType,
   isLimitedItemPrefix,
@@ -14,6 +15,7 @@ import {
   limitedItemChoiceLabel,
   limitedItemChoices,
   limitedItemInitFromStruct,
+  nextJstMidnightAfter,
   normalizeLimitedItemInit,
   OVERALL_PERIOD,
   parseLimitedItemRankingType,
@@ -216,5 +218,37 @@ describe("概要本文の日程（ランキング（N日目））", () => {
     expect(s.endsAt?.toISOString()).toBe("2026-10-08T15:00:00.000Z");
     expect(parseLimitedItemSchedule("ランキング（1日目）\n10月7日", null).days).toEqual([]);
     expect(parseLimitedItemSchedule(null)).toEqual({ days: [], startsAt: null, endsAt: null });
+  });
+});
+
+describe("dailySimulatorWindow（作成フォームの 24 時間の既定）", () => {
+  // イベント期間 10/7 00:00 〜 10/12 00:00 JST
+  const BOUNDS = { start: new Date("2026-10-06T15:00:00.000Z"), end: new Date("2026-10-11T15:00:00.000Z") };
+
+  it("期間中なら今日の 0:00〜翌 0:00 JST", () => {
+    // 10/7 01:11 JST
+    expect(dailySimulatorWindow(new Date("2026-10-06T16:11:00.000Z"), BOUNDS)).toEqual({
+      start: new Date("2026-10-06T15:00:00.000Z"),
+      end: new Date("2026-10-07T15:00:00.000Z"),
+      dateKey: "20261007",
+    });
+  });
+
+  it("開始前なら 1 日目、終了後なら最終日", () => {
+    expect(dailySimulatorWindow(new Date("2026-10-05T00:00:00.000Z"), BOUNDS).dateKey).toBe("20261007");
+    const last = dailySimulatorWindow(new Date("2026-10-20T00:00:00.000Z"), BOUNDS);
+    expect(last).toEqual({ start: new Date("2026-10-10T15:00:00.000Z"), end: new Date("2026-10-11T15:00:00.000Z"), dateKey: "20261011" });
+  });
+
+  it("期間が無ければその日の 1 日。期間が日の途中で始まる・終わるなら切る", () => {
+    expect(dailySimulatorWindow(new Date("2026-10-07T03:00:00.000Z"))).toEqual(jstDayWindow(new Date("2026-10-07T03:00:00.000Z")));
+    const half = dailySimulatorWindow(new Date("2026-10-07T03:00:00.000Z"), { start: new Date("2026-10-07T00:00:00.000Z"), end: new Date("2026-10-07T06:00:00.000Z") });
+    expect(half).toEqual({ start: new Date("2026-10-07T00:00:00.000Z"), end: new Date("2026-10-07T06:00:00.000Z"), dateKey: "20261007" });
+  });
+
+  it("終了 = 開始日の翌日 0:00 JST（開始がちょうど 0:00 なら +24h、日中なら次の 0:00）", () => {
+    expect(nextJstMidnightAfter(new Date("2026-10-06T15:00:00.000Z")).toISOString()).toBe("2026-10-07T15:00:00.000Z"); // 10/7 00:00 → 10/8 00:00
+    expect(nextJstMidnightAfter(new Date("2026-10-07T04:00:00.000Z")).toISOString()).toBe("2026-10-07T15:00:00.000Z"); // 10/7 13:00 → 10/8 00:00
+    expect(nextJstMidnightAfter(new Date("2026-10-07T14:59:59.000Z")).toISOString()).toBe("2026-10-07T15:00:00.000Z"); // 10/7 23:59:59 → 10/8 00:00
   });
 });

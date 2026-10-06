@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 // 区分の絞り込みと既定（総合 → 先頭）は 5 分同期の自動設定と共通（2026-10-01）
 import { choicesForOption, defaultChoice } from "@/lib/whowatch/ranking-choice";
 // 期間限定アイテム型（limited-item・黄金発掘隊）: グループ（配信者グレード）は自動判定が既定。空で保存すると「自動判定に戻す」（2026-10-07）
-import { isLimitedItemPrefix } from "@/lib/whowatch/limited-item";
+import { dailySimulatorWindow, isLimitedItemPrefix, nextJstMidnightAfter } from "@/lib/whowatch/limited-item";
 
 // E1b: 作成済みシミュレーターの区分（前半/後半）・ランキング種別・期間を後から変更する編集導線。
 // 例: オータムグッズコレクションを「後半（2nd, 9/23 00:00〜9/28 00:00 JST, autumncollection_2nd_overall）」へ更新する。
@@ -26,6 +26,10 @@ interface Detail {
   eventKey: string;
   name: string;
   rankingPrefix?: string | null;
+  /** daily = 毎日 0:00 区切り（期間限定アイテム型など）。期間の切り替えボタンに使う */
+  kind?: "daily" | "long" | null;
+  startedAt?: string | null;
+  endTime?: string | null;
   rankingChoices: RankingChoice[];
   periods: EventPeriod[];
 }
@@ -68,6 +72,19 @@ export function EventSettingsEditor({ eventId, whowatchEventId, currentRankingTy
   const [rankingType, setRankingType] = useState<string>(currentRankingType ?? "");
   const [startTime, setStartTime] = useState(() => toLocal(currentStartTime));
   const [endTime, setEndTime] = useState(() => toLocal(currentEndTime));
+  // デイリーの期間の入れ方（2026-10-07）: "day" = 1 日ぶん（開始を変えると終了が開始日の翌日 0:00 JST に追従）、"full" = イベント全期間。
+  // 既定は今の期間の長さから（36 時間以下なら day）
+  const [periodMode, setPeriodMode] = useState<"day" | "full">(() =>
+    new Date(currentEndTime).getTime() - new Date(currentStartTime).getTime() <= 36 * 60 * 60 * 1000 ? "day" : "full",
+  );
+  const isDailyEvent = Boolean(detail && detail.kind === "daily" && detail.periods.length === 0);
+  const handleStartChange = (value: string) => {
+    setStartTime(value);
+    if (!isDailyEvent || periodMode !== "day") return;
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return;
+    setEndTime(toLocal(nextJstMidnightAfter(d).toISOString()));
+  };
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -236,13 +253,48 @@ export function EventSettingsEditor({ eventId, whowatchEventId, currentRankingTy
         </>
       ) : null}
 
+      {detail && detail.kind === "daily" && detail.periods.length === 0 && (
+        // デイリー（毎日 0:00 区切り）: 期間を「今日の 24 時間」か「イベント全期間」にワンタップで入れる（2026-10-07）
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-muted-foreground">デイリー（毎日 0:00 区切り）の期間:</span>
+          <button
+            type="button"
+            onClick={() => {
+              setPeriodMode("day");
+              const w = dailySimulatorWindow(new Date(), { start: detail.startedAt ? new Date(detail.startedAt) : null, end: detail.endTime ? new Date(detail.endTime) : null });
+              setStartTime(toLocal(w.start.toISOString()));
+              setEndTime(toLocal(w.end.toISOString()));
+            }}
+            aria-pressed={periodMode === "day"}
+            className={`min-h-8 rounded-full border px-3 ${periodMode === "day" ? "border-primary bg-primary/10 text-primary" : "border-border bg-muted text-foreground"}`}
+          >
+            今日の 24 時間（0:00〜翌 0:00）
+          </button>
+          {detail.startedAt && detail.endTime && (
+            <button
+              type="button"
+              onClick={() => {
+                setPeriodMode("full");
+                setStartTime(toLocal(detail.startedAt as string));
+                setEndTime(toLocal(detail.endTime as string));
+              }}
+              aria-pressed={periodMode === "full"}
+              className={`min-h-8 rounded-full border px-3 ${periodMode === "full" ? "border-primary bg-primary/10 text-primary" : "border-border bg-muted text-foreground"}`}
+            >
+              イベント全期間（{new Date(detail.startedAt).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}〜
+              {new Date(detail.endTime).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}）
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-xs text-muted-foreground">開始日時（手修正可）</label>
           <input
             type="datetime-local"
             value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
+            onChange={(e) => handleStartChange(e.target.value)}
             className="min-h-11 w-full rounded-sm bg-muted px-3 py-2 text-sm text-foreground"
           />
         </div>

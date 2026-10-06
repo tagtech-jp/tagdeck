@@ -105,6 +105,14 @@ export function jstDayWindow(d: Date): { start: Date; end: Date; dateKey: string
   return { start, end: new Date(start.getTime() + DAY_MS), dateKey };
 }
 
+/**
+ * d の次の 0:00 JST（d がちょうど 0:00 なら翌日の 0:00）。デイリーのシミュレーターの終了 = 開始日の翌日 0:00 に使う
+ * （2026-10-07 社長指示「終了日時は開始日の翌日の 0:00 に自動的になるように」）
+ */
+export function nextJstMidnightAfter(d: Date): Date {
+  return jstDayWindow(d).end;
+}
+
 /** t を [start, end) に収める（end 以降なら end の直前） */
 export function clampTime(t: Date, window: { start: Date; end: Date } | null | undefined): Date {
   if (!window) return t;
@@ -143,6 +151,23 @@ export function currentLimitedItemWindow(
     end: new Date(Math.min(day.end.getTime(), sim.endTime.getTime())),
     dateKey: day.dateKey,
   };
+}
+
+/**
+ * デイリーのシミュレーターの既定の期間 = now を含む JST の 1 日（0:00〜翌 0:00）。イベントの期間（bounds）があればその中に収める:
+ *   開始前なら 1 日目、終了後なら最終日、途中なら今日。日の境界がイベントの期間をはみ出す分は切る
+ * （2026-10-07 社長指示「開始時間と終了時間も自動的に修正して 24 時間で設定できるように」）
+ */
+export function dailySimulatorWindow(now: Date, bounds: { start?: Date | null; end?: Date | null } = {}): { start: Date; end: Date; dateKey: string } {
+  const s = bounds.start && Number.isFinite(bounds.start.getTime()) ? bounds.start : null;
+  const e = bounds.end && Number.isFinite(bounds.end.getTime()) ? bounds.end : null;
+  let t = now.getTime();
+  if (s && t < s.getTime()) t = s.getTime();
+  if (e && t >= e.getTime()) t = e.getTime() - 1;
+  const day = jstDayWindow(new Date(t));
+  const start = s ? new Date(Math.max(day.start.getTime(), s.getTime())) : day.start;
+  const end = e ? new Date(Math.min(day.end.getTime(), e.getTime())) : day.end;
+  return { start, end: end.getTime() > start.getTime() ? end : day.end, dateKey: day.dateKey };
 }
 
 /** ranking_snapshots を「その日の種別」の行だけにする（前日の順位表が混ざるとペース推定が壊れる） */

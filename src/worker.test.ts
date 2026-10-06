@@ -24,6 +24,11 @@ vi.mock("@/lib/whowatch/auto-ranking-type", () => ({
   RANKING_EVENT_TYPES: ["ranking", "nice", "viewer"],
   autoAssignRankingTypes: (...args: unknown[]) => autoAssignMock(...args),
 }));
+// 日替わりのシミュレーターを翌日の区切りへ進める（2026-10-07）。本体は daily-roll.test.ts で検証する
+const rollMock = vi.fn();
+vi.mock("@/lib/whowatch/daily-roll", () => ({
+  rollDailySimulators: (...args: unknown[]) => rollMock(...args),
+}));
 
 import { runRankingSync } from "./worker";
 
@@ -35,6 +40,8 @@ describe("runRankingSync (scheduled)", () => {
     syncMock.mockReset();
     autoAssignMock.mockReset();
     autoAssignMock.mockResolvedValue({ assigned: [], repaired: [], skipped: [] });
+    rollMock.mockReset();
+    rollMock.mockResolvedValue({ rolled: [] });
     for (const k of ["DATABASE_URL", "SOME_VAR"]) delete process.env[k];
   });
   afterEach(() => {
