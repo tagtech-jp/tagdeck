@@ -25,6 +25,8 @@ item_point_mapping の列の意味（2026-09-28 社長決定・単価の定義�
   GET /playitems            全アイテムのマスタ（認証不要・約 1,980 件）。ここから「pre/open イベントの無料配布」を拾う:
                              画像 URL のフォルダ events/YYYY/MM_key/ がイベントの event_key（YYYY_MM_key）に一致するもの
                              （src/lib/whowatch/free-event-items.ts の eventKeyFromImageUrl と同じ規則）。
+                             年だけ違う（MM_key が同じ）ものも一致とみなす。毎年開かれるイベントは前の年の画像を使い回すため
+                             （2026-10-07: 2026_10_art の無料アイテム ブラシ・パレット・ベレー帽の画像が events/2022/10_art/ にあった）
                              過去イベントの無料アイテム・販売終了アイテムは価格不明なので行を作らない（0 を推測で書かない）
                              例外として、常設の無料アイテム（FIXED_FREE_ITEM_IDS）はマスタにあって買えなければ同じ形の無料の行にする
 
@@ -136,6 +138,22 @@ def event_key_from_image_url(url) -> str | None:
         return None
     m = EVENT_FOLDER_RE.search(url)
     return f"{m.group(1)}_{m.group(2)}" if m else None
+
+
+def event_suffix(key) -> str | None:
+    """event_key（YYYY_MM_key）から年を外した MM_key。年が無い形なら None（src/lib/whowatch/free-event-items.ts の eventSuffix と同じ規則）"""
+    m = re.match(r"^\d{4}_(\d{2}_.+)$", key or "")
+    return m.group(1) if m else None
+
+
+def in_active_event(image_keys: set, active_event_keys: set) -> bool:
+    """画像のイベントフォルダが、開催中（pre/open）のイベントのものか。年だけ違う（MM_key が同じ）ものも含める。
+    毎年開かれるイベントは前の年の画像を使い回す（2026-10-07: 2026_10_art の無料アイテム ブラシ・パレット・ベレー帽の
+    画像が events/2022/10_art/ にあり、年が違うので単価表に載らず、学習した単価も書けなかった）"""
+    if image_keys & active_event_keys:
+        return True
+    active_suffixes = {s for s in (event_suffix(k) for k in active_event_keys) if s}
+    return bool({event_suffix(k) for k in image_keys} & active_suffixes)
 
 
 def normalize_name(s) -> str:
@@ -352,7 +370,7 @@ def build_item_rows(categories: list, master_items: list, active_event_keys: set
         patterns = it.get("play_item_pattern") or []
         keys = {event_key_from_image_url(p.get("image_url")) for p in patterns if isinstance(p, dict)}
         keys.discard(None)
-        if item_id not in FIXED_FREE_ITEM_IDS and (not keys or not (keys & set(active_event_keys or ()))):
+        if item_id not in FIXED_FREE_ITEM_IDS and (not keys or not in_active_event(keys, set(active_event_keys or ()))):
             continue
         seen.add(item_id)
         items.append({

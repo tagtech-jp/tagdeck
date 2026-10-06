@@ -24,6 +24,17 @@ export function eventKeyFromImageUrl(url: string | null | undefined): string | n
   return m ? `${m[1]}_${m[2]}` : null;
 }
 
+/**
+ * イベントキー（YYYY_MM_key）から年を外した MM_key。年が無い形なら null。
+ * 毎年開かれるイベントは前の年の画像を使い回すことがある（2026-10-07: 2026_10_art の無料アイテム ブラシ・パレット・ベレー帽の
+ * 画像が events/2022/10_art/ にあった）ので、画像の年のイベントが無ければ同じ MM_key のイベントに付ける
+ * （scripts/platforms/whowatch/sync_items_and_events.py の event_suffix と同じ規則）
+ */
+export function eventSuffix(key: string | null | undefined): string | null {
+  const m = (key ?? "").match(/^\d{4}_(\d{2}_.+)$/);
+  return m ? m[1] : null;
+}
+
 export interface FreeItemInput {
   /** whowatch_item_patterns の (item_id, image_url)。同じ item の複数パターンを含んでよい */
   patterns: ReadonlyArray<{ itemId: number; imageUrl: string | null }>;
@@ -44,16 +55,26 @@ export function buildFreeItemGroupRows(input: FreeItemInput, now: Date): ItemGro
   // 有料アイテムが既に属する (item, group) は無料扱いにしない
   const paidPairs = new Set(paidRows.map((r) => `${r.itemId}|${r.groupKey}`));
 
+  // MM_key → いちばん新しい年のイベントキー（年だけ違うイベントへの付け替え用）
+  const eventBySuffix = new Map<string, string>();
+  for (const k of [...input.eventGroupByKey.keys()].sort()) {
+    const s = eventSuffix(k);
+    if (s) eventBySuffix.set(s, k);
+  }
+
   const out: ItemGroupRow[] = [];
   const seen = new Set<string>();
   for (const p of input.patterns) {
     if (input.pricedItemIds.has(p.itemId)) continue;
-    const eventKey = eventKeyFromImageUrl(p.imageUrl);
+    const imageKey = eventKeyFromImageUrl(p.imageUrl);
+    if (!imageKey) continue;
+    // 画像の年のイベント → 無ければ同じ MM_key の新しい年のイベント。終了したカテゴリ（payments3 に無い）には付けない
+    const eventKey = [imageKey, eventBySuffix.get(eventSuffix(imageKey) ?? "")].find(
+      (k): k is string => !!k && template.has(input.eventGroupByKey.get(k) ?? ""),
+    );
     if (!eventKey) continue;
-    const groupKey = input.eventGroupByKey.get(eventKey);
-    if (!groupKey) continue;
-    const t = template.get(groupKey);
-    if (!t) continue; // 終了したカテゴリ（payments3 に無い）には付けない
+    const groupKey = input.eventGroupByKey.get(eventKey) as string;
+    const t = template.get(groupKey) as ItemGroupRow;
     const pair = `${p.itemId}|${groupKey}`;
     if (paidPairs.has(pair) || seen.has(pair)) continue;
     seen.add(pair);
