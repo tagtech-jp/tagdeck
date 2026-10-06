@@ -462,6 +462,23 @@ def active_event_keys(events: list) -> set:
     return {e["event_key"] for e in events if e.get("status") in ("pre", "open") and e.get("event_key")}
 
 
+def split_events_for_upsert(events: list) -> list:
+    """whowatch_events への upsert を「日付あり」「日付なし」の 2 回に分ける（2026-10-07）。
+
+    一覧に started_at / ended_at が無いイベント（期間限定アイテム型・黄金発掘隊など）は、その 2 列をペイロードから外す。
+    PostgREST の merge-duplicates はペイロードにある列だけを更新するので、詳細同期（event-detail-sync.ts）が概要の日程から
+    入れた日付を NULL で消さずに済む（本番で黄金発掘隊の日付が同期のたびに消えていた）。
+    PostgREST は 1 回の upsert で全行のキーが同じである必要があるため、キーの違う行は別の呼び出しにする。
+    """
+    with_dates = [e for e in events if e.get("started_at") is not None or e.get("ended_at") is not None]
+    without_dates = [
+        {k: v for k, v in e.items() if k not in ("started_at", "ended_at")}
+        for e in events
+        if e.get("started_at") is None and e.get("ended_at") is None
+    ]
+    return [batch for batch in (with_dates, without_dates) if batch]
+
+
 # ---------------------------------------------------------------------------
 # Supabase
 # ---------------------------------------------------------------------------
@@ -594,7 +611,8 @@ def main(argv=None) -> None:
     try:
         if events_error:
             raise events_error
-        events_n = supabase_upsert(supabase_url, service_key, "whowatch_events", "id", events)
+        # 日付の無いイベントは日付列を外して別バッチで upsert（詳細同期が入れた日付を NULL で消さない・2026-10-07）
+        events_n = sum(supabase_upsert(supabase_url, service_key, "whowatch_events", "id", batch) for batch in split_events_for_upsert(events))
         active_ids = [e["id"] for e in events if e["status"] != "closed"]
         reconcile_closed_events(supabase_url, service_key, active_ids)
     except Exception as e:

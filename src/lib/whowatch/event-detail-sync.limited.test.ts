@@ -39,7 +39,7 @@ vi.mock("./events", async (importOriginal) => {
   };
 });
 
-import { shapeEventDetail, syncEventDetail } from "./event-detail-sync";
+import { shapeEventDetail, syncEventDetail, viewFromRow } from "./event-detail-sync";
 import { WhowatchEventApiError } from "./events";
 import { LIMITED_ITEM_STRUCT_KEY } from "./limited-item";
 
@@ -127,5 +127,39 @@ describe("syncEventDetail（期間限定アイテム型）", () => {
     getInitMock.mockRejectedValue(new WhowatchEventApiError(503, "HTTP 503"));
     const { db } = fakeDb();
     await expect(syncEventDetail(db, "2026_10_gold_digger_1")).rejects.toThrow(/\[struct\]/);
+  });
+
+  it("DB の日付が消えていても（一覧同期の NULL 上書き）、保存済みの概要の日程から開始・終了を補って返す", () => {
+    const row = {
+      id: 1542,
+      eventKey: "2026_10_gold_digger_1",
+      name: "ふわっち黄金発掘隊",
+      titleJa: null,
+      shortName: "ふわっち黄金発掘隊",
+      status: "open",
+      startedAt: null,
+      endedAt: null,
+      kind: "daily",
+      rankingPrefix: "limited-item-2026_10_gold_digger_1",
+      struct: { [LIMITED_ITEM_STRUCT_KEY]: INIT },
+      rulesText: RULES_TEXT,
+      rulesHtml: null,
+      rulesParsed: null,
+      periods: [],
+      detailFetchedAt: new Date("2026-10-07T00:10:00.000Z"),
+      bannerUrl: "",
+      badgeText: null,
+      badgeColor: null,
+      badgeAnimation: false,
+      participants: null,
+      itemGroupKey: "gold_digger",
+      lastSyncedAt: new Date("2026-10-07T00:00:00.000Z"),
+    } as unknown as Parameters<typeof viewFromRow>[0];
+    const v = viewFromRow(row);
+    expect(v.startedAt?.toISOString()).toBe("2026-10-06T15:00:00.000Z");
+    expect(v.endedAt?.toISOString()).toBe("2026-10-11T14:59:59.000Z");
+    expect(shapeEventDetail(v).endTime).toBe("2026-10-11T15:00:00.000Z");
+    // 従来の型（limited-item でない）は補わない
+    expect(viewFromRow({ ...row, rankingPrefix: "magicfantasy", struct: { options: [] } } as unknown as Parameters<typeof viewFromRow>[0]).startedAt).toBeNull();
   });
 });

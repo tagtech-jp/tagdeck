@@ -82,8 +82,9 @@ export async function GET() {
               badgeText: sql`excluded.badge_text`,
               badgeColor: sql`excluded.badge_color`,
               badgeAnimation: sql`excluded.badge_animation`,
-              startedAt: sql`excluded.started_at`,
-              endedAt: sql`excluded.ended_at`,
+              // 一覧に日付が無いイベント（期間限定アイテム型など）は、詳細同期が概要の日程から入れた日付を NULL で消さない（2026-10-07）
+              startedAt: sql`COALESCE(excluded.started_at, ${whowatchEvents.startedAt})`,
+              endedAt: sql`COALESCE(excluded.ended_at, ${whowatchEvents.endedAt})`,
               participants: sql`excluded.participants`,
               lastSyncedAt: sql`excluded.last_synced_at`,
             },
