@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 // 区分の絞り込みと既定（総合 → 先頭）は 5 分同期の自動設定と共通（2026-10-01）
 import { choicesForOption, defaultChoice } from "@/lib/whowatch/ranking-choice";
+// 期間限定アイテム型（limited-item・黄金発掘隊）: グループ（配信者グレード）は自動判定が既定。空で保存すると「自動判定に戻す」（2026-10-07）
+import { isLimitedItemPrefix } from "@/lib/whowatch/limited-item";
 
 // E1b: 作成済みシミュレーターの区分（前半/後半）・ランキング種別・期間を後から変更する編集導線。
 // 例: オータムグッズコレクションを「後半（2nd, 9/23 00:00〜9/28 00:00 JST, autumncollection_2nd_overall）」へ更新する。
@@ -107,7 +109,8 @@ export function EventSettingsEditor({ eventId, whowatchEventId, currentRankingTy
         const cur = det.rankingChoices.find((c) => c.rankingType === currentRankingType);
         const key = cur?.parts[0] ?? det.periods[0]?.option_key ?? null;
         setPeriodKey(det.periods.length > 0 ? key : null);
-        if (!cur) setRankingType(defaultChoice(choicesForOption(det.rankingChoices, det.periods.length > 0 ? key : null))?.rankingType ?? "");
+        // 期間限定アイテム型は既定を置かない（空 = 自動判定）。それ以外は従来どおり「総合 → 先頭」
+        if (!cur) setRankingType(isLimitedItemPrefix(det.rankingPrefix) ? (currentRankingType ?? "") : defaultChoice(choicesForOption(det.rankingChoices, det.periods.length > 0 ? key : null))?.rankingType ?? "");
       })
       .catch(() => {
         if (!cancelled) setDetailState({ key: eventKey, detail: null });
@@ -134,6 +137,8 @@ export function EventSettingsEditor({ eventId, whowatchEventId, currentRankingTy
     try {
       const body: Record<string, unknown> = {};
       if (rankingType) body.rankingType = rankingType;
+      // 期間限定アイテム型で「自動判定」を選んだら区分を空に戻す（5 分同期が今日の順位表からグループを判定し直す）
+      else if (detail && isLimitedItemPrefix(detail.rankingPrefix) && currentRankingType) body.rankingType = null;
       if (startTime) body.startTime = new Date(startTime).toISOString();
       if (endTime) body.endTime = new Date(endTime).toISOString();
       const res = await fetch(`/api/events/${eventId}`, {
@@ -205,12 +210,13 @@ export function EventSettingsEditor({ eventId, whowatchEventId, currentRankingTy
           )}
           {choices.length > 0 ? (
             <div>
-              <label className="mb-1 block text-xs text-muted-foreground">ランキング種別</label>
+              <label className="mb-1 block text-xs text-muted-foreground">{isLimitedItemPrefix(detail.rankingPrefix) ? "グループ（配信者グレード）" : "ランキング種別"}</label>
               <select
                 value={rankingType}
                 onChange={(e) => setRankingType(e.target.value)}
                 className="min-h-11 w-full rounded-sm bg-muted px-3 py-2 text-sm text-foreground"
               >
+                {isLimitedItemPrefix(detail.rankingPrefix) && <option value="">自動判定（今日の順位表に載った時点で 5 分同期が設定）</option>}
                 {choices.map((c) => (
                   <option key={c.rankingType} value={c.rankingType}>
                     {detail.periods.length > 0 ? stripOptionLabel(c.label) : c.label}

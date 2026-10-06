@@ -19,8 +19,9 @@ const createSchema = z
     eventRankingUrl: z.string().url().optional(),
     myEntryName: z.string().max(100).optional(),
     whowatchEventId: z.number().int().positive().nullable().optional(),
-    // ランキング区分キー（例: autumncollection_1st_overall）。E1 で追加
-    rankingType: z.string().min(1).max(200).regex(/^[a-z0-9_]+$/i).nullable().optional(),
+    // ランキング区分キー（例: autumncollection_1st_overall）。E1 で追加。
+    // 2026-10-07: 期間限定アイテム型（limited-item-2026_10_gold_digger_1-2）はハイフンを含む
+    rankingType: z.string().min(1).max(200).regex(/^[a-z0-9_-]+$/i).nullable().optional(),
   })
   .refine(
     (data) => {

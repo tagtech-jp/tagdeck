@@ -10,8 +10,13 @@
 //   - 残り時間の総獲得は pace × 残り時間 × m。m は対数正規（平均 1）の「今後のペース倍率」で、
 //     サンプルが少ないほど散らばりを大きくする（ギフトは配信中に固まって入るため、線形の正規ノイズより実態に近い）
 //   - 最終日（endTime 前 24h）はペース係数（既定 1.5）を掛けた実効残り時間を使う
+// 必要個数（2026-10-07 改訂・社長指示「何個平均で必要かを統計で現実的に」）:
+//   - itemValue（1 個あたりの獲得量の分布。ルール本文の重量表か倍率表から）があれば、試行ごとに「必要 pt に達するまで 1 個ずつ引く」
+//     個数を数え、その中央値と 90% タイルを返す（ライバルのペースのばらつきと、1 個あたりのばらつきの両方を含む）
+//   - 無ければ従来どおり 基礎 pt × 期待倍率 で割る
 
 import { normalRandom } from "../events/monte-carlo";
+import { compileDistribution, drawsUntil, type ItemValueDistribution, type Rng } from "../events/item-stats";
 
 export interface SnapshotEntry {
   rank: number;
@@ -62,9 +67,13 @@ export interface RankForecastInput {
   /** 最終日（endTime 前 24h）のライバルペース係数。過去イベントから求まらなければ 1.5 を仮置き（TODO.md） */
   finalDayCoefficient?: number;
   iterations?: number;
-  /** 必要個数の換算: アイテム 1 個の基礎 pt と期待倍率 */
+  /** 必要個数の換算（従来）: アイテム 1 個の基礎 pt と期待倍率 */
   itemBasePoint?: number | null;
   expectedMultiplier?: number | null;
+  /** 必要個数の換算（2026-10-07）: 1 個あたりの獲得量の分布。あればこちらを優先 */
+  itemValue?: ItemValueDistribution | null;
+  /** 乱数（テストで決定的にする） */
+  rng?: Rng;
   /** 自分の識別（user_id → user_path → name） */
   myKey?: string | null;
 }
@@ -89,6 +98,12 @@ export interface RankForecastOutput {
   targetBorderPoints: { p50: number; p90: number };
   itemsNeeded: { p50: number; p90: number } | null;
   itemsPerDay: { p50: number; p90: number } | null;
+  /** 必要個数の出どころ: 分布（重量表・倍率表）か、基礎 pt × 期待倍率か */
+  itemsSource: "distribution" | "basePoint" | null;
+  /** 必要 pt の中央値 ÷ 1 個あたりの平均（「平均で何個」の目安。分布があるときだけ） */
+  itemsNeededMean: number | null;
+  /** 1 個あたりの平均・標準偏差・単位（分布があるときだけ） */
+  itemValue: { mean: number; sd: number; unit: string | null } | null;
   remainingHours: number;
   remainingDays: number;
   rivals: RivalPace[];
@@ -106,6 +121,8 @@ const DEFAULT_MAX_PAIRS = 36;
 const RECENT_HALF_WEIGHT_SAMPLES = 12;
 /** 全期間平均を使うのに必要な最小経過時間 */
 const MIN_ELAPSED_HOURS = 0.5;
+/** 予測不能時（ライバル無し・終了後）に必要個数の分布を出す試行数 */
+const FALLBACK_ITEM_ITERATIONS = 2000;
 
 export function rivalKey(e: SnapshotEntry): string {
   return e.user_id ?? e.user_path ?? e.name;
@@ -213,6 +230,34 @@ function currentRankOf(myPoint: number, rivals: RivalPace[]): number {
   return 1 + rivals.filter((r) => r.currentPoint >= myPoint).length;
 }
 
+/** 必要個数の換算器。分布があれば試行ごとに引いて数え、無ければ基礎 pt × 期待倍率で割る */
+interface ItemCounter {
+  source: "distribution" | "basePoint";
+  /** 必要 pt → 個数（分布なら乱数で 1 回ぶん、基礎 pt なら決定的） */
+  count: (requiredPoints: number) => number;
+  mean: number | null;
+  sd: number | null;
+  unit: string | null;
+}
+
+function makeItemCounter(input: RankForecastInput): ItemCounter | null {
+  const rng = input.rng ?? Math.random;
+  if (input.itemValue) {
+    const c = compileDistribution(input.itemValue);
+    if (c && c.mean > 0) return { source: "distribution", count: (req) => drawsUntil(req, c, rng), mean: c.mean, sd: c.sd, unit: c.unit };
+  }
+  const base = input.itemBasePoint ?? null;
+  const mult = input.expectedMultiplier ?? 1;
+  if (!base || base <= 0) return null;
+  const per = base * mult;
+  return { source: "basePoint", count: (req) => Math.ceil(req / per), mean: null, sd: null, unit: null };
+}
+
+function perDay(items: { p50: number; p90: number } | null, days: number): { p50: number; p90: number } | null {
+  if (!items) return null;
+  return { p50: Math.ceil(items.p50 / days), p90: Math.ceil(items.p90 / days) };
+}
+
 export function forecastRank(input: RankForecastInput): RankForecastOutput {
   const iterations = input.iterations ?? 10_000;
   const coefficient = input.finalDayCoefficient ?? DEFAULT_FINAL_DAY_COEFFICIENT;
@@ -232,6 +277,8 @@ export function forecastRank(input: RankForecastInput): RankForecastOutput {
   const remainingDays = Math.max(1, Math.ceil(remainingHours / 24));
   const targetIdx = Math.max(0, input.targetRank - 1);
   const currentRank = me ? me.rank : null;
+  const counter = makeItemCounter(input);
+  const itemValue = counter && counter.mean !== null ? { mean: counter.mean, sd: counter.sd ?? 0, unit: counter.unit } : null;
 
   if (rivals.length === 0 || remainingHours <= 0) {
     // 予測不能: 現状の順位で確定扱い
@@ -239,6 +286,17 @@ export function forecastRank(input: RankForecastInput): RankForecastOutput {
     const border = sortedNow[targetIdx]?.currentPoint ?? 0;
     const required = Math.max(0, border + 1 - myPoint);
     const rankNow = rivals.length > 0 ? currentRankOf(myPoint, rivals) : currentRank ?? 1;
+    let itemsNeeded: { p50: number; p90: number } | null = null;
+    if (counter) {
+      if (counter.source === "distribution") {
+        const counts = new Array<number>(FALLBACK_ITEM_ITERATIONS);
+        for (let i = 0; i < counts.length; i++) counts[i] = counter.count(required);
+        counts.sort((a, b) => a - b);
+        itemsNeeded = { p50: percentile(counts, 0.5), p90: percentile(counts, 0.9) };
+      } else {
+        itemsNeeded = { p50: counter.count(required), p90: counter.count(required) };
+      }
+    }
     return {
       rankProbability: rivals.length === 0 ? 0 : myPoint > border ? 100 : 0,
       expectedRank: rankNow,
@@ -251,8 +309,11 @@ export function forecastRank(input: RankForecastInput): RankForecastOutput {
       myPace: me,
       requiredPoints: { p50: required, p90: required },
       targetBorderPoints: { p50: border, p90: border },
-      itemsNeeded: toItems(required, required, input),
-      itemsPerDay: toItems(required, required, input, remainingDays),
+      itemsNeeded,
+      itemsPerDay: perDay(itemsNeeded, remainingDays),
+      itemsSource: counter?.source ?? null,
+      itemsNeededMean: counter && counter.mean ? required / counter.mean : null,
+      itemValue,
       remainingHours,
       remainingDays,
       rivals,
@@ -274,6 +335,7 @@ export function forecastRank(input: RankForecastInput): RankForecastOutput {
   const requiredSamples: number[] = [];
   const borderSamples: number[] = [];
   const myFinals: number[] = [];
+  const itemCounts: number[] = [];
   const finals = new Array<number>(rivals.length);
 
   for (let t = 0; t < iterations; t++) {
@@ -297,13 +359,18 @@ export function forecastRank(input: RankForecastInput): RankForecastOutput {
     // 目標順位に入る = 自分が「targetRank 位のライバル最終 pt」を超える（同点は先着優先のため +1）
     const border = sortedFinals[targetIdx] ?? 0;
     borderSamples.push(border);
-    requiredSamples.push(Math.max(0, border + 1 - myPoint));
+    const required = Math.max(0, border + 1 - myPoint);
+    requiredSamples.push(required);
+    // 必要個数: 分布があれば試行ごとに「必要 pt に達するまで引く」。ライバルの散らばりと 1 個あたりの散らばりの両方が入る
+    if (counter) itemCounts.push(counter.count(required));
   }
   requiredSamples.sort((a, b) => a - b);
   borderSamples.sort((a, b) => a - b);
   myFinals.sort((a, b) => a - b);
+  itemCounts.sort((a, b) => a - b);
   const reqP50 = percentile(requiredSamples, 0.5);
   const reqP90 = percentile(requiredSamples, 0.9);
+  const itemsNeeded = counter ? { p50: percentile(itemCounts, 0.5), p90: percentile(itemCounts, 0.9) } : null;
 
   return {
     rankProbability: (achieved / iterations) * 100,
@@ -317,8 +384,11 @@ export function forecastRank(input: RankForecastInput): RankForecastOutput {
     myPace: me,
     requiredPoints: { p50: reqP50, p90: reqP90 },
     targetBorderPoints: { p50: percentile(borderSamples, 0.5), p90: percentile(borderSamples, 0.9) },
-    itemsNeeded: toItems(reqP50, reqP90, input),
-    itemsPerDay: toItems(reqP50, reqP90, input, remainingDays),
+    itemsNeeded,
+    itemsPerDay: perDay(itemsNeeded, remainingDays),
+    itemsSource: counter?.source ?? null,
+    itemsNeededMean: counter && counter.mean ? reqP50 / counter.mean : null,
+    itemValue,
     remainingHours,
     remainingDays,
     rivals,
@@ -327,14 +397,6 @@ export function forecastRank(input: RankForecastInput): RankForecastOutput {
     snapshotCount: input.snapshots.length,
     note: "ランキング全員の pt/時（直近の増分と開始からの平均の混合）から推定。期待値・目安であり結果を保証しない",
   };
-}
-
-function toItems(p50: number, p90: number, input: RankForecastInput, days = 1): { p50: number; p90: number } | null {
-  const base = input.itemBasePoint ?? null;
-  const mult = input.expectedMultiplier ?? 1;
-  if (!base || base <= 0) return null;
-  const per = base * mult;
-  return { p50: Math.ceil(p50 / per / days), p90: Math.ceil(p90 / per / days) };
 }
 
 /** 必要個数の単体計算（UI の手入力用） */

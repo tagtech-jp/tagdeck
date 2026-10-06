@@ -1,4 +1,4 @@
-// ルール本文（rules_text）から当たり倍率表・ボーナス表・無料アイテム配布数を正規表現で抽出する（E3）。
+// ルール本文（rules_text）から当たり倍率表・ボーナス表・無料アイテム配布数・獲得量の表（重量表）を正規表現で抽出する（E3）。
 // 表はセルごとに 1 行になる（例: "1%" "20倍" "4%" "10倍" ... "85%"）ため、行の並びをトークン列として読む。
 // 抽出できなかった項目は null。全て「推定」であり、UI では (要確認) を付けて表示すること。
 
@@ -22,21 +22,44 @@ export interface FreeItemRule {
   hit: { probability: number; multiplier: number } | null;
 }
 
+/**
+ * 獲得量の表の 1 段（2026-10-07・黄金発掘隊「超巨大な金塊 0.1% 500 kg 〜 5,000 pt」）。
+ * 1 個使うと確率 probability で min〜max の量（kg 等）が出る。max が無い段は「〜以上」
+ */
+export interface ValueTierRow {
+  label: string | null;
+  /** 0〜100 の % */
+  probability: number;
+  min: number;
+  max: number | null;
+  /** 段ごとのふわっちポイントのボーナス（本文に無ければ null） */
+  bonusPoint: number | null;
+}
+
 export interface RulesParsed {
   multiplierTable: MultiplierRow[] | null;
   /** Σ(確率×倍率)。表が無ければ null。通常 = 1 倍 */
   expectedMultiplier: number | null;
   bonusTable: BonusRow[] | null;
   freeItem: FreeItemRule | null;
+  /** 獲得量の表（重量表）。倍率表型のイベントは null */
+  valueTable: ValueTierRow[] | null;
+  /** 獲得量の単位（kg など）。表が無ければ null */
+  valueUnit: string | null;
   parsedAt: string;
   parserVersion: number;
 }
 
-export const RULES_PARSER_VERSION = 1;
+/** 2026-10-07: valueTable / valueUnit を追加（v2）。版が違う保存済みの rules_parsed は rules_text から解析し直される（event-detail-sync.pickRulesParsed） */
+export const RULES_PARSER_VERSION = 2;
 
 const PCT_RE = /^(\d+(?:\.\d+)?)\s*[%％]$/;
 const MULT_RE = /^(\d+(?:\.\d+)?)\s*倍$/;
 const GRADE_WORDS = ["レギュラー", "ビッグ", "メガ", "ギガ", "テラ", "ペタ", "スーパー", "ウルトラ"];
+// 獲得量の範囲: "500 kg 〜" / "300 kg 〜 499 kg" / "10kg〜49kg"。単位か範囲記号のどちらかが要る（"20" だけの行は読まない）
+const UNIT_RE_SRC = "(kg|g|t|pt|ポイント|個|回|枚|cm|m|km)";
+const RANGE_RE = new RegExp(`^(\\d{1,3}(?:,\\d{3})*|\\d+)(?:\\.\\d+)?\\s*${UNIT_RE_SRC}?\\s*(?:([〜～~\\-–])\\s*(?:(\\d{1,3}(?:,\\d{3})*|\\d+)(?:\\.\\d+)?\\s*${UNIT_RE_SRC}?)?)?$`, "i");
+const PT_ONLY_RE = /^(\d{1,3}(?:,\d{3})*|\d+)\s*(?:pt|ポイント)$/i;
 
 function toLines(text: string): string[] {
   return text
@@ -45,10 +68,28 @@ function toLines(text: string): string[] {
     .filter((l) => l.length > 0);
 }
 
+function toNumber(s: string): number {
+  return Number(s.replace(/,/g, ""));
+}
+
+/** 行が「獲得量の範囲」（単位か範囲記号を含む数値）か */
+function parseRangeLine(line: string): { min: number; max: number | null; unit: string | null } | null {
+  const m = line.match(RANGE_RE);
+  if (!m) return null;
+  const unit = (m[2] ?? m[5] ?? null)?.toLowerCase() ?? null;
+  const hasRange = Boolean(m[3]);
+  if (!unit && !hasRange) return null;
+  const min = toNumber(m[1]);
+  const max = m[4] !== undefined ? toNumber(m[4]) : null;
+  if (!Number.isFinite(min) || (max !== null && (!Number.isFinite(max) || max < min))) return null;
+  return { min, max, unit };
+}
+
 /**
  * 当たり倍率表: 「ランキングポイント倍率」見出し以降で "N%" → "M倍" の並びを拾う。
  * "N%" の直後が倍率でない場合は通常（1 倍）。確率の合計が 100 に達したら打ち切る。
  * 見出しが無い場合は本文全体から最初に成立する表を探す。
+ * 直後が獲得量の範囲（"500 kg 〜" など）の "N%" は重量表（parseValueTable）の段なので、倍率表としては読まない
  */
 export function parseMultiplierTable(text: string): MultiplierRow[] | null {
   const lines = toLines(text);
@@ -68,8 +109,14 @@ export function parseMultiplierTable(text: string): MultiplierRow[] | null {
         if (rows.length > 0 && !MULT_RE.test(lines[i]) && !/通常/.test(lines[i])) break;
         continue;
       }
-      const probability = Number(pm[1]);
       const next = lines[i + 1] ?? "";
+      if (parseRangeLine(next)) {
+        // 重量表の段。倍率表の途中なら表は終わり、始まっていなければ読み飛ばす
+        if (rows.length > 0) break;
+        i++;
+        continue;
+      }
+      const probability = Number(pm[1]);
       const mm = next.match(MULT_RE);
       const multiplier = mm ? Number(mm[1]) : 1;
       rows.push({ probability, multiplier });
@@ -86,6 +133,36 @@ export function expectedMultiplier(rows: MultiplierRow[] | null): number | null 
   if (!rows || rows.length === 0) return null;
   const e = rows.reduce((acc, r) => acc + (r.probability / 100) * r.multiplier, 0);
   return Math.round(e * 1000) / 1000;
+}
+
+/**
+ * 獲得量の表（重量表）: "N%" の直後に "500 kg 〜" / "300 kg 〜 499 kg" の範囲が来る並びを拾う（2026-10-07・黄金発掘隊）。
+ * 段の名前は "N%" の直前の行（金塊の絵柄）、ボーナス pt は範囲の直後の "5,000 pt" の行。確率の合計が 100 前後の表だけ採用する
+ */
+export function parseValueTable(text: string): { rows: ValueTierRow[]; unit: string | null } | null {
+  const lines = toLines(text);
+  for (let start = 0; start < lines.length; start++) {
+    if (!PCT_RE.test(lines[start]) || !parseRangeLine(lines[start + 1] ?? "")) continue;
+    const rows: ValueTierRow[] = [];
+    let unit: string | null = null;
+    let sum = 0;
+    for (let i = start; i < lines.length && i < start + 60; i++) {
+      const pm = lines[i].match(PCT_RE);
+      if (!pm) continue;
+      const range = parseRangeLine(lines[i + 1] ?? "");
+      if (!range) break;
+      const labelLine = i > 0 ? lines[i - 1] : "";
+      const label = labelLine && !PCT_RE.test(labelLine) && !parseRangeLine(labelLine) && !PT_ONLY_RE.test(labelLine) && labelLine !== "-" ? labelLine : null;
+      const bonus = (lines[i + 2] ?? "").match(PT_ONLY_RE);
+      rows.push({ label, probability: Number(pm[1]), min: range.min, max: range.max, bonusPoint: bonus ? toNumber(bonus[1]) : null });
+      if (!unit && range.unit && range.unit !== "pt" && range.unit !== "ポイント") unit = range.unit;
+      sum += Number(pm[1]);
+      i += bonus ? 2 : 1;
+      if (sum >= 99.5) break;
+    }
+    if (rows.length >= 2 && sum >= 99.5 && sum <= 100.5) return { rows, unit };
+  }
+  return null;
 }
 
 /**
@@ -127,11 +204,14 @@ export function parseFreeItem(text: string): FreeItemRule | null {
 export function parseRules(text: string | null | undefined, now: Date = new Date()): RulesParsed {
   const t = text ?? "";
   const multiplierTable = parseMultiplierTable(t);
+  const valueTable = parseValueTable(t);
   return {
     multiplierTable,
     expectedMultiplier: expectedMultiplier(multiplierTable),
     bonusTable: parseBonusTable(t),
     freeItem: parseFreeItem(t),
+    valueTable: valueTable?.rows ?? null,
+    valueUnit: valueTable?.unit ?? null,
     parsedAt: now.toISOString(),
     parserVersion: RULES_PARSER_VERSION,
   };

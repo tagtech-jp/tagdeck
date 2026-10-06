@@ -7,6 +7,8 @@
 // 同じ人の判定は rank-forecast の rivalKey と同じ（user_id → user_path → name）。
 // ランキングの同期は 5 分ごと（src/worker.ts の Cron）なので、2 枚の間隔は通常 5 分。
 
+import { itemsNeededStats, summarizeItemValue, type ItemValueDistribution, type Rng } from "../events/item-stats";
+
 export interface RankEntryLite {
   rank: number;
   point: number;
@@ -122,6 +124,30 @@ export interface ItemsNeeded {
  * 足りない pt を「アイテムあと◯個」に換算する（2026-10-06 社長指示）。
  * 1 個あたり = 基礎 pt × 当たり倍率の期待値（ルールから。無ければ 1）。pt が大きい順に ITEMS_NEEDED_LIMIT 個まで
  */
+export interface ItemsNeededStatsView {
+  /** 単位（kg など。pt なら "pt"） */
+  unit: string | null;
+  /** 1 個あたりの平均と標準偏差 */
+  meanPerItem: number;
+  sdPerItem: number;
+  /** 必要個数: 平均で割った値・試行の中央値・90% タイル */
+  mean: number;
+  p50: number;
+  p90: number;
+}
+
+/**
+ * 足りない量を、イベントのルール表（重量表や倍率表）の分布で「あと何個か」の統計にする（2026-10-07）。
+ * 平均で割るだけでなく、ばらつきを含めた中央値と 90% タイルを返す（黄金発掘隊は 1 個の標準偏差が平均より大きい）
+ */
+export function itemsNeededByDistribution(gap: number, dist: ItemValueDistribution | null, rng?: Rng): ItemsNeededStatsView | null {
+  if (!dist) return null;
+  const stats = itemsNeededStats(gap, dist, { iterations: 2000, rng });
+  if (!stats) return null;
+  const summary = summarizeItemValue(dist);
+  return { unit: summary.unit, meanPerItem: summary.mean, sdPerItem: summary.sd, mean: stats.mean, p50: stats.p50, p90: stats.p90 };
+}
+
 export function itemsNeeded(gap: number, items: readonly ItemPointLite[], multiplier: number | null): ItemsNeeded[] {
   if (!(gap > 0)) return [];
   const mult = multiplier !== null && multiplier > 0 ? multiplier : 1;

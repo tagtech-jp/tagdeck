@@ -7,6 +7,8 @@ import { useEventForecast, type EventSimulatorRow } from "@/hooks/useEventSimula
 import { useHistoricalPace } from "@/hooks/useHistoricalPace";
 import { useRankingSnapshots } from "@/hooks/useRankingSnapshots";
 import { forecastRank, rivalKey, type RankForecastOutput } from "@/lib/whowatch/rank-forecast";
+// 期間限定アイテム型（limited-item・黄金発掘隊）: 毎日 0:00 JST に順位表が切り替わる。残り時間・予測・スナップショットは「今日の区切り」で見る（2026-10-07）
+import { currentLimitedItemWindow, filterSnapshotsForDatedType, parseLimitedItemRankingType, resolveLimitedItemRankingType } from "@/lib/whowatch/limited-item";
 import { useEventStrategy, type ItemMasterEntry } from "@/hooks/useEventStrategy";
 import { RankDistributionChart } from "./RankDistributionChart";
 import { RivalsList } from "./RivalsList";
@@ -94,7 +96,20 @@ function formatTime(minutes: number): string {
 }
 
 export function EventDashboard({ event, onDeleted }: Props) {
-  const { forecast, now } = useEventForecast(event);
+  // 期間限定アイテム型（limited-item・黄金発掘隊・2026-10-07）: 順位表は毎日 0:00 JST に切り替わる。
+  // 残り時間・予測は「今日の区切り」で見るため、期間を今日に差し替えたイベントを予測フックに渡す（表示する期間はシミュレーターの設定のまま）
+  const limited = event.platform === "whowatch" ? parseLimitedItemRankingType(event.rankingType) : null;
+  const limitedGroup = limited?.group ?? null;
+  const minuteKey = Math.floor(Date.now() / 60_000);
+  const dayWindow = useMemo(() => {
+    if (limitedGroup === null) return null;
+    return currentLimitedItemWindow(new Date(minuteKey * 60_000), { startTime: new Date(event.startTime), endTime: new Date(event.endTime) }, limitedGroup);
+  }, [limitedGroup, minuteKey, event.startTime, event.endTime]);
+  const forecastEvent = useMemo<EventSimulatorRow>(
+    () => (dayWindow ? { ...event, startTime: dayWindow.start.toISOString(), endTime: dayWindow.end.toISOString() } : event),
+    [event, dayWindow],
+  );
+  const { forecast, now } = useEventForecast(forecastEvent);
   const { data: historicalPace } = useHistoricalPace(event.id, event.eventType);
 
   const isRankingType =
@@ -106,6 +121,15 @@ export function EventDashboard({ event, onDeleted }: Props) {
   const isOpenNow =
     now.getTime() >= new Date(event.startTime).getTime() && now.getTime() <= new Date(event.endTime).getTime();
   const snaps = useRankingSnapshots(event.id, { enabled: usesSnapshots, autoRefresh: usesSnapshots && isOpenNow });
+  // 期間限定アイテム型は「その日の種別」（limited-item-…-2-20261007）のスナップショットだけを使う（前日の順位表が混ざるとペース推定が壊れる）
+  const datedRankingType =
+    limitedGroup !== null && event.rankingType
+      ? resolveLimitedItemRankingType(event.rankingType, new Date(minuteKey * 60_000), { start: new Date(event.startTime), end: new Date(event.endTime) })
+      : null;
+  const windowSnapshots = useMemo(
+    () => (datedRankingType ? filterSnapshotsForDatedType(snaps.snapshots, datedRankingType) : snaps.snapshots),
+    [datedRankingType, snaps.snapshots],
+  );
   // 逆算パネルで目標順位を変えたら保存を待たずヒーローにも反映する
   const [targetRankOverride, setTargetRankOverride] = useState<number | null>(null);
   const effectiveTargetRank = targetRankOverride ?? event.targetRank ?? 5;
@@ -113,8 +137,8 @@ export function EventDashboard({ event, onDeleted }: Props) {
   const nowMinute = Math.floor(now.getTime() / 60_000);
 
   const snapshotForecast = useMemo<RankForecastOutput | null>(() => {
-    if (!usesSnapshots || !snaps.snapshots || snaps.snapshots.length === 0) return null;
-    const sorted = [...snaps.snapshots].sort((a, b) => new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime());
+    if (!usesSnapshots || !windowSnapshots || windowSnapshots.length === 0) return null;
+    const sorted = [...windowSnapshots].sort((a, b) => new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime());
     const latest = sorted[sorted.length - 1];
     const me = latest.myRank ? latest.entries.find((e) => e.rank === latest.myRank) ?? null : null;
     const myKey = me ? rivalKey(me) : null;
@@ -127,11 +151,11 @@ export function EventDashboard({ event, onDeleted }: Props) {
       myPaceStdDev: myPace.stdDev,
       targetRank: effectiveTargetRank,
       now: new Date(nowMinute * 60_000),
-      endTime: new Date(event.endTime),
-      eventStart: new Date(event.startTime),
+      endTime: new Date(forecastEvent.endTime),
+      eventStart: new Date(forecastEvent.startTime),
       myKey,
     });
-  }, [usesSnapshots, snaps.snapshots, event.currentScore, event.endTime, event.startTime, effectiveTargetRank, nowMinute]);
+  }, [usesSnapshots, windowSnapshots, event.currentScore, forecastEvent.endTime, forecastEvent.startTime, effectiveTargetRank, nowMinute]);
 
   const hero: HeroView | null = useMemo(() => {
     if (usesSnapshots) {
@@ -139,10 +163,12 @@ export function EventDashboard({ event, onDeleted }: Props) {
         return {
           status: "no_data",
           message:
-            snaps.snapshots === null
+            windowSnapshots === null
               ? "ランキングを読み込み中"
-              : snaps.snapshots.length === 0
-                ? "ランキング未取得のため確率を計算できません。「ランキング更新」で取得します"
+              : windowSnapshots.length === 0
+                ? dayWindow
+                  ? "今日の順位表をまだ取得していません（毎日 0:00 に切り替わります）。「ランキング更新」で取得します"
+                  : "ランキング未取得のため確率を計算できません。「ランキング更新」で取得します"
                 : snapshotForecast?.note ?? "ランキング未取得",
           probability: null,
           expectedRank: null,
@@ -498,6 +524,14 @@ export function EventDashboard({ event, onDeleted }: Props) {
               {" 〜 "}
               {new Date(event.endTime).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
             </span>
+            {dayWindow && dayWindow.dateKey && (
+              // 期間限定アイテム型のデイリー: 残り時間・予測・順位表はこの区切りで見ている
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">
+                今日の区切り {dayWindow.start.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                {" 〜 "}
+                {dayWindow.end.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}（毎日 0:00 に切り替わり）
+              </span>
+            )}
             {!editingSettings && (
               <button
                 type="button"
@@ -516,7 +550,7 @@ export function EventDashboard({ event, onDeleted }: Props) {
           <div role="alert" className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-status-warning/40 bg-status-warning/10 px-3 py-2 text-xs text-status-warning">
             <span>
               {event.whowatchEventId
-                ? "ランキング区分が未設定です。期間中は 5 分ごとの同期が区分（総合）を自動で設定して、順位の取得を始めます。別の区分にするときは選んで保存してください。"
+                ? "ランキング区分が未設定です。期間中は 5 分ごとの同期が区分を自動で設定して、順位の取得を始めます（通常は「総合」。配信者グレードで分かれるイベントは、今日の順位表に載った時点でそのグループ）。別の区分にするときは選んで保存してください。"
                 : "ランキング区分が未設定のため、順位の自動取得（5 分ごと）が止まっています。ふわっちのイベントに紐付けると区分を選べます。"}
             </span>
             {event.whowatchEventId && !editingSettings && (
@@ -728,9 +762,9 @@ export function EventDashboard({ event, onDeleted }: Props) {
           eventId={event.id}
           whowatchEventId={event.whowatchEventId}
           targetRank={event.targetRank ?? 5}
-          startTime={event.startTime}
-          endTime={event.endTime}
-          snapshots={snaps.snapshots}
+          startTime={forecastEvent.startTime}
+          endTime={forecastEvent.endTime}
+          snapshots={windowSnapshots}
           onTargetRankChange={setTargetRankOverride}
         />
       )}

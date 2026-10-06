@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { synthRankAlert } from "@/lib/se/engine";
-import type { ItemsNeeded, RankStatus } from "@/lib/live/rank-alert";
+import type { ItemsNeeded, ItemsNeededStatsView, RankStatus } from "@/lib/live/rank-alert";
 import { useLiveConnection } from "./LiveConnectionProvider";
 
 const REFRESH_MS = 60_000;
@@ -18,9 +18,16 @@ interface RankEvent {
   /** 目標まで・1 つ上まで の「あと◯個」（2026-10-06。イベントの基礎 pt が未登録なら空） */
   itemsToTarget?: ItemsNeeded[];
   itemsToAbove?: ItemsNeeded[];
+  /** ルール本文の表（重量表）から出した統計（2026-10-07。表が無いイベントは null） */
+  statsToTarget?: ItemsNeededStatsView | null;
+  statsToAbove?: ItemsNeededStatsView | null;
 }
 
 const itemsText = (items: ItemsNeeded[] | undefined) => (items && items.length > 0 ? items.map((i) => `${i.name} ${i.count.toLocaleString("ja-JP")}個`).join("・") : null);
+const num = (n: number) => n.toLocaleString("ja-JP", { maximumFractionDigits: 0 });
+/** 「中央値 12 個・90% で 19 個（1 個 平均 85kg ± 94）」 */
+const statsText = (s: ItemsNeededStatsView | null | undefined) =>
+  s ? `中央値 ${num(s.p50)} 個・90% で ${num(s.p90)} 個（1 個 平均 ${num(s.meanPerItem)}${s.unit ?? ""} ± ${num(s.sdPerItem)}）` : null;
 
 const pt = (n: number) => `${n.toLocaleString("ja-JP")}pt`;
 
@@ -67,7 +74,7 @@ export function RankAlertPanel() {
   if (events.length === 0) return null;
   return (
     <div className="space-y-2">
-      {events.map(({ simulatorId, name, status: s, itemsToTarget, itemsToAbove }) => {
+      {events.map(({ simulatorId, name, status: s, itemsToTarget, itemsToAbove, statsToTarget, statsToAbove }) => {
         const alerting = s.alerts.length > 0;
         return (
           <div key={simulatorId} className={`rounded-xl border p-4 ${alerting ? "border-destructive bg-destructive/10" : "border-border bg-card"}`}>
@@ -89,6 +96,12 @@ export function RankAlertPanel() {
               <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                 {itemsText(itemsToAbove) && <span>1 つ上を抜くには: {itemsText(itemsToAbove)}</span>}
                 {s.target && s.target.gap > 0 && itemsText(itemsToTarget) && <span>目標 {s.target.rank} 位まで: {itemsText(itemsToTarget)}</span>}
+              </div>
+            )}
+            {(statsText(statsToAbove) || (s.target && s.target.gap > 0 && statsText(statsToTarget))) && (
+              <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                {statsText(statsToAbove) && <span>統計・1 つ上を抜くには: {statsText(statsToAbove)}</span>}
+                {s.target && s.target.gap > 0 && statsText(statsToTarget) && <span>統計・目標 {s.target.rank} 位まで: {statsText(statsToTarget)}</span>}
               </div>
             )}
             {alerting && (

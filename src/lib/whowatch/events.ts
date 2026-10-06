@@ -4,6 +4,7 @@
 //       エントリー・投稿・購入系（events/join_ranking, retire, settings 等）は呼ばない。
 
 import { resolveWhowatchDeviceId } from "../platforms/whowatch"; // vitest は @/ エイリアス未設定のため相対パス
+import { limitedItemChoices, limitedItemInitFromStruct } from "./limited-item";
 
 const BASE_URL = "https://api.whowatch.tv";
 const USER_AGENT = "TagDeck/0.1 (+https://tagdeck.jp)";
@@ -222,6 +223,10 @@ export function buildRankingType(prefix: string, parts: string[]): string {
 export function flattenRankingChoices(prefix: string, struct: RankingStruct | null | undefined): RankingChoice[] {
   const out: RankingChoice[] = [];
   if (!struct) return out;
+  // 期間限定アイテム型（limited-item・黄金発掘隊など）は構造 JSON の代わりに初期化 JSON を包んで保存している（2026-10-07）。
+  // グループ（配信者グレード K24〜K10）と総合を、日付なしの保存形の種別で返す
+  const limited = limitedItemInitFromStruct(struct);
+  if (limited) return limitedItemChoices(prefix, limited);
 
   // 表示名に <br> 等のタグが入ることがある（例: "赤ずきん<br>ふわっちちゃん"）
   const clean = (v: string | undefined, fallback: string) => (v ?? fallback).replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
@@ -340,6 +345,22 @@ export async function getRankingStruct(prefix: string): Promise<RankingStruct> {
     const data = await getJson<RankingStruct & { error_code?: unknown; error_message?: unknown }>(path);
     // 未公開のときは HTTP 200 で {"error_code":"Z-002","error_message":"データが見つかりません"} が返る。
     // 構造として保存すると区分 0 件のまま「取得済み」になるので、404 と同じ扱いにする（キャッシュもしない）
+    if (data && typeof data === "object" && "error_code" in data && data.error_code) {
+      throw new WhowatchEventApiError(404, `whowatch API ${path} → ${String(data.error_code)}`);
+    }
+    return data;
+  });
+}
+
+/**
+ * GET /events/limited_item_rankings_init?event_key= → 期間限定アイテム型（limited-item）のグループ・総合の有無（そのまま）。
+ * 2026-10-07 実測（黄金発掘隊）。ふわっち Web 版のランキングタブが最初に呼ぶ初期化 JSON で、認証なしで取れる。
+ * 未公開・無いイベントは HTTP 200 の error_code で返るので 404 として投げ、キャッシュしない（構造 JSON と同じ扱い）
+ */
+export async function getLimitedItemRankingsInit(eventKey: string): Promise<Record<string, unknown>> {
+  return cached(`limited_item_init:${eventKey}`, async () => {
+    const path = `/events/limited_item_rankings_init?event_key=${encodeURIComponent(eventKey)}`;
+    const data = await getJson<Record<string, unknown>>(path);
     if (data && typeof data === "object" && "error_code" in data && data.error_code) {
       throw new WhowatchEventApiError(404, `whowatch API ${path} → ${String(data.error_code)}`);
     }

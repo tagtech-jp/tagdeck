@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 // 区分の絞り込みと既定（総合 → 先頭）は 5 分同期の自動設定と共通（2026-10-01）
 import { choicesForOption, defaultChoice } from "@/lib/whowatch/ranking-choice";
+// 期間限定アイテム型（limited-item・黄金発掘隊）: グループは配信者グレードで決まり、既定は置かない（空 = 自動判定・2026-10-07）
+import { isLimitedItemPrefix } from "@/lib/whowatch/limited-item";
 import { Check } from "lucide-react";
 
 type EventType = "score" | "ranking" | "nice" | "viewer";
@@ -108,7 +110,8 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
       setEndTime(toLocalDatetimeValue(period.ends_at));
     }
     const dc = defaultChoice(choicesForOption(d.rankingChoices, key));
-    setRankingType(dc?.rankingType ?? "");
+    // 期間限定アイテム型はグループ（配信者グレード K24〜K10）が本人ごとに違うので既定を置かない。空のまま作れば 5 分同期が今日の順位表から自動判定する
+    setRankingType(isLimitedItemPrefix(d.rankingPrefix) ? "" : dc?.rankingType ?? "");
   };
 
   const selectedWhowatchEvent =
@@ -412,10 +415,11 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
           {!detailLoading && eventDetail && (
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">
-                ランキング種別
-                {eventDetail.periods.length === 0 && eventDetail.kind === "daily" && <span className="ml-1 text-primary">（デイリー）</span>}
+                {isLimitedItemPrefix(eventDetail.rankingPrefix) ? "グループ（配信者グレード）" : "ランキング種別"}
+                {eventDetail.periods.length === 0 && eventDetail.kind === "daily" && <span className="ml-1 text-primary">（デイリー・毎日 0:00 区切り）</span>}
               </label>
               {(() => {
+                const limited = isLimitedItemPrefix(eventDetail.rankingPrefix);
                 const list = choicesForOption(eventDetail.rankingChoices, eventDetail.periods.length > 0 ? periodKey : null);
                 if (list.length === 0) {
                   // RANKING タブはあるのに区分の構造が取れていない（2026_10_magicfantasy で発生）。期間中は 5 分同期が取り直して入れる
@@ -435,6 +439,7 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
                       onChange={(e) => setRankingType(e.target.value)}
                       className="min-h-11 w-full rounded-sm bg-muted px-3 py-2 text-sm text-foreground"
                     >
+                      {limited && <option value="">自動判定（今日の順位表に載った時点で 5 分同期が設定）</option>}
                       {list.map((c) => (
                         <option key={c.rankingType} value={c.rankingType}>
                           {eventDetail.periods.length > 0 ? stripOptionLabel(c.label) : c.label}
@@ -442,7 +447,12 @@ export function EventCreateForm({ onCreated, onCancel }: Props) {
                         </option>
                       ))}
                     </select>
-                    <p className="mt-1 text-xs text-muted-foreground">ranking_type: {rankingType}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">ranking_type: {rankingType || (limited ? "（自動判定）" : "")}</p>
+                    {limited && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        デイリーのイベントです。順位表は毎日 0:00 に切り替わり、期間中は当日の順位表を自動で追います。グループは配信者グレードで毎日決まるため、分かっていれば選び、不明なら「自動判定」のまま作成してください（ふわっち ID の設定が要ります）
+                      </p>
+                    )}
                   </>
                 );
               })()}

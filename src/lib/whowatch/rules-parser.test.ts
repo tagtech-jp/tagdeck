@@ -80,7 +80,9 @@ describe("parseRules", () => {
   it("全項目をまとめ、無い項目は null", () => {
     const r = parseRules(AUTUMN_TEXT, new Date("2026-09-21T00:00:00Z"));
     expect(r.expectedMultiplier).toBe(1.95);
-    expect(r.parserVersion).toBe(1);
+    expect(r.parserVersion).toBe(2);
+    expect(r.valueTable).toBeNull();
+    expect(r.valueUnit).toBeNull();
     const empty = parseRules("");
     expect(empty.multiplierTable).toBeNull();
     expect(empty.bonusTable).toBeNull();
