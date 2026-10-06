@@ -30,6 +30,10 @@ vi.mock("@/lib/db/client", () => ({ createDbClient: () => makeFakeDb() }));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ auth: { getUser: async () => ({ data: { user: null } }) } }),
 }));
+// route は先頭で静的に読み込む（vi.mock は巻き上げられるので差し替えは効く）。テスト内で await import すると、
+// 初回の読み込み(全体実行時は 1〜5 秒超)が最初のテストの 5 秒枠を食って時間切れになり、取り残された処理が
+// 次のテストの env と results を横取りして 2 件目まで落ちていた（2026-10-06）
+import { GET } from "./route";
 
 type ExportBody = { configured: boolean; count: number; simulators: Record<string, unknown>[] };
 const KEY = "test-sync-key-0123456789";
@@ -75,7 +79,6 @@ describe("simulators/export", () => {
 
   it("運営者が未設定なら DB を読まずに configured=false の空配列", async () => {
     delete process.env.EXPORT_OWNER_USER_ID;
-    const { GET } = await import("./route");
     const res = await GET(new Request(URL, { headers: { "X-Sync-Key": KEY } }));
     expect(res.status).toBe(200);
     const body = (await res.json()) as ExportBody;
@@ -86,7 +89,6 @@ describe("simulators/export", () => {
   it("運営者の目標・進捗と event_key を返し、ライバルは含めない", async () => {
     process.env.EXPORT_OWNER_USER_ID = "00000000-0000-0000-0000-000000000001";
     results.push([row], [{ id: 1523, eventKey: "2026_10_magicfantasy" }]);
-    const { GET } = await import("./route");
     const res = await GET(new Request(URL, { headers: { "X-Sync-Key": KEY } }));
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe("private, no-store");
@@ -109,7 +111,6 @@ describe("simulators/export", () => {
     const latest = [snapshot(0, 18_600), snapshot(5, 18_550), snapshot(10, 18_500)]; // 新しい順(orderBy desc)
     const history = [snapshot(10, 18_500), snapshot(5, 18_550), snapshot(0, 18_600)].map((s) => ({ capturedAt: s.capturedAt, myPoint: s.myPoint }));
     results.push([sim], [{ id: 1523, eventKey: "2026_10_magicfantasy" }], latest, history);
-    const { GET } = await import("./route");
     const body = (await (await GET(new Request(URL, { headers: { "X-Sync-Key": KEY } }))).json()) as ExportBody;
     const s = body.simulators[0] as { forecast: Record<string, unknown>; score_history: Array<{ score: number }>; ranking_type: string };
     expect(s.ranking_type).toBe("magicfantasy_1st_doll_gold");
@@ -127,7 +128,6 @@ describe("simulators/export", () => {
     process.env.EXPORT_OWNER_USER_ID = "00000000-0000-0000-0000-000000000001";
     const sim = { ...row, rankingType: "magicfantasy_1st_doll_gold", targetRank: 3, endTime: new Date(Date.now() + 86_400_000) };
     results.push([sim], [{ id: 1523, eventKey: "2026_10_magicfantasy" }], new Error("ranking_snapshots timeout"));
-    const { GET } = await import("./route");
     const res = await GET(new Request(URL, { headers: { "X-Sync-Key": KEY } }));
     expect(res.status).toBe(200);
     const s = ((await res.json()) as ExportBody).simulators[0];
@@ -139,7 +139,6 @@ describe("simulators/export", () => {
     process.env.EXPORT_OWNER_USER_ID = "00000000-0000-0000-0000-000000000001";
     const old = { ...row, rankingType: "x", targetRank: 3, endTime: new Date(Date.now() - 8 * 86_400_000) };
     results.push([old], [{ id: 1523, eventKey: "k" }]);
-    const { GET } = await import("./route");
     const s = ((await (await GET(new Request(URL, { headers: { "X-Sync-Key": KEY } }))).json()) as ExportBody).simulators[0];
     expect(s.forecast).toBeNull();
     expect(whereArgs).toHaveLength(2); // シミュレーターと event_key だけ
@@ -148,7 +147,6 @@ describe("simulators/export", () => {
   it("手入力のスコアがあればそちらを現在値にする", async () => {
     process.env.EXPORT_OWNER_USER_ID = "00000000-0000-0000-0000-000000000001";
     results.push([{ ...row, whowatchEventId: null, manualScore: 5000 }]);
-    const { GET } = await import("./route");
     const body = (await (await GET(new Request(URL, { headers: { "X-Sync-Key": KEY } }))).json()) as ExportBody;
     expect(body.simulators[0]).toMatchObject({ current_score: 5000, current_score_source: "manual", event_key: null });
   });
@@ -156,7 +154,6 @@ describe("simulators/export", () => {
   it("利用者をリクエストで指定できない（クエリは無視して運営者の分だけ）", async () => {
     process.env.EXPORT_OWNER_USER_ID = "00000000-0000-0000-0000-000000000001";
     results.push([]);
-    const { GET } = await import("./route");
     const res = await GET(new Request(`${URL}?user_id=someone-else`, { headers: { "X-Sync-Key": KEY } }));
     expect(res.status).toBe(200);
     expect(whereArgs).toHaveLength(1); // 運営者の分を1回だけ検索している（route.ts はクエリを読まない）
@@ -164,7 +161,6 @@ describe("simulators/export", () => {
   });
 
   it("キー不一致 → 401", async () => {
-    const { GET } = await import("./route");
     const res = await GET(new Request(URL, { headers: { "X-Sync-Key": "wrong-key-xxxxxxxxxxxxxxx" } }));
     expect(res.status).toBe(401);
   });

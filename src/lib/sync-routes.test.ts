@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { SYNC_ROUTES, isSyncRoutePath } from "./sync-routes";
 
@@ -24,6 +24,9 @@ vi.mock("@/lib/whowatch/item-patterns-sync", () => ({
 vi.mock("@/lib/notify-gw", () => ({ sendNotifyGw: vi.fn(async () => ({ sent: false })) }));
 
 const KEY = "test-sync-key-0123456789";
+// ルートと middleware の初回読み込みは全体実行時に数秒かかる。テスト本体（既定 5 秒枠）の中で読むと時間切れになるため、
+// beforeAll で先に読み込んでおく（2026-10-06・simulators/export/route.test.ts と同じ原因）
+const PRELOAD_TIMEOUT_MS = 30_000;
 
 // SYNC_ROUTES のパス → ルートモジュールの importer。新しい同期ルートを SYNC_ROUTES に足したら、
 // ここにも importer を足す必要がある（下の「登録漏れ検知」テストが、片方だけの追記を検知する）。
@@ -51,6 +54,10 @@ describe("SYNC_ROUTES 登録漏れ検知", () => {
 });
 
 describe("middleware: SYNC_ROUTES は必ず素通しされる（本番 307 の再発防止）", () => {
+  beforeAll(async () => {
+    await import("@/middleware");
+  }, PRELOAD_TIMEOUT_MS);
+
   it("isSyncRoutePath は登録済みパスで true、それ以外で false", () => {
     for (const r of SYNC_ROUTES) expect(isSyncRoutePath(r.path)).toBe(true);
     const nonSyncPaths: string[] = ["/dashboard", "/api/events", "/login"];
@@ -68,6 +75,10 @@ describe("middleware: SYNC_ROUTES は必ず素通しされる（本番 307 の�
 });
 
 describe.each(SYNC_ROUTES)("同期ルート認証ループ: $path", (route) => {
+  beforeAll(async () => {
+    await ROUTE_IMPORTERS[route.path]();
+  }, PRELOAD_TIMEOUT_MS);
+
   let original: string | undefined;
   beforeEach(() => {
     original = process.env[route.envKey];
