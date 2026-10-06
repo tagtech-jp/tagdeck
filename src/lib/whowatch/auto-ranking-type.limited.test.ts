@@ -10,6 +10,8 @@ vi.mock("./event-detail-sync", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./event-detail-sync")>();
   return { ...actual, syncEventDetail: vi.fn() };
 });
+// 公開プロフィール（publisher_id 用の数値 ID・性別）は取れない前提。取れる場合は auto-ranking-type.periodic.test.ts
+vi.mock("./profile", () => ({ getPublicProfile: vi.fn(async () => null) }));
 
 import { eventSimulators, streamerProfiles, whowatchEvents } from "@/lib/db/schema";
 import { AUTO_LIMITED_SCAN_MAX_PER_RUN, autoAssignRankingTypes, decideLimitedItemRankingType } from "./auto-ranking-type";

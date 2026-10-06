@@ -279,7 +279,7 @@ export function EventSettingsEditor({ eventId, whowatchEventId, currentRankingTy
               >
                 {hasAutoDivision(detail.rankingPrefix) && (
                   <option value="">
-                    {isN1Prefix(detail.rankingPrefix) ? "自動判定（今の回の男性・女性・ルーキー部門を順に見て、載っている部門を 5 分同期が設定）" : "自動判定（今日の順位表に載った時点で 5 分同期が設定）"}
+                    {isN1Prefix(detail.rankingPrefix) ? "自動判定（ふわっちのプロフィールの性別と、今の回の順位表の本人の行から 5 分同期が設定。ルーキー対象ならルーキー部門）" : "自動判定（今日の順位表に載った時点で 5 分同期が設定）"}
                   </option>
                 )}
                 {choices.map((c) => (

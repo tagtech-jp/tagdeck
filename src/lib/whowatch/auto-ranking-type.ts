@@ -8,9 +8,10 @@
 //   3. 期間限定アイテム型（limited-item・黄金発掘隊・2026-10-07 社長指示「カテゴリーごとに自動的に入れて」）: グループは配信者グレード
 //      （K24〜K10）で決まり、公開 API からは本人のグレードが分からない。今日の各グループの順位表を順に見て、本人が載っているグループを入れる。
 //      まだどこにも載っていなければ入れずに次回へ回す（既定を K24 にすると違うグループの順位を追ってしまう）
-//   4. N-1 グランプリ（prefix "n1"・2026-10-07 社長指示「ナイスも対応して」）: 部門（男性・女性・ルーキー）は本人の属性で決まる。今の回の
-//      3 部門の順位表を順に見て、本人が載っている部門を入れる。全期間（n1-total）は属性に依らないので自動では入れない（利用者が選ぶ）。
-//      WGP（prefix "wgp"）は選択肢が固定（デイリー / 月間総合）なので 2. の規則で先頭のデイリーが入る
+//   4. N-1 グランプリ（prefix "n1"・2026-10-07 社長指示「ナイスも対応して」）: 部門（男性・女性・ルーキー）は本人の属性で決まる。
+//      ルーキー部門の順位表に本人の行があればルーキー、無ければ公開プロフィールの性別（男性 / 女性）、それも無ければ男女の順位表に本人の行があるか
+//      （publisher_id で上位 100 名の外でも本人の行が返る・2026-10-07 社長報告「N-1 の部門が自動判定のままで入らない」への対応）。
+//      全期間（n1-total）は属性に依らないので自動では入れない（利用者が選ぶ）。WGP（prefix "wgp"）は選択肢が固定（デイリー / 月間総合）なので 2. の規則で先頭のデイリーが入る
 // 利用者が後から別の区分を選べば、そちらが優先（ranking_type が空のものだけを書き換える）。
 
 import { and, asc, eq, gte, inArray, isNotNull, isNull, lte, ne, or } from "drizzle-orm";
@@ -19,9 +20,10 @@ import { eventSimulators, streamerProfiles, whowatchEvents } from "@/lib/db/sche
 import { isUsableStruct, syncEventDetail, viewFromRow } from "./event-detail-sync";
 import { flattenRankingChoices } from "./events";
 import { buildLimitedItemRankingType, eventKeyFromLimitedItemPrefix, isLimitedItemPrefix, limitedItemInitFromStruct, type LimitedItemInit } from "./limited-item";
-import { buildN1RankingType, isN1Prefix, N1_SCAN_DIVISIONS } from "./periodic-ranking";
+import { buildN1RankingType, isN1Prefix } from "./periodic-ranking";
+import { getPublicProfile, type PublicProfile } from "./profile";
 import { pickDefaultRankingType, type PeriodLike } from "./ranking-choice";
-import { findMyEntry, getRankings, type RankingEntryApi } from "./rankings";
+import { entriesWithPublisher, findMyEntry, getRankings, type RankingEntryApi } from "./rankings";
 
 type Db = ReturnType<typeof createDbClient>;
 
@@ -101,20 +103,33 @@ export async function decideLimitedItemRankingType(sim: AutoAssignLimitedTarget,
   return { id: sim.id, skip: "今日のランキングにまだ載っていない（載った時点でグループを自動設定）" };
 }
 
+/** 部門の判定に使う公開プロフィール（性別だけ使う） */
+export type N1ProfileHint = Pick<PublicProfile, "gender"> | null;
+
 /**
- * N-1 グランプリ: 今の回の男性・女性・ルーキー部門の順位表を順に見て、本人が載っている部門を入れる。
+ * N-1 グランプリの部門を決める（2026-10-07 社長報告「N-1 の部門が自動判定のままで入らない」= 本人が上位 100 名に居ないと順位表から判定できなかった）:
+ *   1. ルーキー部門の順位表に本人の行があれば（publisher_id で圏外でも返る）ルーキー。対象者は開催月限定で、男女部門より入賞しやすい
+ *   2. 公開プロフィールの性別（男性 / 女性）があればその部門（順位表に載っていなくても決まる。部門は性別の設定で決まる規則）
+ *   3. 性別が未設定なら男性・女性の順位表に本人の行があるか
+ *   4. どれも無ければ入れない（ふわっちで性別を設定するか、設定で部門を選んでもらう）
  * ふわっち ID も表示名も無ければ判定できない。全期間（n1-total）は本人の属性に依らないので候補にしない
  */
-export async function decideN1RankingType(sim: AutoAssignLimitedTarget, lookup: LimitedItemLookup): Promise<AutoAssignDecision> {
+export async function decideN1RankingType(sim: AutoAssignLimitedTarget, lookup: LimitedItemLookup, profile: N1ProfileHint = null): Promise<AutoAssignDecision> {
   if (!sim.whowatchUserId && !sim.myEntryName) return { id: sim.id, skip: "ふわっち ID が未設定のため部門を判定できない（設定 → プラットフォーム）" };
-  for (const division of N1_SCAN_DIVISIONS) {
-    const type = buildN1RankingType(division);
-    const entries = await lookup(type);
-    if (findMyEntry(entries, { whowatchUserId: sim.whowatchUserId, myEntryName: sim.myEntryName })) {
-      return { id: sim.id, rankingType: type, optionKey: division };
-    }
+  const me = { whowatchUserId: sim.whowatchUserId, myEntryName: sim.myEntryName };
+  const rookie = buildN1RankingType("rookie");
+  if (findMyEntry(await lookup(rookie), me)) return { id: sim.id, rankingType: rookie, optionKey: "rookie" };
+  if (profile?.gender === "male" || profile?.gender === "female") {
+    return { id: sim.id, rankingType: buildN1RankingType(profile.gender), optionKey: profile.gender };
   }
-  return { id: sim.id, skip: "今の回の順位表にまだ載っていない（載った時点で部門を自動設定）" };
+  for (const division of ["male", "female"] as const) {
+    const type = buildN1RankingType(division);
+    if (findMyEntry(await lookup(type), me)) return { id: sim.id, rankingType: type, optionKey: division };
+  }
+  return {
+    id: sim.id,
+    skip: "今の回の順位表にまだ載っておらず、ふわっちのプロフィールに性別が設定されていないため部門を判定できない（ふわっちで性別を設定するか、「区分・期間を編集」で部門を選ぶ）",
+  };
 }
 
 export interface AutoAssignResult {
@@ -173,6 +188,20 @@ export async function autoAssignRankingTypes(db: Db, now: Date): Promise<AutoAss
     profileCache.set(userId, v);
     return v;
   };
+  // 公開プロフィール（数値 ID = publisher_id・性別）。取れなくても判定は続ける（10 分キャッシュは profile.ts 側）
+  const publicProfileCache = new Map<string, PublicProfile | null>();
+  const publicProfileOf = async (whowatchUserId: string | null): Promise<PublicProfile | null> => {
+    if (!whowatchUserId) return null;
+    if (publicProfileCache.has(whowatchUserId)) return publicProfileCache.get(whowatchUserId) ?? null;
+    let v: PublicProfile | null = null;
+    try {
+      v = await getPublicProfile(whowatchUserId);
+    } catch (e) {
+      console.warn("[auto-ranking-type] profile lookup failed", whowatchUserId, e instanceof Error ? e.message : String(e));
+    }
+    publicProfileCache.set(whowatchUserId, v);
+    return v;
+  };
 
   let repairAttempts = 0;
   let limitedScans = 0;
@@ -195,34 +224,36 @@ export async function autoAssignRankingTypes(db: Db, now: Date): Promise<AutoAss
     let d: AutoAssignDecision;
     const fetched = Boolean(entry && entry.detail.fetched);
     const prefix = entry?.detail.rankingPrefix ?? null;
-    // 本人が載っている区分を順位表から探す家族（limited-item のグループ・N-1 の部門）で使う。期間はシミュレーターの期間に収めて決める
+    // 本人が載っている区分を順位表から探す家族（limited-item のグループ・N-1 の部門）で使う。期間はシミュレーターの期間に収めて決める。
+    // publisher_id（本人の数値 ID）を付けると、本人が一覧の外（上位 100 名の外）でも本人の行が返るので、それを一覧に足して「載っているか」を見る
     const window = { start: sim.startTime, end: sim.endTime };
-    const lookup: LimitedItemLookup = async (type) => {
-      try {
-        return (await getRankings(type, { limit: 100, now, window })).entries;
-      } catch (e) {
-        console.warn("[auto-ranking-type] division lookup failed", type, e instanceof Error ? e.message : String(e));
-        return [];
-      }
-    };
+    const lookupFor =
+      (publisherId: string | null): LimitedItemLookup =>
+      async (type) => {
+        try {
+          return entriesWithPublisher(await getRankings(type, { limit: 100, now, window, ...(publisherId ? { publisherId } : {}) }));
+        } catch (e) {
+          console.warn("[auto-ranking-type] division lookup failed", type, e instanceof Error ? e.message : String(e));
+          return [];
+        }
+      };
     if (fetched && isLimitedItemPrefix(prefix)) {
       const init = limitedItemInitFromStruct(entry!.detail.struct);
       if (!init) d = { id: sim.id, skip: "区分の構造がまだ取れていない" };
       else if (limitedScans >= AUTO_LIMITED_SCAN_MAX_PER_RUN) d = { id: sim.id, skip: "今回のグループ判定の上限（次回の同期で判定）" };
       else {
         limitedScans++;
-        d = await decideLimitedItemRankingType(
-          { ...target, endTime: sim.endTime, whowatchUserId: await whowatchUserIdOf(sim.userId), myEntryName: sim.myEntryName },
-          prefix as string,
-          init,
-          lookup,
-        );
+        const whowatchUserId = await whowatchUserIdOf(sim.userId);
+        const profile = await publicProfileOf(whowatchUserId);
+        d = await decideLimitedItemRankingType({ ...target, endTime: sim.endTime, whowatchUserId, myEntryName: sim.myEntryName }, prefix as string, init, lookupFor(profile?.userId ?? null));
       }
     } else if (fetched && isN1Prefix(prefix)) {
       if (limitedScans >= AUTO_LIMITED_SCAN_MAX_PER_RUN) d = { id: sim.id, skip: "今回の部門判定の上限（次回の同期で判定）" };
       else {
         limitedScans++;
-        d = await decideN1RankingType({ ...target, endTime: sim.endTime, whowatchUserId: await whowatchUserIdOf(sim.userId), myEntryName: sim.myEntryName }, lookup);
+        const whowatchUserId = await whowatchUserIdOf(sim.userId);
+        const profile = await publicProfileOf(whowatchUserId);
+        d = await decideN1RankingType({ ...target, endTime: sim.endTime, whowatchUserId, myEntryName: sim.myEntryName }, lookupFor(profile?.userId ?? null), profile);
       }
     } else {
       d = decideRankingType(target, entry?.detail ?? null);

@@ -1,6 +1,8 @@
 // ふわっち ランキング公開 API クライアント（E2）
 // GET /rankings/{ranking_type}?limit=N&detail=true[&publisher_id=]
-//   → [{title, status(1=開催中,3=終了), ranking_type, rankings:[{rank, point, total_view_count, user{id,user_path,name,icon_url}}]}]
+//   → [{title, status(1=開催中,3=終了), ranking_type, rankings:[{rank, point, total_view_count, user{id,user_path,name,icon_url}}], publisher_ranking?}]
+//   publisher_id（本人の数値 ID）を付けると、本人が一覧（上位 100〜200 名）の外でも publisher_ranking に本人の行（rank・point・next_rank・ranking_up_point）が
+//   返る（2026-10-07 実測。/events/limited_item_rankings も同じ。その順位表に本人の記録が無ければ publisher_ranking 自体が無い。WGP は非対応）
 // 2026-10-07 追加（E7・E8。ふわっち Web 版が使う公開 API・認証なし）:
 //   GET /events/limited_item_rankings?period=&event_key=&group=   … 期間限定アイテム型（limited-item.ts）
 //   GET /wgp/ranking/{YYYYMMDD} / GET /wgp/ranking/overall/{YYYYMM} … WGP（periodic-ranking.ts）。1 オブジェクト {title, status, is_fixed, rankings}
@@ -32,6 +34,8 @@ export interface RankingResult {
   /** 1=開催中, 3=終了（API 実測）。不明は null */
   status: number | null;
   entries: RankingEntryApi[];
+  /** publisher_id を付けたときに返る本人の行（一覧の外でも返る）。無ければ null */
+  publisher?: RankingEntryApi | null;
   fetchedAt: string;
 }
 
@@ -55,39 +59,59 @@ function headers(): Record<string, string> {
   };
 }
 
-/** API 応答（配列）を正規化する。ranking_type が一致する要素を優先し、無ければ先頭 */
+function asRecord(v: unknown): Record<string, unknown> | null {
+  return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+}
+
+/** /rankings 系の 1 行（{ user{id,user_path,name}, rank, point, total_view_count }）。rank が無ければ null */
+function entryFromUserRow(r: Record<string, unknown>): RankingEntryApi | null {
+  const user = asRecord(r.user) ?? {};
+  const e: RankingEntryApi = {
+    rank: Number(r.rank ?? 0),
+    point: Number(r.point ?? 0),
+    userId: user.id != null ? String(user.id) : null,
+    userPath: user.user_path != null ? String(user.user_path) : null,
+    name: String(user.name ?? ""),
+    totalViewCount: r.total_view_count != null ? Number(r.total_view_count) : null,
+  };
+  return Number.isFinite(e.rank) && e.rank > 0 ? e : null;
+}
+
+/** 期間限定アイテム型の 1 行（{ user_id, user_name, user_path, rank, point }）。point は小数で返るので整数に丸める */
+function entryFromFlatRow(r: Record<string, unknown>): RankingEntryApi | null {
+  const e: RankingEntryApi = {
+    rank: Number(r.rank ?? 0),
+    point: Math.round(Number(r.point ?? 0)),
+    userId: r.user_id != null ? String(r.user_id) : null,
+    userPath: r.user_path != null ? String(r.user_path) : null,
+    name: String(r.user_name ?? ""),
+    totalViewCount: null,
+  };
+  return Number.isFinite(e.rank) && e.rank > 0 ? e : null;
+}
+
+/** API 応答（配列）を正規化する。ranking_type が一致する要素を優先し、無ければ先頭。publisher_ranking（本人の行）があれば publisher に */
 export function normalizeRankingResponse(data: unknown, rankingType: string): RankingResult | null {
   const list = Array.isArray(data) ? (data as Record<string, unknown>[]) : data && typeof data === "object" ? [data as Record<string, unknown>] : [];
   if (list.length === 0) return null;
   const wanted = rankingType.toLowerCase();
   const block = list.find((b) => String(b.ranking_type ?? "").toLowerCase() === wanted) ?? list[0];
   const raw = Array.isArray(block.rankings) ? (block.rankings as Record<string, unknown>[]) : [];
-  const entries: RankingEntryApi[] = raw
-    .map((r) => {
-      const user = (r.user ?? {}) as Record<string, unknown>;
-      return {
-        rank: Number(r.rank ?? 0),
-        point: Number(r.point ?? 0),
-        userId: user.id != null ? String(user.id) : null,
-        userPath: user.user_path != null ? String(user.user_path) : null,
-        name: String(user.name ?? ""),
-        totalViewCount: r.total_view_count != null ? Number(r.total_view_count) : null,
-      };
-    })
-    .filter((e) => Number.isFinite(e.rank) && e.rank > 0)
-    .sort((a, b) => a.rank - b.rank);
+  const entries = raw.map(entryFromUserRow).filter((e): e is RankingEntryApi => e !== null).sort((a, b) => a.rank - b.rank);
+  const pr = asRecord(block.publisher_ranking);
   return {
     rankingType: String(block.ranking_type ?? rankingType),
     title: String(block.title ?? ""),
     status: typeof block.status === "number" ? block.status : null,
     entries,
+    publisher: pr ? entryFromUserRow(pr) : null,
     fetchedAt: new Date().toISOString(),
   };
 }
 
 /**
  * 期間限定アイテム型（limited-item・2026-10-07 実測）の応答を正規化する。
- *   GET /events/limited_item_rankings?period=&event_key=&group= → { rankings: [{ user_id, user_name, user_path, rank, point, … }] }
+ *   GET /events/limited_item_rankings?period=&event_key=&group=[&publisher_id=] → { rankings: [{ user_id, user_name, user_path, rank, point, … }], publisher_ranking?: 同じ形の本人の行 }
  * point は kg などの数値（小数で返る。6831.0）。保存先（ranking_snapshots.my_point・event_simulators.current_score）が整数列なので丸める。
  * error_code 付き（period 省略・開始前の日付・無いグループ = Z-001）は null
  */
@@ -95,23 +119,15 @@ export function normalizeLimitedItemRankingResponse(data: unknown, datedRankingT
   const r = data && typeof data === "object" && !Array.isArray(data) ? (data as Record<string, unknown>) : null;
   if (!r || ("error_code" in r && r.error_code)) return null;
   const raw = Array.isArray(r.rankings) ? (r.rankings as Record<string, unknown>[]) : [];
-  const entries: RankingEntryApi[] = raw
-    .map((e) => ({
-      rank: Number(e.rank ?? 0),
-      point: Math.round(Number(e.point ?? 0)),
-      userId: e.user_id != null ? String(e.user_id) : null,
-      userPath: e.user_path != null ? String(e.user_path) : null,
-      name: String(e.user_name ?? ""),
-      totalViewCount: null,
-    }))
-    .filter((e) => Number.isFinite(e.rank) && e.rank > 0)
-    .sort((a, b) => a.rank - b.rank);
-  return { rankingType: datedRankingType, title: "", status: null, entries, fetchedAt: new Date().toISOString() };
+  const entries = raw.map(entryFromFlatRow).filter((e): e is RankingEntryApi => e !== null).sort((a, b) => a.rank - b.rank);
+  const pr = asRecord(r.publisher_ranking);
+  return { rankingType: datedRankingType, title: "", status: null, entries, publisher: pr ? entryFromFlatRow(pr) : null, fetchedAt: new Date().toISOString() };
 }
 
-/** 期間限定アイテム型のランキングを取得する。group は 1 始まり、period は YYYYMMDD（JST）か OVERALL */
-export async function getLimitedItemRankings(eventKey: string, group: number, period: string, datedRankingType: string): Promise<RankingResult> {
+/** 期間限定アイテム型のランキングを取得する。group は 1 始まり、period は YYYYMMDD（JST）か OVERALL。publisherId（本人の数値 ID）で圏外でも本人の行が返る */
+export async function getLimitedItemRankings(eventKey: string, group: number, period: string, datedRankingType: string, publisherId?: string | null): Promise<RankingResult> {
   const params = new URLSearchParams({ period, event_key: eventKey, group: String(group) });
+  if (publisherId) params.set("publisher_id", publisherId);
   const url = `${BASE_URL}/events/limited_item_rankings?${params.toString()}`;
   const res = await fetch(url, { headers: headers(), signal: AbortSignal.timeout(TIMEOUT_MS), cache: "no-store" });
   if (!res.ok) throw new WhowatchRankingApiError(res.status, `whowatch limited_item_rankings ${datedRankingType} → HTTP ${res.status}`);
@@ -153,11 +169,12 @@ export async function getWgpRankings(datedRankingType: string): Promise<RankingR
  * GET /rankings/nice_one_total/YYYYMM?detail=true。応答は従来の /rankings/{type} と同じ配列（ranking_type は NICE_ONE_1ST_MALE のような大文字・
  * 回が始まる前は status 0 で rankings 空・確定後は status 3）。記録は期間つきの種別（n1-male-202610-1st / n1-total-202610）で揃える
  */
-export async function getN1Rankings(datedRankingType: string, limit = 100): Promise<RankingResult> {
+export async function getN1Rankings(datedRankingType: string, limit = 100, publisherId?: string | null): Promise<RankingResult> {
   const p = parsePeriodicRankingType(datedRankingType);
   const api = p && p.family === "n1" && p.periodKey ? n1ApiRankingType(p.division as N1Division, p.periodKey) : null;
   if (!api) throw new WhowatchRankingApiError(400, `invalid n1 ranking_type: ${datedRankingType}`);
   const params = new URLSearchParams({ limit: String(limit), detail: "true" });
+  if (publisherId) params.set("publisher_id", publisherId);
   const url = `${BASE_URL}/rankings/${api.apiType}/${api.monthKey}?${params.toString()}`;
   const res = await fetch(url, { headers: headers(), signal: AbortSignal.timeout(TIMEOUT_MS), cache: "no-store" });
   if (!res.ok) throw new WhowatchRankingApiError(res.status, `whowatch rankings ${datedRankingType} → HTTP ${res.status}`);
@@ -173,6 +190,7 @@ export async function getN1Rankings(datedRankingType: string, limit = 100): Prom
  * - 期間限定アイテム型（limited-item-{event_key}-{group}[-{YYYYMMDD}]）: 日付なしなら now（と window）からその日の日付を決め、
  *   GET /events/limited_item_rankings を叩く。返す rankingType は日付つき（ranking_snapshots にその日の種別として残る）
  * - WGP（wgp-daily / wgp-overall）・N-1（n1-male 等）: 同じく期間なしなら now（と window）から期間を決める（periodic-ranking.ts）
+ * - opts.publisherId（本人の数値 ID）は従来の種別・期間限定アイテム型・N-1 に付ける（圏外でも本人の行が publisher に返る）。WGP は非対応
  */
 export async function getRankings(
   rankingType: string,
@@ -182,11 +200,11 @@ export async function getRankings(
   if (parseLimitedItemRankingType(rankingType)) {
     const dated = resolveLimitedItemRankingType(rankingType, opts.now ?? new Date(), opts.window);
     const p = parseLimitedItemRankingType(dated)!;
-    return getLimitedItemRankings(p.eventKey, p.group === "overall" ? 1 : p.group, p.period!, dated);
+    return getLimitedItemRankings(p.eventKey, p.group === "overall" ? 1 : p.group, p.period!, dated, opts.publisherId);
   }
   const periodic = parsePeriodicRankingType(rankingType);
   if (periodic?.family === "wgp") return getWgpRankings(resolvePeriodicRankingType(rankingType, opts.now ?? new Date(), opts.window));
-  if (periodic?.family === "n1") return getN1Rankings(resolvePeriodicRankingType(rankingType, opts.now ?? new Date(), opts.window), opts.limit ?? 100);
+  if (periodic?.family === "n1") return getN1Rankings(resolvePeriodicRankingType(rankingType, opts.now ?? new Date(), opts.window), opts.limit ?? 100, opts.publisherId);
   const params = new URLSearchParams({ limit: String(opts.limit ?? 100), detail: "true" });
   if (opts.publisherId) params.set("publisher_id", opts.publisherId);
   const url = `${BASE_URL}/rankings/${encodeURIComponent(rankingType)}?${params.toString()}`;
@@ -208,21 +226,40 @@ function normId(v: string | null | undefined): string {
     .toLowerCase();
 }
 
+function sameUser(a: RankingEntryApi, b: RankingEntryApi): boolean {
+  const ida = normId(a.userId);
+  const idb = normId(b.userId);
+  if (ida && idb) return ida === idb;
+  const pa = normId(a.userPath);
+  const pb = normId(b.userPath);
+  return Boolean(pa && pb && pa === pb);
+}
+
+/** 一覧に本人の行（publisher）が無ければ末尾に足して返す（区分の判定で「載っているか」を 1 つの配列で見るため） */
+export function entriesWithPublisher(result: Pick<RankingResult, "entries" | "publisher">): RankingEntryApi[] {
+  const p = result.publisher;
+  if (!p) return result.entries;
+  return result.entries.some((e) => sameUser(e, p)) ? result.entries : [...result.entries, p];
+}
+
 /**
- * ランキングから自分を探す。優先順: whowatchUserId(数値 id / user_path) → myEntryName(表示名・user_path)
+ * ランキングから自分を探す。優先順: whowatchUserId(数値 id / user_path) → myEntryName(表示名・user_path)。
+ * 一覧に居なければ publisher（publisher_id で返った本人の行・圏外）で同じ照合をする
  */
 export function findMyEntry(
   entries: RankingEntryApi[],
   me: { whowatchUserId?: string | null; myEntryName?: string | null },
+  publisher?: RankingEntryApi | null,
 ): RankingEntryApi | null {
+  const pool = publisher ? [...entries, publisher] : entries;
   const uid = normId(me.whowatchUserId);
   if (uid) {
-    const hit = entries.find((e) => normId(e.userId) === uid || normId(e.userPath) === uid);
+    const hit = pool.find((e) => normId(e.userId) === uid || normId(e.userPath) === uid);
     if (hit) return hit;
   }
   const name = (me.myEntryName ?? "").trim();
   if (name) {
-    const hit = entries.find((e) => e.name === name || normId(e.userPath) === normId(name));
+    const hit = pool.find((e) => e.name === name || normId(e.userPath) === normId(name));
     if (hit) return hit;
   }
   return null;

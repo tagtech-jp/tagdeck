@@ -8,12 +8,15 @@
 //   自分が今日の順位表に居なければ、他のグループ（配信者グレード K24〜K10。毎日 0:00 の判定で変わりうる）を探して ranking_type を付け替える。
 // 2026-10-07: WGP（wgp-daily / wgp-overall）と N-1 グランプリ（n1-male 等）も同じ考え方（periodic-ranking.ts）。N-1 は今の回の順位表に
 //   自分が居なければ他の部門（男性・女性・ルーキー）を探して付け替える。WGP は区分が属性で決まらないので付け替えない。
+// 2026-10-07: 公開プロフィールの数値 ID を publisher_id に付けて取得する。本人が一覧（上位 100 名）の外でも publisher_ranking に本人の行が返るので、
+//   順位・pt を記録できる（E2 の要確認「圏外で順位が取れない」の解消。WGP は非対応）。
 
 import { and, eq } from "drizzle-orm";
 import type { createDbClient } from "@/lib/db/client";
 import { eventSimulators, rankingSnapshots, streamerProfiles, whowatchEvents } from "@/lib/db/schema";
 import { fetchEventRanking, extractRivals, type RankingEntry } from "@/lib/platforms/whowatch-ranking";
 import { parsePeriodicRankingType, periodicSiblingTypes, type PeriodicRankingType } from "./periodic-ranking";
+import { getPublicProfile } from "./profile";
 import { findMyEntry, getRankings, selectAutoRivals, type RankingEntryApi, type RankingResult } from "./rankings";
 
 type Db = ReturnType<typeof createDbClient>;
@@ -51,6 +54,17 @@ async function loadWhowatchUserId(db: DbOrTx, userId: string): Promise<string | 
   return p?.whowatchUserId ?? null;
 }
 
+/** 設定の ふわっち ID → 公開プロフィールの数値 ID（publisher_id 用）。取れなければ null（同期は続ける） */
+async function loadPublisherId(whowatchUserId: string | null): Promise<string | null> {
+  if (!whowatchUserId) return null;
+  try {
+    return (await getPublicProfile(whowatchUserId))?.userId ?? null;
+  } catch (e) {
+    console.warn("[ranking-sync] profile lookup failed", whowatchUserId, e instanceof Error ? e.message : String(e));
+    return null;
+  }
+}
+
 /**
  * 区分が本人の属性で決まる種別（limited-item のグループ・N-1 の部門）で、自分が居る区分（兄弟）を探す（今の種別以外を順に見る）。
  * 見つかれば {種別, 取得結果, 自分}。limited-item のグループ一覧は whowatch_events.struct（初期化 JSON）から、N-1 の部門は固定。無ければ null
@@ -59,7 +73,7 @@ async function findMySiblingDivision(
   db: DbOrTx,
   event: SimulatorRow,
   periodic: PeriodicRankingType,
-  ctx: { now: Date; window: { start: Date; end: Date }; whowatchUserId: string | null },
+  ctx: { now: Date; window: { start: Date; end: Date }; whowatchUserId: string | null; publisherId: string | null },
 ): Promise<{ rankingType: string; result: RankingResult; me: RankingEntryApi } | null> {
   if (!event.rankingType) return null;
   let struct: unknown = null;
@@ -70,8 +84,8 @@ async function findMySiblingDivision(
   }
   for (const type of periodicSiblingTypes(event.rankingType, struct)) {
     try {
-      const r = await getRankings(type, { limit: 100, now: ctx.now, window: ctx.window });
-      const me = findMyEntry(r.entries, { whowatchUserId: ctx.whowatchUserId, myEntryName: event.myEntryName });
+      const r = await getRankings(type, { limit: 100, now: ctx.now, window: ctx.window, ...(ctx.publisherId ? { publisherId: ctx.publisherId } : {}) });
+      const me = findMyEntry(r.entries, { whowatchUserId: ctx.whowatchUserId, myEntryName: event.myEntryName }, r.publisher);
       if (me) return { rankingType: type, result: r, me };
     } catch (e) {
       console.warn("[ranking-sync] sibling division lookup failed", type, e instanceof Error ? e.message : String(e));
@@ -119,14 +133,16 @@ export async function syncSimulatorRanking(db: DbOrTx, event: SimulatorRow, opts
   const periodic = parsePeriodicRankingType(event.rankingType);
 
   if (event.rankingType) {
-    apiResult = await getRankings(event.rankingType, { limit: 100, now, window });
+    // 本人のふわっち ID（設定値）と公開プロフィールの数値 ID。数値 ID を publisher_id に付けると、上位 100 名の外でも本人の行（順位・pt）が返る
+    const whowatchUserId = await loadWhowatchUserId(db, event.userId);
+    const publisherId = await loadPublisherId(whowatchUserId);
+    apiResult = await getRankings(event.rankingType, { limit: 100, now, window, ...(publisherId ? { publisherId } : {}) });
     apiEntries = apiResult.entries;
     source = "api";
-    const whowatchUserId = await loadWhowatchUserId(db, event.userId);
-    me = findMyEntry(apiEntries, { whowatchUserId, myEntryName: event.myEntryName });
+    me = findMyEntry(apiEntries, { whowatchUserId, myEntryName: event.myEntryName }, apiResult.publisher);
     // limited-item のデイリー・N-1 の期間別: 自分が今の順位表に居なければ、他の区分（グループ / 部門）を探して付け替える
     if (!me && periodic && canSwitchDivision(periodic) && (whowatchUserId || event.myEntryName)) {
-      const found = await findMySiblingDivision(db, event, periodic, { now, window, whowatchUserId });
+      const found = await findMySiblingDivision(db, event, periodic, { now, window, whowatchUserId, publisherId });
       if (found) {
         apiResult = found.result;
         apiEntries = found.result.entries;

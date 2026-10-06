@@ -29,7 +29,8 @@
 
 ## E1/E2 で新たに出た要確認
 
-- [ ] `/rankings/{type}` の `publisher_id` パラメータは未使用(自分の特定は user_path / 数値 id / 表示名で行う)。自分が limit 100 圏外の時に順位が取れない → publisher_id を付けると自分の行が返るかは実測で要確認
+- [x] `/rankings/{type}` の `publisher_id` パラメータは未使用(自分の特定は user_path / 数値 id / 表示名で行う)。自分が limit 100 圏外の時に順位が取れない → publisher_id を付けると自分の行が返るかは実測で要確認
+  → **2026-10-07 実測・対応済み（E8 追記）**: `publisher_id=<数値 ID>` を付けると、本人が一覧の外（570 位）でも応答に `publisher_ranking`（rank・point・next_rank・ranking_up_point）が返る。`/events/limited_item_rankings` も同じ。その順位表に本人の記録が無ければ `publisher_ranking` 自体が無い。WGP（`/wgp/ranking/*`）は非対応。数値 ID は公開プロフィール `GET /users/{path}/profile` の `user_id`（`src/lib/whowatch/profile.ts`）。5 分同期は publisher_id 付きで取得し、圏外でも my_rank / my_point を記録する
 - [ ] `whowatch_events.event_key` に UNIQUE を付けるか(既存行に重複が無ければ 0012 で追加)
 - [ ] `EventDashboard.tsx` 71 行目の `setState in effect` は既存コードの lint エラー(E2 では触っていない)
 - [ ] GitHub Actions の 5 分 cron は数分遅延する。デイリーイベント終盤の精度が足りなければ Cloudflare Cron Trigger への移行を検討
