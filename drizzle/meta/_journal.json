@@ -178,10 +178,10 @@
       "breakpoints": true
     },
     {
-      "idx": 25,
+      "idx": 26,
       "version": "7",
-      "when": 1790001500000,
-      "tag": "0025_delete_own_account",
+      "when": 1790001600000,
+      "tag": "0026_delete_own_account",
       "breakpoints": true
     }
   ]

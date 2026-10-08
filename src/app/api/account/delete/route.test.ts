@@ -133,7 +133,7 @@ describe("POST /api/account/delete（退会）", () => {
     expect(h.signOutCalls).toHaveLength(0);
   });
 
-  it("関数が未適用（drizzle/0025 前・PGRST202）なら 503 で「準備中」。Cookie は消さない", async () => {
+  it("関数が未適用（drizzle/0026 前・PGRST202）なら 503 で「準備中」。Cookie は消さない", async () => {
     h.rpcResult = { data: null, error: { code: "PGRST202", message: "Could not find the function public.delete_own_account without parameters in the schema cache" } };
     const res = await call({ confirm: "削除" });
     expect(res.status).toBe(503);

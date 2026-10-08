@@ -1,4 +1,4 @@
--- 0025_delete_own_account_rollback — 退会の関数を落とす（消したデータは戻らない。復元は Supabase のバックアップから）。
+-- 0026_delete_own_account_rollback — 退会の関数を落とす（消したデータは戻らない。復元は Supabase のバックアップから）。
 -- コードを戻す（PR の revert）のが先。関数だけ落とすと POST /api/account/delete は 503（準備中）になり、画面に「準備中」と出る
 BEGIN;
 DROP FUNCTION IF EXISTS public.delete_own_account();

@@ -1,4 +1,4 @@
--- 0025_delete_own_account — 退会（本人によるアカウント削除）の DB 関数（2026-10-08・セキュリティ監査 §3-7）
+-- 0026_delete_own_account — 退会（本人によるアカウント削除）の DB 関数（2026-10-08・セキュリティ監査 §3-7）
 -- 背景: 利用者が自分のアカウントとデータを消す導線が無く、Supabase の管理画面で社長が消す運用だった。
 --       Worker には Service Role Key を置いていない（置かない方針）ので、auth.users の削除は SECURITY DEFINER の関数に
 --       閉じ込め、呼び出し元（POST /api/account/delete）は本人のログインで supabase.rpc() を呼ぶだけにする。
@@ -9,8 +9,8 @@
 -- 対象外: 全利用者共有のマスタ（item_point_mapping・event_item_points・whowatch_events・whowatch_item_*）は利用者の行を持たないので触らない。
 --         Storage（バケット se の {user_id}/…）は API ルートが本人の権限で先に消す（SQL で storage.objects を消すとファイル実体が残るため）。
 -- 一覧: 消える表と順番は docs/ops/account_deletion_20261008.md
--- 適用: Supabase SQL Editor で drizzle/0025_delete_own_account_manual.sql を実行（docs/migration-runbook.md）
--- ロールバック: drizzle/0025_delete_own_account_rollback.sql（関数を落とすだけ。消したデータは戻らない）
+-- 適用: Supabase SQL Editor で drizzle/0026_delete_own_account_manual.sql を実行（docs/migration-runbook.md）
+-- ロールバック: drizzle/0026_delete_own_account_rollback.sql（関数を落とすだけ。消したデータは戻らない）
 -- 冪等: CREATE OR REPLACE / REVOKE・GRANT は何度流しても同じ状態
 -- 未適用のとき: ルートは PostgREST の「関数が無い」（PGRST202）を 503 で返し、画面に「準備中」と出す。適用前にマージしても壊れない
 CREATE OR REPLACE FUNCTION public.delete_own_account()

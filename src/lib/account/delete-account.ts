@@ -49,7 +49,7 @@ export interface RpcErrorLike {
 }
 
 /**
- * DB の関数 delete_own_account がまだ無い（drizzle/0025 未適用）か。
+ * DB の関数 delete_own_account がまだ無い（drizzle/0026 未適用）か。
  * PostgREST はスキーマキャッシュに無い関数を PGRST202、PostgreSQL は 42883（undefined_function）で返す
  */
 export function isFunctionMissingError(error: RpcErrorLike | null | undefined): boolean {

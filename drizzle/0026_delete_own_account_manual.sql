@@ -1,4 +1,4 @@
--- 0025_delete_own_account_manual — Supabase SQL Editor 貼付用（本文は 0025_delete_own_account.sql と同一・トランザクション付き）
+-- 0026_delete_own_account_manual — Supabase SQL Editor 貼付用（本文は 0026_delete_own_account.sql と同一・トランザクション付き）
 BEGIN;
 
 CREATE OR REPLACE FUNCTION public.delete_own_account()

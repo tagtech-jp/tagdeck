@@ -46,7 +46,7 @@ describe("listAllOwnStorageObjects（本人の音源のパスを全部集める�
   });
 });
 
-describe("isFunctionMissingError（drizzle/0025 が未適用か）", () => {
+describe("isFunctionMissingError（drizzle/0026 が未適用か）", () => {
   it("PostgREST の PGRST202・PostgreSQL の 42883・「Could not find the function」は未適用", () => {
     expect(isFunctionMissingError({ code: "PGRST202", message: "Could not find the function public.delete_own_account without parameters in the schema cache" })).toBe(true);
     expect(isFunctionMissingError({ code: "42883", message: "function public.delete_own_account() does not exist" })).toBe(true);

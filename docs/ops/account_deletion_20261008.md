@@ -7,7 +7,7 @@
 
 | 案 | 仕組み | 長所 | 短所 |
 |---|---|---|---|
-| **A（採用）** | DB に `SECURITY DEFINER` の関数 `public.delete_own_account()` を置き（`drizzle/0025`）、API ルートが**本人のログイン**で `supabase.rpc()` を呼ぶ。関数は `auth.uid()` の行だけを消す | Worker に新しい秘密を置かない（監査の「Service Role Key を Worker に置いていない」を保つ）。消す範囲が SQL 1 本に閉じて読める。誰が呼んでも自分の行しか消せない | 社長が SQL Editor で関数を適用するまで機能しない（未適用のときは 503「準備中」） |
+| **A（採用）** | DB に `SECURITY DEFINER` の関数 `public.delete_own_account()` を置き（`drizzle/0026`）、API ルートが**本人のログイン**で `supabase.rpc()` を呼ぶ。関数は `auth.uid()` の行だけを消す | Worker に新しい秘密を置かない（監査の「Service Role Key を Worker に置いていない」を保つ）。消す範囲が SQL 1 本に閉じて読める。誰が呼んでも自分の行しか消せない | 社長が SQL Editor で関数を適用するまで機能しない（未適用のときは 503「準備中」） |
 | B | 社長が Worker に `SUPABASE_SERVICE_ROLE_KEY` の Secret を追加し、ルートが `auth.admin.deleteUser(id)` を呼ぶ | migration が要らない | **全権限の鍵が Worker に載る**（漏れれば全利用者の全データに届く）。`public.users` 以下は `auth.users` に外部キーが無いので自動では消えず、結局ルート側で表ごとに DELETE が要る |
 
 案 B に切り替える場合の差分は小さい（`route.ts` の (2) を `createClient(url, SERVICE_ROLE_KEY).auth.admin.deleteUser(user.id)` と
@@ -59,7 +59,7 @@ Drizzle（`DATABASE_URL`）での表ごとの DELETE に置き換える）。関
 `docs/migration-runbook.md` のとおり。要点:
 
 1. **適用前**: `SELECT count(*) FROM auth.users;` と `SELECT count(*) FROM public.users;` を控える（関数の作成は行を変えないので、同じ値のままのはず）
-2. **適用**: `drizzle/0025_delete_own_account_manual.sql` の全文を貼って Run（`BEGIN … COMMIT` 付き）
+2. **適用**: `drizzle/0026_delete_own_account_manual.sql` の全文を貼って Run（`BEGIN … COMMIT` 付き）
 3. **確認**: 同ファイル末尾の SELECT が 1 行返り、`owner = postgres`・`secdef = true`・`auth_exec = true`・`anon_exec = false`・`owner_can_delete_auth = true`
    - `owner_can_delete_auth` が **false** なら、関数は実行時に権限エラー（42501）になる。回避策を試さず結果を報告し、案 B を検討する
 4. **コード**: 本 PR は**適用の前にマージしても壊れない**（未適用なら 503「準備中」を返すだけ）。適用 → 確認 → マージの順でも、マージ → 適用の順でもよい
@@ -69,7 +69,7 @@ Drizzle（`DATABASE_URL`）での表ごとの DELETE に置き換える）。関
 
 ## 5. ロールバック
 
-`drizzle/0025_delete_own_account_rollback.sql`（関数を落とすだけ）。消したデータは戻らない（復元は Supabase のバックアップから）。
+`drizzle/0026_delete_own_account_rollback.sql`（関数を落とすだけ）。消したデータは戻らない（復元は Supabase のバックアップから）。
 コードは PR を revert。関数だけ落とした状態では、ルートは 503「準備中」を返す。
 
 ## 6. 既知の制約
@@ -84,7 +84,7 @@ Drizzle（`DATABASE_URL`）での表ごとの DELETE に置き換える）。関
 
 ## 7. 関連
 
-- 関数: `drizzle/0025_delete_own_account.sql`（本文）・`_manual.sql`（貼付用・確認 SQL 付き）・`_rollback.sql`
+- 関数: `drizzle/0026_delete_own_account.sql`（本文）・`_manual.sql`（貼付用・確認 SQL 付き）・`_rollback.sql`
 - ルート: `src/app/api/account/delete/route.ts`・テスト `route.test.ts`
 - 純粋な部品: `src/lib/account/delete-account.ts`（確認の語・Storage の一覧のページ送り・未適用の判定）・テスト
 - 画面: `src/components/settings/DeleteAccountSection.tsx`・`src/app/(dashboard)/settings/page.tsx`

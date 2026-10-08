@@ -7,10 +7,10 @@ import { CONFIRM_WORD, isFunctionMissingError, listAllOwnStorageObjects } from "
  * - 本人確認はログイン（Cookie か Authorization: Bearer）。本文 { confirm: "削除" } が無ければ 400（画面で入力させる誤操作の防止）
  * - 別サイトからの POST は middleware の Origin ガードが 403 にする（src/lib/origin-guard.ts）
  * - 順番: (1) Storage（バケット se の {user_id}/…）を本人の権限で消す → (2) DB の関数 delete_own_account() を本人として呼ぶ
- *   （public の各表から auth.users まで 1 トランザクションで消える。drizzle/0025）→ (3) ログイン Cookie を消す
+ *   （public の各表から auth.users まで 1 トランザクションで消える。drizzle/0026）→ (3) ログイン Cookie を消す
  *   Storage を先にするのは、SQL で storage.objects を消すとファイル実体が残るのと、(2) の後では本人の権限が無くなるため。
  *   (1) で失敗したら (2) はしない（途中までの削除を残さない。利用者はやり直せる）
- * - 関数が未適用（drizzle/0025 の前）なら 503 { reason: "function_missing" }。適用より先にマージしても壊れない
+ * - 関数が未適用（drizzle/0026 の前）なら 503 { reason: "function_missing" }。適用より先にマージしても壊れない
  * - 応答: 200 { ok: true, deleted: {表ごとの行数}, storageObjects } / 401 / 400 / 502（Storage）/ 503（未適用）/ 500
  * - 消える表の一覧と運用: docs/ops/account_deletion_20261008.md
  */
@@ -43,11 +43,11 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
   }
 
-  // (2) DB（本人の行だけ。関数の中身と消える表は drizzle/0025_delete_own_account.sql）
+  // (2) DB（本人の行だけ。関数の中身と消える表は drizzle/0026_delete_own_account.sql）
   const { data, error } = await supabase.rpc("delete_own_account");
   if (error) {
     if (isFunctionMissingError(error)) {
-      console.error(`[account/delete] 関数 delete_own_account が未適用（drizzle/0025）: ${error.message}`);
+      console.error(`[account/delete] 関数 delete_own_account が未適用（drizzle/0026）: ${error.message}`);
       return noStore(
         NextResponse.json({ error: "退会の機能はまだ準備中です。お問い合わせフォームからご連絡ください", reason: "function_missing" }, { status: 503 }),
       );
