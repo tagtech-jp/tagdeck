@@ -187,11 +187,11 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 | schema | `whowatch_events.rules_parsed` (jsonb) | 詳細同期時に保存(0010 で列は追加済み)。詳細ルートの応答 `rulesParsed` |
 | lib | `src/lib/whowatch/rank-forecast.ts` | `estimateRivalPaces()`: ranking_snapshots の連続差分からライバル別の pt/時 分布。`forecastRank()`: 既存モンテカルロと同じ正規乱数モデルで 10,000 試行。最終日(終了前 24h)はライバルのペース × 係数(既定 1.5・仮置き)。出力: 目標順位の達成確率、必要追加 pt の中央値/90%タイル、必要個数 = ceil(必要pt ÷ (基礎pt × 期待倍率))、1 日あたり個数 |
 | table | `event_item_points` | `event_key, item_id, base_point, source('manual'/'estimated'), updated_at`。UNIQUE(event_key, item_id)。migration `drizzle/0013_event_item_points*.sql` |
-| route | `GET/PUT/DELETE /api/platforms/whowatch/events/{event_key}/item-points` | 基礎 pt の一覧・upsert・削除(認証必須、全ユーザー共有) |
+| route | `GET/PUT/DELETE /api/platforms/whowatch/events/{event_key}/item-points` | 基礎 pt の一覧・upsert・削除。一覧は認証必須(全ユーザー共有・応答の `canEdit` で画面が「保存」を出すか決める)。**upsert・削除は運営者(`EXPORT_OWNER_USER_ID`)だけ**で、他の利用者は 403(`code: OWNER_ONLY`)。未設定・空なら誰も書けない(2026-10-08 セキュリティ監査 §3-4・社長決定 案 A) |
 | route | `POST …/item-points/estimate` | 「実測から推定」: 自分のスナップショット間の pt 増分 ÷ その間の events(gift) 個数。ギフト保存は S1 以降なので、それまでは insufficient を返す |
 | route | `GET /api/events/[id]/snapshots?limit=` | 自分の ranking_snapshots(新しい順、既定 48・最大 288) |
 | route | `PATCH /api/events/[id]` | 設定編集に `targetRank`(1〜5)を追加 |
-| UI | `RankForecastPanel`(ダッシュボード「逆算と確率」) | 目標順位プルダウン(変えると即再計算 + 保存)、達成確率・必要 pt・必要個数・1 日あたりの 4 指標、期待倍率と無料アイテムの表示、アイテム選択 + 基礎 pt 手入力/実測推定/保存 |
+| UI | `RankForecastPanel`(ダッシュボード「逆算と確率」) | 目標順位プルダウン(変えると即再計算 + 保存)、達成確率・必要 pt・必要個数・1 日あたりの 4 指標、期待倍率と無料アイテムの表示、アイテム選択 + 基礎 pt 手入力/実測推定/保存。「保存」は運営者(`canEdit`)だけに出す。他の利用者の入力と推定はその画面の試算にだけ使い共有値には保存しない(提案先は tagtech.jp/contact) |
 
 ### 社長作業
 
