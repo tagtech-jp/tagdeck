@@ -48,3 +48,34 @@ describe("middleware の CORS（/api/* × 許可した Origin）", () => {
     expect(plain.headers.get("Access-Control-Allow-Origin")).toBeNull();
   });
 });
+
+describe("middleware の CSRF 対策（別サイトからの /api/* への書き込みは 403）", () => {
+  beforeEach(() => {
+    updateSessionMock.mockClear();
+  });
+
+  it("別サイトの Origin が付いた POST は、ログインの確認（Supabase）に行かず 403 の JSON", async () => {
+    const res = await middleware(req("/api/platforms/whowatch/monitor", { method: "POST", origin: "https://evil.example" }));
+    expect(res.status).toBe(403);
+    expect(res.headers.get("content-type")).toContain("application/json");
+    expect(updateSessionMock).not.toHaveBeenCalled();
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBeNull();
+  });
+
+  it("同期ルートも別サイトの Origin 付き POST は 403（GitHub Actions の curl は Origin を付けないので影響しない）", async () => {
+    const res = await middleware(req("/api/platforms/whowatch/rankings/sync", { method: "POST", origin: "https://evil.example" }));
+    expect(res.status).toBe(403);
+  });
+
+  it("自分のサイト・許可したアプリ・Origin 無しの POST はこれまでどおり通す", async () => {
+    expect((await middleware(req("/api/events", { method: "POST", origin: "https://tagdeck.jp" }))).status).not.toBe(403);
+    expect((await middleware(req("/api/events", { method: "POST", origin: "https://localhost" }))).status).not.toBe(403);
+    expect((await middleware(req("/api/events", { method: "POST" }))).status).not.toBe(403);
+    expect(updateSessionMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("GET は Origin が別サイトでも 403 にしない（読み取りは各 API の認証に任せる）。API 以外のパスも対象外", async () => {
+    expect((await middleware(req("/api/events", { origin: "https://evil.example" }))).status).not.toBe(403);
+    expect((await middleware(req("/live", { method: "POST", origin: "https://evil.example" }))).status).not.toBe(403);
+  });
+});

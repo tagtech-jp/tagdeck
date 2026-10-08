@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { applyCorsHeaders, isAllowedAppOrigin } from "@/lib/cors";
+import { isCrossSiteWrite } from "@/lib/origin-guard";
 import { updateSession } from "@/lib/supabase/middleware";
 import { isSyncRoutePath } from "@/lib/sync-routes";
 
@@ -14,6 +15,12 @@ export async function middleware(request: NextRequest) {
     const preflight = new NextResponse(null, { status: 204 });
     applyCorsHeaders(preflight.headers, origin!);
     return preflight;
+  }
+
+  // 別サイトからの書き込み（CSRF）を Origin で止める（2026-10-08）。Origin が自分のサイトでも許可したアプリでもない
+  // GET 以外の /api/* は、ログインの確認より前に 403 で返す。理由と判定は src/lib/origin-guard.ts
+  if (isCrossSiteWrite({ method: request.method, pathname, origin, requestHost: request.nextUrl.host, isAllowedAppOrigin: cors })) {
+    return NextResponse.json({ error: "cross-site request rejected" }, { status: 403 });
   }
 
   // X-Sync-Key で保護する「サーバ間呼び出し専用」ルート（cron 等）は認証を素通しする。
