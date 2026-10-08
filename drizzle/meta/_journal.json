@@ -169,6 +169,13 @@
       "when": 1790001300000,
       "tag": "0023_item_learned_point",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790001400000,
+      "tag": "0024_se_storage_list_own",
+      "breakpoints": true
     }
   ]
 }

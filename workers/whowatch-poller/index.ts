@@ -32,6 +32,27 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ---------------------------------------------------------------------------
+// 制御エンドポイント（/start /stop）の共有キー（2026-10-08 セキュリティ監査）
+// このサービスは Service Role Key（RLS をバイパス）で events に INSERT する。/start が誰でも叩けると、任意の streamer_id に
+// 5 秒ごとの行を書き込まれ続ける（他人の統計の汚染・Supabase の無料枠の消費）。POLLER_KEY を X-Sync-Key で照合し、
+// 未設定なら制御エンドポイントを開かない（黙って無防備に起動しない）
+// ---------------------------------------------------------------------------
+
+const pollerKey = process.env.POLLER_KEY ?? "";
+if (!pollerKey) {
+  console.error("[whowatch-poller] POLLER_KEY が未設定です（/start /stop を開けないため終了）");
+  process.exit(1);
+}
+
+/** 長さ一致 + 定数時間比較（src/lib/whowatch/sync-auth.ts と同じ方式） */
+function verifyPollerKey(given: string | string[] | undefined): boolean {
+  if (typeof given !== "string" || given.length !== pollerKey.length) return false;
+  let diff = 0;
+  for (let i = 0; i < pollerKey.length; i++) diff |= given.charCodeAt(i) ^ pollerKey.charCodeAt(i);
+  return diff === 0;
+}
+
+// ---------------------------------------------------------------------------
 // ふわっち公開 API 型定義（api.whowatch.tv の実レスポンスに準拠）
 // ---------------------------------------------------------------------------
 
@@ -167,6 +188,13 @@ const server = http.createServer(async (req, res) => {
   if (method === "GET" && url === "/health") {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ status: "ok", service: "whowatch-poller", sessions: sessions.size }));
+    return;
+  }
+
+  // /start /stop は X-Sync-Key（POLLER_KEY）が一致したときだけ受け付ける
+  if (method === "POST" && (url === "/start" || url === "/stop") && !verifyPollerKey(req.headers["x-sync-key"])) {
+    res.writeHead(401, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "invalid X-Sync-Key" }));
     return;
   }
 

@@ -3,6 +3,7 @@ import withSerwistInit from "@serwist/next";
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { securityHeaderRules } from "./src/lib/security-headers";
 
 /**
  * public/ の事前キャッシュ一覧を自前で作る（2026-09-29）。
@@ -47,8 +48,15 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   reactCompiler: false,
+  // x-powered-by: Next.js を出さない（2026-10-08 セキュリティ監査。実装の種類を無駄に知らせない）
+  poweredByHeader: false,
   images: {
     unoptimized: true,
+  },
+  // Worker が返す全応答（ページ・API）にセキュリティ関連ヘッダーを付ける（2026-10-08）。値と理由は src/lib/security-headers.ts。
+  // Cloudflare が Worker の手前で配る静的アセットには効かないので、同じ値を public/_headers にも書いてある
+  async headers() {
+    return securityHeaderRules();
   },
   async redirects() {
     return [

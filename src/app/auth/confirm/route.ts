@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { safeNextPath } from "@/lib/auth/safe-next";
 import { NextResponse } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 
@@ -6,7 +7,8 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/dashboard";
+  // 戻り先はサイト内のパスだけ（別サイトへ飛ばせるオープンリダイレクトを閉じる・2026-10-08。判定は src/lib/auth/safe-next.ts）
+  const next = safeNextPath(searchParams.get("next"));
 
   if (!token_hash || !type) {
     return NextResponse.redirect(

@@ -1,9 +1,19 @@
 # Cloudflare Workers の静的アセット用ヘッダー（https://developers.cloudflare.com/workers/static-assets/headers/）。
 # OpenNext が public/ を .open-next/assets に写すので、このファイルもそのまま配信側に載る。
+# 静的アセットは Worker（next.config.ts の headers() / src/middleware.ts）の手前で配られるため、そちらでは付けられずここで付ける。
 #
+# /* はセキュリティ関連のヘッダー（2026-10-08 セキュリティ監査）。値は src/lib/security-headers.ts と同じにする
+# （src/lib/security-headers.test.ts が一致を確かめる。片方だけ変えない）。
+/*
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Content-Security-Policy: frame-ancestors 'none'; base-uri 'self'; object-src 'none'
+
 # /se/* は同梱の音源（すべて CC0 1.0）。スマホアプリ（tagtech-jp/tagdeck-mobile・Capacitor の WebView。Origin は
 # https://localhost / capacitor://localhost）が Web Audio の fetch() で取得するため、別オリジンからの読み取りを許す（2026-10-07・スライス 2）。
-# 静的アセットは Worker（src/middleware.ts の CORS）の手前で配られるため、middleware では付けられずここで付ける。
 # 認証情報を伴わない公開ファイルなので * でよい（Cookie 付きの要求を許す Allow-Credentials は付けない）。
 /se/*
   Access-Control-Allow-Origin: *
