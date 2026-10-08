@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { and, eq, isNotNull } from "drizzle-orm";
+import { errorDetail } from "@/lib/error-detail";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
 import { itemPointMapping, whowatchEvents, whowatchItemGroups } from "@/lib/db/schema";
@@ -98,7 +99,7 @@ async function handle(request: Request): Promise<NextResponse> {
   } catch (e) {
     const message = describeDbError(e);
     console.error("[items/export] 失敗", message);
-    return NextResponse.json({ error: "単価表を取得できませんでした", detail: message }, { status: 500 });
+    return NextResponse.json({ error: "単価表を取得できませんでした", ...errorDetail(message) }, { status: 500 });
   }
 }
 

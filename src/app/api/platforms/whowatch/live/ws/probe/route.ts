@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { errorDetail } from "@/lib/error-detail";
 import { createClient } from "@/lib/supabase/server";
 import { resolveWhowatchDeviceId } from "@/lib/platforms/whowatch";
 import { fetchLive, WhowatchLiveApiError } from "@/lib/whowatch/live-feed";
@@ -92,7 +93,9 @@ export async function GET(request: Request) {
     live = await fetchLive(parsed.data.liveId, 0);
   } catch (err) {
     const status = err instanceof WhowatchLiveApiError ? 502 : 500;
-    return NextResponse.json({ error: "配信データを取得できませんでした", detail: err instanceof Error ? err.message : String(err) }, { status });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[live/ws/probe] 配信データの取得に失敗", { liveId: parsed.data.liveId, status, error: message });
+    return NextResponse.json({ error: "配信データを取得できませんでした", ...errorDetail(message) }, { status });
   }
   const { url, jwt } = live.ws;
   const http = wsUrlToHttp(url);

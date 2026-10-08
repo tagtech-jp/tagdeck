@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { WhowatchLiveLookup } from "@/lib/whowatch/live-feed";
+import { WhowatchLiveApiError, type WhowatchLiveLookup } from "@/lib/whowatch/live-feed";
 
 const h = vi.hoisted(() => ({
   user: { id: "user-1" } as { id: string } | null,
@@ -95,5 +95,27 @@ describe("GET /api/platforms/whowatch/live", () => {
     expect((await GET(new Request(URL_))).status).toBe(400);
     h.user = null;
     expect((await GET(new Request(URL_))).status).toBe(401);
+  });
+
+  it("whowatch API の失敗は 502。本番では detail を返さずログにだけ残し、開発では従来どおり返す（監査 §3-9）", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      h.fetchLiveId.mockRejectedValue(new WhowatchLiveApiError(503, "whowatch API 503 Service Unavailable"));
+      vi.stubEnv("NODE_ENV", "production");
+      const prod = await GET(new Request(URL_));
+      expect(prod.status).toBe(502);
+      const prodBody = (await prod.json()) as Record<string, unknown>;
+      expect(prodBody).toEqual({ error: "配信状態を取得できませんでした", found: false, isLive: false, liveId: null });
+      expect(prodBody).not.toHaveProperty("detail");
+      expect(JSON.stringify(errorSpy.mock.calls)).toContain("503 Service Unavailable"); // 原因はログに残る
+
+      vi.stubEnv("NODE_ENV", "development");
+      const dev = await GET(new Request(URL_));
+      expect(dev.status).toBe(502);
+      expect(await dev.json()).toMatchObject({ detail: "whowatch API 503 Service Unavailable" });
+    } finally {
+      vi.unstubAllEnvs();
+      errorSpy.mockRestore();
+    }
   });
 });

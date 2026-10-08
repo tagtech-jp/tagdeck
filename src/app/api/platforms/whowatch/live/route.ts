@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
+import { errorDetail } from "@/lib/error-detail";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
 import { streamerProfiles } from "@/lib/db/schema";
@@ -61,6 +62,8 @@ export async function GET(request: Request) {
     return res;
   } catch (err) {
     const status = err instanceof WhowatchLiveApiError ? 502 : 500;
-    return NextResponse.json({ error: "配信状態を取得できませんでした", detail: err instanceof Error ? err.message : String(err), found: false, isLive: false, liveId: null }, { status });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[whowatch/live] 配信状態の取得に失敗", { whowatchUserId: target, status, error: message });
+    return NextResponse.json({ error: "配信状態を取得できませんでした", ...errorDetail(message), found: false, isLive: false, liveId: null }, { status });
   }
 }

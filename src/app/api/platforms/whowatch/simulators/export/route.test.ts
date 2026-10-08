@@ -160,6 +160,22 @@ describe("simulators/export", () => {
     expect(((await res.json()) as ExportBody).simulators).toEqual([]);
   });
 
+  it("DB の失敗は 500。本番では detail（DB エラーの要約）を返さず、ログにだけ残す（監査 §3-9）", async () => {
+    process.env.EXPORT_OWNER_USER_ID = "00000000-0000-0000-0000-000000000001";
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      vi.stubEnv("NODE_ENV", "production");
+      results.push(new Error('column "ranking_type" does not exist'));
+      const res = await GET(new Request(URL, { headers: { "X-Sync-Key": KEY } }));
+      expect(res.status).toBe(500);
+      expect(await res.json()).toEqual({ error: "シミュレーターを取得できませんでした" });
+      expect(JSON.stringify(errorSpy.mock.calls)).toContain("ranking_type"); // 原因はログに残る
+    } finally {
+      vi.unstubAllEnvs();
+      errorSpy.mockRestore();
+    }
+  });
+
   it("キー不一致 → 401", async () => {
     const res = await GET(new Request(URL, { headers: { "X-Sync-Key": "wrong-key-xxxxxxxxxxxxxxx" } }));
     expect(res.status).toBe(401);

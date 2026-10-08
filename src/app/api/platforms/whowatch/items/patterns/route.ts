@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { and, eq, isNotNull } from "drizzle-orm";
+import { errorDetail } from "@/lib/error-detail";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
 import { itemPointMapping, whowatchItemDecorations, whowatchItemGroups, whowatchItemPatterns, whowatchItemPrices } from "@/lib/db/schema";
@@ -161,6 +162,6 @@ export async function GET() {
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("[items/patterns] 失敗", { message, stack: e instanceof Error ? e.stack : undefined });
-    return NextResponse.json({ error: "アイテムマスタを取得できませんでした", detail: message }, { status: 500 });
+    return NextResponse.json({ error: "アイテムマスタを取得できませんでした", ...errorDetail(message) }, { status: 500 });
   }
 }

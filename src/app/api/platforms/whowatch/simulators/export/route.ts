@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { and, asc, desc, eq, inArray, isNotNull, ne } from "drizzle-orm";
+import { errorDetail } from "@/lib/error-detail";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
 import { eventSimulators, rankingSnapshots, whowatchEvents } from "@/lib/db/schema";
@@ -103,7 +104,7 @@ async function handle(request: Request): Promise<NextResponse> {
   } catch (e) {
     const message = describeDbError(e);
     console.error("[simulators/export] 失敗", message);
-    return NextResponse.json({ error: "シミュレーターを取得できませんでした", detail: message }, { status: 500 });
+    return NextResponse.json({ error: "シミュレーターを取得できませんでした", ...errorDetail(message) }, { status: 500 });
   }
 }
 

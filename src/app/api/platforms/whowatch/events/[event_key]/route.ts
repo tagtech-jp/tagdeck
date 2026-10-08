@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { errorDetail } from "@/lib/error-detail";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
 import { WhowatchEventApiError } from "@/lib/whowatch/events";
@@ -31,6 +32,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ even
       return NextResponse.json({ error: "イベントが見つかりません" }, { status: 404 });
     }
     console.error("[whowatch/events/detail]", eventKey, err);
-    return NextResponse.json({ error: "イベント詳細を取得できませんでした", detail: err instanceof Error ? err.message : String(err) }, { status: 502 });
+    return NextResponse.json({ error: "イベント詳細を取得できませんでした", ...errorDetail(err instanceof Error ? err.message : String(err)) }, { status: 502 });
   }
 }
