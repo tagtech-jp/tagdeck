@@ -17,9 +17,15 @@ function toPlatform(value: string): Platform | null {
   return platforms.has(value as Platform) ? (value as Platform) : null;
 }
 
+/**
+ * CRM のランク。totalGiftAmount は「ギフトの定価の合計（円）」（listeners.total_gift_amount・2026-10-08 に単位を円へ統一・監査 §3-6）。
+ * whowatch は 1 回のギフトの total_yen（price_yen × count）の累計で、1pt = ¥1 の定価。Kick はサブスクギフトの金額が取れないので常に 0
+ * （rank はコメント数だけで決まる）。しきい値 top ≥ ¥50,000 / vip ≥ ¥10,000 は 2026-10-08 社長確認で据え置き。
+ * newcomer はギフト ¥0 かつコメント 3 件以下
+ */
 function toRank(totalGiftAmount: number, totalCommentCount: number): ListenerRank {
-  if (totalGiftAmount >= 50000) return "top";
-  if (totalGiftAmount >= 10000) return "vip";
+  if (totalGiftAmount >= 50000) return "top"; // 累計 ¥50,000 以上
+  if (totalGiftAmount >= 10000) return "vip"; // 累計 ¥10,000 以上
   if (totalGiftAmount === 0 && totalCommentCount <= 3) return "newcomer";
   return "regular";
 }

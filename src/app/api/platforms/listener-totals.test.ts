@@ -8,6 +8,8 @@ import type { LiveComment, LiveResponse } from "@/lib/whowatch/live-feed";
 // 同じギフトを 2 回処理しても累計は 1 回分しか増えないこと、同時に走った加算を取りこぼさないことを、
 // 実際の行に対して確かめる。対象は POST /api/platforms/whowatch/live/poll（ctx.waitUntil の中の保存）と、
 // 同じ型の処理を持つ POST /api/platforms/kick/event
+// 累計ギフトの単位は「定価の合計（円）」（2026-10-08・監査 §3-6）。whowatch は normalizeGift の total_yen（単価 × 個数）を足し、
+// 単価が分からなければ 0 を足す（個数は足さない）。Kick は金額が取れないので足さない
 
 type Row = Record<string, unknown>;
 type Fields = Record<string, unknown>;
@@ -34,7 +36,7 @@ vi.mock("@/lib/whowatch/live-feed", async (importOriginal) => ({
 
 import { POST as livePoll } from "./whowatch/live/poll/route";
 import { POST as kickEvent } from "./kick/event/route";
-import { events, listeners, streamerProfiles } from "@/lib/db/schema";
+import { events, listeners, streamerProfiles, whowatchItemPatterns, whowatchItemPrices } from "@/lib/db/schema";
 
 // ── インメモリ DB ──────────────────────────────────────────────
 // ルートが組み立てた Drizzle の WHERE / SET を PgDialect で SQL に描画して評価する（soft-delete.test.ts と同じ作り）。
@@ -46,13 +48,21 @@ function columnKeys(table: PgTable): Record<string, string> {
   return Object.fromEntries(Object.entries(getTableColumns(table)).map(([key, col]) => [col.name, key]));
 }
 
-/** 「"表"."列" = $n」を and でつないだ WHERE だけ対応 */
+/** 「"表"."列" = $n」と「"表"."列" in ($n, …)」を and でつないだ WHERE だけ対応 */
 function compileWhere(table: PgTable, cond: SQL | undefined): (row: Row) => boolean {
   if (!cond) throw new Error("fake db: WHERE なしのクエリは想定していない");
   const { sql, params } = dialect.sqlToQuery(cond);
   const keys = columnKeys(table);
   const body = sql.startsWith("(") && sql.endsWith(")") ? sql.slice(1, -1) : sql;
   const preds = body.split(" and ").map((part) => {
+    // 「"表"."列" in ($1, $2, …)」（inArray）。lookupPatterns がパターン ID・アイテム ID で単価を引くのに使う
+    const inm = /^"([A-Za-z0-9_]+)"[.]"([A-Za-z0-9_]+)" in [(]([$][0-9]+(?:, [$][0-9]+)*)[)]$/.exec(part);
+    if (inm) {
+      if (inm[1] !== getTableName(table) || !(inm[2] in keys)) throw new Error(`fake db: 未対応の WHERE 句: ${sql}`);
+      const key = keys[inm[2]];
+      const values = inm[3].split(", ").map((p) => params[Number(p.slice(1)) - 1]);
+      return (row: Row) => values.includes(row[key]);
+    }
     const m = /^"(\w+)"\."(\w+)" = \$(\d+)$/.exec(part);
     if (!m || m[1] !== getTableName(table) || !(m[2] in keys)) throw new Error(`fake db: 未対応の WHERE 句: ${sql}`);
     const key = keys[m[2]];
@@ -119,6 +129,11 @@ abstract class TableQuery<T> {
     return this.before()
       .then(() => this.run())
       .then(ok, ng);
+  }
+
+  /** lookupPatterns の `.catch(() => [])`（0020 / 0022 未適用の表を引く箇所）が付けられるようにする */
+  catch<B = never>(ng?: ((reason: unknown) => B | PromiseLike<B>) | null): Promise<T | B> {
+    return this.then(undefined, ng);
   }
 
   where(cond: SQL | undefined): this {
@@ -290,6 +305,25 @@ const LISTENER_ID = "22222222-2222-4222-8222-222222222222";
 const KICK_LISTENER_ID = "33333333-3333-4333-8333-333333333333";
 const LIVE_ID = "76257563";
 const OLD = new Date("2026-09-01T00:00:00Z");
+/** 単価の種（whowatch_item_patterns + whowatch_item_prices）。gift() の既定はパターン 4201＝アイテム 42・1 個 ¥100 */
+const PATTERN_ID = 4201;
+const ITEM_ID = 42;
+const UNIT_PRICE_YEN = 100;
+/** 束パターン（「花束 × 10」）: パターン 4310＝アイテム 43・quantity 10・1 個 ¥30 */
+const BUNDLE_PATTERN_ID = 4310;
+const BUNDLE_ITEM_ID = 43;
+const BUNDLE_UNIT_PRICE_YEN = 30;
+/** 単価表に無いアイテムのパターン（照合はできるが price_yen=null → total_yen=null） */
+const UNPRICED_PATTERN_ID = 4400;
+const UNPRICED_ITEM_ID = 44;
+
+function patternRow(patternId: number, itemId: number, quantity: number | null): Row {
+  return { patternId, itemId, itemName: `アイテム${itemId}`, patternName: `パターン${patternId}`, quantity, isHit: false, hitGrade: null, isVariant: false, imageUrl: null, animationUrl: null, animationFullscreen: false, soundUrl: null, syncedAt: OLD };
+}
+
+function priceRow(itemId: number, unitPriceJpy: number): Row {
+  return { itemId, itemName: `アイテム${itemId}`, unitPriceJpy, minUnitPriceJpy: unitPriceJpy, onSale: true, products: [], syncedAt: OLD };
+}
 
 function listenerRow(overrides: Row = {}): Row {
   return {
@@ -308,10 +342,10 @@ function listenerRow(overrides: Row = {}): Row {
   };
 }
 
-/** ふわっちのギフトコメント（BY_PLAYITEM）。パターン ID は付けない（照合で DB を引かず、個数 = item_count になる） */
-function gift(id: number, itemCount: number, opts: { userId?: number; name?: string; anonymized?: boolean } = {}): LiveComment {
-  const { userId = 555, name = "リスナーA", anonymized = false } = opts;
-  return { id, comment_type: "BY_PLAYITEM", message: "", item_count: itemCount, anonymized, posted_at: 1790000000000 + id, user: { id: userId, name, user_path: `w:user${userId}` } };
+/** ふわっちのギフトコメント（BY_PLAYITEM）。既定はパターン 4201（1 個 ¥100・quantity 1）なので、合計金額 = item_count × ¥100 */
+function gift(id: number, itemCount: number, opts: { userId?: number; name?: string; anonymized?: boolean; patternId?: number } = {}): LiveComment {
+  const { userId = 555, name = "リスナーA", anonymized = false, patternId = PATTERN_ID } = opts;
+  return { id, comment_type: "BY_PLAYITEM", message: "", play_item_pattern_id: patternId, item_count: itemCount, anonymized, posted_at: 1790000000000 + id, user: { id: userId, name, user_path: `w:user${userId}` } };
 }
 
 function liveResponse(comments: LiveComment[]): LiveResponse {
@@ -357,6 +391,9 @@ beforeEach(() => {
   db = new FakeDb();
   h.db = db;
   db.rows(streamerProfiles).push({ id: STREAMER_ID, userId: USER_ID, kickIsMonitoring: true, kickIsLive: false, kickLastEventAt: null, updatedAt: OLD });
+  // 単価の種。item_point_mapping / whowatch_item_groups / whowatch_item_decorations は空（引かれるが行は無い）
+  db.rows(whowatchItemPatterns).push(patternRow(PATTERN_ID, ITEM_ID, 1), patternRow(BUNDLE_PATTERN_ID, BUNDLE_ITEM_ID, 10), patternRow(UNPRICED_PATTERN_ID, UNPRICED_ITEM_ID, 1));
+  db.rows(whowatchItemPrices).push(priceRow(ITEM_ID, UNIT_PRICE_YEN), priceRow(BUNDLE_ITEM_ID, BUNDLE_UNIT_PRICE_YEN));
   vi.spyOn(console, "log").mockImplementation(() => {});
   errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 });
@@ -370,7 +407,7 @@ describe("POST /api/platforms/whowatch/live/poll（ギフトの保存と累計�
     db.rows(listeners).push(listenerRow());
   });
 
-  it("同じギフトを 2 台のブラウザが受け取っても（同じ lastUpdatedAt の取り直しも同じ）、events は 1 件ずつ・累計は 1 回分だけ増える", async () => {
+  it("同じギフトを 2 台のブラウザが受け取っても（同じ lastUpdatedAt の取り直しも同じ）、events は 1 件ずつ・累計は 1 回分（¥300 + ¥500）だけ増える", async () => {
     const batch = [gift(9001, 3), gift(9002, 5)];
 
     await pollOnce(batch); // パソコン
@@ -378,11 +415,11 @@ describe("POST /api/platforms/whowatch/live/poll（ギフトの保存と累計�
 
     expect(giftEvents().map((e) => e.platformCommentId)).toEqual(["9001", "9002"]);
     expect(giftEvents().every((e) => e.listenerId === LISTENER_ID)).toBe(true);
-    expect(listenerOf(LISTENER_ID)).toMatchObject({ totalGiftAmount: 108 });
+    expect(listenerOf(LISTENER_ID)).toMatchObject({ totalGiftAmount: 900 });
     expect(db.rows(listeners)).toHaveLength(1);
   });
 
-  it("初めてのリスナーは累計 0 で作り、events に入った 1 回分だけ足す", async () => {
+  it("初めてのリスナーは累計 0 で作り、events に入った 1 回分（4 個 × ¥100 = ¥400）だけ足す", async () => {
     const first = gift(9101, 4, { userId: 999, name: "はじめまして" });
 
     await pollOnce([first]);
@@ -390,7 +427,7 @@ describe("POST /api/platforms/whowatch/live/poll（ギフトの保存と累計�
 
     const created = db.rows(listeners).filter((l) => l.platformUserId === "999");
     expect(created).toHaveLength(1);
-    expect(created[0]).toMatchObject({ streamerId: STREAMER_ID, platform: "whowatch", displayName: "はじめまして", totalGiftAmount: 4 });
+    expect(created[0]).toMatchObject({ streamerId: STREAMER_ID, platform: "whowatch", displayName: "はじめまして", totalGiftAmount: 400 });
     expect(giftEvents()).toEqual([expect.objectContaining({ listenerId: created[0].id, platformCommentId: "9101", streamId: LIVE_ID })]);
   });
 
@@ -404,9 +441,9 @@ describe("POST /api/platforms/whowatch/live/poll（ギフトの保存と累計�
     await settleBackground();
 
     const created = db.rows(listeners).filter((l) => l.platformUserId === "999");
-    expect(created.reduce((sum, l) => sum + Number(l.totalGiftAmount), 0)).toBe(4);
+    expect(created.reduce((sum, l) => sum + Number(l.totalGiftAmount), 0)).toBe(400);
     expect(giftEvents()).toHaveLength(1);
-    expect(created.find((l) => l.id === giftEvents()[0].listenerId)).toMatchObject({ totalGiftAmount: 4 });
+    expect(created.find((l) => l.id === giftEvents()[0].listenerId)).toMatchObject({ totalGiftAmount: 400 });
   });
 
   it("匿名のギフトは listener_id=null で保存し、リスナーは作らない・累計も変えない", async () => {
@@ -428,7 +465,7 @@ describe("POST /api/platforms/whowatch/live/poll（ギフトの保存と累計�
 
     expect(responses.map((r) => r.status)).toEqual([200, 200]);
     expect(giftEvents()).toHaveLength(2);
-    expect(listenerOf(LISTENER_ID)).toMatchObject({ totalGiftAmount: 107 });
+    expect(listenerOf(LISTENER_ID)).toMatchObject({ totalGiftAmount: 800 });
   });
 
   it("累計の加算に失敗したら events の行も残さない（同じトランザクション）。次に同じギフトを受け取ったときにやり直せる", async () => {
@@ -442,7 +479,29 @@ describe("POST /api/platforms/whowatch/live/poll（ギフトの保存と累計�
 
     await pollOnce([g]); // 2 台目（または次の取り直し）: 今度は保存も加算も通る
     expect(giftEvents()).toHaveLength(1);
-    expect(listenerOf(LISTENER_ID)).toMatchObject({ totalGiftAmount: 103 });
+    expect(listenerOf(LISTENER_ID)).toMatchObject({ totalGiftAmount: 400 });
+  });
+
+  it("束パターン（1 個 ¥30 × quantity 10）は 単価 × 個数（item_count × quantity）を足す。events の payload にも total_yen が入る", async () => {
+    await pollOnce([gift(9501, 2, { patternId: BUNDLE_PATTERN_ID })]); // 2 束 = 20 個 = ¥600
+
+    expect(listenerOf(LISTENER_ID)).toMatchObject({ totalGiftAmount: 700 });
+    expect(giftEvents()[0].payload).toMatchObject({ pattern_id: BUNDLE_PATTERN_ID, item_id: BUNDLE_ITEM_ID, count: 20, item_count: 2, price_yen: 30, total_yen: 600 });
+  });
+
+  it("単価が分からないギフト（単価表に無いアイテム）は 0 を足し、個数は足さない。payload に item_id と count が残るので 0025 の再集計で単価表から補える", async () => {
+    await pollOnce([gift(9601, 5, { patternId: UNPRICED_PATTERN_ID })]);
+
+    expect(listenerOf(LISTENER_ID)).toMatchObject({ totalGiftAmount: 100 });
+    expect(giftEvents()).toHaveLength(1);
+    expect(giftEvents()[0].payload).toMatchObject({ item_id: UNPRICED_ITEM_ID, count: 5, price_yen: null, total_yen: null });
+  });
+
+  it("パターン未登録のギフト（照合できない）も 0 を足して保存は続ける", async () => {
+    await pollOnce([gift(9701, 3, { patternId: 9999 })]);
+
+    expect(listenerOf(LISTENER_ID)).toMatchObject({ totalGiftAmount: 100 });
+    expect(giftEvents()[0].payload).toMatchObject({ pattern_id: 9999, item_id: null, count: 3, total_yen: null });
   });
 });
 
@@ -475,11 +534,12 @@ describe("POST /api/platforms/kick/event（同じ型の処理）", () => {
     expect(db.rows(events)).toHaveLength(2);
   });
 
-  it("ギフト: 既存リスナーの累計に 1 足し、events の listener_id は従来どおり null", async () => {
+  it("ギフト: 金額が取れないので累計（定価の合計・円）は変えない。最終アクセスだけ更新し、events の listener_id は従来どおり null", async () => {
     const res = await kickEvent(kickRequest("gift_subscription", { gifter: sender, gifted_usernames: ["a", "b"] }));
 
     expect(res.status).toBe(200);
-    expect(listenerOf(KICK_LISTENER_ID)).toMatchObject({ totalGiftAmount: 5, totalCommentCount: 10 });
+    expect(listenerOf(KICK_LISTENER_ID)).toMatchObject({ totalGiftAmount: 4, totalCommentCount: 10 });
+    expect((listenerOf(KICK_LISTENER_ID)?.lastSeenAt as Date).getTime()).toBeGreaterThan(OLD.getTime());
     expect(db.rows(events)).toEqual([expect.objectContaining({ platform: "kick", eventType: "gift", listenerId: null })]);
   });
 
