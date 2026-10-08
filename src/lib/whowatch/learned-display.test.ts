@@ -53,5 +53,8 @@ describe("isOwner", () => {
     expect(isOwner("u2", "u1")).toBe(false);
     expect(isOwner("u1", undefined)).toBe(false);
     expect(isOwner(null, "u1")).toBe(false);
+    // 空文字で全員一致にならない（item-points の書き込み制限が EXPORT_OWNER_USER_ID の未設定・空で開かないこと・2026-10-08）
+    expect(isOwner("u1", "")).toBe(false);
+    expect(isOwner("", "")).toBe(false);
   });
 });

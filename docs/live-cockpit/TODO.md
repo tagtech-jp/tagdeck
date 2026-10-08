@@ -44,7 +44,7 @@
   → **後者も 2026-10-07 に対応済み（E8）**: `WGP_RANKING` タブ（2026-10 は detail 空）は擬似 prefix `wgp` にし、`GET /wgp/ranking/{YYYYMMDD}`（デイリー）/ `GET /wgp/ranking/overall/{YYYYMM}`（月間総合・21 日から公開）を使う。N-1 グランプリ（RANKING タブ detail `n1`・構造 JSON は Z-002）も `GET /rankings/nice_one_{1st|2nd|3rd}_{male|female|rookie}/{YYYYMM}` / `nice_one_total/{YYYYMM}` で対応。残る未対応は `WGP_AWARD`（デイリー受賞者の一覧・順位追跡には不要）
 - [ ] E3 の基礎 pt(アイテム 1 個あたりのランキングポイント)は公式本文に無い → 手入力運用。S1 のギフト保存後に「実測から推定」で置換
 - [ ] E3 の最終日係数 1.5 は仮置き。過去 closed イベントの伸び率係数(最終日 24h の pt 増分 ÷ 通常日平均)を求める処理を追加する
-- [ ] `event_item_points` は全ユーザー共有(認証ユーザーなら誰でも上書き可)。荒らし対策が必要なら user 別に分ける
+- [x] `event_item_points` は全ユーザー共有(認証ユーザーなら誰でも上書き可)。荒らし対策が必要なら user 別に分ける → 2026-10-08 社長決定(案 A・セキュリティ監査 §3-4): 書き込みは運営者(`EXPORT_OWNER_USER_ID`)だけ(他は 403 `OWNER_ONLY`)。他の利用者は読めるだけで、画面の入力・推定は自分の試算用(保存しない)。提案が増えたら `updated_by` + `source='proposed'`(案 B)を上に足す
 
 ## S1 で新たに出た要確認(2026-09-21)
 
