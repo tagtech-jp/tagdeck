@@ -7,7 +7,8 @@ import { z } from "zod";
 
 /**
  * リスナーを探す／無ければ作る（累計 0 で作る）。累計はここでは足さない（2026-10-02・whowatch/live/poll と同じ方針）。
- * 足すのは events への保存と同じトランザクションの中で、SQL の中で行う（読んでから足すと、同時に来た分が消える）
+ * 足すのは events への保存と同じトランザクションの中で、SQL の中で行う（読んでから足すと、同時に来た分が消える）。
+ * total_gift_amount は「ギフトの定価の合計（円）」で、Kick は金額が取れないので 0 のまま（2026-10-08・下記）
  */
 async function findOrCreateListener(db: ReturnType<typeof createDbClient>, streamerId: string, platformUserId: string, displayName: string): Promise<string | null> {
   const [existing] = await db
@@ -101,10 +102,10 @@ export async function POST(request: Request) {
         listenerId: null,
       });
       if (!listenerId) return;
-      await tx
-        .update(listeners)
-        .set({ lastSeenAt: new Date(), totalGiftAmount: sql`coalesce(${listeners.totalGiftAmount}, 0) + 1` })
-        .where(eq(listeners.id, listenerId));
+      // 累計 total_gift_amount は「ギフトの定価の合計（円）」（2026-10-08・監査 §3-6・社長決定 案A）。Kick のサブスクギフトは
+      // 金額が取れないので足さない（以前は 1 回 = 1 を足していて、whowatch の円と単位が混ざっていた）。回数は events（event_type='gift'）に残る。
+      // 推測の金額（サブスクの定価など）で埋めない。最終アクセスだけ更新する
+      await tx.update(listeners).set({ lastSeenAt: new Date() }).where(eq(listeners.id, listenerId));
     });
   } else if (type === "streamer_live") {
     await db
