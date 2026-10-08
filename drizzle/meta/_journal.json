@@ -183,6 +183,13 @@
       "when": 1790001500000,
       "tag": "0025_listener_gift_yen",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790001600000,
+      "tag": "0026_delete_own_account",
+      "breakpoints": true
     }
   ]
 }

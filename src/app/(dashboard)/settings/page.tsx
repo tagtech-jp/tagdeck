@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { SettingsPlatformSummary } from "@/components/settings/SettingsPlatformSummary";
+import { DeleteAccountSection } from "@/components/settings/DeleteAccountSection";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -28,6 +29,9 @@ export default async function SettingsPage() {
       <p className="text-xs text-muted-foreground">
         プロファイル編集はフェーズ 4 で実装予定
       </p>
+
+      {/* 退会（2026-10-08・セキュリティ監査 §3-7）。プライバシーポリシー第 4 項の「設定 → プロファイル → アカウントの削除」がここ */}
+      <DeleteAccountSection />
     </div>
   );
 }
