@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { errorDetail } from "@/lib/error-detail";
 import { createClient } from "@/lib/supabase/server";
 import { fetchLive, WhowatchLiveApiError } from "@/lib/whowatch/live-feed";
 
@@ -27,6 +28,8 @@ export async function GET(request: Request) {
     return res;
   } catch (err) {
     const status = err instanceof WhowatchLiveApiError ? 502 : 500;
-    return NextResponse.json({ error: "接続情報を取得できませんでした", detail: err instanceof Error ? err.message : String(err) }, { status });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[live/ws] 接続情報の取得に失敗", { liveId: parsed.data.liveId, status, error: message });
+    return NextResponse.json({ error: "接続情報を取得できませんでした", ...errorDetail(message) }, { status });
   }
 }

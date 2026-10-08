@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
+import { errorDetail } from "@/lib/error-detail";
 import { createClient } from "@/lib/supabase/server";
 import { createDbClient } from "@/lib/db/client";
 import { events, itemPointMapping, listeners, streamerProfiles, whowatchItemDecorations, whowatchItemGroups, whowatchItemPatterns, whowatchItemPrices } from "@/lib/db/schema";
@@ -158,7 +159,9 @@ export async function POST(request: Request) {
     live = await fetchLive(liveId, lastUpdatedAt);
   } catch (err) {
     const status = err instanceof WhowatchLiveApiError ? 502 : 500;
-    return NextResponse.json({ error: "配信データを取得できませんでした", detail: err instanceof Error ? err.message : String(err) }, { status });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[live/poll] 配信データの取得に失敗", { liveId, status, error: message });
+    return NextResponse.json({ error: "配信データを取得できませんでした", ...errorDetail(message) }, { status });
   }
   const tUpstream = Date.now();
 
