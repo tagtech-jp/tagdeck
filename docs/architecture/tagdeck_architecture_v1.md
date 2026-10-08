@@ -67,6 +67,7 @@ graph TB
 - `workers/` ディレクトリ配下だが、`fuwacchi-poller` のみ実際には **Render.com** の常駐Nodeサービスとしてデプロイされる（`render.yaml`確認済み）。Cloudflare Workers はCPU時間制約（`AGENTS.md`記載）のため常時ポーリングに不向きで、別インフラに分離されていると推定（要確認: 分離判断の設計文書は本調査範囲で未発見）
 - `kick-watcher` / `niconico-watcher` は空ディレクトリで、対応するデプロイ設定も存在しない（要確認: Kick/ニコ生はメインアプリのAPI Route内でリアルタイム処理が完結している可能性）
 - `youtube-relay`（26行スタブ）にもデプロイ設定なし
+- **2026-10-08 追記**: Render には配備されていない（社長が管理画面で確認・外形は `x-render-routing: no-server`）。`workers/whowatch-poller`（旧 fuwacchi-poller）・`workers/youtube-relay`・`render.yaml` は `_moved_workers_20261008/` へ退避済み（削除していない。戻し方は同ディレクトリの README）
 
 ---
 
@@ -171,3 +172,4 @@ graph TB
 | 版 | 日付 | 改訂内容 |
 |---|---|---|
 | 1.0 | 2026-07-18 | 初版作成 |
+| 1.1 | 2026-10-08 | §1 構成上の要点に Render 配備なし・`workers/` 2 件と `render.yaml` の `_moved_workers_20261008/` への退避を追記 |

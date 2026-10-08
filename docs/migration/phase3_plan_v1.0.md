@@ -196,6 +196,7 @@ flowchart LR
 - YouTube / Google OAuth の Supabase Auth への追加設定
 - Render Worker ↔ Supabase DB の INSERT 疎通テスト
 - `workers/fuwacchi-poller/` と `workers/youtube-relay/` の雛形配置（現在空ディレクトリ）
+- **2026-10-08 追記**: Render には配備されていない（社長が管理画面で確認・外形は `x-render-routing: no-server`）。`workers/whowatch-poller`（旧 fuwacchi-poller）・`workers/youtube-relay`・`render.yaml` は `_moved_workers_20261008/` へ退避済み（削除していない。戻し方は同ディレクトリの README）
 
 **成果物**:
 - Render Free 上で動作する WebSocket中継サーバー（URL確定）

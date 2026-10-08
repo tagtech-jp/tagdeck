@@ -68,6 +68,8 @@ tail_pid.txt
 # workers -- build output & local node_modules
 workers/*/node_modules/
 workers/*/dist/
+_moved_workers_20261008/*/node_modules/
+_moved_workers_20261008/*/dist/
 
 # Build & lint logs (Phase 3a-1b cleanup 2026-05-15)
 _build_*.txt
