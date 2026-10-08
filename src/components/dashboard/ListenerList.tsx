@@ -51,6 +51,7 @@ export function ListenerList({
       if (sortKey === "lastSeenAt") {
         cmp = a.lastSeenAt.getTime() - b.lastSeenAt.getTime();
       } else if (sortKey === "totalGiftAmount") {
+        // 累計ギフト＝定価の合計（円）。Kick は金額が取れないので 0（2026-10-08・単位を円に統一）
         cmp = a.totalGiftAmount - b.totalGiftAmount;
       } else if (sortKey === "totalCommentCount") {
         cmp = a.totalCommentCount - b.totalCommentCount;

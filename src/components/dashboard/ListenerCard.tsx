@@ -53,8 +53,9 @@ export function ListenerCard({ listener }: { listener: Listener }) {
               {PLATFORM_LABELS[listener.platform]}
             </span>
           </div>
+          {/* 累計はギフトの定価の合計（円・whowatch は 1pt = ¥1）。Kick は金額が取れないので ¥0 のまま（2026-10-08・単位を円に統一） */}
           <div className="mt-1 text-xs text-muted-foreground">
-            累計 {listener.totalGiftAmount.toLocaleString()} pt
+            累計 ¥{listener.totalGiftAmount.toLocaleString()}
             ・コメント {listener.totalCommentCount}
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">

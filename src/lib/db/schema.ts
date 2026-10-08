@@ -65,6 +65,9 @@ export const listeners = pgTable("listeners", {
   displayName: text("display_name"),
   nickname: text("nickname"),
   notes: text("notes"),
+  // ギフトの定価の合計（円）。whowatch は 1 回のギフトの total_yen（price_yen × count・無料と単価不明は 0）を events への保存と同じ
+  // トランザクションの SQL で足す（live/poll）。Kick はサブスクギフトの金額が取れないので 0 のまま（回数は events に残る）。
+  // 2026-10-08 以前は whowatch が個数・Kick が回数を足していて単位が混ざっていた（監査 §3-6）。過去分は drizzle/0025 で再集計
   totalGiftAmount: integer("total_gift_amount").default(0),
   totalCommentCount: integer("total_comment_count").default(0),
   lastSeenAt: timestamp("last_seen_at"),

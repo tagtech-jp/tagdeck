@@ -55,6 +55,9 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
+  // 共有の基礎 pt を保存できるか（運営者だけ・GET item-points の canEdit・2026-10-08 セキュリティ監査 §3-4）。
+  // null = 未取得。false のときは「保存」を出さず、入力と推定はこの画面の試算にだけ使う
+  const [canEdit, setCanEdit] = useState<boolean | null>(null);
 
   // 残り時間の更新用に 5 分毎に再計算（スナップショット自体は親が再取得する）
   useEffect(() => {
@@ -80,11 +83,12 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
         setEventKey(hit.eventKey);
         const [detail, points] = await Promise.all([
           fetch(`/api/platforms/whowatch/events/${encodeURIComponent(hit.eventKey)}`).then((r) => (r.ok ? (r.json() as Promise<{ rulesParsed?: RulesParsed | null } | null>) : null)),
-          fetch(`/api/platforms/whowatch/events/${encodeURIComponent(hit.eventKey)}/item-points`).then((r) => (r.ok ? (r.json() as Promise<{ items?: ItemPointRow[] }>) : { items: [] })),
+          fetch(`/api/platforms/whowatch/events/${encodeURIComponent(hit.eventKey)}/item-points`).then((r) => (r.ok ? (r.json() as Promise<{ items?: ItemPointRow[]; canEdit?: boolean }>) : { items: [] as ItemPointRow[], canEdit: false })),
         ]);
         if (cancelled) return;
         setRules(detail?.rulesParsed ?? null);
         setItemPoints(points?.items ?? []);
+        setCanEdit(points?.canEdit === true);
       })
       .catch(() => undefined);
     return () => {
@@ -153,6 +157,13 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
         body: JSON.stringify({ itemId: selectedItem, basePoint: Math.round(basePoint), source }),
       });
       if (!res.ok) {
+        // 運営者以外（403 OWNER_ONLY）。画面の判定が古かったときの保険で、以後は「保存」を出さない
+        const err = (await res.json().catch(() => null)) as { code?: string } | null;
+        if (res.status === 403 && err?.code === "OWNER_ONLY") {
+          setCanEdit(false);
+          setMsg("基礎 pt（全利用者共有）の保存は運営者だけができます。入力した値はこの画面の試算にだけ使われます");
+          return;
+        }
         setMsg("保存に失敗しました");
         return;
       }
@@ -179,7 +190,7 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
       const d = (await res.json()) as { ok: boolean; estimatedBasePoint?: number; message?: string; giftCount?: number; pointDelta?: number };
       if (d.ok && d.estimatedBasePoint) {
         setBasePointInput(String(d.estimatedBasePoint));
-        setMsg(`実測から推定: ${d.estimatedBasePoint} pt/個（pt 増分 ${d.pointDelta} ÷ ${d.giftCount} 個）。「保存」で確定`);
+        setMsg(`実測から推定: ${d.estimatedBasePoint} pt/個（pt 増分 ${d.pointDelta} ÷ ${d.giftCount} 個）。${canEdit === true ? "「保存」で確定" : "この画面の試算に使います（共有値には保存しません）"}`);
       } else {
         setMsg(d.message ?? "推定できませんでした");
       }
@@ -303,7 +314,7 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
             }}
             className="min-h-11 min-w-40 flex-1 rounded-sm bg-muted px-3 py-2 text-sm text-foreground"
           >
-            <option value="">アイテムを選択（基礎 pt を設定）</option>
+            <option value="">{canEdit === false ? "アイテムを選択（基礎 pt を試算に使う）" : "アイテムを選択（基礎 pt を設定）"}</option>
             {items.map((i) => (
               <option key={i.id} value={i.id}>
                 {i.name}
@@ -322,14 +333,16 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
             disabled={!selectedItem}
             className="min-h-11 w-40 rounded-sm bg-muted px-3 py-2 text-sm text-foreground disabled:opacity-50"
           />
-          <button
-            type="button"
-            onClick={() => void handleSaveBasePoint("manual")}
-            disabled={saving || !selectedItem || !eventKey || !basePointInput}
-            className="min-h-11 rounded-full bg-primary px-4 text-xs font-medium text-primary-foreground disabled:opacity-50"
-          >
-            保存
-          </button>
+          {canEdit === true && (
+            <button
+              type="button"
+              onClick={() => void handleSaveBasePoint("manual")}
+              disabled={saving || !selectedItem || !eventKey || !basePointInput}
+              className="min-h-11 rounded-full bg-primary px-4 text-xs font-medium text-primary-foreground disabled:opacity-50"
+            >
+              保存
+            </button>
+          )}
           <button
             type="button"
             onClick={() => void handleEstimate()}
@@ -339,11 +352,21 @@ export function RankForecastPanel({ eventId, whowatchEventId, targetRank: initia
             実測から推定
           </button>
         </div>
+        {canEdit === false && (
+          // 共有の基礎 pt は運営者だけが保存できる（2026-10-08 セキュリティ監査 §3-4・社長決定 案 A）。他の利用者の入力・推定はこの画面の試算にだけ使う
+          <p className="text-xs text-muted-foreground">
+            基礎 pt（全利用者共有）は運営者が設定します。ここに入力した値や「実測から推定」の結果はこの画面の試算にだけ使われ、保存されません。値の提案は{" "}
+            <a href="https://tagtech.jp/contact" target="_blank" rel="noopener noreferrer" className="underline decoration-dotted underline-offset-2 hover:text-foreground">
+              tagtech.jp のお問い合わせ
+            </a>
+            {" "}から
+          </p>
+        )}
         {msg && <p className="text-xs text-muted-foreground">{msg}</p>}
         <p className="text-xs text-muted-foreground">
           {itemValue?.kind === "range"
             ? `このイベントはルール本文の表（1 個あたりの獲得量 ${itemValue.unit ?? ""}）から必要個数を出すため、基礎 pt の入力は要りません。`
-            : "必要個数は、基礎 pt × 当たり倍率表の分布で「足りるまで引く」試行の中央値・90%（倍率表が無ければ ×1）。基礎 pt は公式本文に無いため手入力（全ユーザー共有）。「実測から推定」は自分のスナップショット間の pt 増分 ÷ その間のギフト個数（ギフト保存は S1 以降）"}
+            : "必要個数は、基礎 pt × 当たり倍率表の分布で「足りるまで引く」試行の中央値・90%（倍率表が無ければ ×1）。基礎 pt は公式本文に無いため手入力（全ユーザー共有・運営者が設定）。「実測から推定」は自分のスナップショット間の pt 増分 ÷ その間のギフト個数（ギフト保存は S1 以降）"}
         </p>
       </div>
     </div>

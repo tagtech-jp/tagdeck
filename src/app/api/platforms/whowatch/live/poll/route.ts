@@ -71,6 +71,9 @@ async function findOrCreateListener(db: ReturnType<typeof createDbClient>, strea
  * - 累計（listeners.total_gift_amount）は events に 1 行入ったときだけ足す（2026-10-02）。同じ配信に 2 台以上の
  *   ブラウザが接続していると、同じギフトを各ブラウザの poll が受け取ってここへ来る。以前は events の保存より先に
  *   累計を足していたため、events は部分ユニークで 1 件にまとまるのに、累計は処理した回数だけ増えていた
+ * - 累計の単位は「ギフトの定価の合計（円）」（2026-10-08・監査 §3-6・社長決定 案A）。足すのは normalizeGift の total_yen
+ *   （= 1 個の定価 price_yen × 個数 count。無料アイテム・単価不明は null → 0 を足す）。以前は個数（count）を足していて、
+ *   /api/listeners の rank 判定（top ≥ ¥50,000 / vip ≥ ¥10,000・円）と単位が合っていなかった。過去分は drizzle/0025 で再集計
  */
 async function persistGifts(db: ReturnType<typeof createDbClient>, streamerId: string, liveId: string, giftRaw: LiveComment[]): Promise<void> {
   const patternIds = [...new Set(giftRaw.map((c) => c.play_item_pattern_id).filter((v): v is number => typeof v === "number"))];
@@ -105,10 +108,10 @@ async function persistGifts(db: ReturnType<typeof createDbClient>, streamerId: s
           .returning({ id: events.id });
         // 0 行 = 別のブラウザ（または同じ lastUpdatedAt での取り直し）が保存済み。累計は足さない
         if (inserted.length === 0 || !listenerId) return;
-        // 読んでから足すと、同時に動いた 2 件の片方が消える。SQL の中で足す
+        // 読んでから足すと、同時に動いた 2 件の片方が消える。SQL の中で足す（足す値は定価の合計・円。単価不明の total_yen=null は 0）
         await tx
           .update(listeners)
-          .set({ lastSeenAt: new Date(), totalGiftAmount: sql`coalesce(${listeners.totalGiftAmount}, 0) + ${g.count}`, ...(g.user.name ? { displayName: g.user.name } : {}) })
+          .set({ lastSeenAt: new Date(), totalGiftAmount: sql`coalesce(${listeners.totalGiftAmount}, 0) + ${g.total_yen ?? 0}`, ...(g.user.name ? { displayName: g.user.name } : {}) })
           .where(eq(listeners.id, listenerId));
       });
     } catch (e) {
@@ -138,7 +141,7 @@ const bodySchema = z.object({
  *   ctx.waitUntil() のバックグラウンドへ寄せてある。postgres.js は遅延接続なので、クエリを 1 本も
  *   出さない回は TCP/TLS/SCRAM のハンドシェイク自体が発生しない（2026-09-22 実測の DB 833ms の正体）
  * - ギフトは events に event_type='gift' / platform_comment_id=comment.id / stream_id=live_id で保存（重複は部分ユニークで弾く）
- * - listeners は platform_user_id で探す／無ければ累計 0 で作る。累計は events に 1 行入ったときだけ SQL の中で足す。匿名は listener_id=null
+ * - listeners は platform_user_id で探す／無ければ累計 0 で作る。累計（定価の合計・円）は events に 1 行入ったときだけ SQL の中で足す。匿名は listener_id=null
  * - 生データは payload.raw に保持。jwt は保存も返却もしない
  */
 export async function POST(request: Request) {
