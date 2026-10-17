@@ -687,6 +687,7 @@ pnpm se:pack --src <dir> --dry-run        # 切り出しと計画だけ(登録�
 pnpm se:pack --src <dir>                  # 切り出し → 分類 → 登録
 pnpm se:pack --src <dir> --skip-clip      # 短く整えた mp3/wav 等をそのまま使う
 pnpm se:pack --undo .se-pack/out/pack-manifest.json [--purge]   # 取り込んだ行を消す(--purge で Storage の音源も)
+bash scripts/se/run-pack.sh [./source_se] [pnpm se:pack の引数...]   # 上の 1〜2 を 1 コマンドで: 道具と .env.local の確認 → dry-run → 確認(y/N) → 本実行。YES=1 で確認を飛ばす(Windows は Git Bash / WSL)
 ```
 
 - 引数: `--out <dir>`(既定 `.se-pack/out`)/ `--user <uuid>` / `--min 2 --max 5`(秒)/ `--lufs -14` / `--max-clips 8` / `--noise -35`(無音とみなすしきい値 dBFS。切れ目が拾えなければ -45〜-30 で調整)/ `--min-silence 0.3`(無音が続く最短秒数)/ `--all` / `--items <json>` / `--env <file>`(既定 `.env.local`)/ `--concurrency 4`(同時に走らせる ffmpeg の数)
