@@ -75,7 +75,7 @@
 
 - [ ] **本番での実登録の結果は未確認**: `pnpm se:pack` の本番 Storage(バケット `se`)/ `se_mappings` への登録は、本番の鍵が要るため Claude は実行していない。社長が `--dry-run` で `pack-manifest.json` の計画を見てから本実行し、SE タブに `item:{id}` / `#2〜#5` の行が増えたか・鳴るかを確認する。戻すときは `pnpm se:pack --undo <manifest>`(`--purge` で Storage の音源も)。手順は README「S26」の使い方
 - [ ] **`.env.local` への `SUPABASE_SERVICE_ROLE_KEY` の投入は社長作業**: バケット `se` の書き込みポリシーは `auth.uid()` 配下だけなので CLI からは service role が要る(Supabase ダッシュボード → Project Settings → API → service_role)。値はチャットに貼らない。CLI は値をログに出さない
-- [ ] **実音源での無音しきい値の妥当性は未確認**: 切り出しは `silencedetect=noise=-35dB:d=0.3` で、合成音源(無音を挟んだ wav・ずっと鳴っている mp4)でしか確かめていない。実音源(パチンコ・パチスロの効果音など)で切れすぎ・切れなさすぎが出たら、しきい値と `--min` / `--max` の既定を見直す
+- [ ] **実音源での無音しきい値の妥当性は未確認**: 切り出しは `silencedetect=noise=-35dB:d=0.3` で、合成音源(無音を挟んだ wav・ずっと鳴っている mp4)でしか確かめていない。実音源(パチンコ・パチスロの効果音など)で切れすぎ・切れなさすぎが出たら、まず `--noise`(-45〜-30)/ `--min-silence` と `--min` / `--max` で調整し、合う値が決まれば既定を見直す(引数は 2026-10-17 に追加)
 
 ## 社長が転記する(2026-09-30)
 
@@ -84,7 +84,8 @@
 ## 社長が転記する(2026-10-17)
 
 - [ ] **正本 `D:\tagtech\docs\streaming\remote-studio-plan.md`** に「## 2026-10-17 到達点：音源パックの一括取り込み CLI」節を**追記のみ**で足す(既存行は書き換えない。2026-10-17 の作業環境からは正本に触れないため Claude は書いていない)。内容は README「S26」の要約: 社長指示「手元のソースディレクトリ(音声・動画)を読み込み、ffmpeg で切り出し・ノーマライズし、ファイル名・フォルダ名でテーマ分類して、全アイテムに Supabase へ一括登録する、ローカル専用の自動化パイプライン」/ PR #106(`45f8fb3` の SE タブのカード + `/api/se/mappings/batch` は取り下げ、`c7c563c` で CLI に置き換え。merge commit `cf5fbfe`)/ `scripts/se/pack-pipeline.ts`(`pnpm se:pack --src <dir>`)と純関数 `src/lib/se/pack-clip.ts` / `pack-import.ts` / 切り出しは silencedetect(-35dB・0.3 秒)→ `loudnorm` -14 LUFS・mono 44.1kHz・mp3 96k・既定 2〜5 秒 / 分類はフォルダ名 → ファイル名(パチンコ・パチスロ用語は近いテーマへ)/ 割り当てはアイテムごとに同じ分類の音を最大 5 本(`item:{id}`・`#2〜#5`)、当たりは `pattern:{id}`、段階は `bulk:{段階}` / 登録は Storage `se` の `{user}/pack/{sha1 先頭 12 桁}_{名前}.mp3` と `se_mappings` の 500 行ずつ upsert、`--undo` で取り消し / 品質ゲート 3 点 + `--frozen-lockfile` + verifier 8 項目 PASS + CI 成功 / 本番の実登録と実音源でのしきい値は未確認 / URL からの取得は範囲外
-- [ ] **Notion タスク管理(`[tagdeck-live]` 接頭辞)** の該当タスクの `ステータス` を完了にし、`メモ` に「2026-10-17 / PR #106(merge `cf5fbfe`)/ `pnpm se:pack` の CLI・合成音源での dry-run 結果・本番の実登録は未確認」を記入する。2026-10-17 の作業環境からは Notion に触れないため Claude は更新していない(該当タスクの有無・ID も未確認)
+- [x] **Notion タスク管理(`[tagdeck-live]` 接頭辞)** に S26 のタスクを作る
+  → **完了(2026-10-17)**: 既存に S26 相当のタスクが無かったため、`[tagdeck-live] S26: 音源パックの一括取り込み CLI(切り出し・テーマ分類・全アイテムへ一括登録)` を `ステータス` 完了・完了日時 2026-10-17 09:42Z で新規作成し、`メモ` に PR #106 / #107・CLI の中身・品質ゲート・未確認事項を記入した(社長指示「全て許可するので自走して」による)
 
 ## 次の作業
 

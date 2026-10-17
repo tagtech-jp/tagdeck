@@ -13,6 +13,8 @@
 //   --out <dir>        切り出し先（既定 .se-pack/out）。pack-manifest.json もここ
 //   --user <uuid>      登録先のユーザー id（既定: 環境変数 SE_PACK_USER_ID → SE_DEFAULT_SOURCE_USER_ID）
 //   --min 2 --max 5    切り出す尺（秒）。--lufs -14 音量。--max-clips 8 1 ファイルから作る最大本数
+//   --noise -35        無音とみなすしきい値（dBFS）。実音源で切れ目が拾えないときは -45〜-30 の間で調整する
+//   --min-silence 0.3  無音が続く最短秒数。これより短い途切れは 1 つの音として扱う
 //   --all              価格もカテゴリも無いアイテム（販売終了・その他）も対象にする（既定は SE タブの「価格ありのみ」と同じ）
 //   --items <json>     DB の代わりにアイテム一覧を JSON から読む（/api/platforms/whowatch/items/patterns の応答と同じ形）
 //   --env <file>       環境変数のファイル（既定 .env.local）。DATABASE_URL / NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY を読む
@@ -54,6 +56,9 @@ interface Args {
   max: number;
   lufs: number;
   maxClips: number;
+  /** 無音とみなすしきい値（dBFS）と、無音が続く最短秒数（silencedetect の noise / d） */
+  noise: number;
+  minSilence: number;
   all: boolean;
   items: string | null;
   env: string;
@@ -65,7 +70,7 @@ interface Args {
 }
 
 function parseArgs(argv: string[]): Args {
-  const a: Args = { src: null, out: ".se-pack/out", user: null, min: 2, max: 5, lufs: -14, maxClips: 8, all: false, items: null, env: ".env.local", concurrency: 4, dryRun: false, skipClip: false, undo: null, purge: false };
+  const a: Args = { src: null, out: ".se-pack/out", user: null, min: 2, max: 5, lufs: -14, maxClips: 8, noise: -35, minSilence: 0.3, all: false, items: null, env: ".env.local", concurrency: 4, dryRun: false, skipClip: false, undo: null, purge: false };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
     const v = () => {
@@ -82,6 +87,8 @@ function parseArgs(argv: string[]): Args {
       case "--max": a.max = Number(v()); break;
       case "--lufs": a.lufs = Number(v()); break;
       case "--max-clips": a.maxClips = Number(v()); break;
+      case "--noise": a.noise = Number(v()); break;
+      case "--min-silence": a.minSilence = Number(v()); break;
       case "--all": a.all = true; break;
       case "--items": a.items = v(); break;
       case "--env": a.env = v(); break;
@@ -95,7 +102,7 @@ function parseArgs(argv: string[]): Args {
     }
   }
   if (!a.undo && !a.src) throw new Error("--src <dir> か --undo <manifest> が要ります（--help で一覧）");
-  for (const [name, n] of [["--min", a.min], ["--max", a.max], ["--lufs", a.lufs], ["--max-clips", a.maxClips], ["--concurrency", a.concurrency]] as const) {
+  for (const [name, n] of [["--min", a.min], ["--max", a.max], ["--lufs", a.lufs], ["--max-clips", a.maxClips], ["--noise", a.noise], ["--min-silence", a.minSilence], ["--concurrency", a.concurrency]] as const) {
     if (!Number.isFinite(n)) throw new Error(`${name} は数値で指定してください`);
   }
   return a;
@@ -103,7 +110,7 @@ function parseArgs(argv: string[]): Args {
 
 function printHelp(): void {
   console.log(`音源パックの一括取り込み CLI
-  pnpm se:pack --src <dir> [--out <dir>] [--user <uuid>] [--min 2] [--max 5] [--lufs -14] [--max-clips 8] [--all] [--skip-clip] [--dry-run] [--items <json>] [--env .env.local] [--concurrency 4]
+  pnpm se:pack --src <dir> [--out <dir>] [--user <uuid>] [--min 2] [--max 5] [--lufs -14] [--max-clips 8] [--noise -35] [--min-silence 0.3] [--all] [--skip-clip] [--dry-run] [--items <json>] [--env .env.local] [--concurrency 4]
   pnpm se:pack --undo <pack-manifest.json> [--purge]
 詳しくは scripts/se/pack-pipeline.ts の先頭コメント`);
 }
@@ -153,9 +160,9 @@ async function probeDuration(file: string): Promise<number> {
   return Number.isFinite(d) ? d : 0;
 }
 
-async function detectSilence(file: string): Promise<string> {
+async function detectSilence(file: string, noiseDb: number, minSilenceSec: number): Promise<string> {
   // 出力は捨てるので stderr だけ要る。ffmpeg は -f null でも終了コード 0
-  const { stderr } = await run("ffmpeg", ffmpegSilenceArgs(file), { maxBuffer: 64 * 1024 * 1024 });
+  const { stderr } = await run("ffmpeg", ffmpegSilenceArgs(file, noiseDb, minSilenceSec), { maxBuffer: 64 * 1024 * 1024 });
   return String(stderr);
 }
 
@@ -189,7 +196,7 @@ async function clipSources(sources: readonly SourceFile[], a: Args, rootName: st
     const outDir = path.join(a.out, ...(relDir === "." ? [] : relDir.split("/")));
     await mkdir(outDir, { recursive: true });
     const duration = await probeDuration(src.abs);
-    const silences = parseSilenceDetect(await detectSilence(src.abs));
+    const silences = parseSilenceDetect(await detectSilence(src.abs, a.noise, a.minSilence));
     const ranges = chooseClips(nonSilentRanges(silences, duration), duration, { minSec: a.min, maxSec: a.max, maxClips: a.maxClips });
     const made: Clip[] = [];
     const srcStat = await stat(src.abs);
@@ -344,13 +351,13 @@ async function main(): Promise<void> {
     console.log(`--skip-clip: ${clips.length} ファイルをそのまま使う（mp3/ogg/wav/m4a/aac 以外は除外）`);
   } else {
     await mkdir(a.out, { recursive: true });
-    console.log(`切り出し（${a.min}〜${a.max} 秒・${a.lufs} LUFS・1 ファイル最大 ${a.maxClips} 本）→ ${path.resolve(a.out)}`);
+    console.log(`切り出し（${a.min}〜${a.max} 秒・${a.lufs} LUFS・1 ファイル最大 ${a.maxClips} 本・無音は ${a.noise}dB 以下が ${a.minSilence} 秒以上）→ ${path.resolve(a.out)}`);
     clips = await clipSources(sources, a, rootName);
   }
   const oversized = clips.filter((c) => c.size > PACK_MAX_BYTES);
   if (oversized.length > 0) console.log(`20MB 超で除外: ${oversized.length} 本`);
 
-  const userId = a.user ?? (process.env.SE_PACK_USER_ID ?? process.env.SE_DEFAULT_SOURCE_USER_ID ?? "").trim() ?? null;
+  const userId = a.user ?? (process.env.SE_PACK_USER_ID ?? process.env.SE_DEFAULT_SOURCE_USER_ID ?? "").trim();
   const db = a.items ? null : createDbClient();
   const allItems = a.items ? await loadItemsFromJson(a.items) : await loadItemsFromDb(db!);
   const items = a.all ? allItems : allItems.filter((i) => i.priced || (i.groups?.length ?? 0) > 0);
