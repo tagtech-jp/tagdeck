@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "se:pack": "tsx scripts/se/pack-pipeline.ts",
-    "se:prep": "tsx scripts/se/prep-source.ts"
+    "se:prep": "tsx scripts/se/prep-source.ts",
+    "se:fetch": "tsx scripts/se/fetch-source.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
