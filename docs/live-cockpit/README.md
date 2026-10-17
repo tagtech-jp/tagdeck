@@ -672,6 +672,9 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 | script(新規・2026-10-17) | `scripts/se/prep-source.ts` / `prep-source.ps1` / `prep-source.sh` | 元メディアの下ごしらえ CLI `pnpm se:prep`。`source_raw/` の元動画・音声を cuts.csv(区間・名前・テーマ)と map.json(元ファイル名の言葉 → テーマ)で wav に切り出して `source_se/` に置く。ps1 / sh は run-pack の `-PreScript` / `PRE_SCRIPT` につなぐ入口 |
 | lib(新規・2026-10-17) | `src/lib/se/prep-source.ts` / `prep-source.test.ts` | 純関数: 時刻 `parseTimecode`・区間表 `parseCutsCsv` / `parseCutsJson`・テーマ表 `themeForSource`・計画 `planPrep`(分類は `classifyPackFile` と同じ)・ffmpeg 引数 `ffmpegPrepArgs`・`sanitizeName`。テスト 28 件 |
 | package.json / .gitignore(2026-10-17) | `se:prep` / `source_raw/` | `se:prep` = `tsx scripts/se/prep-source.ts`。元メディアの置き場 `source_raw/` をコミットしない |
+| script(新規・2026-10-17) | `scripts/se/fetch-source.ts` / `fetch-source.ps1` / `fetch-source.sh` | 音源の自動取得 CLI `pnpm se:fetch`。`source_raw/sources.csv`(url・name・theme・start・end)の URL / 検索を yt-dlp で `source_raw/{id}-{題名}.{ext}` に取得し、行ごとの区間とテーマから cuts.csv / map.json を作って、続けて `pnpm se:prep` まで行う。ps1 / sh は run-pack の `-PreScript` / `PRE_SCRIPT` につなぐ入口 |
+| lib(新規・2026-10-17) | `src/lib/se/fetch-source.ts` / `fetch-source.test.ts` | 純関数: 一覧 `parseSourcesCsv` / `parseSourcesJson`・yt-dlp の `--print` 解析 `parseResolvedLines`・命名 `fileStemFor`・yt-dlp 引数 `ytdlpResolveArgs` / `ytdlpDownloadArgs`・cuts / map の組み立て `buildPrepInputs`・`cutsCsvText`。テスト 11 件 |
+| package.json(2026-10-17) | `se:fetch` | `se:fetch` = `tsx scripts/se/fetch-source.ts` |
 
 変更なし: `public/se/`・自動ライブラリ・公式既定・`choose-sound.ts`・`sound-license.test.ts`。
 
@@ -695,6 +698,9 @@ bash scripts/se/run-pack.sh [./source_se] [pnpm se:pack の引数...]           
 pnpm se:prep [--in source_raw] [--out source_se] [--cuts <csv|json>] [--map <json>] [--only-cuts] [--dry-run] [--force]   # 元メディアの下ごしらえ(2026-10-17): source_raw の元動画・音声を区間と言葉で切り出して source_se に置く
 .\scripts\se\run-pack.ps1 -PreScript .\scripts\se\prep-source.ps1 -- --max-clips 40                # 下ごしらえ → dry-run → 確認 → 本実行 を 1 コマンドで(PowerShell。-Yes を付けると確認なしで本実行まで)
 PRE_SCRIPT=scripts/se/prep-source.sh bash scripts/se/run-pack.sh ./source_se --max-clips 40       # 同じものの bash 版
+pnpm se:fetch [--list source_raw/sources.csv] [--out source_raw] [--prep-out source_se] [--dry-run] [--no-prep]   # 音源の自動取得(2026-10-17): sources.csv の URL / 検索を yt-dlp で取得して cuts / map を作り、続けて se:prep まで
+.\scripts\se\run-pack.ps1 -PreScript .\scripts\se\fetch-source.ps1 -- --max-clips 40               # 取得 → 下ごしらえ → dry-run → 確認 → 本実行 を 1 コマンドで(PowerShell。-Yes で確認なし)
+PRE_SCRIPT=scripts/se/fetch-source.sh bash scripts/se/run-pack.sh ./source_se --max-clips 40      # 同じものの bash 版
 ```
 
 `-PreScript` / `PRE_SCRIPT` は、取り込みの前に社長が用意したスクリプト(音源を `source_se` に置く処理など)を呼ぶ入口。失敗(終了コード 0 以外)なら取り込みはせずに止まる。スクリプトの中身はリポジトリに含めない(個人用のまま手元に置く。`.git/info/exclude` に名前を書けばその PC だけで無視される)。
@@ -717,6 +723,18 @@ PowerShell で「スクリプトの実行が無効」と出たら `powershell -E
 - 終了コード: 0 成功 / 1 ffmpeg か引数の失敗 / 2 置くものが 0 件(run-pack の `-PreScript` から呼ぶと、0 以外ならそこで止まり取り込みに進まない)
 - 2〜5 秒への切り出し・音量そろえ・mp3 化・分類・割り当て・登録は、そのあとの pnpm se:pack が行う
 - 確認(2026-10-17・合成メディア): 無音を挟んだ 8 秒の wav に cuts 3 行(確定 / 激アツ_先読み / キュイン)と、音付き 6 秒の mp4 を map.json(`play` → リーチ)で丸ごと → 4 本が ジャックポット 2・壮大 1・カジノ 1 に分類され、続く dry-run で 259 アイテム・1011 行の計画になった。単体テスト 28 件(時刻・CSV / JSON・テーマ表・計画・ffmpeg 引数)
+
+#### 音源の自動取得 `pnpm se:fetch`(2026-10-17 社長指示「URL や検索語の指定から、取得・切り出し・分類・配置まで全自動で」)
+
+`source_raw/sources.csv` に書いた URL / 検索を yt-dlp で取得して `source_raw/` に置き、行ごとの区間とテーマから cuts.csv / map.json を作り、続けて `pnpm se:prep`(切り出し → `source_se/`)まで一気に行う。run-pack の `-PreScript` に `scripts/se/fetch-source.ps1` を渡せば、取得 → 下ごしらえ → dry-run → 確認 → 本実行 が 1 コマンド。社長の検証用クローズド環境だけで使う(取得元の権利は社長の責任。取得した音源は他の利用者に配られない: S23 の設計)。
+
+- sources.csv(UTF-8・1 行目は見出し `url,name,theme,start,end`・順は自由・`#` で始まる行は無視): `url` は動画 / 音声の URL か yt-dlp の検索書式(`ytsearch3:確定音 パチンコ` = 上位 3 件)。`source_raw/` に置いた手元のファイル名(例 `北斗_録画.mp4`)も同じ表で扱える(取得しない)。`start` / `end`(秒か `mm:ss`)があればその区間を、`name` があれば出力名を、`theme` があれば置き場のフォルダを指定する。同じ url の行を複数書けば、取得は 1 回で区間ごとに切る
+- 取得: `yt-dlp -f bestaudio/best --no-playlist --no-overwrites`(音声だけ・再エンコードしない)で `source_raw/{id}-{題名}.{元の拡張子}` に。既に同じ id のファイルがあれば取得しない(使い回し)。wav への変換・2〜5 秒への切り出し・分類・割り当て・登録はそのあとの se:prep / se:pack
+- 生成: `source_raw/cuts.csv` と `map.json` を sources.csv から毎回作り直す(手書きの cuts.csv は上書きされるので、区間とテーマは sources.csv に書く)。名前だけの行は 0 秒〜末尾の名前付き 1 本、テーマだけの行は map(フォルダ)、何もない行は丸ごと
+- 引数: `--list <csv|json>`(既定 `source_raw/sources.csv`、無ければ sources.json)/ `--out`(既定 `source_raw`)/ `--prep-out`(既定 `source_se`)/ `--dry-run`(id・題名・長さ・置き場の名前と計画だけ。取得も下ごしらえもしない)/ `--no-prep`(取得だけ)/ `--concurrency 2`
+- 必要な道具: yt-dlp(`python -m pip install --user --upgrade yt-dlp`)と ffmpeg / ffprobe。手元のファイルだけの一覧なら yt-dlp は要らない
+- 終了コード: 0 成功 / 1 取得か下ごしらえの失敗(1 件でも。取得できた分の下ごしらえは済ませてから 1)/ 2 取得できたものが 0 件
+- 確認(2026-10-17): 単体テスト 11 件(一覧の CSV / JSON・`--print` の解析・命名・yt-dlp 引数・cuts / map の組み立て・CSV 書き出し)。取得と連結の実機確認(手元ファイルだけの一覧・ローカル HTTP・YouTube の CC BY 動画)は、Claude の環境で yt-dlp が見つからず自動モードの分類器が `se:fetch` の実行を止めたため **未**(TODO.md 参照)
 
 - 引数: `--out <dir>`(既定 `.se-pack/out`)/ `--user <uuid>` / `--min 2 --max 5`(秒)/ `--lufs -14` / `--max-clips 8` / `--noise -35`(無音とみなすしきい値 dBFS。切れ目が拾えなければ -45〜-30 で調整)/ `--min-silence 0.3`(無音が続く最短秒数)/ `--all` / `--items <json>` / `--env <file>`(既定 `.env.local`)/ `--concurrency 4`(同時に走らせる ffmpeg の数)
 - 必要なもの: `ffmpeg` / `ffprobe`。`.env.local`(`--env` で変更可)に `DATABASE_URL`・`NEXT_PUBLIC_SUPABASE_URL`・`SUPABASE_SERVICE_ROLE_KEY`。バケット `se` の書き込みポリシーは `auth.uid()` 配下だけなので、CLI からは service role が要る(Supabase ダッシュボード → Project Settings → API → service_role)。値はログに出さない
