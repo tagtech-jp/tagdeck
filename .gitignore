@@ -81,3 +81,6 @@ public/sw.js
 
 # DB backups (contain real user data) — never commit
 docs/backup/
+
+# 音源パックの一括取り込み CLI の作業フォルダ（scripts/se/pack-pipeline.ts）
+.se-pack/
