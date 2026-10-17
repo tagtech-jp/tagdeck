@@ -687,13 +687,15 @@ pnpm se:pack --src <dir> --dry-run        # 切り出しと計画だけ(登録�
 pnpm se:pack --src <dir>                  # 切り出し → 分類 → 登録
 pnpm se:pack --src <dir> --skip-clip      # 短く整えた mp3/wav 等をそのまま使う
 pnpm se:pack --undo .se-pack/out/pack-manifest.json [--purge]   # 取り込んだ行を消す(--purge で Storage の音源も)
-.\scripts\se\run-pack.ps1 [-Src .\source_se] [-Yes] [-PreScript <自分の .py / .ps1>] [-- pnpm se:pack の引数...]   # PowerShell: 上の 1〜2 を 1 コマンドで(道具と .env.local の確認 → dry-run → 確認 → 本実行)。必ず cd D:\tagdeck してから
+.\scripts\se\run-pack.ps1 [-Src .\source_se] [-Yes] [-PreScript <自分の .py / .ps1>] [-- pnpm se:pack の引数...]   # PowerShell: 上の 1〜2 を 1 コマンドで(道具と .env.local の確認 → dry-run → 確認 → 本実行)。必ずリポジトリのフォルダ(2026-10-17 時点は D:\tagdeck-main。D:\tagdeck は .git の無い古いコピー)に cd してから。-Src / -PreScript は名前付きで、pnpm se:pack の引数は -- の後に
 bash scripts/se/run-pack.sh [./source_se] [pnpm se:pack の引数...]                 # 同じものの bash 版(Git Bash / WSL / macOS・Linux)。YES=1 で確認を飛ばす、PRE_SCRIPT=<自分の .py / .sh> で前段を呼ぶ
 ```
 
 `-PreScript` / `PRE_SCRIPT` は、取り込みの前に社長が用意したスクリプト(音源を `source_se` に置く処理など)を呼ぶ入口。失敗(終了コード 0 以外)なら取り込みはせずに止まる。スクリプトの中身はリポジトリに含めない(個人用のまま手元に置く。`.git/info/exclude` に名前を書けばその PC だけで無視される)。
 
 PowerShell で「スクリプトの実行が無効」と出たら `powershell -ExecutionPolicy Bypass -File scripts\se\run-pack.ps1`。`YES=1 bash ...` は bash 専用の書き方で、PowerShell では `-Yes` を使う。
+
+2026-10-17 修正(PR #113): run-pack.ps1 は `-Src` / `-PreScript` を名前付きでだけ受け、名前の無い引数はすべて `pnpm se:pack` へ渡す(`[CmdletBinding(PositionalBinding = $false)]`)。以前は `-PreScript .\auto_fetch.py -Yes -- --max-clips 40` の `--max-clips` が `-Src` に入り「ソースフォルダがありません: --max-clips」で止まった。あわせて、`-Src` が `-` で始まる(引数の取り違え)場合と、ソースフォルダのファイルが 0 件(前段が何も置いていない・置き場が違う)場合はその場で止まる。bash 版も同じ 2 つの検査(1 つ目の引数が `-` で始まる / 0 件)で exit 1。Windows PowerShell 5.1 と pwsh 7.6 で実機確認済み。
 
 - 引数: `--out <dir>`(既定 `.se-pack/out`)/ `--user <uuid>` / `--min 2 --max 5`(秒)/ `--lufs -14` / `--max-clips 8` / `--noise -35`(無音とみなすしきい値 dBFS。切れ目が拾えなければ -45〜-30 で調整)/ `--min-silence 0.3`(無音が続く最短秒数)/ `--all` / `--items <json>` / `--env <file>`(既定 `.env.local`)/ `--concurrency 4`(同時に走らせる ffmpeg の数)
 - 必要なもの: `ffmpeg` / `ffprobe`。`.env.local`(`--env` で変更可)に `DATABASE_URL`・`NEXT_PUBLIC_SUPABASE_URL`・`SUPABASE_SERVICE_ROLE_KEY`。バケット `se` の書き込みポリシーは `auth.uid()` 配下だけなので、CLI からは service role が要る(Supabase ダッシュボード → Project Settings → API → service_role)。値はログに出さない
@@ -707,12 +709,15 @@ PowerShell で「スクリプトの実行が無効」と出たら `powershell -E
 3. 分類(同上): `花火/` → 花火、`kakutei_01.wav` → ジャックポット、`misc/long_tone.mp4` → 分類なし
 4. 割り当て(同上): 花火アイテム → 花火 2 本、スロット → ジャックポット、ねこ(ねこの音が無い)→ 分類なし
 5. 本番に入れるときは、まず `--dry-run` で `pack-manifest.json` の計画を見てから本実行する(推奨)。戻すときは `--undo`
+6. run-pack の引数と停止条件(2026-10-17 実測・PR #113・Windows PowerShell 5.1 と pwsh 7.6 で同じ結果): `-Src .\source_se -- --max-clips 40`(空の source_se)→ `--max-clips` は `-Src` に入らず 0 件で停止 / `-Src --max-clips 40` → 取り違えで停止 / `-PreScript <ダミー> -Yes -- --max-clips 40` → 前段のあと 0 件で停止(前段が失敗なら従来どおり停止)。bash 版は `bash -n` と同 2 ケース(1 つ目が `-` / 空フォルダ)で exit 1
 
 ### 未確認(TODO.md 参照)
 
 - 本番の Storage / DB への実登録は未実行(本番の鍵が要るため)。実行結果は未確認
 - 実音源での切り出しの出来(無音しきい値 -35dB・0.3 秒が実音源に合うか)は未確認。合わなければ `--noise` / `--min-silence` で調整できる(2026-10-17 追加)
 - URL からの音源の取得は範囲外(社長側で用意する)
+- 本実行には `.env.local` の `SE_PACK_USER_ID`(登録先ユーザーの uuid。または `-- --user <uuid>`)が要る。2026-10-17 時点で未設定(他の 3 つは設定済み。dry-run には不要)
+- 前段 `auto_fetch.py`(社長担当・リポジトリ外)は 2026-10-17 時点で音源を `source_se` に置けていない(全件 WinError 2)。直ったら dry-run から
 
 ## S25: ¥160 以上は 5 秒以上の豪華なミックス・イベントアイテムと花火は段階ごとにさらに長く(実装済み・2026-09-30)
 
