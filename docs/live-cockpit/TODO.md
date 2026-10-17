@@ -83,6 +83,8 @@
 - [ ] **前段 `auto_fetch.py`(社長担当・リポジトリ外・`.git/info/exclude` 済み)が音源を `source_se` に置けていない**: 2026-10-17 の実行で全件 WinError 2。Claude は中身を直さない。直ったら `.\scripts\se\run-pack.ps1 -Src .\source_se -- --max-clips 40`(-Yes 無し)で dry-run の分類と本数を見てから本実行。切れ目が合わなければ `-- --noise -40 --min-silence 0.2`。本実行後は SE タブで `item:{id}` の行が増えて鳴るかを確認、戻すときは `pnpm se:pack --undo .se-pack\out\pack-manifest.json`
 - [x] **事故(2026-10-17 21:51 JST): run-pack.ps1 の確認が非対話で素通りし、本番へ本実行された**: Claude のツールの shell(stdin なし)から `-Yes` 無しで連結テストを走らせたところ、Read-Host が空の列挙を返して `-notmatch` が偽になり、合成音 4 本が Storage に、se_mappings 1011 行(item:N 259・#2〜#5 752)が公式既定の同期元アカウントに upsert された(既存 24 行を上書き)
   → **対処(同日 22:0x・社長承認)**: `pnpm se:pack --undo .se-pack\out\pack-manifest.json --purge`(1011 行・4 本削除)→ 同梱スナップショット(`src/lib/se/default-mappings.ts`・9/30 時点)から消えた 24 行を `ON CONFLICT DO NOTHING` で INSERT(24 行挿入・0 行既存)。残り 235 行はパックが新規に入れたもの。9/30 以降に SE タブで手で変えた item の行があれば戻らない(社長が SE タブで確認)。再発防止: run-pack の非対話ガード(本 PR)・本番に書く手順の連結テストは本実行の経路を物理的に塞いでから行う
+- [x] **元メディアの自動切り出し(2026-10-17 社長指示「音源の自動取得・切り出しも含めて全部」)**: 手元の元動画・音声から、タイムスタンプ(cuts.csv / cuts.json)と言葉(名前・map.json)で切り出し、分類に掛かる名前とフォルダで `source_se/` に置く `pnpm se:prep` と、run-pack の `-PreScript` / `PRE_SCRIPT` につなぐ入口(ps1 / sh)
+  → **完了(2026-10-17)**: README「S26」の「元メディアの下ごしらえ」。YouTube 等からの自動取得は書いていない(権利のない配信元からの取得は Claude が担当しない)。元メディアを `source_raw/` に置き、`cuts.csv` と `map.json` を添えれば、`.\scripts\se\run-pack.ps1 -PreScript .\scripts\se\prep-source.ps1 -- --max-clips 40` で下ごしらえ → dry-run → 確認 → 本実行まで 1 コマンド。実音源での切り出しと分類の出来は未確認(dry-run の計画を見て名前・map.json を調整する)
 
 ## 社長が転記する(2026-09-30)
 

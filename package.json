@@ -14,7 +14,8 @@
     "db:studio": "drizzle-kit studio",
     "test": "vitest run",
     "test:watch": "vitest",
-    "se:pack": "tsx scripts/se/pack-pipeline.ts"
+    "se:pack": "tsx scripts/se/pack-pipeline.ts",
+    "se:prep": "tsx scripts/se/prep-source.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
