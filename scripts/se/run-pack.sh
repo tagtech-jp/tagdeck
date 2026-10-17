@@ -22,6 +22,12 @@ cd "$(dirname "$0")/../.."
 SRC="${1:-./source_se}"
 if [ $# -gt 0 ]; then shift; fi
 ENV_FILE=".env.local"
+case "$SRC" in
+  -*)
+    echo "× 1 つ目の引数はソースフォルダです: $SRC（pnpm se:pack に渡す引数は 2 つ目以降に書く。例: bash scripts/se/run-pack.sh ./source_se --max-clips 40）" >&2
+    exit 1
+    ;;
+esac
 
 echo "=== 1. 道具と環境変数の確認 ==="
 for tool in pnpm ffmpeg ffprobe; do
@@ -50,7 +56,12 @@ if [ ! -d "$SRC" ]; then
   echo "× ソースフォルダがありません: $SRC（音源を置くか、1 つ目の引数でフォルダを指定）" >&2
   exit 1
 fi
-echo "・ソース: $SRC（ファイル $(find "$SRC" -type f | wc -l | tr -d ' ') 件）"
+file_count="$(find "$SRC" -type f | wc -l | tr -d ' ')"
+echo "・ソース: $SRC（ファイル $file_count 件）"
+if [ "$file_count" -eq 0 ]; then
+  echo "× ソースフォルダに音源がありません: $SRC（取り込み前の処理が何も置いていないか、置き場が違う）" >&2
+  exit 1
+fi
 
 [ -f "$ENV_FILE" ] || touch "$ENV_FILE"
 # キーの行が無ければ空で追記する（値は社長が入れる）

@@ -23,7 +23,9 @@
   初回に「このシステムではスクリプトの実行が無効になっている」と出たら:
     powershell -ExecutionPolicy Bypass -File scripts\se\run-pack.ps1
 #>
-[CmdletBinding()]
+# PositionalBinding = $false: 名前を付けない引数（"--" の後の --max-clips 40 など）を -Src や -PreScript に当てず、すべて $PackArgs に回す
+# （2026-10-17 実行ログ: --max-clips が -Src に入って「ソースフォルダがありません: --max-clips」になった）
+[CmdletBinding(PositionalBinding = $false)]
 param(
   [string]$Src = ".\source_se",
   [switch]$Yes,
@@ -43,6 +45,9 @@ function Fail([string]$message) {
 }
 
 Write-Host "=== 1. 道具と環境変数の確認 ==="
+if ($Src.StartsWith("-")) {
+  Fail "-Src の値がフォルダではなく引数に見えます: $Src（pnpm se:pack に渡す引数は `"--`" の後に書く。例: -Src .\source_se -- --max-clips 40）"
+}
 foreach ($tool in @("pnpm", "ffmpeg", "ffprobe")) {
   if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
     Fail "$tool が見つかりません。インストールして PATH を通してください"
@@ -65,6 +70,9 @@ if (-not (Test-Path -LiteralPath $Src -PathType Container)) {
 }
 $fileCount = @(Get-ChildItem -LiteralPath $Src -Recurse -File).Count
 Write-Host "・ソース: $Src（ファイル $fileCount 件）"
+if ($fileCount -eq 0) {
+  Fail "ソースフォルダに音源がありません: $Src（取り込み前の処理が何も置いていないか、置き場が違う）"
+}
 
 if (-not (Test-Path -LiteralPath $envFile)) { New-Item -ItemType File -Path $envFile | Out-Null }
 $utf8NoBom = New-Object System.Text.UTF8Encoding $false
