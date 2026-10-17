@@ -654,6 +654,60 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - ロールバック: PR を revert → `drizzle/0023_item_learned_point_rollback.sql`(3 列を外し、表単位の公開読み取りを戻す)。学習結果は erupi-commentbot 側(`data/bot.db` の `unit_obs`・`data/learned_item_points.json`)にも残る
 - **SE タブに実収の単価を表示(2026-10-06 社長指示「TagDeck の画面に実収の単価を表示」)**: `GET /api/platforms/whowatch/items/patterns` は、運営者(`EXPORT_OWNER_USER_ID` と一致するログイン)のときだけ、各アイテムに `learnedPoint`(学習した 1 個の単価・pt)/ `learnedSamples`(観測回数)/ `estimatedPoint`(未学習のときの見込み = 定価 × 学習済みの有料アイテムの「学習単価 ÷ 定価」の中央値)を付ける。運営者以外には付けない(実収の比率のため)。読めなくても一覧は返す(/live の SE 判定を道連れにしない)。SeMappingTab は定価の下に「実収 36pt/個(3回の観測)」または「実収 見込み 18pt/個」を既存の注記と同じ書式(11px・muted)で出す。純関数 `src/lib/whowatch/learned-display.ts`。全利用者に見せるなら、ルートの `isOwner(...)` の条件を外す
 
+## S26: 音源パックの一括取り込み CLI — 切り出し・テーマ分類・全アイテムへ一括登録(実装済み・2026-10-17・PR #106)
+
+社長指示(2026-10-17): 「手元のソースディレクトリ(音声・動画)を読み込み、ffmpeg で切り出し・ノーマライズし、ファイル名・フォルダ名でテーマ分類して、全アイテムに Supabase へ一括登録する、ローカル専用の自動化パイプライン」。URL からの音源の自動取得は範囲外(社長側で用意する)。
+
+経緯: PR #106 の最初のコミット `45f8fb3` は SE タブの手動フォルダ選択カード(`SePackImportCard.tsx`)と `/api/se/mappings/batch` だったが、社長指示で取り下げ、`c7c563c` で CLI に置き換えた(カードとルートは削除。`SeMappingTab.tsx` は元に戻した)。2026-10-17 に社長指示「マージも自動でして」でマージ済み(merge commit `cf5fbfe`)。
+
+### 追加・変更
+
+| 種別 | パス | 内容 |
+|---|---|---|
+| script(新規) | `scripts/se/pack-pipeline.ts` | ローカル専用 CLI。`pnpm se:pack --src <dir>`。走査 → ffmpeg 切り出し → 分類 → 割り当て → Storage / `se_mappings` へ登録。`--undo` で取り消し |
+| lib(新規) | `src/lib/se/pack-clip.ts` / `pack-clip.test.ts` | 純関数: silencedetect の解析 `parseSilenceDetect`・音のある区間 `nonSilentRanges`・切り出し区間 `chooseClips`・ffmpeg 引数 `ffmpegClipArgs` / `ffmpegSilenceArgs`・`.env.local` の読み取り `parseEnvFile`・`clipFileName` |
+| lib(新規) | `src/lib/se/pack-import.ts` / `pack-import.test.ts` | 純関数: 分類 `classifyPackFile`・表示名 `packCategoryLabel`・計画 `planPackImport`。ブラウザでも動く |
+| package.json | `se:pack` スクリプト / devDependency | `se:pack` = `tsx scripts/se/pack-pipeline.ts`。`tsx` 4.21.0 を devDependency に明示。`pnpm-lock.yaml` は pnpm 10.28 が再生成(`libc:` 行の正規化を含む) |
+| .gitignore | `.se-pack/` | 切り出しの出力先(既定)をコミットしない |
+
+変更なし: `public/se/`・自動ライブラリ・公式既定・`choose-sound.ts`・`sound-license.test.ts`。
+
+### 仕組み
+
+1. **読み込み**: `--src` を再帰で走査(mp3 / wav / ogg / oga / m4a / aac / flac / opus / webm / mp4 / mkv / mov / avi / m4v / wmv / ts / mpg / mpeg)
+2. **切り出し**: `ffprobe` で尺、`ffmpeg -af silencedetect=noise=-35dB:d=0.3` で無音区間 → 音のある区間を候補にする。最大尺より長ければ先頭から最大尺、最小尺より短ければ後ろ(足りなければ前)に伸ばす、伸ばして重なれば 1 つにまとめる、本数が多ければ長い候補から `--max-clips`(既定 8)本。無音の無いファイルは先頭から最大尺を 1 本。`loudnorm=I=-14:TP=-1.5:LRA=11`(`--lufs` 既定 -14)・mono 44.1kHz・mp3 96k・末尾 0.12 秒フェード。既定の尺は `--min 2 --max 5`(秒)。出力は `--out`(既定 `.se-pack/out`)に元の相対パスを保って `元の名前_01.mp3`。再実行は元より新しい出力を使い回す。`--skip-clip` で元ファイル(mp3 / ogg / wav / m4a / aac・20MB 以下)をそのまま使う
+3. **分類**(`classifyPackFile`): サブフォルダ名(近い方から)→ ファイル名 → 選んだフォルダ名の順。分類は自動ライブラリのテーマ(`THEME_LABELS` の約 50 種)/ 当たり(hit)/ まとめ投げの段階(bulk-COOL〜MIRACLE)/ 分類なし(generic)。パチンコ・パチスロの用語は近いテーマへ: 確定・告知・先バレ・キュイン・フィーバー・777 → ジャックポット / プレミア・激アツ → 壮大(epic)/ リーチ・予告・チャンス・突入・演出 → カジノ / 大当・当た・ボーナス・ビッグ・レギュラー・BIG・REG・hit → 当たり / クール・グレート・ファンタスティック・ミラクル → 段階。英単語は語の境界で見る(white の hit・coolant の cool には当てない)。最後に自動ライブラリのアイテム名の規則(`themeForItem`)もファイル名に当てる
+4. **割り当て**(`planPackImport`): アイテムごとに `themeForItem` でテーマを決め、同じ分類の音を最大 5 本(`item:{id}`・`#2〜#5`・ランダム再生)。無ければ 分類なし → テーマ付きの音すべて の順。当たりパターンには hit の音(`pattern:{id}`)、段階には bulk の音(`bulk:{段階}`)。同じテーマのアイテムが同じ 5 本に偏らないよう、id から決めた位置からずらす(同じ入力なら同じ結果)。対象は既定で「価格ありかカテゴリ付き」(SE タブの「価格ありのみ」と同じ)、`--all` で全部。アイテム一覧は DB(`whowatch_item_patterns` / `whowatch_item_groups` / `whowatch_item_prices` / `item_point_mapping`)から。`--items <json>` で `/api/platforms/whowatch/items/patterns` と同じ形の JSON からも読める
+5. **登録**: 同じ音源は 1 回だけ Storage バケット `se` の `{user}/pack/{相対パスの sha1 先頭 12 桁}_{名前}.mp3` に upsert(再実行しても増えない)。`se_mappings` は 500 行ずつ 1 文の upsert(volume 80・enabled true・label はファイル名)。`pack-manifest.json`(`--out` 内)に記録し、`pnpm se:pack --undo <manifest>` で行を消せる(`--purge` で Storage の音源も)。`--dry-run` は登録せず計画だけ
+
+### 使い方
+
+```bash
+pnpm se:pack --src <dir> --dry-run        # 切り出しと計画だけ(登録しない)。計画は .se-pack/out/pack-manifest.json
+pnpm se:pack --src <dir>                  # 切り出し → 分類 → 登録
+pnpm se:pack --src <dir> --skip-clip      # 短く整えた mp3/wav 等をそのまま使う
+pnpm se:pack --undo .se-pack/out/pack-manifest.json [--purge]   # 取り込んだ行を消す(--purge で Storage の音源も)
+```
+
+- 引数: `--out <dir>`(既定 `.se-pack/out`)/ `--user <uuid>` / `--min 2 --max 5`(秒)/ `--lufs -14` / `--max-clips 8` / `--all` / `--items <json>` / `--env <file>`(既定 `.env.local`)/ `--concurrency 4`(同時に走らせる ffmpeg の数)
+- 必要なもの: `ffmpeg` / `ffprobe`。`.env.local`(`--env` で変更可)に `DATABASE_URL`・`NEXT_PUBLIC_SUPABASE_URL`・`SUPABASE_SERVICE_ROLE_KEY`。バケット `se` の書き込みポリシーは `auth.uid()` 配下だけなので、CLI からは service role が要る(Supabase ダッシュボード → Project Settings → API → service_role)。値はログに出さない
+- 登録先は `--user <uuid>`、無ければ環境変数 `SE_PACK_USER_ID` → `SE_DEFAULT_SOURCE_USER_ID`
+- `--items` で読むときは `--dry-run` のみ(登録には `DATABASE_URL` の DB が要る)
+
+### 動作確認手順
+
+1. 品質ゲート(2026-10-17 実測): `pnpm exec tsc --noEmit` 0 エラー(`scripts/**/*.ts` も対象)/ `pnpm test` 102 ファイル・1031 件通過 / `pnpm exec next build --webpack` exit 0 / `pnpm install --frozen-lockfile` exit 0 / whowatch-verifier 8 項目 PASS / CI(ci.yml)成功
+2. 合成音源での dry-run(2026-10-17 実測): 無音を挟んだ 6.5 秒の wav(1s 音 / 2s 無音 / 1s 音 / 2s 無音 / 0.5s 音)→ 2 本(0〜2 秒・3〜6.5 秒 → 2.04 秒・3.53 秒)、0.4 秒の wav → 1 本(0.44 秒)、20 秒の mp4(映像つき・ずっと鳴っている)→ 1 本(5.04 秒)。すべて mono 44.1kHz 96k
+3. 分類(同上): `花火/` → 花火、`kakutei_01.wav` → ジャックポット、`misc/long_tone.mp4` → 分類なし
+4. 割り当て(同上): 花火アイテム → 花火 2 本、スロット → ジャックポット、ねこ(ねこの音が無い)→ 分類なし
+5. 本番に入れるときは、まず `--dry-run` で `pack-manifest.json` の計画を見てから本実行する(推奨)。戻すときは `--undo`
+
+### 未確認(TODO.md 参照)
+
+- 本番の Storage / DB への実登録は未実行(本番の鍵が要るため)。実行結果は未確認
+- 実音源での切り出しの出来(無音しきい値 -35dB・0.3 秒が実音源に合うか)は未確認
+- URL からの音源の取得は範囲外(社長側で用意する)
+
 ## S25: ¥160 以上は 5 秒以上の豪華なミックス・イベントアイテムと花火は段階ごとにさらに長く(実装済み・2026-09-30)
 
 社長指示: 「160円以上のアイテムの SE をもっと 5 秒以上で組み合わせて豪華にすること。これらの主要なイベントアイテムはまとめ投げごとにさらに長い豪華な音に修正してほしい。花火系ももっと花火らしい綺羅びやかな長い SE にしてほしい」(オオカミさんがやってくる！のイベント専用アイテム 6 種の画像つき)。

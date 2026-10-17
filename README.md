@@ -27,6 +27,7 @@ pnpm dev          # 開発サーバー（Turbopack）
 pnpm test         # Vitest
 pnpm exec tsc --noEmit  # 型チェック
 pnpm run build    # 本番ビルド（webpack）
+pnpm se:pack --src <dir>  # 音源パックの一括取り込み CLI（ローカル専用・ffmpeg が要る）
 ```
 
 環境変数は `.env.local` に設定する（`.env.local.example` 参照・書式は AGENTS.md「環境変数の書式」に従う）。
