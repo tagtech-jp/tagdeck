@@ -91,6 +91,15 @@
   → **登録は実施済み(2026-10-18・テーマ別の検索 11 行で 29〜37 本を取得し、サブへ登録・undo を何度か繰り返した)**。SE タブでの確認は社長
 - [ ] **メインアカウントへの登録**(2026-10-18 社長決定・案 B): パック由来の行を公式既定から除外する変更(README「登録先の注意」の 2026-10-18 変更)のデプロイ後に、社長の端末で `.\scripts\se\run-pack.ps1 -Src .\source_se -- --max-clips 40` でメインに登録 → メインの SE タブで鳴ること、別アカウント(サブ)でログインして `/api/se/mappings` の `defaults` が変更前と同じ(公式既定のラベルが「〜（CC0）」のまま)ことを確認する
 
+## 日次同期の起動遅れ対策(O1)で新たに出た要確認(2026-10-18)
+
+- [ ] **PAT の期限**: `TAGDECK_DISPATCH_TOKEN`(fine-grained PAT・tagdeck のみ・Actions: write)の発行日と期限をここに記録する → 発行日 ____ / 期限 ____(切れると tagtech-cron が 401 で CRITICAL を出す)。期限の 2 週間前に再発行して `wrangler secret put` し直す
+- [ ] **予備 cron(`17 15 * * *`)を外すか**: 本命(tagtech-cron からの workflow_dispatch)が 1 週間連続で `15:00:xxZ` に起動したことを `gh run list --repo tagtech-jp/tagdeck --workflow daily-sync.yml --limit 10 --json event,createdAt,displayTitle,conclusion` で確認してから判断。外すなら `schedule:` を消すだけ(guard は残して害なし)
+- [ ] **job_schedule(notify-gw)**: `tagtech-cron/tagdeck-daily-sync-dispatch` は期待回数の表に未登録(tagtech-internal の exporter が task-notify の 8 枠重複で止まっている)。exporter を直したら再生成に含める
+
+## 社長が転記する(2026-10-18)
+
+- [ ] **正本 `D:/tagtech/docs/streaming/remote-studio-plan.md`** に「## 2026-10-18 到達点：日次同期の起動を JST 0:00 に揃える」節を**追記のみ**で足す(既存行は書き換えない)。内容は README「O1」の要約: GitHub Actions schedule の実測 3〜7 時間遅れ(22 回) / tagtech-cron(Cloudflare)から workflow_dispatch API で起動・PAT は Actions: write のみ / 予備 cron は 0:17 JST + guard で二重実行を防ぐ
 ## 社長が転記する(2026-09-30)
 
 - [ ] **正本 `D:\tagtech\docs\streaming\remote-studio-plan.md`** に「## 2026-09-30 到達点：シミュレーター削除の論理削除化」節を**追記のみ**で足す(既存行は書き換えない。2026-09-30 は D ドライブの統合作業中のため Claude は触っていない)。内容は README「2026-09-30 修正: シミュレーターの削除を論理削除に」の要約: 本番の `ranking_snapshots` がシミュレーター削除の CASCADE で全 0 行になっていた / PR #66 で DELETE を論理削除(`status = 'deleted'`)にし、id 指定の API を `ownedSimulator` で絞った / PR #68 で historical-pace の 404・schema.ts のコメント・テスト 35 件を追加 / 9/23・9/25 に消えた履歴は戻らない

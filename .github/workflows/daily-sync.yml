@@ -2,12 +2,34 @@ name: Daily whowatch sync
 
 # ふわっちアイテムマスタ（item_point_mapping）+ イベント一覧（whowatch_events）を毎日 JST 0:00 に同期。
 # 既存 scripts/platforms/whowatch/sync_items_and_events.py を実行（標準ライブラリのみ・依存インストール不要）。
-# n8n 廃止後の日次同期基盤。GitHub Actions cron は数分〜十数分の遅延がありうる（0:00〜0:15 頃）。
+# n8n 廃止後の日次同期基盤。
+#
+# 起動の経路（2026-10-18 変更）:
+#   本命: tagtech-internal の Cloudflare Worker「tagtech-cron」（cloudflare/tagtech-cron・ジョブ tagdeck-daily-sync-dispatch）が
+#         JST 0:00（UTC 15:00）に GitHub API（POST /repos/tagtech-jp/tagdeck/actions/workflows/daily-sync.yml/dispatches）で
+#         workflow_dispatch を起こす。inputs.source=tagtech-cron を付けるので、run-name で手動起動と見分けられる。
+#   予備: 下の schedule。GitHub Actions の schedule は毎時 0 分が高負荷帯で、旧 "0 15 * * *" の実測は 22 回すべて
+#         3〜7 時間遅れだった（2026-09-26〜10-17・最小 3h13m・最大 7h21m・中央値 4h44m。「数分〜十数分」ではなかった）。
+#         公式の助言どおり 0 分以外（17 分）にずらし、本命がすでに成功していれば何もしない（guard ステップ）。
+#   どちらの経路でも同期の中身は同じ。所要は約 60〜120 秒。
+
+run-name: "Daily whowatch sync (${{ github.event_name == 'workflow_dispatch' && inputs.source || github.event_name }})"
 
 on:
   schedule:
-    - cron: "0 15 * * *" # UTC 15:00 = JST 0:00（cron は UTC 指定）
-  workflow_dispatch: {} # 手動実行（テスト用）
+    - cron: "17 15 * * *" # UTC 15:17 = JST 0:17（予備。本命は tagtech-cron からの workflow_dispatch。cron は UTC 指定）
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "起動元。tagtech-cron が自動起動するときは tagtech-cron。手動実行はそのまま（manual）"
+        required: false
+        default: "manual"
+        type: string
+
+# GITHUB_TOKEN に要るのは guard の run 一覧の読み取り（actions: read）と checkout（contents: read）だけ
+permissions:
+  contents: read
+  actions: read
 
 jobs:
   sync:
@@ -15,13 +37,49 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      # 予備（schedule）で起きたとき、直前の JST 0:00 以降にこのワークフローが既に成功していれば何もしない。
+      # 二重に同期すると Python 同期の Discord 通知が 1 日 2 回になり、ふわっち API と Supabase への書き込みも重なる。
+      # 判定に失敗したときは「待つ」に化けさせず予備を実行する（安全側）。手動・API 起動（workflow_dispatch）は常に実行する。
+      - name: Guard (schedule only) - skip if today's sync already succeeded
+        id: guard
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" != "schedule" ]; then
+            echo "event=$EVENT_NAME: 手動・API 起動は常に実行する"
+            echo "skip=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # 直前の JST 0:00（UTC 15:00）。今日の 15:00 がまだ来ていなければ前日の 15:00
+          now=$(date -u +%s)
+          boundary=$(date -u -d "$(date -u +%F) 15:00:00" +%s)
+          if [ "$boundary" -gt "$now" ]; then boundary=$((boundary - 86400)); fi
+          since=$(date -u -d "@$boundary" +%Y-%m-%dT%H:%M:%SZ)
+          echo "判定の起点（直前の JST 0:00）: $since"
+          if ! json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/daily-sync.yml/runs?status=success&per_page=20"); then
+            echo "::warning::run 一覧を取得できなかったため予備起動を実行する"
+            echo "skip=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          hit=$(printf '%s' "$json" | jq -r --arg since "$since" \
+            '[.workflow_runs[] | select(.created_at >= $since)] | first // empty | "run \(.id) (\(.event), \(.created_at))"')
+          if [ -n "$hit" ]; then
+            echo "本日分は既に成功している: $hit。予備起動は何もしない"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "$since 以降に成功した run が無いため予備起動を実行する"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v5
+        if: steps.guard.outputs.skip != 'true'
 
       - uses: actions/setup-python@v5
+        if: steps.guard.outputs.skip != 'true'
         with:
           python-version: "3.11"
 
       - name: Run whowatch item/event daily sync
+        if: steps.guard.outputs.skip != 'true'
         working-directory: scripts/platforms/whowatch
         run: python sync_items_and_events.py
         env:
@@ -31,9 +89,10 @@ jobs:
           DISCORD_WEBHOOK_TASK: ${{ secrets.DISCORD_WEBHOOK_TASK }}
 
       # E1b: open/pre の全イベント詳細（名前・区分・ランキング構造・ルール・periods）を同期する。
-      # Python 同期の後に tagdeck の Route Handler を呼ぶ。RANKING_SYNC_KEY 未設定なら skip（失敗にしない）
+      # Python 同期の後に tagdeck の Route Handler を呼ぶ。RANKING_SYNC_KEY 未設定なら skip（失敗にしない）。
+      # Python 同期が失敗しても走らせる（!cancelled()）。guard が skip のときだけ走らせない
       - name: Sync whowatch event details (tagdeck route)
-        if: always()
+        if: ${{ !cancelled() && steps.guard.outputs.skip != 'true' }}
         env:
           RANKING_SYNC_KEY: ${{ secrets.RANKING_SYNC_KEY }}
           TAGDECK_BASE_URL: ${{ secrets.TAGDECK_BASE_URL }}
@@ -55,7 +114,7 @@ jobs:
 
       # S1: /playitems のアイテムパターン（当たり判定用）を同期する
       - name: Sync whowatch item patterns (tagdeck route)
-        if: always()
+        if: ${{ !cancelled() && steps.guard.outputs.skip != 'true' }}
         env:
           RANKING_SYNC_KEY: ${{ secrets.RANKING_SYNC_KEY }}
           TAGDECK_BASE_URL: ${{ secrets.TAGDECK_BASE_URL }}
