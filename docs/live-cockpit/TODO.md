@@ -85,7 +85,9 @@
   → **対処(同日 22:0x・社長承認)**: `pnpm se:pack --undo .se-pack\out\pack-manifest.json --purge`(1011 行・4 本削除)→ 同梱スナップショット(`src/lib/se/default-mappings.ts`・9/30 時点)から消えた 24 行を `ON CONFLICT DO NOTHING` で INSERT(24 行挿入・0 行既存)。残り 235 行はパックが新規に入れたもの。9/30 以降に SE タブで手で変えた item の行があれば戻らない(社長が SE タブで確認)。再発防止: run-pack の非対話ガード(本 PR)・本番に書く手順の連結テストは本実行の経路を物理的に塞いでから行う
 - [x] **元メディアの自動切り出し(2026-10-17 社長指示「音源の自動取得・切り出しも含めて全部」)**: 手元の元動画・音声から、タイムスタンプ(cuts.csv / cuts.json)と言葉(名前・map.json)で切り出し、分類に掛かる名前とフォルダで `source_se/` に置く `pnpm se:prep` と、run-pack の `-PreScript` / `PRE_SCRIPT` につなぐ入口(ps1 / sh)
   → **完了(2026-10-17)**: README「S26」の「元メディアの下ごしらえ」。YouTube 等からの自動取得は書いていない(権利のない配信元からの取得は Claude が担当しない)。元メディアを `source_raw/` に置き、`cuts.csv` と `map.json` を添えれば、`.\scripts\se\run-pack.ps1 -PreScript .\scripts\se\prep-source.ps1 -- --max-clips 40` で下ごしらえ → dry-run → 確認 → 本実行まで 1 コマンド。実音源での切り出しと分類の出来は未確認(dry-run の計画を見て名前・map.json を調整する)
-- [ ] **音源の自動取得 `pnpm se:fetch`(2026-10-17 社長指示「URL や検索語の指定から全自動で」)**: 実装・単体テスト 11 件・tsc 0 エラー。README「S26」の「音源の自動取得」。**実機確認は未**: Claude の環境では yt-dlp が見つからず(社長が入れた場所が PATH に無い)、自動モードの分類器が `pnpm se:fetch` の実行(手元ファイルだけの一覧でも)を止めたため。社長の端末で ①`yt-dlp --version` ②`source_raw/sources.csv` を用意して `pnpm se:fetch --dry-run` ③`pnpm se:fetch`(取得 → source_se)④`pnpm se:pack --src source_se --dry-run --out .se-pack/dryrun-<日付>` を通し、結果(件数・失敗)をここと README に反映する
+- [x] **音源の自動取得 `pnpm se:fetch`(2026-10-17 社長指示「URL や検索語の指定から全自動で」)**: 実装・単体テスト 11 件・tsc 0 エラー。README「S26」の「音源の自動取得」
+  → **完了(2026-10-18・社長の端末で実機確認)**: 検索 1 行 → 取得 3/3 → wav 3 本 → 切り出し 7 本 → 259 アイテム・1295 行の本実行まで成功。ただし登録先がメイン(公式既定の同期元)だったため、同日 社長承認で `--undo --purge`(1295 行・7 本削除)し、公式既定 24 行を同梱スナップショットから作り直した。検証用のパックはサブアカウントへ `-- --user <uuid> --out .se-pack/sub` で入れる(README「登録先の注意」)
+- [ ] **サブアカウントへの登録と SE タブ確認**: 社長の端末で `.\scripts\se\run-pack.ps1 -Src .\source_se -- --max-clips 40 --user <サブの uuid> --out .se-pack\sub` → サブでログインして SE タブで `item:{id}` が鳴るか確認。狙った音を増やすなら sources.csv を URL + 区間の行にして `pnpm se:fetch` からやり直す
 
 ## 社長が転記する(2026-09-30)
 
