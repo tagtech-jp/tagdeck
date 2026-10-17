@@ -687,9 +687,11 @@ pnpm se:pack --src <dir> --dry-run        # 切り出しと計画だけ(登録�
 pnpm se:pack --src <dir>                  # 切り出し → 分類 → 登録
 pnpm se:pack --src <dir> --skip-clip      # 短く整えた mp3/wav 等をそのまま使う
 pnpm se:pack --undo .se-pack/out/pack-manifest.json [--purge]   # 取り込んだ行を消す(--purge で Storage の音源も)
-.\scripts\se\run-pack.ps1 [-Src .\source_se] [-Yes] [-- pnpm se:pack の引数...]   # PowerShell: 上の 1〜2 を 1 コマンドで(道具と .env.local の確認 → dry-run → 確認 → 本実行)。必ず cd D:\tagdeck してから
-bash scripts/se/run-pack.sh [./source_se] [pnpm se:pack の引数...]                 # 同じものの bash 版(Git Bash / WSL / macOS・Linux)。YES=1 で確認を飛ばす
+.\scripts\se\run-pack.ps1 [-Src .\source_se] [-Yes] [-PreScript <自分の .py / .ps1>] [-- pnpm se:pack の引数...]   # PowerShell: 上の 1〜2 を 1 コマンドで(道具と .env.local の確認 → dry-run → 確認 → 本実行)。必ず cd D:\tagdeck してから
+bash scripts/se/run-pack.sh [./source_se] [pnpm se:pack の引数...]                 # 同じものの bash 版(Git Bash / WSL / macOS・Linux)。YES=1 で確認を飛ばす、PRE_SCRIPT=<自分の .py / .sh> で前段を呼ぶ
 ```
+
+`-PreScript` / `PRE_SCRIPT` は、取り込みの前に社長が用意したスクリプト(音源を `source_se` に置く処理など)を呼ぶ入口。失敗(終了コード 0 以外)なら取り込みはせずに止まる。スクリプトの中身はリポジトリに含めない(個人用のまま手元に置く。`.git/info/exclude` に名前を書けばその PC だけで無視される)。
 
 PowerShell で「スクリプトの実行が無効」と出たら `powershell -ExecutionPolicy Bypass -File scripts\se\run-pack.ps1`。`YES=1 bash ...` は bash 専用の書き方で、PowerShell では `-Yes` を使う。
 

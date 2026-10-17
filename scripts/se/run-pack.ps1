@@ -17,6 +17,8 @@
   .\scripts\se\run-pack.ps1 -Src D:\se-src                   # 別のフォルダ
   .\scripts\se\run-pack.ps1 -Yes                             # 確認を飛ばして本実行まで（自動化用）
   .\scripts\se\run-pack.ps1 -Src .\source_se -- --noise -40  # "--" の後は pnpm se:pack にそのまま渡す
+  .\scripts\se\run-pack.ps1 -PreScript .\auto_download.py -Yes   # 取り込みの前に自分のスクリプト（.py / .ps1）を呼ぶ。
+                                                                 # 音源の取得など、取り込みの前段を 1 コマンドにつなぐ入口。失敗したら止まる
 
   初回に「このシステムではスクリプトの実行が無効になっている」と出たら:
     powershell -ExecutionPolicy Bypass -File scripts\se\run-pack.ps1
@@ -25,6 +27,8 @@
 param(
   [string]$Src = ".\source_se",
   [switch]$Yes,
+  # 取り込みの前に呼ぶ自分のスクリプト（.py は python で、.ps1 はそのまま実行）。音源を $Src に置く処理をここにつなぐ
+  [string]$PreScript = "",
   [Parameter(ValueFromRemainingArguments = $true)]
   [string[]]$PackArgs = @()
 )
@@ -43,6 +47,18 @@ foreach ($tool in @("pnpm", "ffmpeg", "ffprobe")) {
   if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
     Fail "$tool が見つかりません。インストールして PATH を通してください"
   }
+}
+if ($PreScript -ne "") {
+  Write-Host "=== 0. 取り込み前の処理（$PreScript） ==="
+  if (-not (Test-Path -LiteralPath $PreScript -PathType Leaf)) { Fail "PreScript が見つかりません: $PreScript" }
+  $preExt = [System.IO.Path]::GetExtension($PreScript).ToLowerInvariant()
+  if ($preExt -eq ".py") {
+    if (-not (Get-Command python -ErrorAction SilentlyContinue)) { Fail "python が見つかりません（.py の PreScript に要る）" }
+    & python $PreScript
+  } else {
+    & $PreScript
+  }
+  if ($LASTEXITCODE -ne 0) { Fail "取り込み前の処理が失敗しました（exit $LASTEXITCODE）。音源の取り込みはしていません" }
 }
 if (-not (Test-Path -LiteralPath $Src -PathType Container)) {
   Fail "ソースフォルダがありません: $Src（音源を置くか、-Src でフォルダを指定）"
