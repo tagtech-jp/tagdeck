@@ -87,3 +87,6 @@ docs/backup/
 
 # 音源パックの取り込み元（既定の置き場。大きい音声ファイルを公開リポジトリに入れない）
 source_se/
+
+# 元メディア（録画・所有の動画や音声）の置き場。pnpm se:prep が source_se/ に切り出す（scripts/se/prep-source.ts）
+source_raw/

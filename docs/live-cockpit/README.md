@@ -669,6 +669,9 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 | lib(新規) | `src/lib/se/pack-import.ts` / `pack-import.test.ts` | 純関数: 分類 `classifyPackFile`・表示名 `packCategoryLabel`・計画 `planPackImport`。ブラウザでも動く |
 | package.json | `se:pack` スクリプト / devDependency | `se:pack` = `tsx scripts/se/pack-pipeline.ts`。`tsx` 4.21.0 を devDependency に明示。`pnpm-lock.yaml` は pnpm 10.28 が再生成(`libc:` 行の正規化を含む) |
 | .gitignore | `.se-pack/` | 切り出しの出力先(既定)をコミットしない |
+| script(新規・2026-10-17) | `scripts/se/prep-source.ts` / `prep-source.ps1` / `prep-source.sh` | 元メディアの下ごしらえ CLI `pnpm se:prep`。`source_raw/` の元動画・音声を cuts.csv(区間・名前・テーマ)と map.json(元ファイル名の言葉 → テーマ)で wav に切り出して `source_se/` に置く。ps1 / sh は run-pack の `-PreScript` / `PRE_SCRIPT` につなぐ入口 |
+| lib(新規・2026-10-17) | `src/lib/se/prep-source.ts` / `prep-source.test.ts` | 純関数: 時刻 `parseTimecode`・区間表 `parseCutsCsv` / `parseCutsJson`・テーマ表 `themeForSource`・計画 `planPrep`(分類は `classifyPackFile` と同じ)・ffmpeg 引数 `ffmpegPrepArgs`・`sanitizeName`。テスト 28 件 |
+| package.json / .gitignore(2026-10-17) | `se:prep` / `source_raw/` | `se:prep` = `tsx scripts/se/prep-source.ts`。元メディアの置き場 `source_raw/` をコミットしない |
 
 変更なし: `public/se/`・自動ライブラリ・公式既定・`choose-sound.ts`・`sound-license.test.ts`。
 
@@ -689,6 +692,9 @@ pnpm se:pack --src <dir> --skip-clip      # 短く整えた mp3/wav 等をその
 pnpm se:pack --undo .se-pack/out/pack-manifest.json [--purge]   # 取り込んだ行を消す(--purge で Storage の音源も)
 .\scripts\se\run-pack.ps1 [-Src .\source_se] [-Yes] [-PreScript <自分の .py / .ps1>] [-- pnpm se:pack の引数...]   # PowerShell: 上の 1〜2 を 1 コマンドで(道具と .env.local の確認 → dry-run → 確認 → 本実行)。必ずリポジトリのフォルダ(2026-10-17 時点は D:\tagdeck-main。D:\tagdeck は .git の無い古いコピー)に cd してから。-Src / -PreScript は名前付きで、pnpm se:pack の引数は -- の後に
 bash scripts/se/run-pack.sh [./source_se] [pnpm se:pack の引数...]                 # 同じものの bash 版(Git Bash / WSL / macOS・Linux)。YES=1 で確認を飛ばす、PRE_SCRIPT=<自分の .py / .sh> で前段を呼ぶ
+pnpm se:prep [--in source_raw] [--out source_se] [--cuts <csv|json>] [--map <json>] [--only-cuts] [--dry-run] [--force]   # 元メディアの下ごしらえ(2026-10-17): source_raw の元動画・音声を区間と言葉で切り出して source_se に置く
+.\scripts\se\run-pack.ps1 -PreScript .\scripts\se\prep-source.ps1 -- --max-clips 40                # 下ごしらえ → dry-run → 確認 → 本実行 を 1 コマンドで(PowerShell。-Yes を付けると確認なしで本実行まで)
+PRE_SCRIPT=scripts/se/prep-source.sh bash scripts/se/run-pack.sh ./source_se --max-clips 40       # 同じものの bash 版
 ```
 
 `-PreScript` / `PRE_SCRIPT` は、取り込みの前に社長が用意したスクリプト(音源を `source_se` に置く処理など)を呼ぶ入口。失敗(終了コード 0 以外)なら取り込みはせずに止まる。スクリプトの中身はリポジトリに含めない(個人用のまま手元に置く。`.git/info/exclude` に名前を書けばその PC だけで無視される)。
@@ -698,6 +704,19 @@ PowerShell で「スクリプトの実行が無効」と出たら `powershell -E
 2026-10-17 修正(PR #113): run-pack.ps1 は `-Src` / `-PreScript` を名前付きでだけ受け、名前の無い引数はすべて `pnpm se:pack` へ渡す(`[CmdletBinding(PositionalBinding = $false)]`)。以前は `-PreScript .\auto_fetch.py -Yes -- --max-clips 40` の `--max-clips` が `-Src` に入り「ソースフォルダがありません: --max-clips」で止まった。あわせて、`-Src` が `-` で始まる(引数の取り違え)場合と、ソースフォルダのファイルが 0 件(前段が何も置いていない・置き場が違う)場合はその場で止まる。bash 版も同じ 2 つの検査(1 つ目の引数が `-` で始まる / 0 件)で exit 1。Windows PowerShell 5.1 と pwsh 7.6 で実機確認済み。
 
 2026-10-17 修正(2 回目): 本実行の前の確認で、入力ができない実行(stdin なし・パイプ・スケジューラ・ツールからの呼び出し)なら `-Yes` / `YES=1` が無い限り本実行に進まず exit 1 で止まる。以前は stdin が無いと Read-Host が空の列挙を返し、`-notmatch` の判定が偽になって取り消しを素通りし、本実行まで走った(同日 21:51 JST の実害: 合成音 4 本・se_mappings 1011 行が公式既定の同期元アカウントに upsert → 社長承認で `--undo --purge`、同梱スナップショットから 24 行を復元)。本実行は対話で y と答えるか、`-Yes` / `YES=1` で明示する。
+
+#### 元メディアの下ごしらえ `pnpm se:prep`(2026-10-17 社長指示「音源の自動取得・切り出しも含めて 1 コマンドで」)
+
+手元の元動画・音声(録画・所有ファイル)を `source_raw/` に置くと、区間と言葉で切り出して `source_se/` に並べる。YouTube 等からの自動取得は含まない(権利のない配信元からの取得は Claude が担当しない。元メディアは社長が置く)。
+
+- 入力: `source_raw/` 配下の mp3 / wav / m4a / mp4 / mkv / webm など(pnpm se:pack と同じ拡張子)。`source_raw/cuts.csv`(または cuts.json)と `source_raw/map.json` は置いてあれば自動で使う(`--cuts` / `--map` で別の場所も可)
+- cuts.csv(UTF-8・1 行目は見出し `file,start,end,name,theme`・順は自由・`#` で始まる行は無視): `file` は元ファイル(相対パス・ファイル名だけ・拡張子なし・大小文字違いでも当たる)、`start` / `end` は秒か `mm:ss` / `hh:mm:ss`(小数可。end 空は末尾まで)、`name` は出力名(空なら 元の名前_開始時刻)、`theme` は置き場のフォルダ(空なら map.json の言葉で決め、無ければフォルダなし)
+- map.json: `{ "北斗": "確定", "play": "リーチ" }` のように、元ファイル名に含まれる言葉(大小文字は区別しない・長い言葉を優先)→ テーマのフォルダ名
+- 出力: `source_se/{テーマ}/{名前}.wav` か `source_se/{名前}.wav`(mono 44.1kHz・無圧縮)。区間指定の無い元ファイルは丸ごと 1 本(`--only-cuts` で除外)。同じ出力名は `_2` `_3` … で分ける。出力が元より新しければ飛ばす(`--force` で作り直す)。元ファイルは消さない
+- 計画の表示で、各出力が pnpm se:pack と同じ `classifyPackFile` でどう分類されるかを先に出し、「分類なし」になる出力は警告する(名前かフォルダにテーマの言葉を入れれば直る)。`--dry-run` は計画だけ(ffmpeg は呼ばない)
+- 終了コード: 0 成功 / 1 ffmpeg か引数の失敗 / 2 置くものが 0 件(run-pack の `-PreScript` から呼ぶと、0 以外ならそこで止まり取り込みに進まない)
+- 2〜5 秒への切り出し・音量そろえ・mp3 化・分類・割り当て・登録は、そのあとの pnpm se:pack が行う
+- 確認(2026-10-17・合成メディア): 無音を挟んだ 8 秒の wav に cuts 3 行(確定 / 激アツ_先読み / キュイン)と、音付き 6 秒の mp4 を map.json(`play` → リーチ)で丸ごと → 4 本が ジャックポット 2・壮大 1・カジノ 1 に分類され、続く dry-run で 259 アイテム・1011 行の計画になった。単体テスト 28 件(時刻・CSV / JSON・テーマ表・計画・ffmpeg 引数)
 
 - 引数: `--out <dir>`(既定 `.se-pack/out`)/ `--user <uuid>` / `--min 2 --max 5`(秒)/ `--lufs -14` / `--max-clips 8` / `--noise -35`(無音とみなすしきい値 dBFS。切れ目が拾えなければ -45〜-30 で調整)/ `--min-silence 0.3`(無音が続く最短秒数)/ `--all` / `--items <json>` / `--env <file>`(既定 `.env.local`)/ `--concurrency 4`(同時に走らせる ffmpeg の数)
 - 必要なもの: `ffmpeg` / `ffprobe`。`.env.local`(`--env` で変更可)に `DATABASE_URL`・`NEXT_PUBLIC_SUPABASE_URL`・`SUPABASE_SERVICE_ROLE_KEY`。バケット `se` の書き込みポリシーは `auth.uid()` 配下だけなので、CLI からは service role が要る(Supabase ダッシュボード → Project Settings → API → service_role)。値はログに出さない
