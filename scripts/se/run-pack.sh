@@ -2,7 +2,7 @@
 # 音源パックの一括取り込みを 1 コマンドで（2026-10-17 社長提供の手順スクリプトを整えたもの）。
 # scripts/se/pack-pipeline.ts の前後の手作業（道具と .env.local の確認 → dry-run → 確認 → 本実行）をまとめる。
 #
-# 使い方（リポジトリのフォルダで。Windows は Git Bash か WSL）:
+# 使い方（リポジトリのフォルダで。Windows は Git Bash か WSL。PowerShell なら同じ内容の scripts/se/run-pack.ps1 を使う）:
 #   bash scripts/se/run-pack.sh                              # ./source_se を取り込む
 #   bash scripts/se/run-pack.sh D:/se-src                    # 別のフォルダ
 #   bash scripts/se/run-pack.sh ./source_se --noise -40      # 2 つ目以降の引数は pnpm se:pack にそのまま渡す
