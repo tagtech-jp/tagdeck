@@ -734,7 +734,9 @@ PowerShell で「スクリプトの実行が無効」と出たら `powershell -E
 - 引数: `--list <csv|json>`(既定 `source_raw/sources.csv`、無ければ sources.json)/ `--out`(既定 `source_raw`)/ `--prep-out`(既定 `source_se`)/ `--dry-run`(id・題名・長さ・置き場の名前と計画だけ。取得も下ごしらえもしない)/ `--no-prep`(取得だけ)/ `--concurrency 2`
 - 必要な道具: yt-dlp(`python -m pip install --user --upgrade yt-dlp`)と ffmpeg / ffprobe。手元のファイルだけの一覧なら yt-dlp は要らない
 - 終了コード: 0 成功 / 1 取得か下ごしらえの失敗(1 件でも。取得できた分の下ごしらえは済ませてから 1)/ 2 取得できたものが 0 件
-- 確認(2026-10-17): 単体テスト 11 件(一覧の CSV / JSON・`--print` の解析・命名・yt-dlp 引数・cuts / map の組み立て・CSV 書き出し)。取得と連結の実機確認(手元ファイルだけの一覧・ローカル HTTP・YouTube の CC BY 動画)は、Claude の環境で yt-dlp が見つからず自動モードの分類器が `se:fetch` の実行を止めたため **未**(TODO.md 参照)
+- 確認(2026-10-17): 単体テスト 11 件(一覧の CSV / JSON・`--print` の解析・命名・yt-dlp 引数・cuts / map の組み立て・CSV 書き出し)
+- 実機確認(2026-10-18 社長の端末・yt-dlp 2026.08.19): sources.csv の検索 1 行(`ytsearch3:...`・theme ジャックポット)→ `pnpm se:fetch --dry-run` で 3 件(43 秒・32 分・24 秒)を解決 → `pnpm se:fetch` で 3 本を webm で取得(新規 3・失敗 0)→ cuts 0 行・map 3 件 → se:prep が `source_se/ジャックポット/` に wav 3 本 → `pnpm se:pack --dry-run` が 7 本に切り出し(24 秒 → 2 本・43 秒 → 3 本・32 分 → 2 本)、259 アイテム・1295 行の計画 → run-pack の本実行で 7 本・1295 行を登録(成功)。32 分の動画はずっと鳴っていて無音の切れ目が少なく 2 本しか取れないので、狙った部分は sources.csv に同じ URL の行を区間つきで複数書く。検索の行は効果音でない動画も拾うので、URL の行に置き換えるのが確実
+- 登録先の注意(2026-10-18 実測): `.env.local` の `SE_PACK_USER_ID` が公式既定の同期元(wrangler.jsonc の `SE_DEFAULT_SOURCE_USER_ID`)と同じアカウントだと、取得した音源自体は配られないものの、259 アイテム分の公式既定がラベルから推定した CC0 の音に置き換わる(推定できない行は配られない)。検証用のパックは同期元でないアカウント(サブ)に `-- --user <uuid> --out .se-pack/sub` で入れる。メインに入れてしまった分は `--undo --purge` で消し、公式既定の 24 行は同梱スナップショットから作り直した
 
 - 引数: `--out <dir>`(既定 `.se-pack/out`)/ `--user <uuid>` / `--min 2 --max 5`(秒)/ `--lufs -14` / `--max-clips 8` / `--noise -35`(無音とみなすしきい値 dBFS。切れ目が拾えなければ -45〜-30 で調整)/ `--min-silence 0.3`(無音が続く最短秒数)/ `--all` / `--items <json>` / `--env <file>`(既定 `.env.local`)/ `--concurrency 4`(同時に走らせる ffmpeg の数)
 - 必要なもの: `ffmpeg` / `ffprobe`。`.env.local`(`--env` で変更可)に `DATABASE_URL`・`NEXT_PUBLIC_SUPABASE_URL`・`SUPABASE_SERVICE_ROLE_KEY`。バケット `se` の書き込みポリシーは `auth.uid()` 配下だけなので、CLI からは service role が要る(Supabase ダッシュボード → Project Settings → API → service_role)。値はログに出さない
