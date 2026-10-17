@@ -81,6 +81,8 @@
   → **完了(2026-10-17・PR #113)**: `[CmdletBinding(PositionalBinding = $false)]` で名前の無い引数をすべて `pnpm se:pack` へ。`-Src` が `-` で始まる / ソースフォルダのファイルが 0 件 はその場で停止(bash 版も同じ 2 検査)。Windows PowerShell 5.1 と pwsh 7.6 で実機確認。品質ゲート 3 点緑・verifier 8 項目 PASS・CI 成功
 - [ ] **`.env.local` に `SE_PACK_USER_ID` が無い**(2026-10-17 時点・行ごと無し): 本実行で登録先ユーザーの uuid として要る(dry-run には不要)。社長が値を入れるか、`-- --user <uuid>` で渡す。run-pack を実行すると空の行 `SE_PACK_USER_ID=` が自動で追記されるので、そこに入れる。値はチャットに貼らない
 - [ ] **前段 `auto_fetch.py`(社長担当・リポジトリ外・`.git/info/exclude` 済み)が音源を `source_se` に置けていない**: 2026-10-17 の実行で全件 WinError 2。Claude は中身を直さない。直ったら `.\scripts\se\run-pack.ps1 -Src .\source_se -- --max-clips 40`(-Yes 無し)で dry-run の分類と本数を見てから本実行。切れ目が合わなければ `-- --noise -40 --min-silence 0.2`。本実行後は SE タブで `item:{id}` の行が増えて鳴るかを確認、戻すときは `pnpm se:pack --undo .se-pack\out\pack-manifest.json`
+- [x] **事故(2026-10-17 21:51 JST): run-pack.ps1 の確認が非対話で素通りし、本番へ本実行された**: Claude のツールの shell(stdin なし)から `-Yes` 無しで連結テストを走らせたところ、Read-Host が空の列挙を返して `-notmatch` が偽になり、合成音 4 本が Storage に、se_mappings 1011 行(item:N 259・#2〜#5 752)が公式既定の同期元アカウントに upsert された(既存 24 行を上書き)
+  → **対処(同日 22:0x・社長承認)**: `pnpm se:pack --undo .se-pack\out\pack-manifest.json --purge`(1011 行・4 本削除)→ 同梱スナップショット(`src/lib/se/default-mappings.ts`・9/30 時点)から消えた 24 行を `ON CONFLICT DO NOTHING` で INSERT(24 行挿入・0 行既存)。残り 235 行はパックが新規に入れたもの。9/30 以降に SE タブで手で変えた item の行があれば戻らない(社長が SE タブで確認)。再発防止: run-pack の非対話ガード(本 PR)・本番に書く手順の連結テストは本実行の経路を物理的に塞いでから行う
 
 ## 社長が転記する(2026-09-30)
 

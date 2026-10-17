@@ -697,6 +697,8 @@ PowerShell で「スクリプトの実行が無効」と出たら `powershell -E
 
 2026-10-17 修正(PR #113): run-pack.ps1 は `-Src` / `-PreScript` を名前付きでだけ受け、名前の無い引数はすべて `pnpm se:pack` へ渡す(`[CmdletBinding(PositionalBinding = $false)]`)。以前は `-PreScript .\auto_fetch.py -Yes -- --max-clips 40` の `--max-clips` が `-Src` に入り「ソースフォルダがありません: --max-clips」で止まった。あわせて、`-Src` が `-` で始まる(引数の取り違え)場合と、ソースフォルダのファイルが 0 件(前段が何も置いていない・置き場が違う)場合はその場で止まる。bash 版も同じ 2 つの検査(1 つ目の引数が `-` で始まる / 0 件)で exit 1。Windows PowerShell 5.1 と pwsh 7.6 で実機確認済み。
 
+2026-10-17 修正(2 回目): 本実行の前の確認で、入力ができない実行(stdin なし・パイプ・スケジューラ・ツールからの呼び出し)なら `-Yes` / `YES=1` が無い限り本実行に進まず exit 1 で止まる。以前は stdin が無いと Read-Host が空の列挙を返し、`-notmatch` の判定が偽になって取り消しを素通りし、本実行まで走った(同日 21:51 JST の実害: 合成音 4 本・se_mappings 1011 行が公式既定の同期元アカウントに upsert → 社長承認で `--undo --purge`、同梱スナップショットから 24 行を復元)。本実行は対話で y と答えるか、`-Yes` / `YES=1` で明示する。
+
 - 引数: `--out <dir>`(既定 `.se-pack/out`)/ `--user <uuid>` / `--min 2 --max 5`(秒)/ `--lufs -14` / `--max-clips 8` / `--noise -35`(無音とみなすしきい値 dBFS。切れ目が拾えなければ -45〜-30 で調整)/ `--min-silence 0.3`(無音が続く最短秒数)/ `--all` / `--items <json>` / `--env <file>`(既定 `.env.local`)/ `--concurrency 4`(同時に走らせる ffmpeg の数)
 - 必要なもの: `ffmpeg` / `ffprobe`。`.env.local`(`--env` で変更可)に `DATABASE_URL`・`NEXT_PUBLIC_SUPABASE_URL`・`SUPABASE_SERVICE_ROLE_KEY`。バケット `se` の書き込みポリシーは `auth.uid()` 配下だけなので、CLI からは service role が要る(Supabase ダッシュボード → Project Settings → API → service_role)。値はログに出さない
 - 登録先は `--user <uuid>`、無ければ環境変数 `SE_PACK_USER_ID` → `SE_DEFAULT_SOURCE_USER_ID`

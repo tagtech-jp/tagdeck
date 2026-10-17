@@ -6,7 +6,7 @@
 #   bash scripts/se/run-pack.sh                              # ./source_se を取り込む
 #   bash scripts/se/run-pack.sh D:/se-src                    # 別のフォルダ
 #   bash scripts/se/run-pack.sh ./source_se --noise -40      # 2 つ目以降の引数は pnpm se:pack にそのまま渡す
-#   YES=1 bash scripts/se/run-pack.sh                        # 確認を飛ばして本実行まで（自動化用）
+#   YES=1 bash scripts/se/run-pack.sh                        # 確認を飛ばして本実行まで（自動化用）。確認の入力ができない実行（パイプ・スケジューラ）では YES=1 が無い限り本実行に進まず止まる
 #   PRE_SCRIPT=./auto_download.py bash scripts/se/run-pack.sh   # 取り込みの前に自分のスクリプト（.py は python / それ以外は bash）を呼ぶ。
 #                                                                 # 音源の取得など、取り込みの前段を 1 コマンドにつなぐ入口。失敗したら止まる
 #
@@ -110,7 +110,13 @@ if [ -n "$missing" ]; then
 fi
 
 if [ "${YES:-}" != "1" ]; then
-  read -r -p "dry-run の計画（.se-pack/out/pack-manifest.json）を確認しましたか？ 本番へ登録を実行しますか？ (y/N) " yn
+  # 確認の入力ができない実行（stdin が端末でない: パイプ・スケジューラ・ツールからの呼び出し）では本実行に進まない（2026-10-17 の PowerShell 版の実害と同じ経路を塞ぐ）
+  if [ ! -t 0 ]; then
+    echo "× 確認の入力ができない実行（非対話・stdin なし）なので本実行はしません。本実行するなら YES=1 を付けて明示してください" >&2
+    exit 1
+  fi
+  yn=""
+  read -r -p "dry-run の計画（.se-pack/out/pack-manifest.json）を確認しましたか？ 本番へ登録を実行しますか？ (y/N) " yn || yn=""
   case "$yn" in
     [yY]*) ;;
     *) echo "キャンセルしました（何も登録していません）"; exit 0 ;;
