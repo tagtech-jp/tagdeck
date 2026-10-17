@@ -1,17 +1,17 @@
-// 音源フォルダの一括取り込み（2026-10-17 社長指示「手元に用意した音源を、プログラムで自動解析してアイテムへ一括割り当て」）。
+// 音源パックの一括取り込み（2026-10-17 社長指示「手元に用意した音源を、プログラムで自動解析してアイテムへ一括割り当て」）。
 //
-// 仕組み:
-//   - SE タブでフォルダ（またはファイル複数）を選ぶと、置かれたサブフォルダ名とファイル名の言葉から「分類」を決める（classifyPackFile）。
+// 仕組み（ローカル専用 CLI scripts/se/pack-pipeline.ts から使う純関数）:
+//   - 音源の置かれたサブフォルダ名とファイル名の言葉から「分類」を決める（classifyPackFile）。
 //     分類は自動ライブラリのテーマ（花火・ねこ・コイン…・auto-library.ts の THEME_LABELS）と、当たり（hit）・
 //     まとめ投げの段階（bulk-COOL / GREAT / FANTASTIC / MIRACLE）・どれでもない（generic）
 //   - アイテムごとに自動ライブラリと同じ themeForItem でテーマを決め、同じ分類の音を最大 5 本（item:{id}・#2〜#5）割り当てる（planPackImport）。
 //     同じテーマの音が無ければ generic → テーマ付きの音すべて の順に落とす。当たりのパターンには hit の音（pattern:{id}）、
 //     まとめ投げの段階には bulk-{段階} の音（bulk:{段階}）
-//   - 同じテーマのアイテムが同じ 5 本に偏らないよう、アイテム id から決めた位置からずらして選ぶ（再読み込みしても同じ結果）
-//   - 音源は自分のアカウントの Storage にだけ上がり（/api/se/upload）、行は /api/se/mappings/batch でまとめて保存する。
+//   - 同じテーマのアイテムが同じ 5 本に偏らないよう、アイテム id から決めた位置からずらして選ぶ（再実行しても同じ結果）
+//   - 音源は自分のアカウントの Storage にだけ上がり、行は se_mappings に 1 文の upsert でまとめて入る（CLI 側）。
 //     他の利用者に配られることはない（公式既定の配布は S23 のとおり CC0 の置き換えだけ）。public/se/ には何も置かないので
 //     sound-license.test.ts の対象にもならない
-//   - ここは純関数だけ（ブラウザ・テストの両方で使う）
+//   - ここは純関数だけ（Node のスクリプト・テストの両方で使う。ブラウザでも動く）
 
 import { THEME_LABELS, themeForItem } from "./auto-library";
 import { BULK_GRADE_LABELS, MAIN_BULK_GRADES, type BulkGrade } from "./bulk-grade";

@@ -13,7 +13,6 @@ import { isClearedSingleRow } from "@/lib/se/choose-sound";
 import { AUTO_LIBRARY_CREDITS, AUTO_LIBRARY_FILE_COUNT } from "@/lib/se/auto-library-data";
 import { variantKeys } from "@/lib/se/choose-sound";
 import { VolumeSlider } from "./VolumeSlider";
-import { SePackImportCard } from "./SePackImportCard";
 import { useLiveConnection } from "./LiveConnectionProvider";
 import { mergeWithDefaults, type MergedMapping } from "@/lib/se/merge-defaults";
 
@@ -492,13 +491,6 @@ const SeMappingTabInner = memo(function SeMappingTabInner({ reloadMappings }: { 
           ))}
         </div>
       </div>
-
-      {/* 音源フォルダの一括取り込み（2026-10-17）。対象は下の一覧と同じ絞り込み（価格ありのみ・種類・検索）のアイテム */}
-      <SePackImportCard
-        items={filtered}
-        targetLabel={`下の一覧と同じ絞り込みのアイテム ${filtered.length} 件（${query !== "" ? `検索「${query}」` : onlyOnSale ? "価格ありのみ" : "価格なしも含む"}${kindFilter !== "all" ? `・${ITEM_KIND_LABELS[kindFilter]}` : ""}）`}
-        onImported={reloadAll}
-      />
 
       {/* アイテム一覧 */}
       <div className="rounded-xl border border-border bg-card p-4">
