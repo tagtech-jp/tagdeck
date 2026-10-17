@@ -689,7 +689,7 @@ pnpm se:pack --src <dir> --skip-clip      # 短く整えた mp3/wav 等をその
 pnpm se:pack --undo .se-pack/out/pack-manifest.json [--purge]   # 取り込んだ行を消す(--purge で Storage の音源も)
 ```
 
-- 引数: `--out <dir>`(既定 `.se-pack/out`)/ `--user <uuid>` / `--min 2 --max 5`(秒)/ `--lufs -14` / `--max-clips 8` / `--all` / `--items <json>` / `--env <file>`(既定 `.env.local`)/ `--concurrency 4`(同時に走らせる ffmpeg の数)
+- 引数: `--out <dir>`(既定 `.se-pack/out`)/ `--user <uuid>` / `--min 2 --max 5`(秒)/ `--lufs -14` / `--max-clips 8` / `--noise -35`(無音とみなすしきい値 dBFS。切れ目が拾えなければ -45〜-30 で調整)/ `--min-silence 0.3`(無音が続く最短秒数)/ `--all` / `--items <json>` / `--env <file>`(既定 `.env.local`)/ `--concurrency 4`(同時に走らせる ffmpeg の数)
 - 必要なもの: `ffmpeg` / `ffprobe`。`.env.local`(`--env` で変更可)に `DATABASE_URL`・`NEXT_PUBLIC_SUPABASE_URL`・`SUPABASE_SERVICE_ROLE_KEY`。バケット `se` の書き込みポリシーは `auth.uid()` 配下だけなので、CLI からは service role が要る(Supabase ダッシュボード → Project Settings → API → service_role)。値はログに出さない
 - 登録先は `--user <uuid>`、無ければ環境変数 `SE_PACK_USER_ID` → `SE_DEFAULT_SOURCE_USER_ID`
 - `--items` で読むときは `--dry-run` のみ(登録には `DATABASE_URL` の DB が要る)
@@ -705,7 +705,7 @@ pnpm se:pack --undo .se-pack/out/pack-manifest.json [--purge]   # 取り込ん�
 ### 未確認(TODO.md 参照)
 
 - 本番の Storage / DB への実登録は未実行(本番の鍵が要るため)。実行結果は未確認
-- 実音源での切り出しの出来(無音しきい値 -35dB・0.3 秒が実音源に合うか)は未確認
+- 実音源での切り出しの出来(無音しきい値 -35dB・0.3 秒が実音源に合うか)は未確認。合わなければ `--noise` / `--min-silence` で調整できる(2026-10-17 追加)
 - URL からの音源の取得は範囲外(社長側で用意する)
 
 ## S25: ¥160 以上は 5 秒以上の豪華なミックス・イベントアイテムと花火は段階ごとにさらに長く(実装済み・2026-09-30)
