@@ -87,7 +87,9 @@
   → **完了(2026-10-17)**: README「S26」の「元メディアの下ごしらえ」。YouTube 等からの自動取得は書いていない(権利のない配信元からの取得は Claude が担当しない)。元メディアを `source_raw/` に置き、`cuts.csv` と `map.json` を添えれば、`.\scripts\se\run-pack.ps1 -PreScript .\scripts\se\prep-source.ps1 -- --max-clips 40` で下ごしらえ → dry-run → 確認 → 本実行まで 1 コマンド。実音源での切り出しと分類の出来は未確認(dry-run の計画を見て名前・map.json を調整する)
 - [x] **音源の自動取得 `pnpm se:fetch`(2026-10-17 社長指示「URL や検索語の指定から全自動で」)**: 実装・単体テスト 11 件・tsc 0 エラー。README「S26」の「音源の自動取得」
   → **完了(2026-10-18・社長の端末で実機確認)**: 検索 1 行 → 取得 3/3 → wav 3 本 → 切り出し 7 本 → 259 アイテム・1295 行の本実行まで成功。ただし登録先がメイン(公式既定の同期元)だったため、同日 社長承認で `--undo --purge`(1295 行・7 本削除)し、公式既定 24 行を同梱スナップショットから作り直した。検証用のパックはサブアカウントへ `-- --user <uuid> --out .se-pack/sub` で入れる(README「登録先の注意」)
-- [ ] **サブアカウントへの登録と SE タブ確認**: 社長の端末で `.\scripts\se\run-pack.ps1 -Src .\source_se -- --max-clips 40 --user <サブの uuid> --out .se-pack\sub` → サブでログインして SE タブで `item:{id}` が鳴るか確認。狙った音を増やすなら sources.csv を URL + 区間の行にして `pnpm se:fetch` からやり直す
+- [x] **サブアカウントへの登録と SE タブ確認**: 社長の端末で `.\scripts\se\run-pack.ps1 -Src .\source_se -- --max-clips 40 --user <サブの uuid> --out .se-pack\sub` → サブでログインして SE タブで `item:{id}` が鳴るか確認。狙った音を増やすなら sources.csv を URL + 区間の行にして `pnpm se:fetch` からやり直す
+  → **登録は実施済み(2026-10-18・テーマ別の検索 11 行で 29〜37 本を取得し、サブへ登録・undo を何度か繰り返した)**。SE タブでの確認は社長
+- [ ] **メインアカウントへの登録**(2026-10-18 社長決定・案 B): パック由来の行を公式既定から除外する変更(README「登録先の注意」の 2026-10-18 変更)のデプロイ後に、社長の端末で `.\scripts\se\run-pack.ps1 -Src .\source_se -- --max-clips 40` でメインに登録 → メインの SE タブで鳴ること、別アカウント(サブ)でログインして `/api/se/mappings` の `defaults` が変更前と同じ(公式既定のラベルが「〜（CC0）」のまま)ことを確認する
 
 ## 社長が転記する(2026-09-30)
 
