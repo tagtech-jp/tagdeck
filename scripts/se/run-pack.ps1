@@ -19,11 +19,12 @@
   .\scripts\se\run-pack.ps1 -Src .\source_se -- --noise -40  # "--" の後は pnpm se:pack にそのまま渡す
   .\scripts\se\run-pack.ps1 -PreScript .\auto_download.py -Yes   # 取り込みの前に自分のスクリプト（.py / .ps1）を呼ぶ。
                                                                  # 音源の取得など、取り込みの前段を 1 コマンドにつなぐ入口。失敗したら止まる
+  -Src と -PreScript は必ず名前付きで指定する（名前の無い引数はすべて pnpm se:pack に渡る。"--" の後に書くのが確実）
 
   初回に「このシステムではスクリプトの実行が無効になっている」と出たら:
     powershell -ExecutionPolicy Bypass -File scripts\se\run-pack.ps1
 #>
-[CmdletBinding()]
+[CmdletBinding(PositionalBinding = $false)]
 param(
   [string]$Src = ".\source_se",
   [switch]$Yes,
@@ -43,6 +44,9 @@ function Fail([string]$message) {
 }
 
 Write-Host "=== 1. 道具と環境変数の確認 ==="
+if ($Src.StartsWith("-")) {
+  Fail "-Src の値がフォルダではなく引数に見えます: $Src（pnpm se:pack に渡す引数は ""--"" の後に書く。例: -Src .\source_se -- --max-clips 40）"
+}
 foreach ($tool in @("pnpm", "ffmpeg", "ffprobe")) {
   if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
     Fail "$tool が見つかりません。インストールして PATH を通してください"
@@ -65,6 +69,9 @@ if (-not (Test-Path -LiteralPath $Src -PathType Container)) {
 }
 $fileCount = @(Get-ChildItem -LiteralPath $Src -Recurse -File).Count
 Write-Host "・ソース: $Src（ファイル $fileCount 件）"
+if ($fileCount -eq 0) {
+  Fail "ソースフォルダに音源がありません: $Src（取り込み前の処理が何も置いていないか、置き場が違う）"
+}
 
 if (-not (Test-Path -LiteralPath $envFile)) { New-Item -ItemType File -Path $envFile | Out-Null }
 $utf8NoBom = New-Object System.Text.UTF8Encoding $false
