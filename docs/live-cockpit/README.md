@@ -449,6 +449,47 @@ SELECT event_key, jsonb_pretty(periods) FROM whowatch_events WHERE event_key = '
 - `WGP_AWARD`(デイリー受賞者のカレンダー)は未対応(順位の追跡には不要)
 - 外部ツール許諾依頼(tagtech-internal `docs/streaming/whowatch-permission-request-email_20261006.md`)の別紙に、今回の取得先(`/wgp/ranking/*`・`/rankings/nice_one_*`)を追記すること(送付前)
 
+## O1: 日次同期(daily-sync.yml)の起動を JST 0:00 に揃える(tagtech-cron からの workflow_dispatch・実装済み・2026-10-18)
+
+### 背景(実測)
+
+- `daily-sync.yml`(アイテムマスタ・イベント一覧の Python 同期 → イベント詳細 → アイテムパターンの同期)は GitHub Actions の schedule `0 15 * * *`(JST 0:00)で動いていたが、`gh run list --workflow daily-sync.yml` の createdAt と予定時刻の差は 2026-09-26〜10-17 の 22 回すべてが 3〜7 時間遅れ(最小 3h13m・最大 7h21m・中央値 4h44m・平均 4h42m)。10/18 0:00 の枠は 01:19 JST 時点で未起動で、手動起動した(即時開始・87 秒で成功)
+- 同じアカウントの tagtech-internal の cron(dependency_audit `0 21 * * 2` → 3h08m・3h21m、旧 cfo_report `0 23 * * *` → 約 2 時間)も同症状で、tagdeck 固有ではない。GitHub 公式(events-that-trigger-workflows#schedule)は「毎時 0 分は高負荷帯・遅れることがある・0 分以外にすると減る」と書くだけで保証は無い。旧ヘッダコメントの「数分〜十数分の遅延」は実態と合っていなかった
+- 影響: 0:00 に入る新しいアイテム・イベントが朝まで TagDeck に反映されず、ランキング区分の自動設定・SE の単価もその分遅れていた
+
+### 設計
+
+- 本命: tagtech-internal の Cloudflare Worker `tagtech-cron`(`D:/tagtech/cloudflare/tagtech-cron`・ジョブ `tagdeck-daily-sync-dispatch`)が、既にある cron 枠 `0 15 * * *`(JST 0:00・task-notify と同居)から GitHub API `POST /repos/tagtech-jp/tagdeck/actions/workflows/daily-sync.yml/dispatches` を呼び、`inputs.source=tagtech-cron` で workflow_dispatch を起こす。Cloudflare の Cron Trigger は秒単位で発火し、GitHub 側は workflow_dispatch なら schedule のキュー待ちを受けない(手動起動の実測: 即時開始)
+- 使う API は workflow_dispatch(fine-grained PAT の **Actions: write** だけで足りる)。repository_dispatch は Contents: write(コードを書ける権限)が要るので使わない
+- 失敗は tagtech-cron の証跡(notify-gw)に CRITICAL で出て #alerts に届く(401 PAT 失効 / 403 権限不足 / 404 アクセス無し / 422 inputs 不一致)。成功は日報に載る。dispatch は 204 で run の id を返さないので、直後に run 一覧を読み戻して run の URL を証跡にする(見えなければ WARN)
+- 予備: GitHub の schedule は残し、公式の助言どおり 0 分以外 `17 15 * * *`(JST 0:17)へ。schedule 起動時は guard ステップが「直前の JST 0:00 以降に success の run があれば何もしない」(二重に同期すると Python 同期の Discord 通知が 1 日 2 回になる)。判定に失敗したら予備を実行する(安全側)。手動・API 起動(workflow_dispatch)は常に実行する
+- `run-name` に起動元が出る: `Daily whowatch sync (tagtech-cron)` / `(manual)` / `(schedule)`
+
+### 追加・変更
+
+| 種別 | ファイル | 内容 |
+|---|---|---|
+| workflow | `.github/workflows/daily-sync.yml` | `workflow_dispatch.inputs.source`(既定 manual)・`run-name`・予備 cron を `17 15 * * *` へ・`permissions: contents/actions: read`・guard ステップ(schedule のみ・`gh api .../runs?status=success` を直前の JST 0:00 以降で絞る)・後続ステップに `steps.guard.outputs.skip != 'true'`(詳細・パターン同期は `!cancelled()` で Python 失敗時も走る従来どおり)・ヘッダコメントを実測に修正 |
+| tagtech-internal(別 PR) | `cloudflare/tagtech-cron/src/jobs/tagdeck_daily_sync.ts` ほか | ジョブ本体・JOBS/CRON_MAP 登録・Env `TAGDECK_DISPATCH_TOKEN`・テスト・README |
+
+### 社長作業
+
+1. fine-grained PAT を発行: GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token。Resource owner **tagtech-jp**・Repository access **Only select repositories → tagtech-jp/tagdeck**・Repository permissions **Actions: Read and write**(Metadata: Read-only は自動で付く)・Expiration 1 年(期限は TODO.md に記録)
+2. 自分の端末で `cd D:/tagtech/cloudflare/tagtech-cron` → `npx wrangler secret put TAGDECK_DISPATCH_TOKEN`(値はチャットに貼らない)→ `npx wrangler secret list` に名前が出ることを読み戻す
+3. PR を **tagdeck → tagtech-internal の順に**マージする(逆だと Worker が 422「Unexpected inputs provided」で CRITICAL を出す)。tagtech-internal 側は `cloudflare/tagtech-cron/` を含むので `no-automerge`・マージで CI がデプロイする
+
+### 動作確認手順
+
+1. マージ翌日の 0:00 JST 以降: `gh run list --repo tagtech-jp/tagdeck --workflow daily-sync.yml --limit 3 --json event,createdAt,displayTitle,conclusion`。`createdAt` が `15:00:xxZ`・`displayTitle` が `Daily whowatch sync (tagtech-cron)`・`conclusion` success なら本命が動いている。その後の `(schedule)` の run は guard で数秒で終わる(ログに「本日分は既に成功している」)
+2. 当日中に確かめたいときだけ(本番の同期が 1 回余分に走るので社長の承認後): `curl -H "X-Run-Key: <MANUAL_RUN_KEY>" "https://tagtech-cron.bb25xp.workers.dev/?job=tagdeck-daily-sync-dispatch"` → 上の `gh run list` に `(tagtech-cron)` の run が増える
+3. tagtech-cron 側の証跡: notify-gw の日報に `tagtech-cron/tagdeck-daily-sync-dispatch` が success で載る。失敗なら #alerts に CRITICAL
+
+### 未確定・運用(TODO.md 参照)
+
+- PAT の期限(1 年)が切れると 401 → CRITICAL。TODO.md の期限日に再発行して `wrangler secret put` し直す
+- 予備 cron を外すかは、本命が 1 週間連続で `15:00:xxZ` に起動したのを見て判断(外すなら `schedule:` を消すだけ。guard は残して害なし)
+- notify-gw の `job_schedule`(期待回数の真実源)にはまだ載せていない。tagtech-internal の `scripts/agent_ledger_export.py` が task-notify の 8 枠重複で止まっている(2026-09-25 以来)ため。直すのは tagtech-internal 側の別作業
+- 品質ゲート: この PR は workflow と docs のみ(src 変更なし)。`tsc --noEmit` と `vitest` は手元で緑、`next build` は CI(ci.yml)で確認
 ## S2: SE プリセット(保存・共有・取り込み)(実装済み・2026-09-25 → **2026-09-26 廃止**)
 
 > 2026-09-26 社長指示「SE プリセットは不要。社長が SE を入れるたびに他の人にも同期する仕組みに」により、UI(SePresetPanel)・API(/api/se/presets*)・lib(presets*.ts)を削除した。同期は S4 の仕組み(運営アカウント = SE_DEFAULT_SOURCE_USER_ID の現在の割り当てを全員の既定にする)。読み直しは 開いたとき・5 分ごと・タブに戻ったとき(**2026-09-30 社長指示で同期状況のカードと「今すぐ同期」は外し、表示なしで自動同期**。S19)。se_presets テーブルは残置。以下は記録として残す。
