@@ -28,6 +28,7 @@ pnpm test         # Vitest
 pnpm exec tsc --noEmit  # 型チェック
 pnpm run build    # 本番ビルド（webpack）
 pnpm se:pack --src <dir>  # 音源パックの一括取り込み CLI（ローカル専用・ffmpeg が要る）
+.\scripts\se\run-pack.ps1 # 同上を 1 コマンドで（PowerShell。.env.local の確認 → dry-run → 確認 → 本実行。bash 版は scripts/se/run-pack.sh）
 ```
 
 環境変数は `.env.local` に設定する（`.env.local.example` 参照・書式は AGENTS.md「環境変数の書式」に従う）。

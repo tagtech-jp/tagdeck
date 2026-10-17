@@ -108,9 +108,13 @@ export function ffmpegSilenceArgs(src: string, noiseDb = -35, minSilenceSec = 0.
   return ["-hide_banner", "-nostats", "-i", src, "-vn", "-af", `silencedetect=noise=${noiseDb}dB:d=${minSilenceSec}`, "-f", "null", "-"];
 }
 
-/** `.env.local` の KEY=VALUE を読む（コメント・空行・export・引用符に対応。既にある環境変数は上書きしない前提で呼び元が使う） */
+/**
+ * `.env.local` の KEY=VALUE を読む（コメント・空行・export・引用符に対応。既にある環境変数は上書きしない前提で呼び元が使う）。
+ * 先頭の BOM（Windows のエディタや PowerShell が付けることがある）は無視する
+ */
 export function parseEnvFile(text: string): Record<string, string> {
   const out: Record<string, string> = {};
+  text = text.replace(/^﻿/, "");
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim();
     if (!line || line.startsWith("#")) continue;

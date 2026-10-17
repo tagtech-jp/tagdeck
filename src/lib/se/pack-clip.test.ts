@@ -84,6 +84,9 @@ describe("parseEnvFile", () => {
     const env = parseEnvFile(['# c', 'A=1', 'export B="two words"', "C='x' ", 'D=val # 後ろのコメント', '', 'bad line', 'E='].join("\n"));
     expect(env).toEqual({ A: "1", B: "two words", C: "x", D: "val", E: "" });
   });
+  it("先頭の BOM（Windows のエディタ・PowerShell）を無視する", () => {
+    expect(parseEnvFile("﻿DATABASE_URL=postgres://x\r\nSE_PACK_USER_ID=u\r\n")).toEqual({ DATABASE_URL: "postgres://x", SE_PACK_USER_ID: "u" });
+  });
 });
 
 describe("clipFileName", () => {

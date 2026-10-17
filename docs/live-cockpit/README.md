@@ -687,8 +687,11 @@ pnpm se:pack --src <dir> --dry-run        # 切り出しと計画だけ(登録�
 pnpm se:pack --src <dir>                  # 切り出し → 分類 → 登録
 pnpm se:pack --src <dir> --skip-clip      # 短く整えた mp3/wav 等をそのまま使う
 pnpm se:pack --undo .se-pack/out/pack-manifest.json [--purge]   # 取り込んだ行を消す(--purge で Storage の音源も)
-bash scripts/se/run-pack.sh [./source_se] [pnpm se:pack の引数...]   # 上の 1〜2 を 1 コマンドで: 道具と .env.local の確認 → dry-run → 確認(y/N) → 本実行。YES=1 で確認を飛ばす(Windows は Git Bash / WSL)
+.\scripts\se\run-pack.ps1 [-Src .\source_se] [-Yes] [-- pnpm se:pack の引数...]   # PowerShell: 上の 1〜2 を 1 コマンドで(道具と .env.local の確認 → dry-run → 確認 → 本実行)。必ず cd D:\tagdeck してから
+bash scripts/se/run-pack.sh [./source_se] [pnpm se:pack の引数...]                 # 同じものの bash 版(Git Bash / WSL / macOS・Linux)。YES=1 で確認を飛ばす
 ```
+
+PowerShell で「スクリプトの実行が無効」と出たら `powershell -ExecutionPolicy Bypass -File scripts\se\run-pack.ps1`。`YES=1 bash ...` は bash 専用の書き方で、PowerShell では `-Yes` を使う。
 
 - 引数: `--out <dir>`(既定 `.se-pack/out`)/ `--user <uuid>` / `--min 2 --max 5`(秒)/ `--lufs -14` / `--max-clips 8` / `--noise -35`(無音とみなすしきい値 dBFS。切れ目が拾えなければ -45〜-30 で調整)/ `--min-silence 0.3`(無音が続く最短秒数)/ `--all` / `--items <json>` / `--env <file>`(既定 `.env.local`)/ `--concurrency 4`(同時に走らせる ffmpeg の数)
 - 必要なもの: `ffmpeg` / `ffprobe`。`.env.local`(`--env` で変更可)に `DATABASE_URL`・`NEXT_PUBLIC_SUPABASE_URL`・`SUPABASE_SERVICE_ROLE_KEY`。バケット `se` の書き込みポリシーは `auth.uid()` 配下だけなので、CLI からは service role が要る(Supabase ダッシュボード → Project Settings → API → service_role)。値はログに出さない
