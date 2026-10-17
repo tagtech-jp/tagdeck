@@ -20,6 +20,7 @@
   .\scripts\se\run-pack.ps1 -PreScript .\auto_download.py -Yes   # 取り込みの前に自分のスクリプト（.py / .ps1）を呼ぶ。
                                                                  # 音源の取得など、取り込みの前段を 1 コマンドにつなぐ入口。失敗したら止まる
   -Src と -PreScript は必ず名前付きで指定する（名前の無い引数はすべて pnpm se:pack に渡る。"--" の後に書くのが確実）
+  確認の入力ができない実行（スケジューラ・パイプ・ツールからの呼び出し）では、-Yes が無い限り本実行に進まず止まる
 
   初回に「このシステムではスクリプトの実行が無効になっている」と出たら:
     powershell -ExecutionPolicy Bypass -File scripts\se\run-pack.ps1
@@ -126,8 +127,14 @@ if ($missing.Count -gt 0) {
 }
 
 if (-not $Yes) {
-  $yn = Read-Host "dry-run の計画（.se-pack\out\pack-manifest.json）を確認しましたか？ 本番へ登録を実行しますか？ (y/N)"
-  if ($yn -notmatch "^[yY]") {
+  # 確認の入力ができない実行（stdin なし・パイプ・スケジューラ・ツールからの呼び出し）では本実行に進まない。
+  # 2026-10-17 の実害: stdin が無いと Read-Host が空の列挙を返し、`$yn -notmatch` が空配列（偽）になって取り消しを素通りし、本実行まで走った
+  if ([Console]::IsInputRedirected -or -not [Environment]::UserInteractive) {
+    Fail "確認の入力ができない実行（非対話・stdin なし）なので本実行はしません。本実行するなら -Yes を付けて明示してください"
+  }
+  $yn = ""
+  try { $yn = [string](Read-Host "dry-run の計画（.se-pack\out\pack-manifest.json）を確認しましたか？ 本番へ登録を実行しますか？ (y/N)") } catch { $yn = "" }
+  if ([string]::IsNullOrWhiteSpace($yn) -or $yn -notmatch "^[yY]") {
     Write-Host "キャンセルしました（何も登録していません）"
     exit 0
   }
