@@ -74,8 +74,13 @@
 ## S26 で新たに出た要確認(2026-10-17)
 
 - [ ] **本番での実登録の結果は未確認**: `pnpm se:pack` の本番 Storage(バケット `se`)/ `se_mappings` への登録は、本番の鍵が要るため Claude は実行していない。社長が `--dry-run` で `pack-manifest.json` の計画を見てから本実行し、SE タブに `item:{id}` / `#2〜#5` の行が増えたか・鳴るかを確認する。戻すときは `pnpm se:pack --undo <manifest>`(`--purge` で Storage の音源も)。手順は README「S26」の使い方
-- [ ] **`.env.local` への `SUPABASE_SERVICE_ROLE_KEY` の投入は社長作業**: バケット `se` の書き込みポリシーは `auth.uid()` 配下だけなので CLI からは service role が要る(Supabase ダッシュボード → Project Settings → API → service_role)。値はチャットに貼らない。CLI は値をログに出さない
+- [x] **`.env.local` への `SUPABASE_SERVICE_ROLE_KEY` の投入は社長作業**: バケット `se` の書き込みポリシーは `auth.uid()` 配下だけなので CLI からは service role が要る(Supabase ダッシュボード → Project Settings → API → service_role)。値はチャットに貼らない。CLI は値をログに出さない
+  → **完了(2026-10-17)**: `.env.local` に `DATABASE_URL` / `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` の行があり、値が空でも仮の値でもないことを run-pack と同じ判定で確認(キー名と有無だけ。値は表示していない。有効性は本実行で分かる)
 - [ ] **実音源での無音しきい値の妥当性は未確認**: 切り出しは `silencedetect=noise=-35dB:d=0.3` で、合成音源(無音を挟んだ wav・ずっと鳴っている mp4)でしか確かめていない。実音源(パチンコ・パチスロの効果音など)で切れすぎ・切れなさすぎが出たら、まず `--noise`(-45〜-30)/ `--min-silence` と `--min` / `--max` で調整し、合う値が決まれば既定を見直す(引数は 2026-10-17 に追加)
+- [x] **run-pack.ps1 で `--` の後の引数が `-Src` に入る**: 2026-10-17 の社長の実行ログ `.\scripts\se\run-pack.ps1 -PreScript .\auto_fetch.py -Yes -- --max-clips 40` が「ソースフォルダがありません: --max-clips」で止まった(PowerShell 既定の位置束縛)
+  → **完了(2026-10-17・PR #113)**: `[CmdletBinding(PositionalBinding = $false)]` で名前の無い引数をすべて `pnpm se:pack` へ。`-Src` が `-` で始まる / ソースフォルダのファイルが 0 件 はその場で停止(bash 版も同じ 2 検査)。Windows PowerShell 5.1 と pwsh 7.6 で実機確認。品質ゲート 3 点緑・verifier 8 項目 PASS・CI 成功
+- [ ] **`.env.local` に `SE_PACK_USER_ID` が無い**(2026-10-17 時点・行ごと無し): 本実行で登録先ユーザーの uuid として要る(dry-run には不要)。社長が値を入れるか、`-- --user <uuid>` で渡す。run-pack を実行すると空の行 `SE_PACK_USER_ID=` が自動で追記されるので、そこに入れる。値はチャットに貼らない
+- [ ] **前段 `auto_fetch.py`(社長担当・リポジトリ外・`.git/info/exclude` 済み)が音源を `source_se` に置けていない**: 2026-10-17 の実行で全件 WinError 2。Claude は中身を直さない。直ったら `.\scripts\se\run-pack.ps1 -Src .\source_se -- --max-clips 40`(-Yes 無し)で dry-run の分類と本数を見てから本実行。切れ目が合わなければ `-- --noise -40 --min-silence 0.2`。本実行後は SE タブで `item:{id}` の行が増えて鳴るかを確認、戻すときは `pnpm se:pack --undo .se-pack\out\pack-manifest.json`
 
 ## 社長が転記する(2026-09-30)
 
