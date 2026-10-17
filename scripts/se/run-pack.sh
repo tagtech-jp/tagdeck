@@ -7,6 +7,8 @@
 #   bash scripts/se/run-pack.sh D:/se-src                    # 別のフォルダ
 #   bash scripts/se/run-pack.sh ./source_se --noise -40      # 2 つ目以降の引数は pnpm se:pack にそのまま渡す
 #   YES=1 bash scripts/se/run-pack.sh                        # 確認を飛ばして本実行まで（自動化用）
+#   PRE_SCRIPT=./auto_download.py bash scripts/se/run-pack.sh   # 取り込みの前に自分のスクリプト（.py は python / それ以外は bash）を呼ぶ。
+#                                                                 # 音源の取得など、取り込みの前段を 1 コマンドにつなぐ入口。失敗したら止まる
 #
 # .env.local に要るもの（値はログに出さない。無ければ空の行を足して止まるので、値を入れてもう一度実行する）:
 #   DATABASE_URL                 アイテム一覧の取得と se_mappings の書き込み（dry-run でも要る）
@@ -28,6 +30,22 @@ for tool in pnpm ffmpeg ffprobe; do
     exit 1
   fi
 done
+if [ -n "${PRE_SCRIPT:-}" ]; then
+  echo "=== 0. 取り込み前の処理（$PRE_SCRIPT） ==="
+  if [ ! -f "$PRE_SCRIPT" ]; then
+    echo "× PRE_SCRIPT が見つかりません: $PRE_SCRIPT" >&2
+    exit 1
+  fi
+  case "$PRE_SCRIPT" in
+    *.py)
+      if command -v python3 >/dev/null 2>&1; then PY=python3; else PY=python; fi
+      "$PY" "$PRE_SCRIPT" || { echo "× 取り込み前の処理が失敗しました。音源の取り込みはしていません" >&2; exit 1; }
+      ;;
+    *)
+      bash "$PRE_SCRIPT" || { echo "× 取り込み前の処理が失敗しました。音源の取り込みはしていません" >&2; exit 1; }
+      ;;
+  esac
+fi
 if [ ! -d "$SRC" ]; then
   echo "× ソースフォルダがありません: $SRC（音源を置くか、1 つ目の引数でフォルダを指定）" >&2
   exit 1
