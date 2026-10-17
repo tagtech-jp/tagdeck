@@ -84,3 +84,6 @@ docs/backup/
 
 # 音源パックの一括取り込み CLI の作業フォルダ（scripts/se/pack-pipeline.ts）
 .se-pack/
+
+# 音源パックの取り込み元（既定の置き場。大きい音声ファイルを公開リポジトリに入れない）
+source_se/
